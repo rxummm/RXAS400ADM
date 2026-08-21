@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# vue-tsc -b 会在源码树内生成这些文件，遮蔽 vite.config.ts（P1-3）
+vite.config.js
+vite.config.d.ts
+vite.config.js.map
+
+# 本地环境
+.env.local
+.env.*.local

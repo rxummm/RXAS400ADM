@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rxas400adm.security.mapper.LoginAttemptMapper">
+
+    <update id="incrementFailure">
+        UPDATE rx_login_attempt SET failed_count = failed_count + 1,
+            last_fail_time = CURRENT_TIMESTAMP, last_ip = #{ip}, updated_time = CURRENT_TIMESTAMP
+        WHERE username = #{username} AND server_id = #{serverId}
+    </update>
+
+    <!-- 按 IP 聚合统计（暴力破解溯源：同 IP 多账号穷举） -->
+    <select id="aggregateByIp" resultType="map">
+        SELECT last_ip AS ip, SUM(failed_count) AS attempts,
+               COUNT(*) AS accounts,
+               SUM(CASE WHEN locked_until IS NOT NULL AND locked_until &gt; CURRENT_TIMESTAMP THEN 1 ELSE 0 END) AS locked,
+               MAX(last_fail_time) AS last_time
+        FROM rx_login_attempt
+        WHERE last_ip IS NOT NULL AND last_ip &lt;&gt; ''
+        GROUP BY last_ip
+        ORDER BY attempts DESC
+        LIMIT 100
+    </select>
+
+</mapper>

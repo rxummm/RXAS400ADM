@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rxas400adm.system.mapper.NotificationMapper">
+
+    <!-- 批量插入通知（公告/告警群发用，替代 N 次单条 INSERT） -->
+    <insert id="insertBatch">
+        INSERT INTO rx_notification (username, type, title, content, read_flag, created_time) VALUES
+        <foreach collection="list" item="n" separator=",">(#{n.username}, #{n.type}, #{n.title}, #{n.content}, 0, #{n.createdTime})</foreach>
+    </insert>
+
+</mapper>

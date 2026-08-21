@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rxas400adm.system.mapper.SysMenuMapper">
+
+    <resultMap id="SysMenuResultMap" type="com.rxas400adm.system.entity.SysMenu">
+        <id column="id" property="id"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="menu_name" property="menuName"/>
+        <result column="menu_type" property="menuType"/>
+        <result column="title" property="title"/>
+        <result column="path" property="path"/>
+        <result column="component" property="component"/>
+        <result column="perms" property="perms"/>
+        <result column="icon" property="icon"/>
+        <result column="sort" property="sort"/>
+        <result column="visible" property="visible"/>
+        <result column="status" property="status"/>
+        <result column="admin_only" property="adminOnly"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <select id="selectAuthorizedMenusByUserId" resultMap="SysMenuResultMap">
+        WITH RECURSIVE menu_tree AS (
+            SELECT m.* FROM rx_menu m
+            JOIN rx_role_menu rm ON m.id = rm.menu_id
+            JOIN rx_user_role ur ON rm.role_id = ur.role_id
+            WHERE ur.user_id = #{userId} AND m.status = 1
+            UNION
+            SELECT m.* FROM rx_menu m
+            JOIN rx_user_menu um ON m.id = um.menu_id
+            WHERE um.user_id = #{userId} AND m.status = 1
+            UNION
+            SELECT p.* FROM rx_menu p
+            JOIN menu_tree mt ON p.id = mt.parent_id
+            WHERE p.status = 1
+        )
+        SELECT DISTINCT * FROM menu_tree ORDER BY sort ASC
+    </select>
+
+</mapper>

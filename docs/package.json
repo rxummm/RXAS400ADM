@@ -1,0 +1,19 @@
+{
+  "name": "rxas400adm-docs",
+  "private": true,
+  "type": "module",
+  "description": "RXAS400ADM 审计文档站（VitePress）：Trae 审计报告按章拆页 + 合订本单页 + 全文搜索",
+  "scripts": {
+    "dev": "vitepress dev .",
+    "build": "vitepress build .",
+    "preview": "vitepress preview .",
+    "split:trae": "node scripts/split-trae.mjs"
+  },
+  "devDependencies": {
+    "vitepress": "^1.3.4"
+  },
+  "dependencies": {
+    "mermaid": "^11.16.1",
+    "vitepress-plugin-mermaid": "^2.0.17"
+  }
+}

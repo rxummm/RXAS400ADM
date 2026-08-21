@@ -1,0 +1,21 @@
+# RXAS400 后端 systemd 服务（适用于 AS400 上的 Linux LPAR）
+# 安装：
+#   sudo cp scripts/rxas400-backend.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now rxas400-backend
+[Unit]
+Description=RXAS400 Enterprise IBM i Operation Platform (Backend)
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/QOpenSys/opt/rxas400/backend
+ExecStart=/usr/bin/java -jar /QOpenSys/opt/rxas400/backend/rxas400adm-app-1.0.0-SNAPSHOT.jar --spring.profiles.active=prod
+Restart=on-failure
+RestartSec=10
+# 生产环境通过 EnvironmentFile 注入密钥与数据库密码
+EnvironmentFile=-/QOpenSys/opt/rxas400/backend/rxas400.env
+
+[Install]
+WantedBy=multi-user.target

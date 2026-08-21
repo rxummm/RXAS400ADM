@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# =============================================================================
+# .githooks/pre-commit —— 提交前门禁
+#
+# 阶段一：八道静态门禁（verify-all.sh SKIP_DB=1，几秒内）：
+#   1. 后端分层准绳（Controller 禁 Mapper/QueryWrapper、写接口必须 DTO、返回禁直返 Entity）
+#   2. 前端表格/树插槽行类型（裸作用域插槽或悬空 RowType 即失败）
+#   3. 前端 CRLF 拼行防护（el-* 开标签与 <template #default> 拼行即失败）
+#   4. V38 种子静态一致性（V38 SQL ↔ verify-fresh-db.sh V38_EXPECT_*，无需 MySQL）
+#   5. 迁移结构一致性（V1~V46+ 序列/命名/对象去重/空迁移/MANIFEST，无需 MySQL）
+#   6. 事务注解一致性（@Transactional 必须显式 rollbackFor = Exception.class）
+#   7. 模板自定义 class 作用域（scoped/全局/:deep/组件树判定，详见 check-template-classes.mjs）
+#   8. i18n key 一致性 + i18nPrefix.add 校验（check-i18n.mjs）
+#
+# 阶段二：后端单元测试（mvn -q test，约 1~2 分钟）——
+#   防止 H2/H3/M2 类 API 改造后过时测试漏网（2026-08-17 实测抓过 4 个过时测试类）。
+#
+# 启用：git config core.hooksPath .githooks
+# 跳过静态门禁（紧急）：SKIP_VERIFY_ALL=1 git commit ...
+# 跳过后端单测（紧急，仅静态门禁）：SKIP_BACKEND_TESTS=1 git commit ...
+# =============================================================================
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+if [ "${SKIP_VERIFY_ALL:-0}" = "1" ]; then
+  echo "[pre-commit] SKIP_VERIFY_ALL=1，跳过全部门禁"
+  exit 0
+fi
+
+echo "[pre-commit] 阶段一：八道静态门禁（SKIP_DB=1，跳过 M1 数据库校验）..."
+if ! SKIP_DB=1 bash "$ROOT/scripts/verify-all.sh"; then
+  echo ""
+  echo "[pre-commit] ❌ 静态门禁未通过，已阻断提交。修复后重新 commit；"
+  echo "             紧急跳过：SKIP_VERIFY_ALL=1 git commit ..."
+  exit 1
+fi
+
+echo "[pre-commit] ✅ 静态门禁通过"
+
+if [ "${SKIP_BACKEND_TESTS:-0}" = "1" ]; then
+  echo "[pre-commit] SKIP_BACKEND_TESTS=1，跳过后端单元测试（仅跑静态门禁）"
+  exit 0
+fi
+
+echo "[pre-commit] 阶段二：后端单元测试（mvn -q test，约 1~2 分钟）..."
+if (cd "$ROOT/backend" && mvn -q test); then
+  echo "[pre-commit] ✅ 后端单元测试通过（212 用例）"
+  exit 0
+fi
+
+echo ""
+echo "[pre-commit] ❌ 后端单元测试失败，已阻断提交。API 改造请同步更新测试；"
+echo "             紧急跳过：SKIP_BACKEND_TESTS=1 git commit ..."
+exit 1

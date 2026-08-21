@@ -1,0 +1,49 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths: ['frontend/**', '.github/workflows/frontend.yml']
+  pull_request:
+    branches: [main]
+    paths: ['frontend/**']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci --no-audit --no-fund
+
+      - name: i18n key check
+        run: cd frontend && node scripts/check-i18n.mjs
+
+      - name: Unit tests (vitest)
+        run: cd frontend && npm test
+
+      - name: Lint (0 errors gate + CRLF join guard)
+        run: cd frontend && npm run lint
+
+      # 前端插槽行类型门禁：el-table #default 必须显式标注行类型，禁止裸 { row }
+      # （scripts/check-frontend-slots.sh，违规即失败；存量遗留见脚本内 ALLOW_FILES）
+      - name: Slot typing gate
+        run: bash scripts/check-frontend-slots.sh
+
+      - name: Type-check & build
+        run: cd frontend && npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rxas400adm-frontend
+          path: frontend/dist
+          retention-days: 7

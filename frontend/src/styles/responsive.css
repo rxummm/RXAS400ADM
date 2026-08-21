@@ -1,0 +1,67 @@
+/* ====== 响应式断点（从 common.css 提取，减少主 CSS 体积） ====== */
+
+/* --- 1920px+ : NOC 大屏 --- */
+@media (min-width: 1920px) {
+  :root {
+    --table-density: compact;
+  }
+
+  .search-bar .el-input,
+  .search-bar .el-select {
+    width: 180px;
+  }
+
+  .el-table .el-table__cell {
+    padding: 4px 0;
+  }
+
+  .el-table .cell {
+    padding: 0 8px;
+  }
+}
+
+/* --- 1440px : 标准显示器 --- */
+@media (min-width: 1440px) and (max-width: 1919px) {
+  :root {
+    --table-density: default;
+  }
+}
+
+/* --- 1024px : 笔记本/平板 --- */
+@media (max-width: 1439px) {
+  :root {
+    --table-density: comfortable;
+  }
+
+  .search-bar .el-input,
+  .search-bar .el-select {
+    width: 160px;
+  }
+
+  .search-bar {
+    padding: 8px;
+  }
+
+  .page-container {
+    padding: 0;
+  }
+
+  .el-table .el-table__cell {
+    padding: 8px 0;
+  }
+
+  .el-table .cell {
+    padding: 0 12px;
+  }
+}
+
+/* --- 侧边栏自动折叠（笔记本） --- */
+@media (max-width: 1200px) {
+  .el-aside {
+    width: 64px !important;
+  }
+
+  .el-menu--collapse {
+    width: 64px;
+  }
+}

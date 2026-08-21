@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rxas400adm.system.mapper.SysUserRoleMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO rx_user_role (user_id, role_id) VALUES
+        <foreach collection="list" item="ur" separator=",">(#{ur.userId}, #{ur.roleId})</foreach>
+    </insert>
+
+</mapper>

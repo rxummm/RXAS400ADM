@@ -1,0 +1,75 @@
+graph TD
+    subgraph Browser["浏览器 (Vue 3 + TypeScript)"]
+        Login["Login.vue 登录页"]
+        Layout["Layout.vue 主布局"]
+        Views["各业务视图 (Dashboard/Job/Monitor/...)"]
+        Pinia["Pinia Store (user / as400Server)"]
+        Axios["Axios 请求层 (request.ts)"]
+    end
+
+    subgraph Security["Security Filter 链 (Spring Security)"]
+        JwtFilter["JwtAuthenticationFilter (JWT 校验)"]
+        CorsFilter["CorsFilter (CORS 白名单)"]
+        SecurityConfig["SecurityConfig (CSP/CSRF/Session)"]
+    end
+
+    subgraph Backend["后端 Controller 层 (Spring Boot)"]
+        AuthCtrl["AuthController /api/v1/auth"]
+        As400Ctrl["As400Controller /api/v1/as400"]
+        JobCtrl["JobController /api/v1/jobs"]
+        MonitorCtrl["MonitorController /api/v1/monitor"]
+        QueryCtrl["SqlQueryController /api/v1/query"]
+        BizCtrl["BusinessController /api/v1/business"]
+        SysCtrl["SysUser/Role/Menu/Permission/Config/..."]
+        CompileCtrl["CompileController /api/v1/compile"]
+        SourceCtrl["SourceController /api/v1/source"]
+        IfsCtrl["IfsController /api/v1/ifs"]
+        ObjectCtrl["ObjectController /api/v1/objects"]
+        PfCtrl["PfController /api/v1/pf"]
+        SubsysCtrl["SubsystemController /api/v1/subsystems"]
+        ScriptCtrl["ScriptController /api/v1/scripts"]
+        SchedCtrl["ScheduleController /api/v1/schedules"]
+        ExecCtrl["ExecutionController /api/v1/executions"]
+    end
+
+    subgraph Service["Service 层"]
+        SysUserSvc["SysUserService"]
+        MenuSvc["MenuService"]
+        PermissionSvc["PermissionService"]
+        LoginAttemptSvc["LoginAttemptService"]
+        IpRuleSvc["IpRuleService"]
+        TokenBlacklistSvc["TokenBlacklistService"]
+        JobSvc["JobService"]
+        MetricSvc["MetricService"]
+        AlertEngine["AlertEngine"]
+        BusinessSvc["BusinessService"]
+        SqlQuerySvc["SqlQueryService"]
+        IbmiSystemSvc["IbmiSystemService"]
+    end
+
+    subgraph AS400["AS400 Client 层 (JTOpen)"]
+        AS400Provider["AS400ClientProvider (按 X-AS400-Server 头路由)"]
+        JTOpenClient["JTOpenAS400Client (委托模式, 12 个子接口)"]
+        SqlClient["JTOpenSqlClient (PreparedStatement, DB2 for i)"]
+        CommandClient["JTOpenCommandClient (CL 命令, 标识符校验)"]
+    end
+
+    subgraph Data["数据层"]
+        MySQL[("MySQL / DB2 for i<br/>业务数据库")]
+        IBMi[("IBM i (AS400)<br/>QSYS2 系统表")]
+        Redis[("Redis (可选)<br/>缓存")]
+    end
+
+    Browser -->|"HTTP + JWT Header"| Security
+    Security -->|"已认证"| Backend
+    Backend --> Service
+    Service --> AS400
+    Service --> MySQL
+    AS400 -->|"JDBC / CL Command"| IBMi
+
+    style Browser fill:#e1f5fe
+    style Security fill:#fff3e0
+    style Backend fill:#e8f5e9
+    style Service fill:#f3e5f5
+    style AS400 fill:#fce4ec
+    style Data fill:#fff9c4

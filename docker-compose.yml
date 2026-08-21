@@ -1,0 +1,29 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: rxas400adm-mysql
+    environment:
+      MYSQL_DATABASE: rxas400adm
+      MYSQL_USER: rxas400
+      MYSQL_PASSWORD: rxas400
+      MYSQL_ROOT_PASSWORD: root
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysqldata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: rxas400adm-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  mysqldata:

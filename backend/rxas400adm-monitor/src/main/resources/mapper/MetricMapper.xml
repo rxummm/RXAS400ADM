@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rxas400adm.monitor.mapper.MetricMapper">
+
+    <!-- H2：表级分布式锁（替代 MySQL GET_LOCK，兼容 DB2 for i）——原子 UPDATE，行影响数=1 即抢锁成功 -->
+    <update id="tryAcquireLock">
+        UPDATE rx_dist_lock
+        SET holder = #{holder}, acquired_at = CURRENT_TIMESTAMP, expires_at = #{expiresAt}
+        WHERE lock_key = #{lockKey}
+          AND (holder IS NULL OR expires_at IS NULL OR expires_at &lt; CURRENT_TIMESTAMP)
+    </update>
+
+    <!-- H2：释放分布式锁（仅持有者本人可释放，防误释放他人锁） -->
+    <update id="releaseLock">
+        UPDATE rx_dist_lock SET holder = NULL, expires_at = NULL
+        WHERE lock_key = #{lockKey} AND holder = #{holder}
+    </update>
+
+    <!-- 报表聚合（P3：GROUP BY 下推）：近 N 天按 日期+指标 分组计算均值/峰值/最小值/采样数 -->
+    <select id="selectAggregatedMetrics" resultType="map">
+        SELECT DATE(collect_time) AS d, metric_name AS m,
+               ROUND(AVG(metric_value), 1) AS avg,
+               ROUND(MAX(metric_value), 1) AS max,
+               ROUND(MIN(metric_value), 1) AS min,
+               COUNT(*) AS samples
+        FROM rx_metric
+        WHERE instance_id = #{instanceId} AND collect_time &gt;= #{since}
+        GROUP BY DATE(collect_time), metric_name
+        ORDER BY d ASC, m ASC
+    </select>
+
+    <!-- 基线聚合（P3：GROUP BY 下推）：近 N 天按指标名分组算均值/峰值/最小值/采样数 -->
+    <select id="selectBaselineAggregates" resultType="map">
+        SELECT metric_name AS metricName,
+               ROUND(AVG(metric_value), 1) AS avgValue,
+               ROUND(MAX(metric_value), 1) AS `maxValue`,
+               ROUND(MIN(metric_value), 1) AS minValue,
+               COUNT(*) AS sampleCount
+        FROM rx_metric
+        WHERE instance_id = #{instanceId} AND collect_time &gt;= #{since}
+        GROUP BY metric_name
+    </select>
+
+    <!-- 容量趋势聚合（P3：GROUP BY 下推）：近 N 天 DISK 指标按天分组算日均/峰值 -->
+    <select id="selectDailyDiskAggregates" resultType="map">
+        SELECT DATE(collect_time) AS day,
+               ROUND(AVG(metric_value), 1) AS avgValue,
+               ROUND(MAX(metric_value), 1) AS `maxValue`
+        FROM rx_metric
+        WHERE instance_id = #{instanceId} AND metric_name = 'DISK' AND collect_time &gt;= #{since}
+        GROUP BY DATE(collect_time)
+        ORDER BY day ASC
+    </select>
+
+    <!-- Overview 批量查询：一次取出 5 项指标的最新值，替代 5 次独立 SELECT -->
+    <select id="selectLatestOverview" resultType="map">
+        SELECT metric_name AS metricName, metric_value AS metricValue
+        FROM rx_metric
+        WHERE instance_id = #{instanceId}
+          AND metric_name IN ('CPU', 'MEMORY', 'DISK', 'MSGW', 'LCKW')
+          AND collect_time = (
+              SELECT MAX(collect_time) FROM rx_metric
+              WHERE instance_id = #{instanceId}
+          )
+    </select>
+
+</mapper>

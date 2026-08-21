@@ -1,0 +1,80 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths: ['backend/**', '.github/workflows/backend.yml']
+  pull_request:
+    branches: [main]
+    paths: ['backend/**']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: rxas400adm_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Compile
+        run: cd backend && mvn -q -DskipTests compile
+
+      # 分层准绳门禁：Controller 禁注入 Mapper / 禁 new QueryWrapper、写接口必须 DTO、返回禁直返 Entity
+      # （scripts/check-layering.sh，违规即失败；存量遗留见脚本内白名单）
+      - name: Layering rules gate
+        run: bash scripts/check-layering.sh
+
+      # V38 种子 ↔ verify-fresh-db.sh V38_EXPECT_* 静态一致性（解析 V38 SQL，无需 MySQL）
+      - name: V38 seed static consistency
+        run: node scripts/check-v38-consistency.mjs
+
+      # 迁移结构一致性：V1~V42+ 版本连续唯一 / 表索引跨迁移去重 / 空迁移拦截 / MANIFEST 断言
+      # （scripts/check-migrations.mjs，新增迁移必须过本检查 + verify-fresh-db，模板见脚本头）
+      - name: Migration structure consistency
+        run: node scripts/check-migrations.mjs
+
+      # 事务注解一致性：@Transactional 必须显式 rollbackFor = Exception.class（防 checked exception 半提交）
+      # （scripts/check-transactional.sh，新增裸注解即失败）
+      - name: Transaction rollbackFor consistency
+        run: bash scripts/check-transactional.sh
+
+      - name: Run tests
+        run: cd backend && mvn -q test
+
+      - name: Package
+        run: cd backend && mvn -q -DskipTests package
+
+      # M1 单源门禁：全新库跑完 V1~V38 后断言结构计数与 V38 种子一致，
+      # 防止菜单/权限播种双源（DataInitializer ↔ Flyway）回归（scripts/verify-fresh-db.sh）
+      - name: Verify fresh-DB M1 consistency (V38 single-source gate)
+        run: bash scripts/verify-fresh-db.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rxas400adm-backend
+          path: backend/rxas400adm-app/target/rxas400adm-app-*.jar
+          retention-days: 7

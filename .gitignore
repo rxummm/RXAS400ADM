@@ -1,0 +1,31 @@
+# Node
+node_modules/
+frontend/dist/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
+# Java / Maven
+backend/**/target/
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+*.err
+
+# Local dev tools
+.freebuff/
+.opencode/
+
+# Runtime logs and temp files
+logs/
+*.tmp
+mvn_test_result.txt
