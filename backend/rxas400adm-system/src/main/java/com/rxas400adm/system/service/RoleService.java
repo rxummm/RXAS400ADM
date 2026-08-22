@@ -141,17 +141,20 @@ public class RoleService implements IRoleService {
         if (ids == null || ids.isEmpty()) {
             return 0;
         }
+        List<Long> distinctIds = ids.stream().filter(Objects::nonNull).distinct().toList();
+        if (distinctIds.isEmpty()) {
+            return 0;
+        }
         long adminCount = roleMapper.selectCount(new LambdaQueryWrapper<SysRole>()
-                .in(SysRole::getId, ids).eq(SysRole::getRoleCode, ADMIN_CODE));
+                .in(SysRole::getId, distinctIds).eq(SysRole::getRoleCode, ADMIN_CODE));
         if (adminCount > 0) {
             throw new BusinessException(ErrorCode.ROLE_ADMIN_PROTECTED, "内置 ADMIN 角色不可删除");
         }
-        for (Long id : ids.stream().filter(Objects::nonNull).distinct().toList()) {
-            roleMenuMapper.deleteByRoleId(id);
-            userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getRoleId, id));
-            roleMapper.deleteById(id);
-        }
-        return ids.size();
+        // B7：批量删除改为 IN 条件，消除逐条 delete 的 N 次 DB 往返
+        roleMenuMapper.delete(new LambdaQueryWrapper<SysRoleMenu>().in(SysRoleMenu::getRoleId, distinctIds));
+        userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().in(SysUserRole::getRoleId, distinctIds));
+        roleMapper.delete(new LambdaQueryWrapper<SysRole>().in(SysRole::getId, distinctIds));
+        return distinctIds.size();
     }
 
     private void saveMenuIds(Long roleId, List<Long> menuIds) {

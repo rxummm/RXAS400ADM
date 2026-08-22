@@ -15,7 +15,8 @@ Spring Boot 3.3 (Java 17) 多模块 Maven + Vue 3 (TypeScript, Vite) 前后端�
 | `cd backend && mvn -q -DskipTests compile` | 快速编译检查（增量，最快） |
 | `cd backend && mvn test` | 运行全部单元测试 |
 | `cd backend && mvn -DskipTests package` | 打包（产出 `rxas400adm-app/target/rxas400adm-app-*.jar`） |
-| `java -jar backend/rxas400adm-app/target/rxas400adm-app-1.0.0-SNAPSHOT.jar --spring.datasource.password=root` | 本地启动（后端 8080） |
+| `java -jar backend/rxas400adm-app/target/rxas400adm-app-1.0.0-SNAPSHOT.jar --spring.datasource.password=root --spring.profiles.active=mock` | 本地启动（后端 8080；**mock 档**：AS400 走 `MockAS400Client` 假数据，菜单/用户/权限等仍读本地 docker MySQL，无需真实 IBM i 即可联调） |
+| `RXAS400_JWT_SECRET=<32+字节随机值> java -jar backend/rxas400adm-app/target/rxas400adm-app-1.0.0-SNAPSHOT.jar --spring.datasource.password=root --spring.profiles.active=prod` | 生产启动（**必须** `prod` 档 + 设 `RXAS400_JWT_SECRET` 环境变量，否则 `StartupGuard` 拒启；`prod` 下 AS400 走真实 `JTOpenAS400Client` 连 IBM i）。推荐直接用 `scripts/start-backend.sh`（已内置 `--spring.profiles.active=prod` 并自动加载 env） |
 | `cd frontend && npm run dev` | 前端 dev server（5173，代理 /api、/ws 到 8080） |
 | `cd frontend && npm run build` | 前端构建验证 |
 | `cd docs && npm run dev` | 审计文档站（VitePress，默认 5174）：Trae 报告按章拆页 + 合订本单页 + 全文搜索 |

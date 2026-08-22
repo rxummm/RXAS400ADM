@@ -23,7 +23,7 @@
             :props="{ label: 'menuName', children: 'children' }"
             @check="handleCurrentPermCheck"
           >
-            <template #default="{ data }: { data: SysMenu }">
+            <template #default="{ data }">
               <span class="perm-node">
                 <el-tag size="small" :type="menuTypeTag(data.menuType)">{{ menuTypeLabel(data.menuType) }}</el-tag>
                 <span :class="{ 'pending-remove': data.id != null && pendingRemoveIds.has(data.id) }">{{ data.menuName }}</span>
@@ -62,7 +62,7 @@
             default-expand-all
             :props="{ label: 'menuName', children: 'children' }"
           >
-            <template #default="{ data }: { data: SysMenu }">
+            <template #default="{ data }">
               <span class="perm-node">
                 <el-tag size="small" :type="menuTypeTag(data.menuType)">{{ menuTypeLabel(data.menuType) }}</el-tag>
                 <span>{{ data.menuName }}</span>
@@ -189,7 +189,7 @@ function getCheckedAssignKeys() {
   return assignPermTreeRef.value?.getCheckedKeys() || []
 }
 
-function handleCurrentPermCheck(_node: SysMenu, info: { checkedKeys: number[] }) {
+function handleCurrentPermCheck(_node: any, info: any) {
   const currentChecked = new Set<number>(info.checkedKeys)
   const toRemove = new Set<number>()
   for (const id of originalPermIds.value) {

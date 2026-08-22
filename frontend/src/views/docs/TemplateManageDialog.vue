@@ -6,19 +6,19 @@
       <el-select v-model="form.docType" size="small" class="w-120">
         <el-option v-for="tp in textTypes" :key="tp" :label="$t(docTypeKey(tp))" :value="tp" />
       </el-select>
-      <el-button size="small" type="primary" @click="openCreate">{{ $t('docs.addTemplate') }}</el-button>
+      <el-button size="small" type="primary" @click="() => openCreate()">{{ $t('docs.addTemplate') }}</el-button>
     </div>
     <el-table :data="templates" size="small" border>
       <el-table-column prop="name" :label="$t('docs.tplName')" min-width="130" />
       <el-table-column prop="category" :label="$t('docs.tplCategory')" width="100" />
       <el-table-column :label="$t('docs.tplType')" width="100">
-        <template #default="{ row }: { row: TemplateItem }">
+        <template #default="{ row }">
           <el-tag size="small" type="info">{{ $t(docTypeKey(row.docType)) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="createdBy" :label="$t('docs.author')" width="100" />
       <el-table-column :label="$t('common.operation')" width="130">
-        <template #default="{ row }: { row: TemplateItem }">
+        <template #default="{ row }">
           <el-button size="small" link type="primary" @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
           <el-button size="small" link type="danger" @click="remove(row)">{{ $t('common.delete') }}</el-button>
         </template>

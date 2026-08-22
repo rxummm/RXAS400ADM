@@ -179,7 +179,7 @@ public class AuthController {
 
     /**
      * 修改当前登录用户密码（个人中心）：
-     * 校验旧密码正确后加密覆盖；新密码至少 6 位。
+     * 校验旧密码正确后加密覆盖；新密码至少 8 位。
      */
     @PostMapping("/change-password")
     @OperateLog(module = "登录安全", operation = "修改密码")
@@ -256,7 +256,6 @@ public class AuthController {
     }
 
     private String currentUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication == null ? "anonymous" : authentication.getName();
+        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 }

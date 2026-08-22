@@ -71,7 +71,6 @@ import type { AxiosError } from 'axios'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import { useAs400ServerStore, type As400Server } from '@/stores/as400Server'
-import { fetchEnabledServers } from '@/api/as400'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -89,16 +88,15 @@ const form = reactive({
   serverId: 0 as number,
 })
 const rules: FormRules = {
-  serverId: [{ required: true, message: t('login.selectServer'), trigger: 'change' }],
-  username: [{ required: true, message: t('login.username'), trigger: 'blur' }],
-  password: [{ required: true, message: t('login.password'), trigger: 'blur' }],
+  serverId: [{ required: true, message: () => t('login.selectServer'), trigger: 'change' }],
+  username: [{ required: true, message: () => t('login.username'), trigger: 'blur' }],
+  password: [{ required: true, message: () => t('login.password'), trigger: 'blur' }],
 }
 
 const loadServers = async () => {
   try {
-    // 免登录公开接口（登录前无 token，不能走需鉴权的 /as400/systems）
-    servers.value = (await fetchEnabledServers()) as As400Server[]
-    as400ServerStore.serverList = servers.value
+    // 统一走 store action（F8）：登录前用免 token 的公开接口 /as400/servers/enabled
+    servers.value = (await as400ServerStore.fetchEnabledServers()) as As400Server[]
     // 参照旧项目 getDefaultServerId：优先默认服务器，否则第一个
     if (!form.serverId && servers.value.length > 0) {
       const def = servers.value.find((s) => s.defaultServer) || servers.value[0]

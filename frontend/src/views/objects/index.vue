@@ -24,17 +24,17 @@
         <el-table :data="pagedData" size="small" border>
         <el-table-column prop="OBJECT_NAME" :label="$t('objects.name')" min-width="140" />
         <el-table-column prop="OBJECT_TYPE" :label="$t('objects.type')" width="100">
-          <template #default="{ row }: { row: ObjectRow }">
+          <template #default="{ row }">
             <el-tag size="small">{{ row.OBJECT_TYPE }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="OBJECT_LIBRARY" :label="$t('objects.library')" min-width="120" />
         <el-table-column prop="OBJECT_SIZE" :label="$t('objects.size')" width="120">
-          <template #default="{ row }: { row: ObjectRow }">{{ formatSize(row.OBJECT_SIZE) }}</template>
+          <template #default="{ row }">{{ formatSize(row.OBJECT_SIZE) }}</template>
         </el-table-column>
         <el-table-column prop="OBJECT_CREATION_TIMESTAMP" :label="$t('objects.created')" width="180" />
         <el-table-column :label="$t('common.operation')" width="100" fixed="right">
-          <template #default="{ row }: { row: ObjectRow }">
+          <template #default="{ row }">
             <el-button size="small" type="primary" plain @click="openDetail(row)">{{ $t('objects.detail') }}</el-button>
           </template>
         </el-table-column>
@@ -96,6 +96,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Objects' })
 import { ref } from 'vue'
 import QueryBar from '@/components/QueryBar.vue'
 import { useUserStore } from '@/stores/user'

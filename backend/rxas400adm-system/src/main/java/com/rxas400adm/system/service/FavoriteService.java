@@ -3,6 +3,7 @@ package com.rxas400adm.system.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.system.entity.Favorite;
 import com.rxas400adm.system.mapper.FavoriteMapper;
+import com.rxas400adm.system.vo.FavoriteVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,10 +21,11 @@ public class FavoriteService implements IFavoriteService {
 
     private final FavoriteMapper favoriteMapper;
 
-    public List<Favorite> mine(String username) {
+    public List<FavoriteVO> mine(String username) {
         return favoriteMapper.selectList(new LambdaQueryWrapper<Favorite>()
                 .eq(Favorite::getUsername, username)
-                .orderByDesc(Favorite::getCreatedTime));
+                .orderByDesc(Favorite::getCreatedTime))
+                .stream().map(FavoriteVO::from).toList();
     }
 
     /** 是否已收藏 */

@@ -69,8 +69,8 @@ function formatTime(time?: string) {
   return time ? time.replace('T', ' ').slice(0, 19) : '-'
 }
 
-const typeTag = (type: string) =>
-  ({ ALERT: 'danger', NOTICE: 'success', PERMISSION: 'warning', SYSTEM: 'info' } as Record<string, string>)[type || ''] || 'info'
+const typeTag = (type: string): 'danger' | 'success' | 'warning' | 'info' =>
+  ({ ALERT: 'danger', NOTICE: 'success', PERMISSION: 'warning', SYSTEM: 'info' } as Record<string, 'danger' | 'success' | 'warning' | 'info'>)[type || ''] || 'info'
 const typeLabel = (type: string) =>
   type === 'ALERT'
     ? t('notification.typeAlert')

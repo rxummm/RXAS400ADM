@@ -40,9 +40,7 @@ export const useTagsStore = defineStore('tags', {
     }
   },
 
-  getters: {
-    activePath: () => '', // 兼容旧接口占位，当前以 route 为准
-  },
+  getters: {},
 
   actions: {
     persist() {

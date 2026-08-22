@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * AS400 user profile 登录（追踪文档 2.2）：
@@ -145,13 +146,20 @@ public class As400LoginService implements IAs400LoginService {
     @Override
     public void applyRoles(Long userId, List<String> roleCodes) {
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
+        if (roleCodes == null || roleCodes.isEmpty()) {
+            return;
+        }
+        // B7：一次性按 roleCode 批量查询，消除逐条 selectOne 的 N+1
+        List<SysRole> roles = roleMapper.selectList(
+                new LambdaQueryWrapper<SysRole>().in(SysRole::getRoleCode, roleCodes));
+        Map<String, Long> codeToId = roles.stream()
+                .collect(Collectors.toMap(SysRole::getRoleCode, SysRole::getId));
         for (String code : roleCodes) {
-            SysRole role = roleMapper.selectOne(
-                    new LambdaQueryWrapper<SysRole>().eq(SysRole::getRoleCode, code));
-            if (role != null) {
+            Long roleId = codeToId.get(code);
+            if (roleId != null) {
                 SysUserRole ur = new SysUserRole();
                 ur.setUserId(userId);
-                ur.setRoleId(role.getId());
+                ur.setRoleId(roleId);
                 userRoleMapper.insert(ur);
             }
         }

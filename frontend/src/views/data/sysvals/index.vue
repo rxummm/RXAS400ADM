@@ -23,7 +23,7 @@
       <RxSkeleton type="table" :rows="8" :loading="loading">
         <el-table :data="visibleRows" size="small" border>
         <el-table-column width="56" align="center">
-          <template #default="{ row }: { row: SystemValue }">
+          <template #default="{ row }">
             <el-tooltip :content="isFav(row.SYSTEM_VALUE_NAME) ? $t('sysvals.unfav') : $t('sysvals.fav')" placement="top">
               <el-button
                 text
@@ -36,7 +36,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="SYSTEM_VALUE_NAME" :label="$t('sysvals.name')" width="180">
-          <template #default="{ row }: { row: SystemValue }">
+          <template #default="{ row }">
             <b>{{ row.SYSTEM_VALUE_NAME }}</b>
             <el-tag v-if="isCommon(row.SYSTEM_VALUE_NAME)" size="small" type="info" class="ml8">
               {{ $t('sysvals.common') }}
@@ -44,14 +44,14 @@
           </template>
         </el-table-column>
         <el-table-column prop="CURRENT_VALUE" :label="$t('sysvals.currentValue')" min-width="140">
-          <template #default="{ row }: { row: SystemValue }">
+          <template #default="{ row }">
             <el-tag size="small">{{ row.CURRENT_VALUE }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="VALUE_DESCRIPTION" :label="$t('sysvals.description')" min-width="260" show-overflow-tooltip />
         <el-table-column prop="SYSTEM_VALUE_TYPE" :label="$t('sysvals.type')" width="90" align="center" />
         <el-table-column :label="$t('common.operation')" width="100" align="center" fixed="right">
-          <template #default="{ row }: { row: SystemValue }">
+          <template #default="{ row }">
             <el-button v-has-perm="'SYSVAL_EDIT'" size="small" type="primary" plain :icon="Edit" @click="openEdit(row)">
               {{ $t('sysvals.modify') }}
             </el-button>
@@ -77,6 +77,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Sysvals' })
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Star, StarFilled } from '@element-plus/icons-vue'

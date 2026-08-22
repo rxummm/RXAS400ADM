@@ -17,6 +17,8 @@ export default {
     msgw: 'MSGW Job Count',
     lckw: 'LCKW Job Count',
     history: 'Metric History',
+    healthStatusLabel: 'Health Status',
+    serverName: 'Server',
     capacity: 'Disk Capacity Trend & Forecast',
     capAvg: 'Daily Average',
     capPred: 'Forecast (30d)',

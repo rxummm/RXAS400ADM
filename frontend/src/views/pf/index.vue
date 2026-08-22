@@ -56,6 +56,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Pf' })
 import { onMounted, ref } from 'vue'
 import QueryBar from '@/components/QueryBar.vue'
 import { pfColumns, pfData, pfFiles, type PfColumn, type PfFile } from '@/api/pf'

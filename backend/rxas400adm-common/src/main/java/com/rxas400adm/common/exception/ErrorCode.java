@@ -29,6 +29,7 @@ public enum ErrorCode {
     AS400_SERVER_REQUIRED(20005, "当前请求未指定 AS400 Server"),
     AS400_HOST_NOT_CONFIGURED(20006, "未配置 IBM i 服务器地址"),
     AS400_SQL_FAILED(20007, "SQL 查询执行失败"),
+    AS400_COMMAND_BUSY(20008, "命令执行并发已满，请稍后再试"),
 
     // ---------- 发布 (30000+) ----------
     DEPLOY_NOT_FOUND(30001, "发布不存在"),

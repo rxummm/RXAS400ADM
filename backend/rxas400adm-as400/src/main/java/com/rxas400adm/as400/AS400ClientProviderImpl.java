@@ -6,17 +6,16 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.rxas400adm.as400.context.As400ServerContextHolder;
 import com.rxas400adm.as400.entity.IbmiSystem;
 import com.rxas400adm.as400.mapper.IbmiSystemMapper;
+import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.crypto.AesCryptoService;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -43,14 +42,7 @@ public class AS400ClientProviderImpl implements AS400ClientProvider {
             .maximumSize(500)
             .build();
 
-    @Value("${spring.profiles.active:mock}")
-    private String activeProfile;
-
-    private boolean isMockMode() {
-        return Arrays.stream(activeProfile.split(","))
-                .map(String::trim)
-                .anyMatch("mock"::equalsIgnoreCase);
-    }
+    private final ProfileResolver profileResolver;
 
     @Override
     public AS400Client current() {
@@ -69,7 +61,7 @@ public class AS400ClientProviderImpl implements AS400ClientProvider {
         }
         // mock 与生产都按服务器缓存：保证客户端内状态（如子系统启停、计数器）跨请求一致
         return clientCache.computeIfAbsent(serverId, id -> {
-            if (isMockMode()) {
+            if (profileResolver.isMockMode()) {
                 return new MockAS400Client(system.getName());
             }
             return new JTOpenAS400Client(system.getHost(), system.getUsername(), decryptPassword(system));

@@ -14,16 +14,16 @@
         <el-table :data="rules" size="small" border>
         <el-table-column prop="jobName" :label="$t('jobSla.jobName')" min-width="140" />
         <el-table-column prop="scheduleName" :label="$t('jobSla.scheduleName')" min-width="160">
-          <template #default="{ row }: { row: JobSla }">{{ row.scheduleName || '-' }}</template>
+          <template #default="{ row }">{{ row.scheduleName || '-' }}</template>
         </el-table-column>
         <el-table-column prop="expectedDurationSec" :label="$t('jobSla.expectedSec')" width="120" align="right">
-          <template #default="{ row }: { row: JobSla }">{{ row.expectedDurationSec }} s</template>
+          <template #default="{ row }">{{ row.expectedDurationSec }} s</template>
         </el-table-column>
         <el-table-column prop="deviationPercent" :label="$t('jobSla.deviation')" width="120" align="center">
-          <template #default="{ row }: { row: JobSla }">{{ row.deviationPercent }}%</template>
+          <template #default="{ row }">{{ row.deviationPercent }}%</template>
         </el-table-column>
         <el-table-column :label="$t('jobSla.enabled')" width="90" align="center">
-          <template #default="{ row }: { row: JobSla }">
+          <template #default="{ row }">
             <el-switch
               v-has-perm="'SLA_MANAGE'"
               :model-value="row.enabled"
@@ -32,7 +32,7 @@
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="130" align="center" fixed="right">
-          <template #default="{ row }: { row: JobSla }">
+          <template #default="{ row }">
             <el-button v-has-perm="'SLA_MANAGE'" size="small" type="primary" plain :icon="Edit" @click="openDialogWrap(row)">
               {{ $t('common.edit') }}
             </el-button>
@@ -55,13 +55,13 @@
         <el-table-column prop="JOB_NAME" :label="$t('jobSla.jobName')" min-width="140" />
         <el-table-column prop="SCHEDULE_NAME" :label="$t('jobSla.scheduleName')" min-width="160" />
         <el-table-column :label="$t('jobSla.expectedSec')" width="120" align="right">
-          <template #default="{ row }: { row: SlaExecution }">{{ row.EXPECTED_SEC }} s</template>
+          <template #default="{ row }">{{ row.EXPECTED_SEC }} s</template>
         </el-table-column>
         <el-table-column :label="$t('jobSla.actualSec')" width="120" align="right">
-          <template #default="{ row }: { row: SlaExecution }">{{ row.ACTUAL_SEC }} s</template>
+          <template #default="{ row }">{{ row.ACTUAL_SEC }} s</template>
         </el-table-column>
         <el-table-column :label="$t('jobSla.slaStatus')" width="110" align="center">
-          <template #default="{ row }: { row: SlaExecution }">
+          <template #default="{ row }">
             <el-tag :type="row.STATUS === 'OK' ? 'success' : 'danger'" size="small">
               {{ row.STATUS === 'OK' ? $t('jobSla.statusOk') : $t('jobSla.statusBreached') }}
             </el-tag>
@@ -96,6 +96,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'JobSla' })
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Edit, Plus, Refresh } from '@element-plus/icons-vue'

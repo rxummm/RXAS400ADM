@@ -17,6 +17,8 @@ export default {
     msgw: 'MSGW 作业数',
     lckw: 'LCKW 作业数',
     history: '指标历史',
+    healthStatusLabel: '健康状态',
+    serverName: '服务器',
     capacity: '磁盘容量趋势与预测',
     capAvg: '每日均值',
     capPred: '预测(30天)',

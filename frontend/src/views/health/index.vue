@@ -32,7 +32,7 @@
         <el-table-column prop="host" :label="$t('health.host')" min-width="150" />
         <el-table-column prop="environment" :label="$t('health.environment')" width="110" />
         <el-table-column :label="$t('health.connect')" width="120">
-          <template #default="{ row }: { row: HealthServer }">
+          <template #default="{ row }">
             <el-tag :type="row.connect === 'OK' ? 'success' : 'danger'" size="small">{{ row.connect }}</el-tag>
           </template>
         </el-table-column>
@@ -46,6 +46,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Health' })
 import { computed, onMounted, ref } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { healthReport, type HealthReport, type HealthServer } from '@/api/health'
@@ -73,7 +77,7 @@ const load = async () => {
     report.value = await healthReport()
   } catch {
     report.value = null
-    console.warn('[health] healthReport failed')
+    // health report failed silently (interceptor handles errors)
   } finally {
     loading.value = false
   }

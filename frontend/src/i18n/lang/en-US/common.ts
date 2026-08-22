@@ -35,6 +35,8 @@ export default {
     show: 'Show',
     hide: 'Hide',
     close: 'Close',
+    notFound: 'Page not found',
+    backToHome: 'Back to Home',
     enable: 'Enable',
     disable: 'Disable',
     read: 'Read',

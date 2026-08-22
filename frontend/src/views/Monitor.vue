@@ -57,6 +57,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Monitor' })
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElNotification } from 'element-plus'
@@ -196,7 +200,7 @@ const connectSocket = () => {
         if (metric.metricName === 'MSGW') overview.value.msgw = metric.metricValue
         if (metric.metricName === 'LCKW') overview.value.lckw = metric.metricValue
       } catch {
-        console.warn('[monitor] WS message parse error')
+        // WS message parse error (non-critical)
       }
     })
     },

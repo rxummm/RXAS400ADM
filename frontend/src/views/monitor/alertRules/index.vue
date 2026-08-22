@@ -1,7 +1,7 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-button type="primary" v-has-perm="'ALERT_MANAGE'" :icon="Plus" @click="openCreate">
+      <el-button type="primary" v-has-perm="'ALERT_MANAGE'" :icon="Plus" @click="() => openCreate()">
         {{ $t('alertRules.add') }}
       </el-button>
       <el-button :icon="Refresh" @click="load">{{ $t('common.refresh') }}</el-button>
@@ -13,7 +13,7 @@
         <el-table :data="pagedRows" size="small" border>
         <el-table-column prop="metricName" :label="$t('alertRules.metric')" width="120" />
         <el-table-column :label="$t('alertRules.condition')" width="160">
-          <template #default="{ row }: { row: AlertRule }">
+          <template #default="{ row }">
             <span class="text-muted">{{ row.metricName }}</span>
             <el-tag size="small" class="mx8">{{ row.operator }}</el-tag>
             <b>{{ row.threshold }}</b>
@@ -21,12 +21,12 @@
           </template>
         </el-table-column>
         <el-table-column :label="$t('alertRules.level')" width="110">
-          <template #default="{ row }: { row: AlertRule }">
+          <template #default="{ row }">
             <el-tag :type="row.level === 'CRITICAL' ? 'danger' : 'warning'" size="small">{{ row.level }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('alertRules.server')" width="140">
-          <template #default="{ row }: { row: AlertRule }">
+          <template #default="{ row }">
             <el-tag v-if="!row.serverId" size="small" type="info">{{ $t('alertRules.allServers') }}</el-tag>
             <template v-else>
               <span>{{ serverName(row.serverId) }}</span>
@@ -34,25 +34,25 @@
           </template>
         </el-table-column>
         <el-table-column :label="$t('alertRules.channel')" width="120">
-          <template #default="{ row }: { row: AlertRule }">
+          <template #default="{ row }">
             <el-tag :type="channelType(row.channel)" size="small">{{ channelLabel(row.channel) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('alertRules.enabled')" width="80" align="center">
-          <template #default="{ row }: { row: AlertRule }">
+          <template #default="{ row }">
             <el-switch
               v-has-perm="'ALERT_MANAGE'"
               :model-value="row.enabled"
               size="small"
-              @change="(v: boolean) => toggle(row, v)"
+              @change="(v: any) => toggle(row, v)"
             />
           </template>
         </el-table-column>
         <el-table-column prop="description" :label="$t('alertRules.description')" min-width="180" show-overflow-tooltip>
-          <template #default="{ row }: { row: AlertRule }">{{ descText(row) }}</template>
+          <template #default="{ row }">{{ descText(row) }}</template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="140" fixed="right">
-          <template #default="{ row }: { row: AlertRule }">
+          <template #default="{ row }">
             <el-button v-has-perm="'ALERT_MANAGE'" size="small" type="warning" plain @click="openEdit(row)">
               {{ $t('common.edit') }}
             </el-button>
@@ -96,8 +96,8 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('alertRules.server')">
-          <el-select v-model="form.serverId" class="w-full" clearable>
-            <el-option :label="$t('alertRules.allServers')" :value="null" />
+          <el-select v-model="form.serverId as any" class="w-full" clearable>
+            <el-option :label="$t('alertRules.allServers')" :value="undefined" />
             <el-option v-for="s in servers" :key="s.id" :label="`${s.name} (${s.host})`" :value="s.id" />
           </el-select>
         </el-form-item>
@@ -126,6 +126,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'AlertRules' })
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Refresh } from '@element-plus/icons-vue'

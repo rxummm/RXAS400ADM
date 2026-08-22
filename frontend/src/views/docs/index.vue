@@ -14,7 +14,7 @@
       <template #right>
         <div class="flex-1" />
         <el-button @click="templatesVisible = true">{{ $t('docs.templateManage') }}</el-button>
-        <el-button type="primary" :icon="Plus" @click="openCreate">{{ $t('docs.create') }}</el-button>
+        <el-button type="primary" :icon="Plus" @click="() => openCreate()">{{ $t('docs.create') }}</el-button>
       </template>
     </QueryBar>
 
@@ -28,16 +28,16 @@
         <el-table-column prop="title" :label="$t('docs.docTitle')" min-width="200" show-overflow-tooltip />
         <template v-if="viewMode === 'normal'">
           <el-table-column prop="templateName" :label="$t('docs.template')" width="110">
-            <template #default="{ row }: { row: DocItem }">{{ row.templateName || '-' }}</template>
+            <template #default="{ row }">{{ row.templateName || '-' }}</template>
           </el-table-column>
           <el-table-column :label="$t('docs.docType')" width="100">
-            <template #default="{ row }: { row: DocItem }">
+            <template #default="{ row }">
               <el-tag size="small" type="info">{{ $t(docTypeKey(row.docType)) }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="version" :label="$t('docs.version')" width="80" align="center" />
           <el-table-column :label="$t('docs.status')" width="110">
-            <template #default="{ row }: { row: DocItem }">
+            <template #default="{ row }">
               <el-tag size="small" :type="statusType(row.status)">{{ statusMap[row.status] || row.status }}</el-tag>
             </template>
           </el-table-column>
@@ -53,7 +53,7 @@
         <el-table-column prop="createdBy" :label="$t('docs.author')" width="110" />
         <el-table-column v-if="viewMode === 'normal'" prop="updatedTime" :label="$t('docs.updated')" width="170" />
         <el-table-column :label="$t('common.operation')" width="330" fixed="right">
-          <template #default="{ row }: { row: DocItem }">
+          <template #default="{ row }">
             <template v-if="viewMode === 'normal'">
               <el-button size="small" link type="primary" @click="openDetail(row)">{{ $t('docs.view') }}</el-button>
               <el-button v-if="['DRAFT', 'REJECTED'].includes(row.status)" size="small" link type="primary" @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
@@ -180,8 +180,8 @@ const statusMap: Record<string, string> = {
   PUBLISHED: t('docs.stPublished'),
   REJECTED: t('docs.stRejected'),
 }
-const statusType = (s: string) =>
-  ({ DRAFT: 'info', PENDING: 'warning', PUBLISHED: 'success', REJECTED: 'danger' } as Record<string, string>)[s] || 'info'
+const statusType = (s: string): 'info' | 'warning' | 'success' | 'danger' =>
+  ({ DRAFT: 'info', PENDING: 'warning', PUBLISHED: 'success', REJECTED: 'danger' } as Record<string, 'info' | 'warning' | 'success' | 'danger'>)[s] || 'info'
 
 /** 文档可选类型 + i18n key（docTypeMarkdown / docTypeText / ...） */
 const allTypes: DocType[] = ['MARKDOWN', 'TEXT', 'HTML', 'PDF', 'IMAGE']

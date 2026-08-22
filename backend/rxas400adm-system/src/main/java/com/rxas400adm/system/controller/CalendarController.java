@@ -81,8 +81,7 @@ public class CalendarController {
     }
 
     private Long currentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication == null ? "anonymous" : authentication.getName();
+        String username = com.rxas400adm.common.util.SecurityUtils.currentUsername();
         SysUser user = userService.getByUsername(username);
         return user == null ? -1L : user.getId();
     }

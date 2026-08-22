@@ -44,23 +44,23 @@
         <el-table-column prop="COLUMN_NAME" :label="$t('tableFields.field')" min-width="140" />
         <el-table-column prop="DATA_TYPE" :label="$t('tableFields.type')" width="110" />
         <el-table-column :label="$t('tableFields.length')" width="90" align="right">
-          <template #default="{ row }: { row: BizColumn }">
+          <template #default="{ row }">
             <span v-if="row.LENGTH != null">{{ row.LENGTH }}<template v-if="row.SCALE != null && Number(row.SCALE) > 0">.{{ row.SCALE }}</template></span>
             <span v-else>-</span>
           </template>
         </el-table-column>
         <el-table-column :label="$t('tableFields.nullable')" width="80" align="center">
-          <template #default="{ row }: { row: BizColumn }">
+          <template #default="{ row }">
             <el-tag :type="row.IS_NULLABLE === 'Y' ? 'warning' : 'info'" size="small">
               {{ row.IS_NULLABLE === 'Y' ? $t('common.yes') : $t('common.no') }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="COLUMN_DEFAULT" :label="$t('tableFields.default')" width="120" show-overflow-tooltip>
-          <template #default="{ row }: { row: BizColumn }">{{ row.COLUMN_DEFAULT ?? '-' }}</template>
+          <template #default="{ row }">{{ row.COLUMN_DEFAULT ?? '-' }}</template>
         </el-table-column>
         <el-table-column prop="COLUMN_TEXT" :label="$t('tableFields.description')" min-width="220" show-overflow-tooltip>
-          <template #default="{ row }: { row: BizColumn }">{{ row.COLUMN_TEXT || '-' }}</template>
+          <template #default="{ row }">{{ row.COLUMN_TEXT || '-' }}</template>
         </el-table-column>
       </el-table>
       </RxSkeleton>
@@ -70,6 +70,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'TableFields' })
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'

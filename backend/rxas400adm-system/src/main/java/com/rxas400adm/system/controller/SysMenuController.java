@@ -40,8 +40,7 @@ public class SysMenuController {
     /** 可申请菜单树（权限申请页：登录即可，排除 admin_only 与已拥有按钮） */
     @GetMapping("/requestable")
     public ApiResponse<List<RequestableMenuVO>> requestable() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth == null ? "anonymous" : auth.getName();
+        String username = com.rxas400adm.common.util.SecurityUtils.currentUsername();
         return ApiResponse.success(menuService.requestableMenuTree(username));
     }
 

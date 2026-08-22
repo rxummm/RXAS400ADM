@@ -3,7 +3,7 @@
     <!-- 健康状态卡片 -->
     <div class="search-bar">
       <el-tag :type="healthStatus === 'UP' ? 'success' : healthStatus === 'DOWN' ? 'danger' : 'info'" size="large">
-        {{ $t('monitor.health') }}: {{ healthStatus || '...' }}
+        {{ $t('monitor.healthStatusLabel') }}: {{ healthStatus || '...' }}
       </el-tag>
       <el-tag v-if="as400Health" :type="as400Health === 'UP' ? 'success' : 'danger'" size="large">
         AS400: {{ as400Health }}
@@ -29,20 +29,20 @@
     <!-- JVM 内存图表 -->
     <div class="table-wrapper">
       <h3 class="section">JVM Memory</h3>
-      <div ref="jvmMemoryChart" style="height: 300px; width: 100%"></div>
+      <div ref="jvmMemoryChart" class="chart-container"></div>
     </div>
 
     <!-- HTTP 请求图表 -->
     <div class="table-wrapper">
       <h3 class="section">HTTP Requests</h3>
-      <div ref="httpChart" style="height: 300px; width: 100%"></div>
+      <div ref="httpChart" class="chart-container"></div>
     </div>
 
     <!-- AS400 服务器指标 -->
     <div class="table-wrapper" v-if="as400Metrics.length">
       <h3 class="section">AS400 Servers</h3>
       <el-table :data="as400Metrics" size="small" border>
-        <el-table-column prop="name" :label="$t('monitor.name')" />
+        <el-table-column prop="name" :label="$t('monitor.serverName')" />
         <el-table-column prop="value" :label="$t('monitor.value')" />
       </el-table>
     </div>
@@ -50,9 +50,19 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Metrics' })
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import * as echarts from 'echarts'
-import { fetchHealth, fetchMetricDetail } from '@/api/metrics'
+import {
+  fetchHealth,
+  fetchMetricDetail,
+  type ActuatorHealth,
+  type MetricDetail,
+} from '@/api/metrics'
+import { formatSize } from '@/utils/format'
 
 const loading = ref(false)
 const healthStatus = ref('')
@@ -85,7 +95,7 @@ async function refresh() {
 
 async function fetchHealthData() {
   try {
-    const data = await fetchHealth()
+    const data: ActuatorHealth = await fetchHealth()
     healthStatus.value = data?.status || 'UNKNOWN'
     const as400 = data?.components?.as400
     if (as400) {
@@ -99,22 +109,25 @@ async function fetchHealthData() {
 async function fetchJvmMetrics() {
   try {
     const heap = await fetchMetricDetail('jvm.memory.used')
-    const heapUsed = heap?.measurements?.find((m: any) => m.statistic === 'VALUE')?.value || 0
-    summaryCards.value[0].value = formatBytes(heapUsed)
+    const heapUsed = heap?.measurements?.find((m) => m.statistic === 'VALUE')?.value ?? 0
+    summaryCards.value[0].value = formatSize(heapUsed)
+
+    const heapMaxDetail = await fetchMetricDetail('jvm.memory.max')
+    const heapMax = heapMaxDetail?.measurements?.find((m) => m.statistic === 'VALUE')?.value ?? 0
 
     const threads = await fetchMetricDetail('jvm.threads.live')
-    const threadCount = threads?.measurements?.find((m: any) => m.statistic === 'VALUE')?.value || 0
+    const threadCount = threads?.measurements?.find((m) => m.statistic === 'VALUE')?.value ?? 0
     summaryCards.value[1].value = String(Math.round(threadCount))
 
     await nextTick()
-    renderJvmChart(heap)
+    renderJvmChart(heapUsed, heapMax)
   } catch { /* ignore */ }
 }
 
 async function fetchHttpMetrics() {
   try {
-    const data = await fetchMetricDetail('http.server.requests')
-    const count = data?.measurements?.find((m: any) => m.statistic === 'COUNT')?.value || 0
+    const data: MetricDetail = await fetchMetricDetail('http.server.requests')
+    const count = data?.measurements?.find((m) => m.statistic === 'COUNT')?.value ?? 0
     summaryCards.value[2].value = String(Math.round(count))
 
     await nextTick()
@@ -126,8 +139,8 @@ async function fetchAs400Metrics() {
   try {
     const total = await fetchMetricDetail('as400.servers.total')
     const enabled = await fetchMetricDetail('as400.servers.enabled')
-    const totalCount = total?.measurements?.find((m: any) => m.statistic === 'VALUE')?.value || 0
-    const enabledCount = enabled?.measurements?.find((m: any) => m.statistic === 'VALUE')?.value || 0
+    const totalCount = total?.measurements?.find((m) => m.statistic === 'VALUE')?.value ?? 0
+    const enabledCount = enabled?.measurements?.find((m) => m.statistic === 'VALUE')?.value ?? 0
     summaryCards.value[3].value = `${enabledCount}/${totalCount}`
     as400Metrics.value = [
       { name: 'Total Servers', value: String(totalCount) },
@@ -136,13 +149,13 @@ async function fetchAs400Metrics() {
   } catch { /* ignore */ }
 }
 
-function renderJvmChart(heap: any) {
+function renderJvmChart(heapUsed: number, heapMax: number) {
   if (!jvmMemoryChart.value) return
   if (!jvmChart) {
     jvmChart = echarts.init(jvmMemoryChart.value)
   }
-  const heapMax = heap?.measurements?.find((m: any) => m.statistic === 'VALUE')?.value || 0
-  const usedPct = heapMax > 0 ? Math.round((heapMax / (1024 * 1024 * 1024)) * 100) : 0
+  // F10：原实现把「已用字节」当分母（/1GB），百分比严重失真；改为 已用 / 上限
+  const usedPct = heapMax > 0 ? Math.round((heapUsed / heapMax) * 100) : 0
   jvmChart.setOption({
     tooltip: { trigger: 'item' },
     series: [{
@@ -154,12 +167,12 @@ function renderJvmChart(heap: any) {
   })
 }
 
-function renderHttpChart(data: any) {
+function renderHttpChart(data: MetricDetail) {
   if (!httpChart.value) return
   if (!httpChartInstance) {
     httpChartInstance = echarts.init(httpChart.value)
   }
-  const tags = data?.availableTags?.find((t: any) => t.tag === 'outcome')
+  const tags = data?.availableTags?.find((t) => t.tag === 'outcome')
   const outcomes = tags?.values || []
   httpChartInstance.setOption({
     tooltip: { trigger: 'item' },
@@ -172,12 +185,7 @@ function renderHttpChart(data: any) {
   })
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B'
-  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
-  if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB'
-  return (bytes / 1073741824).toFixed(1) + ' GB'
-}
+
 
 onMounted(() => refresh())
 
@@ -210,5 +218,9 @@ onBeforeUnmount(() => {
   margin: 0 0 12px;
   font-size: 14px;
   font-weight: 600;
+}
+.chart-container {
+  height: 300px;
+  width: 100%;
 }
 </style>

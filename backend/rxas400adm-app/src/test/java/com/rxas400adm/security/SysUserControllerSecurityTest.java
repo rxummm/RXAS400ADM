@@ -1,5 +1,6 @@
 package com.rxas400adm.security;
 
+import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.security.config.SecurityConfig;
 import com.rxas400adm.security.filter.JwtAuthenticationFilter;
@@ -50,6 +51,8 @@ class SysUserControllerSecurityTest {
     private JwtUtil jwtUtil;
     @MockBean
     private PermissionService permissionService;
+    @MockBean
+    private ProfileResolver profileResolver;
     @MockBean
     private com.rxas400adm.security.service.TokenBlacklistService tokenBlacklistService;
     @MockBean

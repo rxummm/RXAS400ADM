@@ -75,7 +75,6 @@ public class CompileService implements ICompileService {
     }
 
     private String currentUsername() {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth == null ? "system" : auth.getName();
+        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 }

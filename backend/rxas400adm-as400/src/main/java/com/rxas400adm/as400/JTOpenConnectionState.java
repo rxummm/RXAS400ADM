@@ -53,6 +53,8 @@ class JTOpenConnectionState {
             }
             AS400 fresh = new AS400(host, user, password);
             try {
+                // B3：关闭 GUI 探测，避免 IBM i 不可达时多余探测开销
+                fresh.setGuiAvailable(false);
                 fresh.connectService(AS400.COMMAND);
                 fresh.validateSignon();
                 shared = fresh;

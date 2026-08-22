@@ -6,6 +6,7 @@ import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.entity.AuditLog;
 import com.rxas400adm.system.mapper.AuditLogMapper;
+import com.rxas400adm.system.vo.AuditLogVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,8 +25,8 @@ public class AuditLogService implements IAuditLogService {
     private final AuditLogMapper auditLogMapper;
 
     @Override
-    public PageResult<AuditLog> page(long current, long size, String module, String username,
-                                     String action, String keyword) {
+    public PageResult<AuditLogVO> page(long current, long size, String module, String username,
+                                       String action, String keyword) {
         LambdaQueryWrapper<AuditLog> wrapper = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(module)) {
             wrapper.eq(AuditLog::getModule, module.trim());
@@ -43,7 +44,8 @@ public class AuditLogService implements IAuditLogService {
         wrapper.orderByDesc(AuditLog::getCreatedTime);
         Page<AuditLog> page = auditLogMapper.selectPage(
                 new Page<>(PageConstants.clampNum(current), PageConstants.clampSize(size)), wrapper);
-        return new PageResult<>(page.getTotal(), page.getRecords());
+        return new PageResult<>(page.getTotal(),
+                page.getRecords().stream().map(AuditLogVO::from).toList());
     }
 
     @Override

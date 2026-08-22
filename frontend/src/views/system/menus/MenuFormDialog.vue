@@ -23,7 +23,7 @@
       </el-form-item>
       <el-form-item :label="t('menu.manage.perms')">
         <el-select
-          v-model="form.perms"
+          v-model="form.perms as string"
           filterable
           clearable
           :loading="permLoading"
@@ -190,8 +190,8 @@ const defaultForm = () => ({
 const form = reactive(defaultForm())
 
 const formRules = {
-  menuName: [{ required: true, message: t('menu.manage.nameRequired'), trigger: 'blur' }],
-  title: [{ required: true, message: t('menu.manage.titleRequired'), trigger: 'blur' }],
+  menuName: [{ required: true, message: () => t('menu.manage.nameRequired'), trigger: 'blur' }],
+  title: [{ required: true, message: () => t('menu.manage.titleRequired'), trigger: 'blur' }],
 }
 
 // ==================== 图标选择器 ====================

@@ -4,6 +4,7 @@ import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.UserDTO;
+import com.rxas400adm.system.dto.UserMenuUpdateDTO;
 import com.rxas400adm.system.dto.UserUpdateDTO;
 import com.rxas400adm.system.service.SysUserService;
 import com.rxas400adm.system.service.IUserMenuService;
@@ -24,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -91,8 +91,8 @@ public class SysUserController {
     @PostMapping("/{id}/menus/add")
     @PreAuthorize("hasAuthority('USER_MANAGE')")
     @OperateLog(module = "用户管理", operation = "用户菜单授权")
-    public ApiResponse<Void> addUserMenus(@PathVariable Long id, @RequestBody Map<String, List<Long>> body) {
-        userMenuService.addUserMenus(id, body.get("menuIds"));
+    public ApiResponse<Void> addUserMenus(@PathVariable Long id, @Valid @RequestBody UserMenuUpdateDTO body) {
+        userMenuService.addUserMenus(id, body.getMenuIds());
         return ApiResponse.success(null);
     }
 
@@ -100,8 +100,8 @@ public class SysUserController {
     @PostMapping("/{id}/menus/remove")
     @PreAuthorize("hasAuthority('USER_MANAGE')")
     @OperateLog(module = "用户管理", operation = "移除用户菜单授权")
-    public ApiResponse<Void> removeUserMenus(@PathVariable Long id, @RequestBody Map<String, List<Long>> body) {
-        userMenuService.removeUserMenus(id, body.get("menuIds"));
+    public ApiResponse<Void> removeUserMenus(@PathVariable Long id, @Valid @RequestBody UserMenuUpdateDTO body) {
+        userMenuService.removeUserMenus(id, body.getMenuIds());
         return ApiResponse.success(null);
     }
 
@@ -109,8 +109,8 @@ public class SysUserController {
     @PostMapping("/{id}/menus/set")
     @PreAuthorize("hasAuthority('USER_MANAGE')")
     @OperateLog(module = "用户管理", operation = "设置用户菜单授权")
-    public ApiResponse<Void> setUserMenus(@PathVariable Long id, @RequestBody Map<String, List<Long>> body) {
-        userMenuService.setUserMenus(id, body.get("menuIds"));
+    public ApiResponse<Void> setUserMenus(@PathVariable Long id, @Valid @RequestBody UserMenuUpdateDTO body) {
+        userMenuService.setUserMenus(id, body.getMenuIds());
         return ApiResponse.success(null);
     }
 }

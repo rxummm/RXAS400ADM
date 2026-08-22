@@ -37,6 +37,15 @@ public final class SqlReadOnlyValidator {
                     + "IFS_WRITE|IFS_APPEND|IFS_CREATE_DIRECTORY|IFS_MKDIR|IFS_DELETE|IFS_RENAME|IFS_COPY)\\b",
             Pattern.CASE_INSENSITIVE);
 
+    /**
+     * 无 schema 前缀的副作用函数黑名单：因 DataSource 已设 {@code setLibraries("QSYS2")}，
+     * 未限定名的 {@code IFS_WRITE(...)} 等会解析到 QSYS2，同样具备写/执行副作用，必须一并拦截，
+     * 否则可绕过上面的带前缀黑名单（B2）。
+     */
+    private static final Pattern SIDE_EFFECT_FUNCTION_BARE = Pattern.compile(
+            "\\b(QCMDEXC|QCMDEXEC|QSYSTEMS|IFS_WRITE|IFS_APPEND|IFS_CREATE_DIRECTORY|IFS_MKDIR|IFS_DELETE|IFS_RENAME|IFS_COPY)\\b",
+            Pattern.CASE_INSENSITIVE);
+
     private SqlReadOnlyValidator() {
     }
 
@@ -59,7 +68,8 @@ public final class SqlReadOnlyValidator {
             throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "仅允许只读 SELECT/WITH 查询");
         }
         if (WRITE_CLAUSE.matcher(trimmed).find() || READONLY_VIOLATIONS.matcher(trimmed).find()
-                || SIDE_EFFECT_FUNCTION.matcher(trimmed).find()) {
+                || SIDE_EFFECT_FUNCTION.matcher(trimmed).find()
+                || SIDE_EFFECT_FUNCTION_BARE.matcher(trimmed).find()) {
             throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "SQL 包含写入/破坏只读语义的操作，已拒绝执行");
         }
     }

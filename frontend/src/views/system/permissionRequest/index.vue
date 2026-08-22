@@ -24,7 +24,7 @@
                   :default-expanded-keys="expandedKeys"
                   @check="handleTreeCheck"
                 >
-                  <template #default="{ data }: { data: RequestableMenu }">
+                  <template #default="{ data }">
                     <span class="tree-node">
                       <el-icon v-if="data.icon && !data.icon.startsWith('fa-')" class="mr6">
                         <component :is="data.icon" />
@@ -188,7 +188,7 @@ const menuTypeLabel = (type?: number) =>
         ? t('permissionRequest.typeButton')
         : t('permissionRequest.typeTab')
 
-function handleTreeCheck(_cur: unknown, state: { checkedKeys: number[] }) {
+function handleTreeCheck(_cur: any, state: any) {
   checkedIds.value = state.checkedKeys
 }
 

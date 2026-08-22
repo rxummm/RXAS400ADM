@@ -2,8 +2,8 @@ package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
-import com.rxas400adm.system.entity.AuditLog;
 import com.rxas400adm.system.service.IAuditLogService;
+import com.rxas400adm.system.vo.AuditLogVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +29,7 @@ public class AuditLogController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('AUDIT_VIEW')")
-    public ApiResponse<PageResult<AuditLog>> list(@RequestParam(defaultValue = "1") long current,
+    public ApiResponse<PageResult<AuditLogVO>> list(@RequestParam(defaultValue = "1") long current,
                                                    @RequestParam(defaultValue = "20") long size,
                                                    @RequestParam(required = false) String module,
                                                    @RequestParam(required = false) String username,

@@ -2,6 +2,7 @@ package com.rxas400adm.system.service;
 
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.entity.Notification;
+import com.rxas400adm.system.vo.NotificationVO;
 
 import java.util.List;
 
@@ -14,7 +15,7 @@ public interface INotificationService {
 
     int sendToAllActiveUsers(String type, String title, String content);
 
-    PageResult<Notification> mine(String username, int current, int size, boolean unreadOnly);
+    PageResult<NotificationVO> mine(String username, int current, int size, boolean unreadOnly);
 
     long unreadCount(String username);
 

@@ -24,10 +24,10 @@
         <el-table-column prop="className" :label="$t('tasks.bean')" width="180" show-overflow-tooltip />
         <el-table-column prop="bean" label="Bean" width="200" show-overflow-tooltip />
         <el-table-column :label="$t('tasks.method')" width="200">
-          <template #default="{ row }: { row: TaskBeanInfo }">{{ (row.methods || []).map((m: TaskMethodInfo) => m.method).join(', ') }}</template>
+          <template #default="{ row }">{{ (row.methods || []).map((m: TaskMethodInfo) => m.method).join(', ') }}</template>
         </el-table-column>
         <el-table-column :label="$t('tasks.schedule')" min-width="200">
-          <template #default="{ row }: { row: TaskBeanInfo }">
+          <template #default="{ row }">
             <div v-for="m in row.methods" :key="m.method" class="task-line">
               <el-tag size="small" :type="m.enabled ? 'success' : 'info'">{{ m.method }}</el-tag>
               <span class="text-muted">{{ m.schedule }}</span>
@@ -35,7 +35,7 @@
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="110" fixed="right">
-          <template #default="{ row }: { row: TaskBeanInfo }">
+          <template #default="{ row }">
             <el-button link type="primary" size="small" @click="onTrigger(row)">
               {{ $t('tasks.trigger') }}
             </el-button>

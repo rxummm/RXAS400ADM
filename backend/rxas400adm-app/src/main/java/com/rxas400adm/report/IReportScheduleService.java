@@ -21,5 +21,5 @@ public interface IReportScheduleService {
 
     com.rxas400adm.report.vo.ScheduleExecuteResultVO execute(Long id);
 
-    List<ReportScheduleHistory> history(Long scheduleId);
+    List<ReportScheduleHistoryVO> history(Long scheduleId);
 }

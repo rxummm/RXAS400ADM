@@ -22,19 +22,19 @@
       <RxSkeleton type="table" :rows="8" :loading="loading">
         <el-table :data="pagedData" size="small" border>
         <el-table-column width="50">
-          <template #default="{ row }: { row: IfsEntry }">
+          <template #default="{ row }">
             <el-icon><Folder v-if="row.TYPE === 'DIR'" /><Document v-else /></el-icon>
           </template>
         </el-table-column>
         <el-table-column prop="NAME" :label="$t('ifs.name')" min-width="200">
-          <template #default="{ row }: { row: IfsEntry }">
+          <template #default="{ row }">
             <el-link v-if="row.TYPE === 'DIR'" type="primary" @click="enter(row)">{{ row.NAME }}</el-link>
             <span v-else>{{ row.NAME }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="PATH" :label="$t('ifs.path')" min-width="200" show-overflow-tooltip />
         <el-table-column :label="$t('ifs.type')" width="90">
-          <template #default="{ row }: { row: IfsEntry }">
+          <template #default="{ row }">
             <el-tag :type="row.TYPE === 'DIR' ? 'warning' : 'info'" size="small">{{ row.TYPE }}</el-tag>
           </template>
         </el-table-column>
@@ -44,11 +44,11 @@
           </template>
         </el-table-column>
         <el-table-column :label="$t('ifs.size')" width="120">
-          <template #default="{ row }: { row: IfsEntry }">{{ row.TYPE === 'DIR' ? '-' : formatSize(row.SIZE) }}</template>
+          <template #default="{ row }">{{ row.TYPE === 'DIR' ? '-' : formatSize(row.SIZE) }}</template>
         </el-table-column>
         <el-table-column prop="MODIFIED" :label="$t('ifs.modified')" width="170" />
         <el-table-column :label="$t('common.operation')" width="240" fixed="right">
-          <template #default="{ row }: { row: IfsEntry }">
+          <template #default="{ row }">
             <el-button v-if="row.TYPE === 'FILE'" size="small" type="primary" plain @click="openFile(row)">
               {{ $t('ifs.view') }}
             </el-button>
@@ -109,6 +109,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Ifs' })
 import { computed, onMounted, ref } from 'vue'
 import { Back, Delete, Document, Download, Folder, FolderAdd, RefreshLeft, Upload } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'

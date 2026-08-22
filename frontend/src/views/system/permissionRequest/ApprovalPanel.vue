@@ -24,7 +24,7 @@
         <el-table :data="rows" size="small" border stripe class="w-full">
         <el-table-column prop="username" label="User" width="110" />
         <el-table-column :label="$t('permissionRequest.appliedMenus')" min-width="240">
-          <template #default="{ row }: { row: PermissionRequest }">
+          <template #default="{ row }">
             <el-tag
               v-for="name in parseNames(row.menuNames)"
               :key="name"
@@ -39,15 +39,15 @@
         </el-table-column>
         <el-table-column prop="reason" :label="$t('permissionRequest.reason')" min-width="140" show-overflow-tooltip />
         <el-table-column prop="status" :label="$t('permissionRequest.status')" width="100" align="center">
-          <template #default="{ row }: { row: PermissionRequest }">
+          <template #default="{ row }">
             <el-tag size="small" :type="statusTag(row.status)">{{ statusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createdTime" :label="$t('permissionRequest.time')" min-width="190">
-          <template #default="{ row }: { row: PermissionRequest }">{{ formatTime(row.createdTime) }}</template>
+          <template #default="{ row }">{{ formatTime(row.createdTime) }}</template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="150" fixed="right">
-          <template #default="{ row }: { row: PermissionRequest }">
+          <template #default="{ row }">
             <template v-if="row.status === 'PENDING'">
               <el-button link type="success" size="small" @click="onApprove(row)">
                 {{ $t('permissionRequest.approve') }}

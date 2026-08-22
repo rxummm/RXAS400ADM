@@ -14,7 +14,7 @@
       </el-select>
       <el-checkbox v-model="favOnly" @change="onFilterChange">{{ $t('scripts.favOnly') }}</el-checkbox>
       <template #right>
-        <el-button type="primary" :icon="Plus" @click="openCreate">{{ $t('scripts.create') }}</el-button>
+        <el-button type="primary" :icon="Plus" @click="() => openCreate()">{{ $t('scripts.create') }}</el-button>
       </template>
     </QueryBar>
 
@@ -22,7 +22,7 @@
       <RxSkeleton type="table" :rows="8" :loading="loading">
         <el-table :data="pagedData" size="small" border>
         <el-table-column width="60">
-          <template #default="{ row }: { row: CommandScript }">
+          <template #default="{ row }">
             <el-button
               link
               :type="row.favorite ? 'warning' : 'info'"
@@ -34,16 +34,16 @@
         <el-table-column prop="name" :label="$t('scripts.name')" min-width="130" />
         <el-table-column prop="command" :label="$t('scripts.command')" min-width="220" show-overflow-tooltip />
         <el-table-column :label="$t('scripts.tags')" width="150">
-          <template #default="{ row }: { row: CommandScript }">
+          <template #default="{ row }">
             <el-tag v-for="tag in splitTags(row.tags)" :key="tag" size="small" class="mr4">{{ tag }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="runCount" :label="$t('scripts.runCount')" width="80" />
         <el-table-column prop="lastRunTime" :label="$t('scripts.lastRun')" width="170">
-          <template #default="{ row }: { row: CommandScript }">{{ row.lastRunTime || '-' }}</template>
+          <template #default="{ row }">{{ row.lastRunTime || '-' }}</template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="230" fixed="right">
-          <template #default="{ row }: { row: CommandScript }">
+          <template #default="{ row }">
             <el-select v-model="runServer[row.id]" :placeholder="$t('scripts.selectServer')" size="small" class="w-120">
               <el-option v-for="s in servers" :key="s.id" :label="s.name" :value="s.id" />
             </el-select>
@@ -83,6 +83,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Scripts' })
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Star, StarFilled } from '@element-plus/icons-vue'

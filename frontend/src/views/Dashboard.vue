@@ -31,13 +31,13 @@
         <el-table-column :label="$t('dashboard.name')" prop="name" width="140" />
         <el-table-column :label="$t('dashboard.host')" prop="host" width="160" />
         <el-table-column :label="$t('dashboard.environment')" prop="environment" width="100">
-          <template #default="{ row }: { row: IbmiSystem }">
+          <template #default="{ row }">
             <el-tag :type="envType(row.environment)">{{ row.environment }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('dashboard.level')" prop="criticalLevel" width="120" />
         <el-table-column :label="$t('dashboard.status')" prop="status" width="120">
-          <template #default="{ row }: { row: IbmiSystem }">
+          <template #default="{ row }">
             <el-tag :type="row.status === 'ONLINE' ? 'success' : 'danger'">
               {{ row.status }}
             </el-tag>
@@ -53,7 +53,7 @@
       <el-alert type="info" :title="$t('dashboard.customizeHint')" :closable="false" class="mb16" />
       <div v-for="w in widgetOptions" :key="w.key" class="widget-toggle">
         <span>{{ $t(w.label) }}</span>
-        <el-switch :model-value="isWidgetOn(w.key)" @change="(val: boolean) => toggleWidget(w.key, val)" />
+        <el-switch :model-value="isWidgetOn(w.key)" @change="(val: any) => toggleWidget(w.key, val)" />
       </div>
     </el-dialog>
   </div>
@@ -148,8 +148,8 @@ function openCustomize() {
   customizeVisible.value = true
 }
 
-const envType = (env: string) =>
-  ({ PROD: 'danger', TEST: 'warning', DEV: 'primary', DR: 'info' } as Record<string, string>)[env] || 'info'
+const envType = (env: string): 'danger' | 'warning' | 'primary' | 'info' =>
+  ({ PROD: 'danger', TEST: 'warning', DEV: 'primary', DR: 'info' } as Record<string, 'danger' | 'warning' | 'primary' | 'info'>)[env] || 'info'
 
 const load = async () => {
   loading.value = true

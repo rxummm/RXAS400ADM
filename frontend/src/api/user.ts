@@ -54,8 +54,6 @@ export const updateUser = (id: number, data: { password?: string; email?: string
 
 export const deleteUser = (id: number): Promise<void> => request.delete(`/users/${id}`)
 
-export const fetchRoles = (): Promise<SysRole[]> => request.get('/roles')
-
 export const loginAttempts = (serverId?: number): Promise<LoginAttemptRecord[]> =>
   request.get('/auth/login-attempts', { params: { serverId } })
 

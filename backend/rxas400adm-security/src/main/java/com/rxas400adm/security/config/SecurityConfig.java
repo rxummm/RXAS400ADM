@@ -1,6 +1,7 @@
 package com.rxas400adm.security.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.constants.SecurityConstants;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.security.filter.JwtAuthenticationFilter;
@@ -34,14 +35,15 @@ public class SecurityConfig {
     @Value("${rxas400.security.cors-allowed-origins:http://localhost:5173}")
     private String corsAllowedOrigins;
 
-    /** 当前 profile（逗号分隔）：Swagger 仅在 dev/mock/test 免登录，其余环境一律走认证 */
-    @Value("${spring.profiles.active:}")
-    private String activeProfiles;
+    /** 当前 profile 判定（统一收敛到 ProfileResolver）：Swagger 仅在 dev/mock/test 免登录 */
+    private final ProfileResolver profileResolver;
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ObjectMapper objectMapper;
 
-    public SecurityConfig(@Lazy JwtAuthenticationFilter jwtAuthenticationFilter, ObjectMapper objectMapper) {
+    public SecurityConfig(ProfileResolver profileResolver,
+                          @Lazy JwtAuthenticationFilter jwtAuthenticationFilter, ObjectMapper objectMapper) {
+        this.profileResolver = profileResolver;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.objectMapper = objectMapper;
     }
@@ -111,14 +113,6 @@ public class SecurityConfig {
 
     /** Swagger 放行矩阵：仅 dev/mock/test 环境免登录，其余环境返回空数组（一律走认证） */
     private String[] swaggerMatchers() {
-        if (activeProfiles == null || activeProfiles.isBlank()) {
-            return new String[0];
-        }
-        boolean devLike = java.util.Arrays.stream(activeProfiles.split(","))
-                .map(String::trim)
-                .filter(p -> !p.isBlank())
-                .anyMatch(p -> "dev".equalsIgnoreCase(p) || "mock".equalsIgnoreCase(p)
-                        || "test".equalsIgnoreCase(p));
-        return devLike ? SecurityConstants.SWAGGER_PATHS : new String[0];
+        return profileResolver.isDevLikeMode() ? SecurityConstants.SWAGGER_PATHS : new String[0];
     }
 }

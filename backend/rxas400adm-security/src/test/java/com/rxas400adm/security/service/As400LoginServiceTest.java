@@ -134,7 +134,8 @@ class As400LoginServiceTest {
         SysRole viewer = new SysRole();
         viewer.setId(10L);
         viewer.setRoleCode("VIEWER");
-        when(roleMapper.selectOne(any())).thenReturn(viewer);
+        // B7：applyRoles 已改为 selectList 批量查询，mock selectList 返回列表
+        when(roleMapper.selectList(any())).thenReturn(List.of(viewer));
 
         service.login(request());
 
@@ -157,7 +158,8 @@ class As400LoginServiceTest {
         SysRole dev = new SysRole();
         dev.setId(20L);
         dev.setRoleCode("DEVELOPER");
-        when(roleMapper.selectOne(any())).thenReturn(dev);
+        // B7：applyRoles 已改为 selectList 批量查询，mock selectList 返回列表
+        when(roleMapper.selectList(any())).thenReturn(List.of(dev));
 
         service.login(request());
 

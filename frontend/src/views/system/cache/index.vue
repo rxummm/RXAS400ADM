@@ -23,12 +23,12 @@
         <el-table :data="pagedRows" size="small" border stripe class="w-full">
         <el-table-column prop="name" :label="$t('cache.name')" min-width="200" show-overflow-tooltip />
         <el-table-column prop="size" :label="$t('cache.size')" width="140" align="center">
-          <template #default="{ row }: { row: CacheInfo }">
+          <template #default="{ row }">
             <span>{{ row.size ?? $t('cache.unknown') }}</span>
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="120" fixed="right">
-          <template #default="{ row }: { row: CacheInfo }">
+          <template #default="{ row }">
             <el-button link type="primary" size="small" @click="onClear(row)">
               {{ $t('cache.clear') }}
             </el-button>

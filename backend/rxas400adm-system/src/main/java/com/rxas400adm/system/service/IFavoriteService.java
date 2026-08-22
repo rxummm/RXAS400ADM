@@ -1,6 +1,6 @@
 package com.rxas400adm.system.service;
 
-import com.rxas400adm.system.entity.Favorite;
+import com.rxas400adm.system.vo.FavoriteVO;
 
 import java.util.List;
 import java.util.Map;
@@ -10,7 +10,7 @@ import java.util.Map;
  */
 public interface IFavoriteService {
 
-    List<Favorite> mine(String username);
+    List<FavoriteVO> mine(String username);
 
     boolean isFavorited(String username, String path);
 

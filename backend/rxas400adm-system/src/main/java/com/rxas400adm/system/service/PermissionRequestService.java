@@ -185,6 +185,7 @@ public class PermissionRequestService implements IPermissionRequestService {
         if (user == null) return;
         List<SysMenu> allMenus = menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
                 .eq(SysMenu::getStatus, 1));
+        Set<Long> allMenuIds = allMenus.stream().map(SysMenu::getId).collect(Collectors.toSet());
         // 是否已精确选择按钮（menu_type=3）：先一次性收集按钮 id 集合，避免双层 anyMatch 的 O(n×m)
         Set<Long> buttonIds = allMenus.stream()
                 .filter(m -> m.getMenuType() != null && m.getMenuType() == 3)
@@ -198,12 +199,13 @@ public class PermissionRequestService implements IPermissionRequestService {
                 collectDescendantButtons(allMenus, menuId, grantIds);
             }
         }
+        // B7：一次性加载已有授权，消除循环 selectById / selectCount 的 N+1
+        Set<Long> existingMenuIds = userMenuMapper.selectList(
+                        new LambdaQueryWrapper<SysUserMenu>().eq(SysUserMenu::getUserId, user.getId()))
+                .stream().map(SysUserMenu::getMenuId).collect(Collectors.toSet());
         for (Long menuId : grantIds) {
-            if (menuMapper.selectById(menuId) == null) continue;
-            long exists = userMenuMapper.selectCount(new LambdaQueryWrapper<SysUserMenu>()
-                    .eq(SysUserMenu::getUserId, user.getId())
-                    .eq(SysUserMenu::getMenuId, menuId));
-            if (exists == 0) {
+            if (!allMenuIds.contains(menuId)) continue;
+            if (!existingMenuIds.contains(menuId)) {
                 SysUserMenu um = new SysUserMenu();
                 um.setUserId(user.getId());
                 um.setMenuId(menuId);

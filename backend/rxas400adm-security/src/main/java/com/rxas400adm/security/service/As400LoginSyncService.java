@@ -9,6 +9,7 @@ import com.rxas400adm.system.entity.SysUser;
 import com.rxas400adm.system.entity.SysUserRole;
 import com.rxas400adm.system.mapper.SysUserMapper;
 import com.rxas400adm.system.mapper.SysUserRoleMapper;
+import com.rxas400adm.common.config.ProfileResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,8 +43,7 @@ public class As400LoginSyncService implements IAs400LoginSyncService {
     private final IAs400LoginService as400LoginService;
     private final IPermissionService permissionService;
 
-    @Value("${spring.profiles.active:mock}")
-    private String activeProfile;
+    private final ProfileResolver profileResolver;
 
     /** M2：整机疑似故障保护——某服务器全部 AS400 账号 profile 查询为空时，连续 N 轮才允许清理 */
     private static final int OUTAGE_STREAK_LIMIT = 2;
@@ -52,7 +52,7 @@ public class As400LoginSyncService implements IAs400LoginSyncService {
     /** 每天 02:00 执行 */
     @Scheduled(cron = "0 0 2 * * *")
     public void dailySync() {
-        if (activeProfile.contains("mock")) {
+        if (profileResolver.isMockMode()) {
             log.info("[AS400同步] mock 模式跳过每日同步任务");
             return;
         }

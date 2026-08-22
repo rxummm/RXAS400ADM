@@ -79,12 +79,11 @@ public class ReportScheduleController {
 
     @GetMapping("/{id}/history")
     @PreAuthorize("hasAuthority('REPORT_VIEW')")
-    public ApiResponse<List<ReportScheduleHistory>> history(@PathVariable Long id) {
+    public ApiResponse<List<ReportScheduleHistoryVO>> history(@PathVariable Long id) {
         return ApiResponse.success(scheduleService.history(id));
     }
 
     private String currentUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication == null ? "anonymous" : authentication.getName();
+        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 }

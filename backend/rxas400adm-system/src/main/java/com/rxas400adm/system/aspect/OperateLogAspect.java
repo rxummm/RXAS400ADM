@@ -134,8 +134,7 @@ public class OperateLogAspect {
     }
 
     private String currentUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication == null ? "anonymous" : authentication.getName();
+        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 
     /**

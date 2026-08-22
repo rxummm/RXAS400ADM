@@ -4,6 +4,7 @@ import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.entity.IbmiSystem;
 import com.rxas400adm.as400.mapper.IbmiSystemMapper;
+import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.system.entity.SysUser;
 import com.rxas400adm.system.mapper.SysUserMapper;
 import com.rxas400adm.system.mapper.SysUserRoleMapper;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -46,12 +46,19 @@ class As400LoginSyncServiceTest {
     @Mock
     private PermissionService permissionService;
 
+    @Mock
+    private ProfileResolver profileResolver;
+
     private As400LoginSyncService service;
 
     @BeforeEach
     void setUp() {
         service = new As400LoginSyncService(systemMapper, userMapper, userRoleMapper,
-                clientProvider, as400LoginService, permissionService);
+                clientProvider, as400LoginService, permissionService, profileResolver);
+    }
+
+    private void setMockMode(boolean mock) {
+        when(profileResolver.isMockMode()).thenReturn(mock);
     }
 
     private IbmiSystem system() {
@@ -73,14 +80,14 @@ class As400LoginSyncServiceTest {
 
     @Test
     void dailySync_mockProfile_shouldSkip() {
-        ReflectionTestUtils.setField(service, "activeProfile", "mock");
+        setMockMode(true);
         service.dailySync();
         verify(systemMapper, never()).selectList(any());
     }
 
     @Test
     void dailySync_staleUser_shouldDeleteWithRoles() {
-        ReflectionTestUtils.setField(service, "activeProfile", "prod");
+        setMockMode(false);
         when(systemMapper.selectList(any())).thenReturn(List.of(system()));
         when(clientProvider.forServer(1L)).thenReturn(client);
         // 两名本地用户：stale 在 IBM i 已删除（profile 为空），alive 仍存在
@@ -108,7 +115,7 @@ class As400LoginSyncServiceTest {
 
     @Test
     void dailySync_allMissing_firstRound_shouldNotDelete() {
-        ReflectionTestUtils.setField(service, "activeProfile", "prod");
+        setMockMode(false);
         when(systemMapper.selectList(any())).thenReturn(List.of(system()));
         when(clientProvider.forServer(1L)).thenReturn(client);
         when(userMapper.selectList(any())).thenReturn(List.of(user()));
@@ -123,7 +130,7 @@ class As400LoginSyncServiceTest {
 
     @Test
     void dailySync_allMissing_secondRound_shouldDelete() {
-        ReflectionTestUtils.setField(service, "activeProfile", "prod");
+        setMockMode(false);
         when(systemMapper.selectList(any())).thenReturn(List.of(system()));
         when(clientProvider.forServer(1L)).thenReturn(client);
         when(userMapper.selectList(any())).thenReturn(List.of(user()));
@@ -139,7 +146,7 @@ class As400LoginSyncServiceTest {
 
     @Test
     void dailySync_groupConverge_shouldApplyMappedRole() {
-        ReflectionTestUtils.setField(service, "activeProfile", "prod");
+        setMockMode(false);
         when(systemMapper.selectList(any())).thenReturn(List.of(system()));
         when(clientProvider.forServer(1L)).thenReturn(client);
         when(userMapper.selectList(any())).thenReturn(List.of(user()));
@@ -156,7 +163,7 @@ class As400LoginSyncServiceTest {
 
     @Test
     void dailySync_serverFailure_shouldSkipThatServer() {
-        ReflectionTestUtils.setField(service, "activeProfile", "prod");
+        setMockMode(false);
         when(systemMapper.selectList(any())).thenReturn(List.of(system()));
         when(clientProvider.forServer(1L)).thenThrow(new RuntimeException("connect failed"));
 

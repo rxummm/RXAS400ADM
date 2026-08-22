@@ -1,7 +1,7 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-button type="primary" v-has-perm="'AS400_MANAGE'" :icon="Plus" @click="openCreate">
+      <el-button type="primary" v-has-perm="'AS400_MANAGE'" :icon="Plus" @click="() => openCreate()">
         {{ $t('assets.add') }}
       </el-button>
       <el-button :icon="Refresh" @click="load">{{ $t('common.refresh') }}</el-button>
@@ -15,19 +15,19 @@
         <el-table-column prop="host" :label="$t('assets.host')" min-width="140" />
         <el-table-column prop="port" :label="$t('assets.port')" width="70" />
         <el-table-column :label="$t('assets.environment')" width="90">
-          <template #default="{ row }: { row: IbmiSystem }">
+          <template #default="{ row }">
             <el-tag :type="envType(row.environment)" size="small">{{ row.environment }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('assets.level')" width="90">
-          <template #default="{ row }: { row: IbmiSystem }">
+          <template #default="{ row }">
             <el-tag :type="row.criticalLevel === 'CRITICAL' ? 'danger' : 'info'" size="small">
               {{ row.criticalLevel }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('assets.status')" width="100">
-          <template #default="{ row }: { row: IbmiSystem }">
+          <template #default="{ row }">
             <el-tag :type="row.status === 'ONLINE' ? 'success' : 'info'" size="small">
               {{ row.status }}
             </el-tag>
@@ -35,13 +35,13 @@
         </el-table-column>
         <el-table-column prop="username" :label="$t('assets.username')" width="110" />
         <el-table-column :label="$t('assets.defaultServer')" width="80" align="center">
-          <template #default="{ row }: { row: IbmiSystem }">
+          <template #default="{ row }">
             <el-tag v-if="row.defaultServer" size="small" type="success">{{ $t('common.yes') }}</el-tag>
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="300" fixed="right">
-          <template #default="{ row }: { row: IbmiSystem }">
+          <template #default="{ row }">
             <el-button size="small" type="primary" plain :loading="testingId === row.id" @click="test(row)">
               {{ $t('assets.test') }}
             </el-button>
@@ -150,6 +150,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Assets' })
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Refresh } from '@element-plus/icons-vue'

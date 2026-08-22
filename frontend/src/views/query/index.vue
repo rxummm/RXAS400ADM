@@ -54,7 +54,7 @@
         <el-table-column prop="operator" :label="$t('query.operator')" width="120" />
         <el-table-column prop="createdTime" :label="$t('query.time')" width="180" />
         <el-table-column :label="$t('common.operation')" width="90">
-          <template #default="{ row }: { row: QueryHistoryRow }">
+          <template #default="{ row }">
             <el-button size="small" @click="reuse(row.sqlText)">{{ $t('query.reuse') }}</el-button>
           </template>
         </el-table-column>
@@ -65,6 +65,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Query' })
 import { computed, onMounted, ref } from 'vue'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import { executeSql, fetchQueryHistory, type QueryHistoryRow, type QueryResult } from '@/api/query'

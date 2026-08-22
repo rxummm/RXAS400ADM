@@ -20,6 +20,8 @@ import java.util.Map;
 @Slf4j
 class JTOpenSqlClient implements SqlClient {
 
+    private static final int QUERY_TIMEOUT_SECONDS = 30;
+
     private final JTOpenConnectionState state;
 
     JTOpenSqlClient(JTOpenConnectionState state) {
@@ -80,12 +82,15 @@ class JTOpenSqlClient implements SqlClient {
     private List<Map<String, Object>> executeQuery(String sql, Object... params) throws SQLException {
         try (Connection conn = state.dataSource().getConnection()) {
             if (params == null || params.length == 0) {
-                try (PreparedStatement ps = conn.prepareStatement(sql);
-                     ResultSet rs = ps.executeQuery()) {
-                    return toRows(rs);
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        return toRows(rs);
+                    }
                 }
             }
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
                 for (int i = 0; i < params.length; i++) {
                     ps.setObject(i + 1, params[i]);
                 }

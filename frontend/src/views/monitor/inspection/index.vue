@@ -42,13 +42,13 @@
         <div class="section">{{ $t('inspection.checks') }}</div>
         <el-table :data="report.checks" size="small" border>
           <el-table-column :label="$t('inspection.checkName')" min-width="160">
-            <template #default="{ row }: { row: InspectionCheck }">
+            <template #default="{ row }">
               {{ $t('inspection.check.' + row.name) }}
             </template>
           </el-table-column>
           <el-table-column prop="value" :label="$t('inspection.checkValue')" min-width="180" />
           <el-table-column :label="$t('inspection.checkStatus')" width="110" align="center">
-            <template #default="{ row }: { row: InspectionCheck }">
+            <template #default="{ row }">
               <el-tag :type="statusTag(row.status)" size="small">{{ row.status }}</el-tag>
             </template>
           </el-table-column>
@@ -59,17 +59,17 @@
         <div class="section">{{ $t('inspection.issues') }} ({{ report.issues?.length ?? 0 }})</div>
         <el-table v-if="report.issues?.length" :data="report.issues" size="small" border>
           <el-table-column :label="$t('inspection.issueItem')" width="120">
-            <template #default="{ row }: { row: InspectionIssue }">
+            <template #default="{ row }">
               {{ $t('inspection.item.' + row.item) }}
             </template>
           </el-table-column>
           <el-table-column :label="$t('inspection.issueLevel')" width="110" align="center">
-            <template #default="{ row }: { row: InspectionIssue }">
+            <template #default="{ row }">
               <el-tag :type="row.level === 'CRITICAL' ? 'danger' : 'warning'" size="small">{{ row.level }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column :label="$t('inspection.issueDetail')" min-width="260">
-            <template #default="{ row }: { row: InspectionIssue }">
+            <template #default="{ row }">
               {{ $t('inspection.detail.' + row.detail, row.detailParams || {}) }}
             </template>
           </el-table-column>
@@ -82,6 +82,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Inspection' })
 import { computed, onMounted, ref } from 'vue'
 import { Document, Download, Refresh } from '@element-plus/icons-vue'
 import { useAs400ServerStore } from '@/stores/as400Server'

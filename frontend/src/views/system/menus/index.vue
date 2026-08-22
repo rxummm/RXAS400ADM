@@ -30,7 +30,7 @@
       >
         <el-table-column prop="menuName" :label="$t('menu.manage.menuName')" width="160" show-overflow-tooltip />
         <el-table-column prop="icon" :label="$t('menu.manage.icon')" width="70" align="center">
-          <template #default="{ row }: { row: SysMenu }">
+          <template #default="{ row }">
             <el-icon v-if="row.icon && !isFaIcon(row.icon) && hasIcon(row.icon)">
               <component :is="row.icon" />
             </el-icon>
@@ -39,13 +39,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="menuType" :label="$t('menu.manage.type')" width="90">
-          <template #default="{ row }: { row: SysMenu }">
+          <template #default="{ row }">
             <el-tag size="small" :type="typeTag(row.menuType)">{{ typeLabel(row.menuType) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="path" :label="$t('menu.manage.path')" width="150" show-overflow-tooltip />
         <el-table-column :label="$t('menu.manage.perms')" width="150">
-          <template #default="{ row }: { row: SysMenu }">
+          <template #default="{ row }">
             <el-tag v-if="row.menuType === MenuType.TAB && !row.perms" size="small" type="info">
               {{ $t('menuType.default') }}
             </el-tag>
@@ -55,15 +55,15 @@
         </el-table-column>
         <el-table-column prop="sort" :label="$t('common.sort')" width="70" align="center" />
         <el-table-column :label="$t('common.status')" width="90">
-          <template #default="{ row }: { row: SysMenu }">
+          <template #default="{ row }">
             <el-switch
               :model-value="row.status === 1"
-              @change="(val: boolean) => onToggleStatus(row, val)"
+              @change="(val: any) => onToggleStatus(row, val)"
             />
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="240" fixed="right">
-          <template #default="{ row }: { row: SysMenu }">
+          <template #default="{ row }">
             <el-button size="small" type="success" plain @click="openCreate(row)">
               <el-icon><Plus /></el-icon> {{ $t('menu.manage.addChild') }}
             </el-button>

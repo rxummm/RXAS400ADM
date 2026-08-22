@@ -87,17 +87,15 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-        <!-- 报表引擎（3.11）：Excel 导出 -->
+        <!-- 报表引擎（3.11）：Excel 导出（版本收口于父 pom dependencyManagement，B16） -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>5.2.5</version>
         </dependency>
-        <!-- 报表引擎（3.11）：PDF 导出（OpenPDF，iText 2.x 维护分支） -->
+        <!-- 报表引擎（3.11）：PDF 导出（OpenPDF，iText 2.x 维护分支；版本收口于父 pom，B16） -->
         <dependency>
             <groupId>com.github.librepdf</groupId>
             <artifactId>openpdf</artifactId>
-            <version>1.3.30</version>
         </dependency>
 
         <dependency>

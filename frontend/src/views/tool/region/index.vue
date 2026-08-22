@@ -39,21 +39,21 @@
         <el-table-column prop="name" :label="$t('tool.region.name')" min-width="200" show-overflow-tooltip />
         <el-table-column prop="code" :label="$t('tool.region.code')" width="130" />
         <el-table-column :label="$t('tool.region.level')" width="90" align="center">
-          <template #default="{ row }: { row: Region }">
+          <template #default="{ row }">
             <el-tag size="small" :type="levelTag(row.level)">{{ levelLabel(row.level) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="pinyin" :label="$t('tool.region.pinyin')" width="120" show-overflow-tooltip />
         <el-table-column prop="abbreviation" :label="$t('tool.region.abbreviation')" width="90" />
         <el-table-column prop="status" :label="$t('common.status')" width="80" align="center">
-          <template #default="{ row }: { row: Region }">
+          <template #default="{ row }">
             <el-tag size="small" :type="row.status === 1 ? 'success' : 'info'">
               {{ row.status === 1 ? $t('common.yes') : $t('common.no') }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="200" fixed="right">
-          <template #default="{ row }: { row: Region }">
+          <template #default="{ row }">
             <el-button v-if="row.level < 3" link type="primary" size="small" @click="openCreate(row)">
               {{ $t('tool.region.addChild') }}
             </el-button>
@@ -161,8 +161,8 @@ const defaultForm = () => ({
 const form = reactive(defaultForm())
 
 const formRules = {
-  code: [{ required: true, message: t('tool.region.codeRequired'), trigger: 'blur' }],
-  name: [{ required: true, message: t('tool.region.nameRequired'), trigger: 'blur' }],
+  code: [{ required: true, message: () => t('tool.region.codeRequired'), trigger: 'blur' }],
+  name: [{ required: true, message: () => t('tool.region.nameRequired'), trigger: 'blur' }],
 }
 
 async function loadRoot() {

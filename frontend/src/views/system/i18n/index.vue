@@ -17,7 +17,7 @@
       </el-button>
       <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
       <div class="flex-1" />
-      <el-button type="primary" @click="openCreate">
+      <el-button type="primary" @click="() => openCreate()">
         <el-icon><Plus /></el-icon> {{ $t('sysI18n.add') }}
       </el-button>
     </div>
@@ -128,9 +128,9 @@ const {
 } = useFormDialog<I18nForm>({
   defaultForm: () => ({ i18nKey: '', lang: 'zh-CN', text: '' }),
   rules: {
-    lang: [{ required: true, message: t('sysI18n.langRequired'), trigger: 'change' }],
-    i18nKey: [{ required: true, message: t('sysI18n.keyRequired'), trigger: 'blur' }],
-    text: [{ required: true, message: t('sysI18n.textRequired'), trigger: 'blur' }],
+    lang: [{ required: true, message: () => t('sysI18n.langRequired'), trigger: 'change' }],
+    i18nKey: [{ required: true, message: () => t('sysI18n.keyRequired'), trigger: 'blur' }],
+    text: [{ required: true, message: () => t('sysI18n.textRequired'), trigger: 'blur' }],
   },
   createApi: (data) => saveI18nEntry(data),
   updateApi: (_id, data) => updateI18nEntry(data),

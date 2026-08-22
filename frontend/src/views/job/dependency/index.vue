@@ -19,6 +19,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'JobDependency' })
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import * as echarts from '@/utils/echarts'
 import { Refresh } from '@element-plus/icons-vue'

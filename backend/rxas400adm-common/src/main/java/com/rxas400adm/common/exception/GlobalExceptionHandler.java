@@ -1,16 +1,18 @@
 package com.rxas400adm.common.exception;
 
+import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -22,10 +24,12 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /** 当前 profile（逗号分隔）：仅在 dev/mock/test 等开发环境回显异常内部细节（S5/P1-9）。
-     *  默认空串：未显式配置 profile 时按生产处理，不回显内部细节（P3-5）。 */
-    @Value("${spring.profiles.active:}")
-    private String activeProfile;
+    /** 当前 profile 判定（统一收敛到 ProfileResolver）：dev/mock/test 回显异常内部细节，其余按生产处理 */
+    private final ProfileResolver profileResolver;
+
+    public GlobalExceptionHandler(ProfileResolver profileResolver) {
+        this.profileResolver = profileResolver;
+    }
 
     @ExceptionHandler(BusinessException.class)
     public ApiResponse<Void> handleBusiness(BusinessException e) {
@@ -58,6 +62,20 @@ public class GlobalExceptionHandler {
     public ApiResponse<Void> handleBadRequest(Exception e) {
         log.warn("请求格式错误: {}", e.getMessage());
         return ApiResponse.error(400, "请求参数格式错误");
+    }
+
+    /** 静态资源 / 路由未命中：显式 404，避免落入兜底 500（B4） */
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiResponse<Void> handleNoResource(NoResourceFoundException e) {
+        return ApiResponse.error(404, "资源不存在");
+    }
+
+    /** 请求方法不被允许（如 GET 命中仅 POST 的端点）：显式 405，避免落入兜底 500（B4） */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public ApiResponse<Void> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
+        return ApiResponse.error(405, "请求方法不被允许");
     }
 
     /** 上传文件超限（spring.servlet.multipart 上限）：转 400 友好提示，避免落成 500 */
@@ -106,13 +124,6 @@ public class GlobalExceptionHandler {
 
     /** 开发环境白名单：仅显式 dev / mock / test；default 或未指定 profile 一律不回显 */
     private boolean showInternalDetail() {
-        if (activeProfile == null || activeProfile.isBlank()) {
-            return false;
-        }
-        return java.util.Arrays.stream(activeProfile.split(","))
-                .map(String::trim)
-                .filter(p -> !p.isBlank())
-                .anyMatch(p -> "dev".equalsIgnoreCase(p) || "mock".equalsIgnoreCase(p)
-                        || "test".equalsIgnoreCase(p));
+        return profileResolver.isDevLikeMode();
     }
 }

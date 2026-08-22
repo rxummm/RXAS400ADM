@@ -44,10 +44,10 @@ const permissionCount = ref(0)
 const form = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' })
 
 const formRules = computed(() => ({
-  oldPassword: [{ required: true, message: t('profile.oldRequired'), trigger: 'blur' }],
+  oldPassword: [{ required: true, message: () => t('profile.oldRequired'), trigger: 'blur' }],
   newPassword: [
-    { required: true, message: t('profile.newRequired'), trigger: 'blur' },
-    { min: MIN_PASSWORD_LENGTH, message: t('profile.newLength'), trigger: 'blur' },
+    { required: true, message: () => t('profile.newRequired'), trigger: 'blur' },
+    { min: MIN_PASSWORD_LENGTH, message: () => t('profile.newLength'), trigger: 'blur' },
     {
       // P2-3：与后端 PasswordPolicy 共用同一规则（utils/passwordPolicy.ts）
       validator: (_r: unknown, v: string, cb: (e?: Error) => void) => {

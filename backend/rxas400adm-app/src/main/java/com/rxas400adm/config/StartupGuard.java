@@ -1,5 +1,6 @@
 package com.rxas400adm.config;
 
+import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.system.entity.SysConfig;
 import com.rxas400adm.system.mapper.SysConfigMapper;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +25,7 @@ public class StartupGuard {
 
     private final SysConfigMapper configMapper;
 
-    @Value("${spring.profiles.active:mock}")
-    private String activeProfile;
+    private final ProfileResolver profileResolver;
 
     /** P3-6：实际生效的 JWT 密钥（含 yml 内置默认值兜底），非 mock 时与已知默认值比对拦截 */
     @Value("${rxas400.jwt.secret:}")
@@ -36,7 +36,7 @@ public class StartupGuard {
 
     @EventListener(ApplicationReadyEvent.class)
     public void verify() {
-        boolean isMock = activeProfile.contains("mock");
+        boolean isMock = profileResolver.isMockMode();
 
         if (isMock) {
             log.warn("================================================");

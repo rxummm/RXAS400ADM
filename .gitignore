@@ -24,6 +24,12 @@ Thumbs.db
 # Local dev tools
 .freebuff/
 .opencode/
+.workbuddy/
+.tmp-gate-tests-*/
+
+# Local secrets (docker-compose dev credentials) — never commit the real one
+.env
+.env.local
 
 # Runtime logs and temp files
 logs/

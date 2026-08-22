@@ -64,8 +64,8 @@ const defaultForm = () => ({
 const form = reactive(defaultForm())
 
 const rules = {
-  roleName: [{ required: true, message: t('role.nameRequired'), trigger: 'blur' }],
-  roleCode: [{ required: true, message: t('role.codeRequired'), trigger: 'blur' }],
+  roleName: [{ required: true, message: () => t('role.nameRequired'), trigger: 'blur' }],
+  roleCode: [{ required: true, message: () => t('role.codeRequired'), trigger: 'blur' }],
 }
 
 function openCreate() {

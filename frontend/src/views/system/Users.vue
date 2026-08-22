@@ -9,7 +9,7 @@
         @keyup.enter="forceSearch"
       />
       <el-button type="primary" @click="forceSearch">{{ $t('common.search') }}</el-button>
-      <el-button type="success" :icon="Plus" @click="openCreate">
+      <el-button type="success" :icon="Plus" @click="() => openCreate()">
         {{ $t('users.create') }}
       </el-button>
     </div>
@@ -23,7 +23,7 @@
             <el-table-column prop="username" :label="$t('users.username')" min-width="130" />
             <el-table-column prop="email" :label="$t('users.email')" min-width="160" />
             <el-table-column :label="$t('users.roles')" min-width="180">
-              <template #default="{ row }: { row: UserVO }">
+              <template #default="{ row }">
                 <el-tag
                   v-for="r in row.roles || []"
                   :key="r.id"
@@ -38,14 +38,14 @@
               </template>
             </el-table-column>
             <el-table-column :label="$t('users.loginSource')" width="110">
-              <template #default="{ row }: { row: UserVO }">
+              <template #default="{ row }">
                 <el-tag :type="row.loginSource === 'AS400' ? 'primary' : 'success'" size="small">
                   {{ row.loginSource === 'AS400' ? $t('users.sourceAs400') : $t('users.sourcePlatform') }}
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column :label="$t('common.status')" width="90">
-              <template #default="{ row }: { row: UserVO }">
+              <template #default="{ row }">
                 <el-tag :type="row.status === 'ACTIVE' ? 'success' : 'info'" size="small">
                   {{ row.status === 'ACTIVE' ? $t('users.statusActive') : $t('users.statusDisabled') }}
                 </el-tag>
@@ -53,7 +53,7 @@
             </el-table-column>
             <el-table-column prop="createdTime" :label="$t('users.createdTime')" width="180" />
             <el-table-column :label="$t('common.operation')" width="310" fixed="right">
-              <template #default="{ row }: { row: UserVO }">
+              <template #default="{ row }">
                 <el-button size="small" @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
                 <el-button size="small" type="primary" plain @click="openPermManage(row)">
                   {{ $t('users.permManage') }}
@@ -102,7 +102,7 @@
             <el-table-column prop="serverId" label="Server" width="80" />
             <el-table-column prop="failedCount" :label="$t('users.failedCount')" width="90" />
             <el-table-column :label="$t('users.lockStatus')" width="150">
-              <template #default="{ row }: { row: LoginAttemptRecord }">
+              <template #default="{ row }">
                 <el-tag v-if="isLocked(row.lockedUntil)" type="danger" size="small">
                   {{ $t('users.lockedTo') }} {{ formatTime(row.lockedUntil) }}
                 </el-tag>
@@ -112,7 +112,7 @@
             <el-table-column prop="lastIp" label="IP" min-width="130" />
             <el-table-column prop="lastFailTime" :label="$t('users.lastFail')" width="170" />
             <el-table-column :label="$t('common.operation')" width="90" fixed="right">
-              <template #default="{ row }: { row: LoginAttemptRecord }">
+              <template #default="{ row }">
                 <el-button size="small" type="primary" plain @click="unlock(row)">{{ $t('users.unlock') }}</el-button>
               </template>
             </el-table-column>
@@ -146,7 +146,6 @@ import { useUserStore } from '@/stores/user'
 import { useAs400ServerStore } from '@/stores/as400Server'
 import {
   deleteUser,
-  fetchRoles,
   fetchUsers,
   loginAttemptIps,
   loginAttempts,
@@ -157,6 +156,7 @@ import {
   type LoginAttemptRecord,
   type IpStat,
 } from '@/api/user'
+import { fetchRoles } from '@/api/role'
 import type { SysRole } from '@/api/role'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'

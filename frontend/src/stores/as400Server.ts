@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { fetchSystems, type IbmiSystem } from '@/api/as400'
+import { fetchSystems, fetchEnabledServers as fetchEnabledServersApi, type IbmiSystem } from '@/api/as400'
 import { useStorage, STORAGE_KEYS } from '@/composables/useStorage'
 
 // P3-2：统一走 STORAGE_KEYS.AS400_SERVER（blobClient 下载等复用同一 key 注入 X-AS400-Server）
@@ -51,6 +51,33 @@ export const useAs400ServerStore = defineStore('as400Server', () => {
     return fetchServers()
   }
 
+  /**
+   * 登录前公开拉取（免 token 的 /as400/servers/enabled）。
+   * 与 fetchServers 共用 serverList/loaded 缓存，统一走 store action（F8：避免 Login 直连 API 手动拼装）。
+   */
+  async function fetchEnabledServers() {
+    if (loaded.value) {
+      return serverList.value
+    }
+    if (!inflight) {
+      inflight = fetchEnabledServersApi()
+        .then((data) => {
+          serverList.value = data.filter((s) => s.enabled !== false)
+          loaded.value = true
+          return serverList.value
+        })
+        .finally(() => {
+          inflight = null
+        })
+    }
+    const list = await inflight
+    if (!currentServer.value) {
+      const def = list.find((s) => s.defaultServer) || list[0]
+      if (def) setCurrentServer(def.id)
+    }
+    return serverList.value
+  }
+
   function setCurrentServer(id: number) {
     currentServerId.value = id
     currentServerStorage.set(String(id))
@@ -63,5 +90,5 @@ export const useAs400ServerStore = defineStore('as400Server', () => {
     loaded.value = false
   }
 
-  return { currentServerId, serverList, currentServer, fetchServers, refreshServers, setCurrentServer, reset }
+  return { currentServerId, serverList, currentServer, fetchServers, fetchEnabledServers, refreshServers, setCurrentServer, reset }
 })

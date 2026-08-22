@@ -13,7 +13,7 @@
       </el-button>
       <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
       <div class="flex-1" />
-      <el-button v-has-perm="'SYS_CONFIG_MANAGE'" type="primary" @click="openCreate">
+      <el-button v-has-perm="'SYS_CONFIG_MANAGE'" type="primary" @click="() => openCreate()">
         <el-icon><Plus /></el-icon> {{ $t('common.create') }}
       </el-button>
     </div>
@@ -25,7 +25,7 @@
         <el-table-column prop="configValue" :label="$t('config.value')" min-width="220" show-overflow-tooltip />
         <el-table-column prop="description" :label="$t('config.description')" min-width="220" show-overflow-tooltip />
         <el-table-column :label="$t('common.operation')" width="140" fixed="right">
-          <template #default="{ row }: { row: SysConfig }">
+          <template #default="{ row }">
             <el-button v-has-perm="'SYS_CONFIG_MANAGE'" link type="primary" size="small" @click="openEdit(row)">
               {{ $t('common.edit') }}
             </el-button>
@@ -104,7 +104,7 @@ const formRef = ref()
 const defaultForm = () => ({ configKey: '', configValue: '', description: '' })
 const form = reactive(defaultForm())
 const formRules = {
-  configKey: [{ required: true, message: t('config.keyRequired'), trigger: 'blur' }],
+  configKey: [{ required: true, message: () => t('config.keyRequired'), trigger: 'blur' }],
 }
 
 const resetSearch = () => {

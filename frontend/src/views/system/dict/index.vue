@@ -21,14 +21,14 @@
             <el-table-column prop="code" :label="$t('dict.code')" min-width="110" />
             <el-table-column prop="name" :label="$t('dict.name')" min-width="100" />
             <el-table-column :label="$t('common.status')" width="70" align="center">
-              <template #default="{ row }: { row: DictType }">
+              <template #default="{ row }">
                 <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">
                   {{ row.status === 1 ? $t('common.enable') : $t('common.disable') }}
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column :label="$t('common.operation')" width="120" fixed="right">
-              <template #default="{ row }: { row: DictType }">
+              <template #default="{ row }">
                 <el-button link type="primary" size="small" @click.stop="openTypeDialog(row)">{{ $t('common.edit') }}</el-button>
                 <el-button link type="danger" size="small" @click.stop="removeType(row)">{{ $t('common.delete') }}</el-button>
               </template>

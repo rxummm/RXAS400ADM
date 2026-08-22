@@ -10,7 +10,7 @@
       @reset="resetSearch"
     >
       <template #right>
-        <el-button type="primary" :icon="Plus" @click="openCreate">{{ $t('schedule.create') }}</el-button>
+        <el-button type="primary" :icon="Plus" @click="() => openCreate()">{{ $t('schedule.create') }}</el-button>
       </template>
     </QueryBar>
 
@@ -19,7 +19,7 @@
         <el-table :data="pagedData" size="small" border>
         <el-table-column prop="name" :label="$t('schedule.name')" min-width="140" />
         <el-table-column :label="$t('schedule.type')" width="80">
-          <template #default="{ row }: { row: JobSchedule }">
+          <template #default="{ row }">
             <el-tag :type="row.scheduleType === 'SQL' ? 'warning' : 'success'" size="small">{{ row.scheduleType }}</el-tag>
           </template>
         </el-table-column>
@@ -27,25 +27,25 @@
         <el-table-column prop="command" :label="$t('schedule.command')" min-width="200" show-overflow-tooltip />
         <el-table-column prop="cronExpr" label="Cron" width="130" />
         <el-table-column :label="$t('schedule.enabled')" width="90">
-          <template #default="{ row }: { row: JobSchedule }">
+          <template #default="{ row }">
             <el-switch
               v-has-perm="'SCHEDULE_MANAGE'"
               :model-value="row.enabled"
               size="small"
-              @change="(v: boolean) => toggle(row, v)"
+              @change="(v: any) => toggle(row, v)"
             />
           </template>
         </el-table-column>
         <el-table-column :label="$t('schedule.status')" width="100">
-          <template #default="{ row }: { row: JobSchedule }">
+          <template #default="{ row }">
             <el-tag :type="statusType(row.status)" size="small">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="lastRunTime" :label="$t('schedule.lastRun')" width="170">
-          <template #default="{ row }: { row: JobSchedule }">{{ row.lastRunTime || '-' }}</template>
+          <template #default="{ row }">{{ row.lastRunTime || '-' }}</template>
         </el-table-column>
         <el-table-column :label="$t('schedule.lastResult')" min-width="180" show-overflow-tooltip>
-          <template #default="{ row }: { row: JobSchedule }">
+          <template #default="{ row }">
             <span v-if="row.lastResult" :class="resultClass(row.status)">
               {{ resultText(row.status, row.lastResult) }}
             </span>
@@ -53,7 +53,7 @@
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="220" fixed="right">
-          <template #default="{ row }: { row: JobSchedule }">
+          <template #default="{ row }">
             <el-button v-has-perm="'SCHEDULE_MANAGE'" size="small" type="primary" plain :loading="runningId === row.id" @click="run(row)">
               {{ $t('schedule.runNow') }}
             </el-button>
@@ -105,12 +105,12 @@
           <el-table :data="history" size="small" border>
         <el-table-column prop="runTime" :label="$t('schedule.time')" width="170" />
         <el-table-column :label="$t('schedule.status')" width="100">
-          <template #default="{ row }: { row: ScheduleHistoryRow }">
+          <template #default="{ row }">
             <el-tag :type="row.status === 'SUCCESS' ? 'success' : 'danger'" size="small">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('schedule.message')" min-width="200" show-overflow-tooltip>
-          <template #default="{ row }: { row: ScheduleHistoryRow }">{{ resultText(row.status, row.message) }}</template>
+          <template #default="{ row }">{{ resultText(row.status, row.message) }}</template>
         </el-table-column>
         <el-table-column prop="costMs" :label="$t('schedule.cost')" width="90" />
       </el-table>
@@ -120,6 +120,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Schedules' })
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'

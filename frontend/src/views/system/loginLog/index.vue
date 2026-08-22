@@ -30,7 +30,7 @@
         <el-table :data="pagedData" size="small" border stripe class="w-full">
         <el-table-column prop="userName" :label="$t('loginLog.username')" width="120" />
         <el-table-column prop="action" :label="$t('loginLog.action')" width="180">
-          <template #default="{ row }: { row: AuditLog }">
+          <template #default="{ row }">
             <el-tag size="small" :type="actionTag(row.action)">{{ row.action }}</el-tag>
           </template>
         </el-table-column>
@@ -38,7 +38,7 @@
         <el-table-column prop="target" :label="$t('loginLog.target')" width="180" show-overflow-tooltip />
         <el-table-column prop="detail" :label="$t('loginLog.detail')" min-width="200" show-overflow-tooltip />
         <el-table-column prop="createdTime" :label="$t('loginLog.time')" width="170">
-          <template #default="{ row }: { row: AuditLog }">{{ formatTime(row.createdTime) }}</template>
+          <template #default="{ row }">{{ formatTime(row.createdTime) }}</template>
         </el-table-column>
       </el-table>
       </RxSkeleton>

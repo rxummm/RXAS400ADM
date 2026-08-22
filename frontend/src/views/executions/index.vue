@@ -26,7 +26,7 @@
       <RxSkeleton type="table" :rows="8" :loading="loading">
         <el-table :data="pagedData" size="small" border>
         <el-table-column :label="$t('executions.source')" width="100">
-          <template #default="{ row }: { row: ExecutionRecord }">
+          <template #default="{ row }">
             <el-tag :type="row.source === 'SCHEDULE' ? 'warning' : 'primary'" size="small">
               {{ row.source === 'SCHEDULE' ? $t('executions.typeSchedule') : $t('executions.typeScript') }}
             </el-tag>
@@ -35,22 +35,22 @@
         <el-table-column prop="name" :label="$t('executions.name')" min-width="150" />
         <el-table-column prop="type" :label="$t('executions.type')" width="70" />
         <el-table-column prop="serverId" :label="$t('executions.server')" width="80">
-          <template #default="{ row }: { row: ExecutionRecord }">{{ row.serverId ?? '-' }}</template>
+          <template #default="{ row }">{{ row.serverId ?? '-' }}</template>
         </el-table-column>
         <el-table-column prop="user" :label="$t('executions.user')" width="110">
-          <template #default="{ row }: { row: ExecutionRecord }">{{ row.user || '-' }}</template>
+          <template #default="{ row }">{{ row.user || '-' }}</template>
         </el-table-column>
         <el-table-column prop="runTime" :label="$t('executions.time')" width="170">
-          <template #default="{ row }: { row: ExecutionRecord }">{{ formatDate(row.runTime) || '-' }}</template>
+          <template #default="{ row }">{{ formatDate(row.runTime) || '-' }}</template>
         </el-table-column>
         <el-table-column :label="$t('executions.status')" width="100">
-          <template #default="{ row }: { row: ExecutionRecord }">
+          <template #default="{ row }">
             <el-tag :type="row.status === 'SUCCESS' ? 'success' : 'danger'" size="small">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="message" :label="$t('executions.message')" min-width="220" show-overflow-tooltip />
         <el-table-column prop="costMs" :label="$t('executions.cost')" width="90">
-          <template #default="{ row }: { row: ExecutionRecord }">{{ row.costMs ?? '-' }}</template>
+          <template #default="{ row }">{{ row.costMs ?? '-' }}</template>
         </el-table-column>
       </el-table>
       </RxSkeleton>
@@ -61,6 +61,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Executions' })
 import { ref } from 'vue'
 import { Download } from '@element-plus/icons-vue'
 import QueryBar from '@/components/QueryBar.vue'

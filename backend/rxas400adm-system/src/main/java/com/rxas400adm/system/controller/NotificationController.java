@@ -3,8 +3,8 @@ package com.rxas400adm.system.controller;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
-import com.rxas400adm.system.entity.Notification;
 import com.rxas400adm.system.service.INotificationService;
+import com.rxas400adm.system.vo.NotificationVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -39,7 +39,7 @@ public class NotificationController {
     private final INotificationService notificationService;
 
     @GetMapping("/mine")
-    public ApiResponse<PageResult<Notification>> mine(@RequestParam(defaultValue = "1") int current,
+    public ApiResponse<PageResult<NotificationVO>> mine(@RequestParam(defaultValue = "1") int current,
                                                       @RequestParam(defaultValue = "20") int size,
                                                       @RequestParam(defaultValue = "false") boolean unreadOnly) {
         return ApiResponse.success(notificationService.mine(currentUsername(), current, size, unreadOnly));
@@ -83,7 +83,6 @@ public class NotificationController {
     }
 
     private String currentUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication == null ? "anonymous" : authentication.getName();
+        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 }

@@ -2,12 +2,12 @@
   <el-dialog :model-value="visible" :title="$t('layout.shortcuts')" width="480px" @close="close">
     <el-table :data="shortcuts" size="small">
       <el-table-column :label="$t('layout.shortcutKey')" width="160">
-        <template #default="{ row }: { row: ShortcutItem }">
+        <template #default="{ row }">
           <kbd class="kbd">{{ row.key }}</kbd>
         </template>
       </el-table-column>
       <el-table-column :label="$t('layout.shortcutDesc')">
-        <template #default="{ row }: { row: ShortcutItem }">{{ row.description }}</template>
+        <template #default="{ row }">{{ row.description }}</template>
       </el-table-column>
     </el-table>
     <div class="hint">{{ $t('layout.shortcutHint') }}</div>

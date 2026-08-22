@@ -49,7 +49,7 @@
 
         <el-tab-pane v-if="canSeeTab('reports', 'reportScheduleTab')" :label="$t('reports.tabSchedule')" name="schedule">
           <div class="search-bar">
-            <el-button v-has-perm="'REPORT_MANAGE'" type="primary" :icon="Plus" @click="openCreate">
+            <el-button v-has-perm="'REPORT_MANAGE'" type="primary" :icon="Plus" @click="() => openCreate()">
               {{ $t('reports.scheduleAdd') }}
             </el-button>
             <el-button :icon="Refresh" @click="loadSchedules">{{ $t('common.refresh') }}</el-button>
@@ -58,47 +58,47 @@
             <el-table :data="schedules" size="small" border>
             <el-table-column prop="name" :label="$t('reports.scheduleName')" min-width="140" />
             <el-table-column :label="$t('reports.kind')" width="110">
-              <template #default="{ row }: { row: ReportSchedule }">
+              <template #default="{ row }">
                 <el-tag size="small">{{ reportTypeLabel(row.reportType) }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column :label="$t('reports.format')" width="80">
-              <template #default="{ row }: { row: ReportSchedule }">
+              <template #default="{ row }">
                 <span>{{ (row.format || 'xlsx').toUpperCase() }}</span>
               </template>
             </el-table-column>
             <el-table-column :label="$t('reports.instance')" width="130">
-              <template #default="{ row }: { row: ReportSchedule }">
+              <template #default="{ row }">
                 <span v-if="row.reportType !== 'executions'">{{ serverName(row.serverId) }}</span>
                 <span v-else class="text-muted">-</span>
               </template>
             </el-table-column>
             <el-table-column prop="cronExpr" :label="$t('reports.cron')" width="120" />
             <el-table-column prop="recipients" :label="$t('reports.recipients')" min-width="150" show-overflow-tooltip>
-              <template #default="{ row }: { row: ReportSchedule }">{{ row.recipients || '-' }}</template>
+              <template #default="{ row }">{{ row.recipients || '-' }}</template>
             </el-table-column>
             <el-table-column :label="$t('reports.enabled')" width="80">
-              <template #default="{ row }: { row: ReportSchedule }">
+              <template #default="{ row }">
                 <el-switch
                   v-has-perm="'REPORT_MANAGE'"
                   :model-value="row.enabled"
                   size="small"
-                  @change="(v: boolean) => toggle(row, v)"
+                  @change="(v: any) => toggle(row, v)"
                 />
               </template>
             </el-table-column>
             <el-table-column :label="$t('reports.status')" width="100">
-              <template #default="{ row }: { row: ReportSchedule }">
+              <template #default="{ row }">
                 <el-tag :type="row.status === 'SUCCESS' ? 'success' : row.status === 'FAILED' ? 'danger' : 'info'" size="small">
                   {{ row.status }}
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="lastRunTime" :label="$t('reports.lastRun')" width="165">
-              <template #default="{ row }: { row: ReportSchedule }">{{ row.lastRunTime || '-' }}</template>
+              <template #default="{ row }">{{ row.lastRunTime || '-' }}</template>
             </el-table-column>
             <el-table-column :label="$t('reports.lastResult')" min-width="170" show-overflow-tooltip>
-              <template #default="{ row }: { row: ReportSchedule }">
+              <template #default="{ row }">
                 <span v-if="row.lastResult" :class="row.lastResult.startsWith('FAILED') ? 'text-danger' : ''">
                   {{ row.lastResult }}
                 </span>
@@ -106,7 +106,7 @@
               </template>
             </el-table-column>
             <el-table-column :label="$t('common.operation')" width="240" fixed="right">
-              <template #default="{ row }: { row: ReportSchedule }">
+              <template #default="{ row }">
                 <el-button v-has-perm="'REPORT_MANAGE'" size="small" type="primary" plain :loading="runningId === row.id" @click="run(row)">
                   {{ $t('reports.runNow') }}
                 </el-button>
@@ -130,13 +130,13 @@
         <el-table :data="history" size="small" border>
         <el-table-column prop="runTime" :label="$t('reports.time')" width="170" />
         <el-table-column :label="$t('reports.status')" width="100">
-          <template #default="{ row }: { row: ReportHistoryRow }">
+          <template #default="{ row }">
             <el-tag :type="row.status === 'SUCCESS' ? 'success' : 'danger'" size="small">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="message" :label="$t('reports.message')" min-width="220" show-overflow-tooltip />
         <el-table-column :label="$t('reports.fileSize')" width="110">
-          <template #default="{ row }: { row: ReportHistoryRow }">{{ formatBytes(row.fileBytes) }}</template>
+          <template #default="{ row }">{{ formatBytes(row.fileBytes) }}</template>
         </el-table-column>
       </el-table>
       </RxSkeleton>
@@ -145,6 +145,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Reports' })
 import { onMounted, ref } from 'vue'
 import { Download, Plus, Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -161,8 +165,11 @@ import {
   type ReportRunResult,
   type ReportSchedule,
 } from '@/api/report'
-import { fetchSystems, type IbmiSystem } from '@/api/as400'
+import {
+  fetchSystems, type IbmiSystem
+} from '@/api/as400'
 import ReportScheduleDialog from './ReportScheduleDialog.vue'
+import { formatSize } from '@/utils/format'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 
 const { t } = useI18n()
@@ -224,8 +231,7 @@ const reportTypeLabel = (type: string) => {
 
 const formatBytes = (n: number | null | undefined) => {
   if (!n) return '-'
-  if (n >= 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + ' MB'
-  return (n / 1024).toFixed(1) + ' KB'
+  return formatSize(n)
 }
 
 const loadSchedules = async () => {

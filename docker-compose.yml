@@ -1,29 +1,32 @@
+# ===========================================================================
+# DEV ONLY — 本地开发便利脚本，非生产部署物。
+# 本项目不使用 Docker 部署、也不使用 Redis（代码库无任何 Redis 引用）。
+# 此文件仅用于在本机一键拉起 MySQL 做联调，切勿用于共享/生产环境。
+# 口令通过 .env 注入（参考 .env.example），.env 已被 .gitignore 忽略，
+# 请勿将含真实口令的变体提交入库。
+# ===========================================================================
+
 services:
   mysql:
     image: mysql:8.0
     container_name: rxas400adm-mysql
+    env_file:
+      - .env
     environment:
       MYSQL_DATABASE: rxas400adm
       MYSQL_USER: rxas400
-      MYSQL_PASSWORD: rxas400
-      MYSQL_ROOT_PASSWORD: root
       TZ: Asia/Shanghai
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    # 仅本地开发：绑定 127.0.0.1，避免暴露到外部网卡
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - mysqldata:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 10
-
-  redis:
-    image: redis:7-alpine
-    container_name: rxas400adm-redis
-    ports:
-      - "6379:6379"
 
 volumes:
   mysqldata:

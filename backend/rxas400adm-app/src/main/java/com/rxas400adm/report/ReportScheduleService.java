@@ -160,11 +160,12 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
         return new com.rxas400adm.report.vo.ScheduleExecuteResultVO(status, message, fileBytes);
     }
 
-    public List<ReportScheduleHistory> history(Long scheduleId) {
+    public List<ReportScheduleHistoryVO> history(Long scheduleId) {
         return historyMapper.selectList(new LambdaQueryWrapper<ReportScheduleHistory>()
                 .eq(ReportScheduleHistory::getScheduleId, scheduleId)
                 .orderByDesc(ReportScheduleHistory::getRunTime)
-                .last(PageConstants.limitClause(50)));
+                .last(PageConstants.limitClause(50)))
+                .stream().map(ReportScheduleHistoryVO::from).toList();
     }
 
     /** 启动时恢复启用中的定时任务 */

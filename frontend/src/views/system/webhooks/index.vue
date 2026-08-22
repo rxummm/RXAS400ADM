@@ -4,7 +4,7 @@
       <el-tab-pane v-if="userStore.canSeeTab('webhooks', 'configTab')" :label="$t('webhooks.configTab')" name="config">
         <div class="search-bar">
           <div class="flex-1" />
-          <el-button v-has-perm="'WEBHOOK_MANAGE'" type="primary" @click="openCreate">
+          <el-button v-has-perm="'WEBHOOK_MANAGE'" type="primary" @click="() => openCreate()">
             <el-icon><Plus /></el-icon> {{ $t('webhooks.add') }}
           </el-button>
         </div>
@@ -15,15 +15,15 @@
             <el-table-column prop="url" :label="$t('webhooks.url')" min-width="220" show-overflow-tooltip />
             <el-table-column prop="description" :label="$t('webhooks.description')" min-width="150" show-overflow-tooltip />
             <el-table-column prop="enabled" :label="$t('webhooks.enabled')" width="90" align="center">
-              <template #default="{ row }: { row: WebhookConfig }">
+              <template #default="{ row }">
                 <el-switch v-has-perm="'WEBHOOK_MANAGE'"
                   :model-value="row.enabled === 1"
-                  @change="(val: boolean) => onToggle(row, val)"
+                  @change="(val: any) => onToggle(row, val)"
                 />
               </template>
             </el-table-column>
             <el-table-column :label="$t('common.operation')" width="200" fixed="right">
-              <template #default="{ row }: { row: WebhookConfig }">
+              <template #default="{ row }">
                 <el-button v-has-perm="'WEBHOOK_MANAGE'" link type="primary" size="small" @click="onTest(row)">
                   {{ $t('webhooks.test') }}
                 </el-button>
@@ -67,7 +67,7 @@
             <el-table-column prop="webhookName" :label="$t('webhooks.logName')" width="160" show-overflow-tooltip />
             <el-table-column prop="title" :label="$t('webhooks.logTitle')" min-width="200" show-overflow-tooltip />
             <el-table-column prop="success" :label="$t('webhooks.logSuccess')" width="80" align="center">
-              <template #default="{ row }: { row: WebhookLog }">
+              <template #default="{ row }">
                 <el-tag size="small" :type="row.success === 1 ? 'success' : 'danger'">
                   {{ row.success === 1 ? $t('webhooks.success') : $t('webhooks.fail') }}
                 </el-tag>
@@ -75,12 +75,12 @@
             </el-table-column>
             <el-table-column prop="attempts" :label="$t('webhooks.logAttempts')" width="70" align="center" />
             <el-table-column prop="errorMsg" :label="$t('webhooks.logError')" min-width="160" show-overflow-tooltip>
-              <template #default="{ row }: { row: WebhookLog }">
+              <template #default="{ row }">
                 <span class="text-danger">{{ row.errorMsg || '-' }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="createdTime" :label="$t('webhooks.logTime')" width="170">
-              <template #default="{ row }: { row: WebhookLog }">{{ formatTime(row.createdTime) }}</template>
+              <template #default="{ row }">{{ formatTime(row.createdTime) }}</template>
             </el-table-column>
           </el-table>
           </RxSkeleton>
@@ -169,8 +169,8 @@ const {
 } = useFormDialog<WebhookForm>({
   defaultForm: () => ({ id: undefined, name: '', url: '', secret: '', description: '', enabled: 1 }),
   rules: {
-    name: [{ required: true, message: t('webhooks.nameRequired'), trigger: 'blur' }],
-    url: [{ required: true, message: t('webhooks.urlRequired'), trigger: 'blur' }],
+    name: [{ required: true, message: () => t('webhooks.nameRequired'), trigger: 'blur' }],
+    url: [{ required: true, message: () => t('webhooks.urlRequired'), trigger: 'blur' }],
   },
   createApi: (data) => createWebhook(data),
   updateApi: (id, data) => updateWebhook(Number(id), data),

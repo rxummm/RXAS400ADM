@@ -101,7 +101,7 @@ import {
 } from '@/api/calendar'
 import EventFormDialog from './EventFormDialog.vue'
 
-defineOptions({ name: 'CalendarIndex' })
+defineOptions({ name: 'Calendar' })
 
 const { t, tm } = useI18n()
 

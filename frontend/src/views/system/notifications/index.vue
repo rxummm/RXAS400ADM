@@ -18,28 +18,28 @@
         <el-table :data="rows" size="small" border stripe class="w-full" @selection-change="onSelectionChange">
         <el-table-column v-if="canDelete" type="selection" width="44" align="center" />
         <el-table-column prop="type" label="Type" width="90" align="center">
-          <template #default="{ row }: { row: Notification }">
+          <template #default="{ row }">
             <el-tag size="small" :type="typeTag(row.type)">{{ typeLabel(row.type) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="title" :label="$t('notice.title')" min-width="180" show-overflow-tooltip>
-          <template #default="{ row }: { row: Notification }">
+          <template #default="{ row }">
             <span :class="{ 'notif-unread': row.readFlag === 0 }">{{ row.title }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="content" :label="$t('notice.content')" min-width="220" show-overflow-tooltip />
         <el-table-column prop="readFlag" :label="$t('common.status')" width="90" align="center">
-          <template #default="{ row }: { row: Notification }">
+          <template #default="{ row }">
             <el-tag size="small" :type="row.readFlag === 1 ? 'info' : 'warning'">
               {{ row.readFlag === 1 ? $t('common.read') : $t('common.unread') }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createdTime" :label="$t('notification.time')" width="170">
-          <template #default="{ row }: { row: Notification }">{{ formatTime(row.createdTime) }}</template>
+          <template #default="{ row }">{{ formatTime(row.createdTime) }}</template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" :width="canDelete ? 150 : 100" fixed="right">
-          <template #default="{ row }: { row: Notification }">
+          <template #default="{ row }">
             <el-button v-if="row.readFlag === 0" link type="primary" size="small" @click="onRead(row)">
               {{ $t('notification.markRead') }}
             </el-button>
@@ -93,8 +93,8 @@ function formatTime(time?: string) {
   return time ? time.replace('T', ' ').slice(0, 19) : '-'
 }
 
-const typeTag = (type: string) =>
-  ({ ALERT: 'danger', NOTICE: 'success', PERMISSION: 'warning', SYSTEM: 'info' } as Record<string, string>)[type] || 'info'
+const typeTag = (type: string): 'danger' | 'success' | 'warning' | 'info' =>
+  ({ ALERT: 'danger', NOTICE: 'success', PERMISSION: 'warning', SYSTEM: 'info' } as Record<string, 'danger' | 'success' | 'warning' | 'info'>)[type] || 'info'
 const typeLabel = (type: string) =>
   type === 'ALERT'
     ? t('notification.typeAlert')

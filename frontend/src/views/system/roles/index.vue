@@ -69,17 +69,17 @@
               align="center"
             />
             <el-table-column v-if="visibleColumns.includes('status')" :label="$t('common.status')" width="80" align="center">
-              <template #default="{ row }: { row: SysRole }">
+              <template #default="{ row }">
                 <el-switch
                   :model-value="row.status === 1"
                   :disabled="row.roleCode === 'ADMIN'"
                   size="small"
-                  @change="(val: boolean) => onToggleStatus(row, val)"
+                  @change="(val: any) => onToggleStatus(row, val)"
                 />
               </template>
             </el-table-column>
             <el-table-column :label="$t('common.operation')" width="120" fixed="right">
-              <template #default="{ row }: { row: SysRole }">
+              <template #default="{ row }">
                 <el-button link type="primary" size="small" @click.stop="openEdit(row)">
                   {{ $t('common.edit') }}
                 </el-button>

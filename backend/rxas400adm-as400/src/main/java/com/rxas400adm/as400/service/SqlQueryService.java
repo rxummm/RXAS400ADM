@@ -81,7 +81,6 @@ public class SqlQueryService implements ISqlQueryService {
     }
 
     private String currentUsername() {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth == null ? "system" : auth.getName();
+        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 }

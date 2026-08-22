@@ -48,73 +48,73 @@ const router = createRouter({
           path: 'monitor',
           name: 'Monitor',
           component: () => import('@/views/Monitor.vue'),
-          meta: { title: 'menu.monitor' },
+          meta: { title: 'menu.monitor', cached: true },
         },
         {
           path: 'monitor/alert-rules',
           name: 'AlertRules',
           component: () => import('@/views/monitor/alertRules/index.vue'),
-          meta: { title: 'menu.alertRules' },
+          meta: { title: 'menu.alertRules', cached: true },
         },
         {
           path: 'jobs',
           name: 'Jobs',
           component: () => import('@/views/job/index.vue'),
-          meta: { title: 'menu.jobs' },
+          meta: { title: 'menu.jobs', cached: true },
         },
         {
           path: 'query',
           name: 'Query',
           component: () => import('@/views/query/index.vue'),
-          meta: { title: 'menu.query' },
+          meta: { title: 'menu.query', cached: true },
         },
         {
           path: 'assets',
           name: 'Assets',
           component: () => import('@/views/assets/index.vue'),
-          meta: { title: 'menu.assets' },
+          meta: { title: 'menu.assets', cached: true },
         },
         {
           path: 'objects',
           name: 'Objects',
           component: () => import('@/views/objects/index.vue'),
-          meta: { title: 'menu.objects' },
+          meta: { title: 'menu.objects', cached: true },
         },
         {
           path: 'schedules',
           name: 'Schedules',
           component: () => import('@/views/schedule/index.vue'),
-          meta: { title: 'menu.schedules' },
+          meta: { title: 'menu.schedules', cached: true },
         },
         {
           path: 'scripts',
           name: 'Scripts',
           component: () => import('@/views/scripts/index.vue'),
-          meta: { title: 'menu.scripts' },
+          meta: { title: 'menu.scripts', cached: true },
         },
         {
           path: 'ifs',
           name: 'Ifs',
           component: () => import('@/views/ifs/index.vue'),
-          meta: { title: 'menu.ifs' },
+          meta: { title: 'menu.ifs', cached: true },
         },
         {
           path: 'subsystems',
           name: 'Subsystems',
           component: () => import('@/views/subsystems/index.vue'),
-          meta: { title: 'menu.subsystems' },
+          meta: { title: 'menu.subsystems', cached: true },
         },
         {
           path: 'executions',
           name: 'Executions',
           component: () => import('@/views/executions/index.vue'),
-          meta: { title: 'menu.executions' },
+          meta: { title: 'menu.executions', cached: true },
         },
         {
           path: 'pf',
           name: 'Pf',
           component: () => import('@/views/pf/index.vue'),
-          meta: { title: 'menu.pf' },
+          meta: { title: 'menu.pf', cached: true },
         },
         {
           path: 'audit',
@@ -126,67 +126,67 @@ const router = createRouter({
           path: 'health',
           name: 'Health',
           component: () => import('@/views/health/index.vue'),
-          meta: { title: 'menu.health' },
+          meta: { title: 'menu.health', cached: true },
         },
         {
           path: 'topology',
           name: 'Topology',
           component: () => import('@/views/topology/index.vue'),
-          meta: { title: 'menu.topology' },
+          meta: { title: 'menu.topology', cached: true },
         },
         {
           path: 'table-fields',
           name: 'TableFields',
           component: () => import('@/views/data/tableFields/index.vue'),
-          meta: { title: 'menu.tableFields' },
+          meta: { title: 'menu.tableFields', cached: true },
         },
         {
           path: 'message-files',
           name: 'MessageFiles',
           component: () => import('@/views/data/messageFiles/index.vue'),
-          meta: { title: 'menu.messageFiles' },
+          meta: { title: 'menu.messageFiles', cached: true },
         },
         {
           path: 'sysvals',
           name: 'Sysvals',
           component: () => import('@/views/data/sysvals/index.vue'),
-          meta: { title: 'menu.sysvals' },
+          meta: { title: 'menu.sysvals', cached: true },
         },
         {
           path: 'server-compare',
           name: 'ServerCompare',
           component: () => import('@/views/monitor/serverCompare/index.vue'),
-          meta: { title: 'menu.serverCompare' },
+          meta: { title: 'menu.serverCompare', cached: true },
         },
         {
           path: 'inspection',
           name: 'Inspection',
           component: () => import('@/views/monitor/inspection/index.vue'),
-          meta: { title: 'menu.inspection' },
+          meta: { title: 'menu.inspection', cached: true },
         },
         {
           path: 'metrics',
           name: 'Metrics',
           component: () => import('@/views/monitor/metrics/index.vue'),
-          meta: { title: 'menu.metrics', requiresAuth: true },
+          meta: { title: 'menu.metrics', cached: true },
         },
         {
           path: 'job-sla',
           name: 'JobSla',
           component: () => import('@/views/job/sla/index.vue'),
-          meta: { title: 'menu.jobSla' },
+          meta: { title: 'menu.jobSla', cached: true },
         },
         {
           path: 'job-dependency',
           name: 'JobDependency',
           component: () => import('@/views/job/dependency/index.vue'),
-          meta: { title: 'menu.jobDependency' },
+          meta: { title: 'menu.jobDependency', cached: true },
         },
         {
           path: 'reports',
           name: 'Reports',
           component: () => import('@/views/report/index.vue'),
-          meta: { title: 'menu.reports' },
+          meta: { title: 'menu.reports', cached: true },
         },
         {
           path: 'docs',
@@ -204,7 +204,7 @@ const router = createRouter({
           path: 'source',
           name: 'Source',
           component: () => import('@/views/Source.vue'),
-          meta: { title: 'menu.source' },
+          meta: { title: 'menu.source', cached: true, cacheName: 'SourceManager' },
         },
         {
           path: 'users',
@@ -315,18 +315,31 @@ const router = createRouter({
           path: 'calendar',
           name: 'Calendar',
           component: () => import('@/views/calendar/index.vue'),
-          meta: { title: 'menu.calendar' },
+          meta: { title: 'menu.calendar', cached: true },
         },
         {
           path: 'biz-data',
           name: 'BizData',
           component: () => import('@/views/biz/data/index.vue'),
-          meta: { title: 'menu.bizData' },
+          meta: { title: 'menu.bizData', cached: true },
         },
       ],
     },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
+      component: () => import('@/views/NotFound.vue'),
+      meta: { title: 'common.notFound' },
+    },
   ],
 })
+
+// F7：受保护路径集仅依赖静态路由表，模块级缓存一次，避免每次导航重复重建
+const PROTECTED_PATHS = new Set(
+  router.getRoutes()
+    .filter(r => r.path.startsWith('/') && r.path !== '/' && r.components?.default)
+    .map(r => r.path)
+)
 
 router.beforeEach(async (to) => {
   NProgress.start()
@@ -338,12 +351,7 @@ router.beforeEach(async (to) => {
     return { path: '/' }
   }
   // 页面级访问控制：动态收集 Layout 子路由作为受保护路径集，替代硬编码 MENU_PATHS
-  const protectedPaths = new Set(
-    router.getRoutes()
-      .filter(r => r.path.startsWith('/') && r.path !== '/' && r.components?.default)
-      .map(r => r.path)
-  )
-  if (userStore.isLoggedIn && protectedPaths.has(to.path)) {
+  if (userStore.isLoggedIn && PROTECTED_PATHS.has(to.path)) {
     if (!userStore.menus.length) {
       try {
         await userStore.fetchMenus()

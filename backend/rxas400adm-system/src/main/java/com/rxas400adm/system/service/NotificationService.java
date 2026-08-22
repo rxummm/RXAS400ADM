@@ -7,6 +7,7 @@ import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.entity.Notification;
 import com.rxas400adm.system.entity.SysUser;
+import com.rxas400adm.system.vo.NotificationVO;
 import com.rxas400adm.system.mapper.NotificationMapper;
 import com.rxas400adm.system.mapper.SysUserMapper;
 import lombok.RequiredArgsConstructor;
@@ -77,7 +78,7 @@ public class NotificationService implements INotificationService {
         return users.size();
     }
 
-    public PageResult<Notification> mine(String username, int current, int size, boolean unreadOnly) {
+    public PageResult<NotificationVO> mine(String username, int current, int size, boolean unreadOnly) {
         LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<Notification>()
                 .eq(Notification::getUsername, username);
         if (unreadOnly) {
@@ -86,7 +87,8 @@ public class NotificationService implements INotificationService {
         wrapper.orderByDesc(Notification::getCreatedTime);
         Page<Notification> page = notificationMapper.selectPage(
                 new Page<>(PageConstants.clampNum(current), PageConstants.clampSize(size)), wrapper);
-        return new PageResult<>(page.getTotal(), page.getRecords());
+        return new PageResult<>(page.getTotal(),
+                page.getRecords().stream().map(NotificationVO::from).toList());
     }
 
     public long unreadCount(String username) {

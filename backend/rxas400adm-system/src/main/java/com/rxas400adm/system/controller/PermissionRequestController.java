@@ -3,6 +3,7 @@ package com.rxas400adm.system.controller;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
+import com.rxas400adm.system.dto.PermissionRequestCreateDTO;
 import com.rxas400adm.system.service.IPermissionRequestService;
 import com.rxas400adm.system.vo.PermissionRequestVO;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.rxas400adm.system.vo.PendingCountVO;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,7 +42,7 @@ public class PermissionRequestController {
      */
     @PostMapping
     @OperateLog(module = "权限申请", operation = "提交权限申请")
-    public ApiResponse<PermissionRequestVO> create(@RequestBody com.rxas400adm.system.dto.PermissionRequestCreateDTO dto) {
+    public ApiResponse<PermissionRequestVO> create(@Valid @RequestBody PermissionRequestCreateDTO dto) {
         return ApiResponse.success(PermissionRequestVO.from(requestService.create(
                 currentUsername(), dto.getPermissionCode(), dto.getMenuIds(), dto.getMenuNames(), dto.getReason())));
     }
@@ -86,7 +88,6 @@ public class PermissionRequestController {
     }
 
     private String currentUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication == null ? "anonymous" : authentication.getName();
+        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 }

@@ -17,7 +17,7 @@
       </el-button>
       <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
       <div class="flex-1" />
-      <el-button type="primary" @click="openCreate">
+      <el-button type="primary" @click="() => openCreate()">
         <el-icon><Plus /></el-icon> {{ $t('ipRules.add') }}
       </el-button>
     </div>
@@ -27,7 +27,7 @@
         <el-table :data="pagedData" size="small" border stripe class="w-full">
         <el-table-column prop="ip" :label="$t('ipRules.ip')" width="180" />
         <el-table-column prop="type" :label="$t('ipRules.type')" width="100" align="center">
-          <template #default="{ row }: { row: IpRule }">
+          <template #default="{ row }">
             <el-tag size="small" :type="row.type === 'BLACK' ? 'danger' : 'success'">
               {{ row.type === 'BLACK' ? $t('ipRules.black') : $t('ipRules.white') }}
             </el-tag>
@@ -35,14 +35,14 @@
         </el-table-column>
         <el-table-column prop="description" :label="$t('ipRules.description')" min-width="200" show-overflow-tooltip />
         <el-table-column prop="enabled" :label="$t('ipRules.enabled')" width="90" align="center">
-          <template #default="{ row }: { row: IpRule }">
+          <template #default="{ row }">
             <el-tag size="small" :type="row.enabled === 1 ? 'success' : 'info'">
               {{ row.enabled === 1 ? $t('common.yes') : $t('common.no') }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="140" fixed="right">
-          <template #default="{ row }: { row: IpRule }">
+          <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openEdit(row)">
               {{ $t('common.edit') }}
             </el-button>
@@ -133,8 +133,8 @@ const {
 } = useFormDialog<IpRuleForm>({
   defaultForm: () => ({ id: undefined, ip: '', type: 'BLACK', description: '', enabled: 1 }),
   rules: {
-    ip: [{ required: true, message: t('ipRules.ipRequired'), trigger: 'blur' }],
-    type: [{ required: true, message: t('ipRules.typeRequired'), trigger: 'change' }],
+    ip: [{ required: true, message: () => t('ipRules.ipRequired'), trigger: 'blur' }],
+    type: [{ required: true, message: () => t('ipRules.typeRequired'), trigger: 'change' }],
   },
   createApi: (data) => createIpRule(data),
   updateApi: (id, data) => updateIpRule(Number(id), data),

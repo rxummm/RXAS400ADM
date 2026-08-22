@@ -22,14 +22,14 @@
         <el-table-column prop="itemValue" :label="$t('dict.itemValue')" min-width="140" />
         <el-table-column prop="sort" :label="$t('common.sort')" width="70" align="center" />
         <el-table-column :label="$t('common.status')" width="90" align="center">
-          <template #default="{ row }: { row: DictItem }">
+          <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">
               {{ row.status === 1 ? $t('common.enable') : $t('common.disable') }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="130" fixed="right">
-          <template #default="{ row }: { row: DictItem }">
+          <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openItemDialog(row)">{{ $t('common.edit') }}</el-button>
             <el-button link type="danger" size="small" @click="removeItem(row)">{{ $t('common.delete') }}</el-button>
           </template>

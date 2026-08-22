@@ -13,7 +13,7 @@
       <el-button type="primary" :icon="Search" @click="handleSearch">{{ $t('common.search') }}</el-button>
       <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
       <div class="flex-1" />
-      <el-button type="primary" :icon="Plus" v-has-perm="'PERMISSION_MANAGE'" @click="openCreate">
+      <el-button type="primary" :icon="Plus" v-has-perm="'PERMISSION_MANAGE'" @click="() => openCreate()">
         {{ $t('permissions.create') }}
       </el-button>
     </div>
@@ -22,26 +22,26 @@
       <RxSkeleton type="table" :rows="8" :loading="loading">
         <el-table :data="pagedData" size="small" border stripe>
         <el-table-column prop="permissionCode" :label="$t('permissions.code')" width="220" fixed="left">
-          <template #default="{ row }: { row: PermissionCode }">
+          <template #default="{ row }">
             <el-tag size="small" type="warning">{{ row.permissionCode }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="permissionName" :label="$t('permissions.name')" min-width="150" show-overflow-tooltip />
         <el-table-column prop="module" :label="$t('permissions.module')" width="160">
-          <template #default="{ row }: { row: PermissionCode }">
+          <template #default="{ row }">
             <el-tag v-if="row.module" size="small" type="info">{{ row.module }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="description" :label="$t('permissions.description')" min-width="200" show-overflow-tooltip />
         <el-table-column :label="$t('permissions.usage')" width="180">
-          <template #default="{ row }: { row: PermissionCode }">
+          <template #default="{ row }">
             <span :class="{ 'text-danger': (row.menuUsage || 0) + (row.roleUsage || 0) > 0 }">
               {{ $t('permissions.usageDetail', { menu: row.menuUsage || 0, role: row.roleUsage || 0 }) }}
             </span>
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="140" fixed="right">
-          <template #default="{ row }: { row: PermissionCode }">
+          <template #default="{ row }">
             <el-button v-has-perm="'PERMISSION_MANAGE'" link type="primary" size="small" @click="openEdit(row)">
               {{ $t('common.edit') }}
             </el-button>

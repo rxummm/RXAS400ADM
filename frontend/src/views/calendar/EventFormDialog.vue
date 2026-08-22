@@ -105,8 +105,8 @@ const form = reactive({
 })
 
 const rules = {
-  title: [{ required: true, message: t('calendar.titleRequired'), trigger: 'blur' }],
-  eventDate: [{ required: true, message: t('calendar.dateRequired'), trigger: 'change' }],
+  title: [{ required: true, message: () => t('calendar.titleRequired'), trigger: 'blur' }],
+  eventDate: [{ required: true, message: () => t('calendar.dateRequired'), trigger: 'change' }],
 }
 
 function init(evt: CalendarEvent | null, date: string) {

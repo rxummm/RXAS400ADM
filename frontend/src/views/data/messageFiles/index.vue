@@ -45,21 +45,21 @@
       <RxSkeleton type="table" :rows="8" :loading="loading">
         <el-table :data="filteredRows" size="small" border>
         <el-table-column prop="MESSAGE_ID" :label="$t('messageFiles.id')" width="120">
-          <template #default="{ row }: { row: MessageFileRow }">
+          <template #default="{ row }">
             <el-tag size="small" type="info">{{ row.MESSAGE_ID }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="MESSAGE_TEXT" :label="$t('messageFiles.text')" min-width="220" show-overflow-tooltip />
         <el-table-column prop="SECOND_LEVEL_TEXT" :label="$t('messageFiles.secondLevel')" min-width="220" show-overflow-tooltip>
-          <template #default="{ row }: { row: MessageFileRow }">{{ row.SECOND_LEVEL_TEXT || '-' }}</template>
+          <template #default="{ row }">{{ row.SECOND_LEVEL_TEXT || '-' }}</template>
         </el-table-column>
         <el-table-column :label="$t('messageFiles.severity')" width="90" align="center">
-          <template #default="{ row }: { row: MessageFileRow }">
+          <template #default="{ row }">
             <el-tag :type="severityTag(Number(row.SEVERITY))" size="small">{{ row.SEVERITY }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="140" align="center" fixed="right">
-          <template #default="{ row }: { row: MessageFileRow }">
+          <template #default="{ row }">
             <el-button v-has-perm="'MSGF_EDIT'" size="small" type="primary" plain :icon="Edit" @click="openEditMsg(row)">
               {{ $t('common.edit') }}
             </el-button>
@@ -103,6 +103,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'MessageFiles' })
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Edit, Plus } from '@element-plus/icons-vue'

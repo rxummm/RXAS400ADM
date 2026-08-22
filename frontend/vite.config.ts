@@ -17,11 +17,11 @@ export default defineConfig(({ mode }) => {
       AutoImport({
         imports: ['vue', 'vue-router'],
         resolvers: [ElementPlusResolver()],
-        dts: false,
+        dts: 'src/auto-imports.d.ts',
       }),
       Components({
         resolvers: [ElementPlusResolver()],
-        dts: false,
+        dts: 'src/components.d.ts',
       }),
     ],
     resolve: {

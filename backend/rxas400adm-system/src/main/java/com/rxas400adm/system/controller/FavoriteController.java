@@ -2,8 +2,8 @@ package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
-import com.rxas400adm.system.entity.Favorite;
 import com.rxas400adm.system.service.IFavoriteService;
+import com.rxas400adm.system.vo.FavoriteVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -36,7 +36,7 @@ public class FavoriteController {
     private final IFavoriteService favoriteService;
 
     @GetMapping("/mine")
-    public ApiResponse<List<Favorite>> mine() {
+    public ApiResponse<List<FavoriteVO>> mine() {
         return ApiResponse.success(favoriteService.mine(currentUsername()));
     }
 
@@ -60,7 +60,6 @@ public class FavoriteController {
     }
 
     private String currentUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication == null ? "anonymous" : authentication.getName();
+        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 }

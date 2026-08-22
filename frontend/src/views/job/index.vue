@@ -34,7 +34,7 @@
             <el-table-column prop="jobUser" :label="$t('jobs.jobUser')" width="110" />
             <el-table-column prop="jobNumber" :label="$t('jobs.jobNumber')" width="100" />
             <el-table-column prop="jobStatus" :label="$t('jobs.jobStatus')" width="90">
-              <template #default="{ row }: { row: JobInfo }">
+              <template #default="{ row }">
                 <el-tag :type="statusType(row.jobStatus)" size="small">{{ row.jobStatus }}</el-tag>
               </template>
             </el-table-column>
@@ -42,7 +42,7 @@
             <el-table-column prop="cpuTime" :label="$t('jobs.cpuTime')" width="90" />
             <el-table-column prop="temporaryStorage" :label="$t('jobs.tempStorage')" width="110" />
             <el-table-column :label="$t('common.operation')" width="280" fixed="right">
-              <template #default="{ row }: { row: JobInfo }">
+              <template #default="{ row }">
                 <el-button size="small" @click="openLog(row)">{{ $t('jobs.log') }}</el-button>
                 <el-button
                   v-has-perm="'JOB_END'"
@@ -84,7 +84,7 @@
             <el-table-column prop="JOB_QUEUE_NAME" :label="$t('jobs.queueName')" min-width="130" />
             <el-table-column prop="JOB_QUEUE_LIBRARY" :label="$t('jobs.queueLibrary')" min-width="110" />
             <el-table-column prop="JOB_QUEUE_STATUS" :label="$t('jobs.queueStatus')" width="110">
-              <template #default="{ row }: { row: JobQueueInfo }">
+              <template #default="{ row }">
                 <el-tag :type="row.JOB_QUEUE_STATUS === 'RELEASED' ? 'danger' : 'success'" size="small">
                   {{ row.JOB_QUEUE_STATUS }}
                 </el-tag>
@@ -116,7 +116,7 @@
             <el-table-column prop="JOB_NUMBER" :label="$t('jobs.jobNumber')" width="90" />
             <el-table-column prop="OUTPUT_QUEUE" :label="$t('jobs.outputQueue')" min-width="110" />
             <el-table-column prop="SPOOLED_FILE_STATUS" :label="$t('jobs.spoolStatus')" width="110">
-              <template #default="{ row }: { row: SpoolFile }">
+              <template #default="{ row }">
                 <el-tag :type="row.SPOOLED_FILE_STATUS === 'HELD' ? 'warning' : 'success'" size="small">
                   {{ row.SPOOLED_FILE_STATUS }}
                 </el-tag>
@@ -153,13 +153,13 @@
         <el-table-column prop="MESSAGE_TYPE" :label="$t('jobs.messageType')" width="120" />
         <el-table-column prop="MESSAGE_TEXT" :label="$t('jobs.messageText')" min-width="220" />
         <el-table-column prop="REPLY_STATUS" :label="$t('jobs.replyStatus')" width="100">
-          <template #default="{ row }: { row: MsgwMessage }">
+          <template #default="{ row }">
             <el-tag v-if="row.REPLY_STATUS === 'MSGW'" type="danger" size="small">MSGW</el-tag>
             <span v-else>{{ row.REPLY_STATUS || '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="100" fixed="right">
-          <template #default="{ row }: { row: MsgwMessage }">
+          <template #default="{ row }">
             <el-button size="small" type="primary" plain @click="handleReply(row)">
               {{ $t('jobs.reply') }}
             </el-button>
@@ -172,6 +172,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Jobs' })
 import { ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ChatDotRound, Refresh } from '@element-plus/icons-vue'

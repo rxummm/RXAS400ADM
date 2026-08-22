@@ -17,7 +17,7 @@
       </el-button>
       <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
       <div class="flex-1" />
-      <el-button type="primary" @click="openCreate">
+      <el-button type="primary" @click="() => openCreate()">
         <el-icon><Plus /></el-icon> {{ $t('notice.add') }}
       </el-button>
     </div>
@@ -27,7 +27,7 @@
         <el-table :data="pagedData" size="small" border stripe class="w-full">
         <el-table-column prop="title" :label="$t('notice.title')" min-width="200" show-overflow-tooltip />
         <el-table-column prop="status" :label="$t('notice.status')" width="100" align="center">
-          <template #default="{ row }: { row: Notice }">
+          <template #default="{ row }">
             <el-tag size="small" :type="row.status === 1 ? 'success' : 'info'">
               {{ row.status === 1 ? $t('notice.published') : $t('notice.unpublished') }}
             </el-tag>
@@ -35,10 +35,10 @@
         </el-table-column>
         <el-table-column prop="createdBy" :label="$t('notice.publisher')" width="110" />
         <el-table-column prop="publishedTime" :label="$t('notice.time')" width="170">
-          <template #default="{ row }: { row: Notice }">{{ formatTime(row.publishedTime || row.createdTime) }}</template>
+          <template #default="{ row }">{{ formatTime(row.publishedTime || row.createdTime) }}</template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="160" fixed="right">
-          <template #default="{ row }: { row: Notice }">
+          <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openEdit(row)">
               {{ $t('common.edit') }}
             </el-button>
@@ -70,7 +70,7 @@
             :active-text="$t('notice.published')"
             :inactive-text="$t('notice.unpublished')"
             inline-prompt
-            @change="(val: boolean) => (form.status = val ? 1 : 0)"
+            @change="(val: any) => (form.status = val ? 1 : 0)"
           />
         </el-form-item>
       </el-form>
@@ -136,8 +136,8 @@ const {
 } = useFormDialog<NoticeForm>({
   defaultForm: () => ({ id: undefined, title: '', content: '', status: 1 }),
   rules: {
-    title: [{ required: true, message: t('notice.titleRequired'), trigger: 'blur' }],
-    content: [{ required: true, message: t('notice.contentRequired'), trigger: 'blur' }],
+    title: [{ required: true, message: () => t('notice.titleRequired'), trigger: 'blur' }],
+    content: [{ required: true, message: () => t('notice.contentRequired'), trigger: 'blur' }],
   },
   createApi: (data) => createNotice(data),
   updateApi: (id, data) => updateNotice(Number(id), data),

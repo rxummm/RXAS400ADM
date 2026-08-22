@@ -50,6 +50,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Topology' })
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
@@ -174,7 +178,7 @@ const openNode = async (node: { id?: string; name?: string; type?: string }) => 
     detail.value = await objectDetail(currentLib.value, currentObj.value)
   } catch {
     detail.value = null
-    console.warn('[topology] objectDetail failed')
+    // objectDetail failed silently
   }
   try {
     const [inList, outList] = await Promise.all([
@@ -186,7 +190,7 @@ const openNode = async (node: { id?: string; name?: string; type?: string }) => 
   } catch {
     refIn.value = []
     refOut.value = []
-    console.warn('[topology] objectReferences failed')
+    // objectReferences failed silently
   }
 }
 

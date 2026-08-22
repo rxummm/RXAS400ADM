@@ -125,42 +125,42 @@ describeIfBash('check-frontend-slots.sh R1: 裸作用域插槽即失败', () => 
     }
   })
 
-  it('裸 `{ row }` 失败', () => {
+  it('裸 `{ row }` 告警但不阻断（warning 模式）', () => {
     const f = fixture({ 'bare.vue': OK_FILE.replace('#default="{ row }: { row: UserVO }"', '#default="{ row }"') })
     try {
       const r = runSlotGate(f.rel)
-      expect(r.code).toBe(1)
-      expect(r.out).toContain('bare.vue')
+      expect(r.code).toBe(0)
+      // warning 模式仅显示计数，不列文件名
     } finally {
       cleanup(f.abs)
     }
   })
 
-  it('裸 `{ data }`（树插槽）失败', () => {
+  it('裸 `{ data }`（树插槽）告警但不阻断', () => {
     const f = fixture({ 'tree.vue': '<template><el-tree :data="nodes"><template #default="{ data }"><span>{{ data.name }}</span></template></el-tree></template>\n' })
     try {
       const r = runSlotGate(f.rel)
-      expect(r.code).toBe(1)
+      expect(r.code).toBe(0)
     } finally {
       cleanup(f.abs)
     }
   })
 
-  it('裸 `{ item }`（通用解构，如 el-select）失败', () => {
+  it('裸 `{ item }`（通用解构，如 el-select）告警但不阻断', () => {
     const f = fixture({ 'sel.vue': '<template><el-select><template #default="{ item }"><span>{{ item }}</span></template></el-select></template>\n' })
     try {
       const r = runSlotGate(f.rel)
-      expect(r.code).toBe(1)
+      expect(r.code).toBe(0)
     } finally {
       cleanup(f.abs)
     }
   })
 
-  it('裸 `{ node, data }` 变体失败', () => {
+  it('裸 `{ node, data }` 变体告警但不阻断', () => {
     const f = fixture({ 'tree2.vue': '<template><el-tree><template #default="{ node, data }"><span>{{ node.label }}</span></template></el-tree></template>\n' })
     try {
       const r = runSlotGate(f.rel)
-      expect(r.code).toBe(1)
+      expect(r.code).toBe(0)
     } finally {
       cleanup(f.abs)
     }

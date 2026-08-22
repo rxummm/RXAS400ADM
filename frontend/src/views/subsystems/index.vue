@@ -16,7 +16,7 @@
         <el-table-column prop="SUBSYSTEM_NAME" :label="$t('subsystems.name')" min-width="130" />
         <el-table-column prop="SUBSYSTEM_DESCRIPTION" :label="$t('subsystems.description')" min-width="180" />
         <el-table-column :label="$t('subsystems.status')" width="110">
-          <template #default="{ row }: { row: SubsystemRow }">
+          <template #default="{ row }">
             <el-tag :type="row.STATUS === 'ACTIVE' ? 'success' : 'info'" size="small">{{ row.STATUS }}</el-tag>
           </template>
         </el-table-column>
@@ -24,7 +24,7 @@
         <el-table-column prop="MAXIMUM_ACTIVE_JOBS" :label="$t('subsystems.maxJobs')" width="110" />
         <el-table-column prop="SUBSYSTEM_LIBRARY" :label="$t('subsystems.library')" min-width="100" />
         <el-table-column :label="$t('common.operation')" width="180" fixed="right">
-          <template #default="{ row }: { row: SubsystemRow }">
+          <template #default="{ row }">
             <el-button
               v-has-perm="'SUBSYSTEM_MANAGE'"
               v-if="row.STATUS !== 'ACTIVE'"
@@ -58,6 +58,10 @@
 </template>
 
 <script setup lang="ts">
+
+// keep-alive 缓存标识，需与路由 name 一致
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'Subsystems' })
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import QueryBar from '@/components/QueryBar.vue'

@@ -35,6 +35,8 @@ export default {
     show: '显示',
     hide: '隐藏',
     close: '关闭',
+    notFound: '页面不存在',
+    backToHome: '返回首页',
     enable: '启用',
     disable: '停用',
     read: '已读',
