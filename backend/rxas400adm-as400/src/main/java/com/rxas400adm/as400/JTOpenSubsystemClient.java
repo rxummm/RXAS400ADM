@@ -3,7 +3,8 @@ package com.rxas400adm.as400;
 import com.rxas400adm.as400.model.SubsystemRow;
 
 import java.util.List;
-import java.util.Map;
+import static com.rxas400adm.as400.JTOpenConnectionState.str;
+import static com.rxas400adm.as400.JTOpenConnectionState.lng;
 
 /**
  * JTOpen SubsystemClient 委托实现（子系统状态与启停）。
@@ -47,23 +48,5 @@ class JTOpenSubsystemClient implements SubsystemClient {
                 + JTOpenConnectionState.requireIdentifier(name, "子系统名") + " OPTION(*IMMED)");
     }
 
-    private static String str(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        return v == null ? "" : String.valueOf(v);
-    }
 
-    private static long lng(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        if (v instanceof Number n) {
-            return n.longValue();
-        }
-        if (v != null && !String.valueOf(v).isBlank()) {
-            try {
-                return Long.parseLong(String.valueOf(v).trim());
-            } catch (NumberFormatException ignored) {
-                return 0;
-            }
-        }
-        return 0;
-    }
 }

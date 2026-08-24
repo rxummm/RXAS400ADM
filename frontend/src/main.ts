@@ -2,7 +2,6 @@ import { createApp } from 'vue'
 import axios from 'axios'
 import { createPinia } from 'pinia'
 import { ElMessage } from 'element-plus'
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import 'element-plus/dist/index.css'
 import 'element-plus/theme-chalk/dark/css-vars.css'
 import '@/styles/theme.css'
@@ -10,6 +9,7 @@ import '@/styles/common.css'
 import '@/styles/responsive.css'
 import 'nprogress/nprogress.css'
 import { FontAwesomeIcon } from '@/icons'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
 import i18n from './i18n'
@@ -54,7 +54,9 @@ app.config.warnHandler = (msg: string) => {
 
 app.component('FontAwesomeIcon', FontAwesomeIcon)
 
-// 全局注册所有 Element Plus 图标（SubMenu 通过 <component :is="iconName" /> 动态渲染）
+// 全局注册所有 Element Plus 图标（SubMenu 通过 <component :is="iconName" /> 动态渲染）。
+// 2026-08-23 决策：曾试点「白名单按需注册」省 ~34KB gzip，但会导致上线后新增图标必须前端发版；
+// 运维平台菜单图标属运行时数据，免发版优先于包体，故维持全量注册（详见分析报告 低-17 条目）。
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }

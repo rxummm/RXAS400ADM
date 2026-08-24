@@ -11,13 +11,12 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 
 /**
- * 日历事件（rx_calendar_event）：按创建人隔离，月/范围/今日查询 + CRUD。
+ * 日历事件（rx_calendar_event）：按创建人隔离，月查询 + CRUD。
  * 参照旧项目 CalendarEventService。
  */
 @Service
@@ -33,22 +32,6 @@ public class CalendarEventService implements ICalendarEventService {
                 .ge(CalendarEvent::getEventDate, ym.atDay(1))
                 .le(CalendarEvent::getEventDate, ym.atEndOfMonth())
                 .orderByAsc(CalendarEvent::getEventDate)
-                .orderByAsc(CalendarEvent::getStartTime));
-    }
-
-    /** 按日期范围查询 */
-    public List<CalendarEvent> range(String startDate, String endDate, Long userId) {
-        return eventMapper.selectList(baseWrapper(userId)
-                .ge(CalendarEvent::getEventDate, LocalDate.parse(startDate))
-                .le(CalendarEvent::getEventDate, LocalDate.parse(endDate))
-                .orderByAsc(CalendarEvent::getEventDate)
-                .orderByAsc(CalendarEvent::getStartTime));
-    }
-
-    /** 今日事件 */
-    public List<CalendarEvent> today(Long userId) {
-        return eventMapper.selectList(baseWrapper(userId)
-                .eq(CalendarEvent::getEventDate, LocalDate.now())
                 .orderByAsc(CalendarEvent::getStartTime));
     }
 

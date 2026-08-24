@@ -8,13 +8,47 @@ import java.util.Map;
 
 /**
  * Mock SqlClient 委托实现（SQL 查询仿真路由，含活动作业/ASP/子系统/作业日志/消息队列/业务表）。
+ * queryList 的关键字路由收敛为 {@link LinkedHashMap} 路由表（中-4），保持原 if 链的
+ * contains 匹配顺序语义；兜底仍是业务表 SELECT 模拟。
  */
 class MockSqlClient implements SqlClient {
 
+    /** 关键字 → 行生成函数；遍历顺序即匹配优先级 */
+    @FunctionalInterface
+    private interface SqlRows {
+        List<Map<String, Object>> rows(String upperSql);
+    }
+
     private final MockState state;
+    private final Map<String, SqlRows> listRoutes;
 
     MockSqlClient(MockState state) {
         this.state = state;
+        this.listRoutes = new LinkedHashMap<>();
+        this.listRoutes.put("ACTIVE_JOB_INFO", this::mockActiveJobs);
+        this.listRoutes.put("ASP_INFO", sql -> mockAspNet());
+        this.listRoutes.put("SUBSYSTEM_INFO", sql -> List.of(
+                MockState.row("SUBSYSTEM_NAME", "QINTER", "STATUS", "ACTIVE"),
+                MockState.row("SUBSYSTEM_NAME", "QBATCH", "STATUS", "ACTIVE"),
+                MockState.row("SUBSYSTEM_NAME", "QHTTPSVR", "STATUS", "ACTIVE"),
+                MockState.row("SUBSYSTEM_NAME", "QUSRWRK", "STATUS", "ACTIVE")));
+        this.listRoutes.put("NETSTAT_INFO", sql -> List.of(
+                MockState.row("LOCAL_ADDRESS", "10.1.1.10", "REMOTE_ADDRESS", "10.2.3.4", "STATE", "ESTABLISHED"),
+                MockState.row("LOCAL_ADDRESS", "10.1.1.10", "REMOTE_ADDRESS", "10.5.6.7", "STATE", "ESTABLISHED"),
+                MockState.row("LOCAL_ADDRESS", "10.1.1.10", "REMOTE_ADDRESS", "10.5.6.7", "STATE", "LISTEN")));
+        this.listRoutes.put("OUTPUT_QUEUE_INFO", sql -> List.of(
+                MockState.row("OUTPUT_QUEUE", "QPRINT", "OUTPUT_QUEUE_LIBRARY", "QUSRSYS", "SPOOLED_FILE_STATUS", "READY"),
+                MockState.row("OUTPUT_QUEUE", "QPRINT", "OUTPUT_QUEUE_LIBRARY", "QUSRSYS", "SPOOLED_FILE_STATUS", "HELD"),
+                MockState.row("OUTPUT_QUEUE", "QPRINT", "OUTPUT_QUEUE_LIBRARY", "QUSRSYS", "SPOOLED_FILE_STATUS", "READY"),
+                MockState.row("OUTPUT_QUEUE", "QSYSPRT", "OUTPUT_QUEUE_LIBRARY", "QUSRSYS", "SPOOLED_FILE_STATUS", "READY")));
+        this.listRoutes.put("JOBLOG_INFO", sql -> mockJobLog());
+        this.listRoutes.put("MESSAGE_QUEUE_INFO", sql -> List.of(
+                MockState.row("MESSAGE_ID", "CPA0701", "MESSAGE_TYPE", "INQUIRY",
+                        "MESSAGE_TEXT", "Reply to message (CPA0701)", "REPLY_STATUS", "MSGW"),
+                MockState.row("MESSAGE_ID", "CPF1241", "MESSAGE_TYPE", "INFORMATIONAL",
+                        "MESSAGE_TEXT", "Job ended normally", "REPLY_STATUS", "")));
+        this.listRoutes.put("SYSTABLES", this::mockSysTables);
+        this.listRoutes.put("SYSCOLUMNS", this::mockSysColumns);
     }
 
     private double fluctuate(double base, double amplitude) {
@@ -41,47 +75,10 @@ class MockSqlClient implements SqlClient {
     @Override
     public List<Map<String, Object>> queryList(String sql) {
         String upper = sql.toUpperCase();
-        if (upper.contains("ACTIVE_JOB_INFO")) {
-            return mockActiveJobs(upper);
-        }
-        if (upper.contains("ASP_INFO")) {
-            return mockAspNet();
-        }
-        if (upper.contains("SUBSYSTEM_INFO")) {
-            return List.of(
-                    MockState.row("SUBSYSTEM_NAME", "QINTER", "STATUS", "ACTIVE"),
-                    MockState.row("SUBSYSTEM_NAME", "QBATCH", "STATUS", "ACTIVE"),
-                    MockState.row("SUBSYSTEM_NAME", "QHTTPSVR", "STATUS", "ACTIVE"),
-                    MockState.row("SUBSYSTEM_NAME", "QUSRWRK", "STATUS", "ACTIVE"));
-        }
-        if (upper.contains("NETSTAT_INFO")) {
-            return List.of(
-                    MockState.row("LOCAL_ADDRESS", "10.1.1.10", "REMOTE_ADDRESS", "10.2.3.4", "STATE", "ESTABLISHED"),
-                    MockState.row("LOCAL_ADDRESS", "10.1.1.10", "REMOTE_ADDRESS", "10.5.6.7", "STATE", "ESTABLISHED"),
-                    MockState.row("LOCAL_ADDRESS", "10.1.1.10", "REMOTE_ADDRESS", "10.5.6.7", "STATE", "LISTEN"));
-        }
-        if (upper.contains("OUTPUT_QUEUE_INFO")) {
-            return List.of(
-                    MockState.row("OUTPUT_QUEUE", "QPRINT", "OUTPUT_QUEUE_LIBRARY", "QUSRSYS", "SPOOLED_FILE_STATUS", "READY"),
-                    MockState.row("OUTPUT_QUEUE", "QPRINT", "OUTPUT_QUEUE_LIBRARY", "QUSRSYS", "SPOOLED_FILE_STATUS", "HELD"),
-                    MockState.row("OUTPUT_QUEUE", "QPRINT", "OUTPUT_QUEUE_LIBRARY", "QUSRSYS", "SPOOLED_FILE_STATUS", "READY"),
-                    MockState.row("OUTPUT_QUEUE", "QSYSPRT", "OUTPUT_QUEUE_LIBRARY", "QUSRSYS", "SPOOLED_FILE_STATUS", "READY"));
-        }
-        if (upper.contains("JOBLOG_INFO")) {
-            return mockJobLog();
-        }
-        if (upper.contains("MESSAGE_QUEUE_INFO")) {
-            return List.of(
-                    MockState.row("MESSAGE_ID", "CPA0701", "MESSAGE_TYPE", "INQUIRY",
-                            "MESSAGE_TEXT", "Reply to message (CPA0701)", "REPLY_STATUS", "MSGW"),
-                    MockState.row("MESSAGE_ID", "CPF1241", "MESSAGE_TYPE", "INFORMATIONAL",
-                            "MESSAGE_TEXT", "Job ended normally", "REPLY_STATUS", ""));
-        }
-        if (upper.contains("SYSTABLES")) {
-            return mockSysTables(upper);
-        }
-        if (upper.contains("SYSCOLUMNS")) {
-            return mockSysColumns(upper);
+        for (Map.Entry<String, SqlRows> route : listRoutes.entrySet()) {
+            if (upper.contains(route.getKey())) {
+                return route.getValue().rows(upper);
+            }
         }
         List<Map<String, Object>> tableRows = mockSelectAll(upper);
         if (tableRows != null) {

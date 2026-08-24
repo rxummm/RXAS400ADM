@@ -58,17 +58,17 @@
           <template #default="{ row }">
             <el-switch
               :model-value="row.status === 1"
-              @change="(val: any) => onToggleStatus(row, val)"
+              @change="(val: string | number | boolean) => onToggleStatus(row as SysMenu, Boolean(val))"
             />
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="240" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" type="success" plain @click="openCreate(row)">
+            <el-button size="small" type="success" plain @click="openCreate(row as SysMenu)">
               <el-icon><Plus /></el-icon> {{ $t('menu.manage.addChild') }}
             </el-button>
-            <el-button size="small" @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
-            <el-button size="small" type="danger" @click="onDelete(row)">
+            <el-button size="small" @click="openEdit(row as SysMenu)">{{ $t('common.edit') }}</el-button>
+            <el-button size="small" type="danger" @click="onDelete(row as SysMenu)">
               {{ $t('common.delete') }}
             </el-button>
           </template>

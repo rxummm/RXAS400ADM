@@ -1,11 +1,13 @@
 package com.rxas400adm.as400;
 
+import com.rxas400adm.as400.model.MessageDescriptor;
 import com.rxas400adm.as400.model.MessageFileRow;
 import com.rxas400adm.as400.model.MessageRow;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import static com.rxas400adm.as400.JTOpenConnectionState.str;
+import static com.rxas400adm.as400.JTOpenConnectionState.lng;
 
 /**
  * JTOpen MessageFileClient 委托实现（消息文件列表 / 消息描述增删改查）。
@@ -57,27 +59,28 @@ class JTOpenMessageFileClient implements MessageFileClient {
     }
 
     @Override
-    public CommandResult addMessage(String library, String file, String id, String text,
-                                    String secondLevel, int severity) {
-        if (file == null || file.isBlank() || id == null || id.isBlank()) {
-            return CommandResult.fail("消息文件与消息 ID 不能为空");
-        }
-        String lib = library == null || library.isBlank() ? "QSYS" : JTOpenConnectionState.requireIdentifier(library, "库名");
-        String cmd = "ADDMSGD MSGID(" + JTOpenConnectionState.requireIdentifier(id, "消息 ID") + ") MSGF(" + lib + "/"
-                + JTOpenConnectionState.requireIdentifier(file, "消息文件") + ") MSG('" + text.replace("'", "''") + "')"
-                + (secondLevel == null || secondLevel.isBlank() ? "" : " SECLVL('" + secondLevel.replace("'", "''") + "')")
-                + " SEV(" + Math.max(0, Math.min(severity, 99)) + ")";
-        return commandClient.execute(cmd);
+    public CommandResult addMessage(MessageDescriptor msg) {
+        return messageDdlCommand("ADDMSGD", msg);
     }
 
     @Override
-    public CommandResult updateMessage(String library, String file, String id, String text,
-                                       String secondLevel, int severity) {
+    public CommandResult updateMessage(MessageDescriptor msg) {
+        return messageDdlCommand("CHGMSGD", msg);
+    }
+
+    /** ADDMSGD/CHGMSGD 共用拼装：仅动词不同，MSGID/MSGF/MSG/SECLVL/SEV 完全一致 */
+    private CommandResult messageDdlCommand(String verb, MessageDescriptor msg) {
+        String library = msg.library();
+        String file = msg.file();
+        String id = msg.id();
+        String text = msg.text();
+        String secondLevel = msg.secondLevel();
+        int severity = msg.severity();
         if (file == null || file.isBlank() || id == null || id.isBlank()) {
             return CommandResult.fail("消息文件与消息 ID 不能为空");
         }
         String lib = library == null || library.isBlank() ? "QSYS" : JTOpenConnectionState.requireIdentifier(library, "库名");
-        String cmd = "CHGMSGD MSGID(" + JTOpenConnectionState.requireIdentifier(id, "消息 ID") + ") MSGF(" + lib + "/"
+        String cmd = verb + " MSGID(" + JTOpenConnectionState.requireIdentifier(id, "消息 ID") + ") MSGF(" + lib + "/"
                 + JTOpenConnectionState.requireIdentifier(file, "消息文件") + ") MSG('" + text.replace("'", "''") + "')"
                 + (secondLevel == null || secondLevel.isBlank() ? "" : " SECLVL('" + secondLevel.replace("'", "''") + "')")
                 + " SEV(" + Math.max(0, Math.min(severity, 99)) + ")";
@@ -94,23 +97,5 @@ class JTOpenMessageFileClient implements MessageFileClient {
                 + JTOpenConnectionState.requireIdentifier(file, "消息文件") + ")");
     }
 
-    private static String str(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        return v == null ? "" : String.valueOf(v);
-    }
 
-    private static long lng(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        if (v instanceof Number n) {
-            return n.longValue();
-        }
-        if (v != null && !String.valueOf(v).isBlank()) {
-            try {
-                return Long.parseLong(String.valueOf(v).trim());
-            } catch (NumberFormatException ignored) {
-                return 0;
-            }
-        }
-        return 0;
-    }
 }

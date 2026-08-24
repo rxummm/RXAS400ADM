@@ -53,7 +53,7 @@
       <el-alert type="info" :title="$t('dashboard.customizeHint')" :closable="false" class="mb16" />
       <div v-for="w in widgetOptions" :key="w.key" class="widget-toggle">
         <span>{{ $t(w.label) }}</span>
-        <el-switch :model-value="isWidgetOn(w.key)" @change="(val: any) => toggleWidget(w.key, val)" />
+        <el-switch :model-value="isWidgetOn(w.key)" @change="(val: string | number | boolean) => toggleWidget(w.key, Boolean(val))" />
       </div>
     </el-dialog>
   </div>

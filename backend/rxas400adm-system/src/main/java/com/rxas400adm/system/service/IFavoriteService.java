@@ -3,7 +3,6 @@ package com.rxas400adm.system.service;
 import com.rxas400adm.system.vo.FavoriteVO;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 快捷收藏服务接口（rx_favorite）。

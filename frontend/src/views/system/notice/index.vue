@@ -42,10 +42,10 @@
             <el-button link type="primary" size="small" @click="openEdit(row)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button link type="primary" size="small" @click="onPreview(row)">
+            <el-button link type="primary" size="small" @click="onPreview(row as Notice)">
               {{ $t('docs.preview') }}
             </el-button>
-            <el-button link type="danger" size="small" @click="onDelete(row)">
+            <el-button link type="danger" size="small" @click="onDelete(row as Notice)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -70,7 +70,7 @@
             :active-text="$t('notice.published')"
             :inactive-text="$t('notice.unpublished')"
             inline-prompt
-            @change="(val: any) => (form.status = val ? 1 : 0)"
+            @change="(val: string | number | boolean) => (form.status = val ? 1 : 0)"
           />
         </el-form-item>
       </el-form>

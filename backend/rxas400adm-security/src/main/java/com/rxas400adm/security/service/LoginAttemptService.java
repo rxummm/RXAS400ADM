@@ -90,8 +90,7 @@ public class LoginAttemptService implements ILoginAttemptService {
         }
         attemptMapper.incrementFailure(username, server, ip);
         LoginAttempt updated = find(username, server);
-        if (updated != null && updated.getFailedCount() != null
-                && updated.getFailedCount() >= maxFailed && updated.getLockedUntil() == null) {
+        if (shouldLock(updated)) {
             LoginAttempt lock = new LoginAttempt();
             lock.setLockedUntil(LocalDateTime.now().plus(Duration.ofMinutes(lockMinutes)));
             attemptMapper.update(lock, new LambdaUpdateWrapper<LoginAttempt>()
@@ -129,6 +128,12 @@ public class LoginAttemptService implements ILoginAttemptService {
         if (counter.incrementAndGet() > maxIpPerMinute) {
             throw new BusinessException(ErrorCode.LOGIN_TOO_MANY, "登录尝试过于频繁，请稍后再试");
         }
+    }
+
+    /** 达到失败阈值且尚未锁定（中-9：四段 && 判空/阈值链收敛为谓词，锁定语义单点维护） */
+    private boolean shouldLock(LoginAttempt attempt) {
+        return attempt != null && attempt.getFailedCount() != null
+                && attempt.getFailedCount() >= maxFailed && attempt.getLockedUntil() == null;
     }
 
     private LoginAttempt find(String username, Long serverId) {

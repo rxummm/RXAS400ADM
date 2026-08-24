@@ -30,8 +30,8 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="130" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="openItemDialog(row)">{{ $t('common.edit') }}</el-button>
-            <el-button link type="danger" size="small" @click="removeItem(row)">{{ $t('common.delete') }}</el-button>
+            <el-button link type="primary" size="small" @click="openItemDialog(row as DictItem)">{{ $t('common.edit') }}</el-button>
+            <el-button link type="danger" size="small" @click="removeItem(row as DictItem)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>

@@ -13,6 +13,5 @@ public interface IAuditLogService {
                                 String action, String keyword);
 
     /** 登录审计写入（失败不影响登录主流程，内部吞异常） */
-    void auditLogin(String action, String username, String ip, String source,
-                    Long serverId, String detail);
+    void auditLogin(LoginAuditContext ctx);
 }

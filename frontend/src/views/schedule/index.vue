@@ -32,7 +32,7 @@
               v-has-perm="'SCHEDULE_MANAGE'"
               :model-value="row.enabled"
               size="small"
-              @change="(v: any) => toggle(row, v)"
+              @change="(v: string | number | boolean) => toggle(row as JobSchedule, Boolean(v))"
             />
           </template>
         </el-table-column>
@@ -54,12 +54,12 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button v-has-perm="'SCHEDULE_MANAGE'" size="small" type="primary" plain :loading="runningId === row.id" @click="run(row)">
+            <el-button v-has-perm="'SCHEDULE_MANAGE'" size="small" type="primary" plain :loading="runningId === row.id" @click="run(row as JobSchedule)">
               {{ $t('schedule.runNow') }}
             </el-button>
-            <el-button size="small" @click="showHistory(row)">{{ $t('schedule.history') }}</el-button>
-            <el-button v-has-perm="'SCHEDULE_MANAGE'" size="small" type="warning" plain @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
-            <el-button v-has-perm="'SCHEDULE_MANAGE'" size="small" type="danger" plain @click="remove(row)">{{ $t('common.delete') }}</el-button>
+            <el-button size="small" @click="showHistory(row as JobSchedule)">{{ $t('schedule.history') }}</el-button>
+            <el-button v-has-perm="'SCHEDULE_MANAGE'" size="small" type="warning" plain @click="openEdit(row as JobSchedule)">{{ $t('common.edit') }}</el-button>
+            <el-button v-has-perm="'SCHEDULE_MANAGE'" size="small" type="danger" plain @click="remove(row as JobSchedule)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -67,7 +67,7 @@
       <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="form.id ? $t('schedule.edit') : $t('schedule.create')" width="560px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px">
       <el-form :model="form" label-width="100px">
         <el-form-item :label="$t('schedule.name')" required>
           <el-input v-model="form.name" />
@@ -96,7 +96,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="saving" @click="save">{{ $t('common.save') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="onSubmit">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
@@ -131,6 +131,7 @@ import QueryBar from '@/components/QueryBar.vue'
 import { useI18n } from 'vue-i18n'
 import { useAs400ServerStore, type As400Server } from '@/stores/as400Server'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
+import { useFormDialog } from '@/composables/useFormDialog'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 import {
@@ -150,7 +151,6 @@ import {
 const { t } = useI18n()
 const as400Store = useAs400ServerStore()
 const servers = ref<As400Server[]>([])
-const saving = ref(false)
 const runningId = ref(0)
 
 const {
@@ -174,14 +174,40 @@ const {
   searchFields: ['name', 'command', 'cronExpr'],
 })
 
-const dialogVisible = ref(false)
-const form = ref<JobScheduleRequest & { id?: number }>({
-  name: '',
-  serverId: 0,
-  scheduleType: 'CL',
-  command: '',
-  cronExpr: '0 0 6 * * ?',
-  enabled: true,
+type ScheduleForm = JobScheduleRequest & { id?: number }
+
+const {
+  dialogVisible,
+  dialogTitle,
+  loading: saving,
+  form,
+  openCreate,
+  openEdit,
+  onSubmit,
+} = useFormDialog<ScheduleForm>({
+  defaultForm: () => ({
+    name: '',
+    serverId: servers.value[0]?.id || 0,
+    scheduleType: 'CL',
+    command: '',
+    cronExpr: '0 0 6 * * ?',
+    enabled: true,
+  }),
+  saveApi: async (isEdit, data) => {
+    const payload: JobScheduleRequest = {
+      name: data.name,
+      serverId: data.serverId,
+      scheduleType: data.scheduleType,
+      command: data.command,
+      cronExpr: data.cronExpr,
+      enabled: data.enabled,
+    }
+    if (isEdit && data.id) await updateSchedule(data.id, payload)
+    else await createSchedule(payload)
+  },
+  onSuccess: () => fetchData({}, true),
+  i18nPrefix: 'schedule',
+  validate: false,
 })
 
 const historyVisible = ref(false)
@@ -206,44 +232,6 @@ const resultText = (status: string, msg?: string | null) => {
 const resultClass = (status: string) => (status === 'FAILED' ? 'text-danger' : '')
 
 const load = () => fetchData({}, true)
-
-const openCreate = () => {
-  form.value = { name: '', serverId: servers.value[0]?.id || 0, scheduleType: 'CL', command: '', cronExpr: '0 0 6 * * ?', enabled: true }
-  dialogVisible.value = true
-}
-
-const openEdit = (row: JobSchedule) => {
-  form.value = { id: row.id, name: row.name, serverId: row.serverId, scheduleType: row.scheduleType, command: row.command, cronExpr: row.cronExpr, enabled: row.enabled }
-  dialogVisible.value = true
-}
-
-const save = async () => {
-  if (!form.value.name || !form.value.serverId || !form.value.command || !form.value.cronExpr) {
-    ElMessage.warning(t('schedule.required'))
-    return
-  }
-  saving.value = true
-  try {
-    const payload: JobScheduleRequest = {
-      name: form.value.name,
-      serverId: form.value.serverId,
-      scheduleType: form.value.scheduleType,
-      command: form.value.command,
-      cronExpr: form.value.cronExpr,
-      enabled: form.value.enabled,
-    }
-    if (form.value.id) {
-      await updateSchedule(form.value.id, payload)
-    } else {
-      await createSchedule(payload)
-    }
-    ElMessage.success(t('common.save'))
-    dialogVisible.value = false
-    await load()
-  } finally {
-    saving.value = false
-  }
-}
 
 const toggle = async (row: JobSchedule, v: boolean) => {
   await toggleSchedule(row.id, v)

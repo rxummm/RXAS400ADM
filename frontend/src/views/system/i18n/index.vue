@@ -26,18 +26,18 @@
       <RxSkeleton type="table" :rows="8" :loading="loading">
         <el-table :data="pagedData" size="small" border stripe class="w-full">
         <el-table-column prop="lang" :label="$t('sysI18n.lang')" width="100" align="center">
-          <template #default="{ row }: { row: I18nEntry }">
+          <template #default="{ row }">
             <el-tag size="small">{{ row.lang }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="i18nKey" :label="$t('sysI18n.key')" width="260" show-overflow-tooltip />
         <el-table-column prop="text" :label="$t('sysI18n.text')" min-width="220" show-overflow-tooltip />
         <el-table-column :label="$t('common.operation')" width="140" fixed="right">
-          <template #default="{ row }: { row: I18nEntry }">
-            <el-button link type="primary" size="small" @click="openEdit(row)">
+          <template #default="{ row }">
+            <el-button link type="primary" size="small" @click="openEdit(row as I18nEntry)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button link type="danger" size="small" @click="onDelete(row)">
+            <el-button link type="danger" size="small" @click="onDelete(row as I18nEntry)">
               {{ $t('common.delete') }}
             </el-button>
           </template>

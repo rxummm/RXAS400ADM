@@ -40,10 +40,10 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" :width="canDelete ? 150 : 100" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="row.readFlag === 0" link type="primary" size="small" @click="onRead(row)">
+            <el-button v-if="row.readFlag === 0" link type="primary" size="small" @click="onRead(row as Notification)">
               {{ $t('notification.markRead') }}
             </el-button>
-            <el-button v-if="canDelete" link type="danger" size="small" @click="onDelete(row)">
+            <el-button v-if="canDelete" link type="danger" size="small" @click="onDelete(row as Notification)">
               {{ $t('common.delete') }}
             </el-button>
           </template>

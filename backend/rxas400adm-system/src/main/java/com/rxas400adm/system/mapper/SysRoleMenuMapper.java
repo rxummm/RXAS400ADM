@@ -14,8 +14,6 @@ public interface SysRoleMenuMapper extends BaseMapper<SysRoleMenu> {
 
     int deleteByRoleId(@Param("roleId") Long roleId);
 
-    List<Long> selectMenuIdsByRoleId(@Param("roleId") Long roleId);
-
     int insertBatch(@Param("roleId") Long roleId, @Param("menuIds") List<Long> menuIds);
 
     List<Long> selectMenuIdsByRoleIds(@Param("roleIds") List<Long> roleIds);

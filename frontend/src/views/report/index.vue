@@ -83,7 +83,7 @@
                   v-has-perm="'REPORT_MANAGE'"
                   :model-value="row.enabled"
                   size="small"
-                  @change="(v: any) => toggle(row, v)"
+                  @change="(v: string | number | boolean) => toggle(row as ReportSchedule, Boolean(v))"
                 />
               </template>
             </el-table-column>
@@ -107,12 +107,12 @@
             </el-table-column>
             <el-table-column :label="$t('common.operation')" width="240" fixed="right">
               <template #default="{ row }">
-                <el-button v-has-perm="'REPORT_MANAGE'" size="small" type="primary" plain :loading="runningId === row.id" @click="run(row)">
+                <el-button v-has-perm="'REPORT_MANAGE'" size="small" type="primary" plain :loading="runningId === row.id" @click="run(row as ReportSchedule)">
                   {{ $t('reports.runNow') }}
                 </el-button>
-                <el-button size="small" @click="showHistory(row)">{{ $t('reports.history') }}</el-button>
-                <el-button v-has-perm="'REPORT_MANAGE'" size="small" type="warning" plain @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
-                <el-button v-has-perm="'REPORT_MANAGE'" size="small" type="danger" plain @click="remove(row)">{{ $t('common.delete') }}</el-button>
+                <el-button size="small" @click="showHistory(row as ReportSchedule)">{{ $t('reports.history') }}</el-button>
+                <el-button v-has-perm="'REPORT_MANAGE'" size="small" type="warning" plain @click="openEdit(row as ReportSchedule)">{{ $t('common.edit') }}</el-button>
+                <el-button v-has-perm="'REPORT_MANAGE'" size="small" type="danger" plain @click="remove(row as ReportSchedule)">{{ $t('common.delete') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -136,7 +136,7 @@
         </el-table-column>
         <el-table-column prop="message" :label="$t('reports.message')" min-width="220" show-overflow-tooltip />
         <el-table-column :label="$t('reports.fileSize')" width="110">
-          <template #default="{ row }">{{ formatBytes(row.fileBytes) }}</template>
+          <template #default="{ row }">{{ formatSize(row.fileBytes) }}</template>
         </el-table-column>
       </el-table>
       </RxSkeleton>
@@ -229,10 +229,6 @@ const reportTypeLabel = (type: string) => {
   return t('reports.kindExecutions')
 }
 
-const formatBytes = (n: number | null | undefined) => {
-  if (!n) return '-'
-  return formatSize(n)
-}
 
 const loadSchedules = async () => {
   scheduleLoading.value = true

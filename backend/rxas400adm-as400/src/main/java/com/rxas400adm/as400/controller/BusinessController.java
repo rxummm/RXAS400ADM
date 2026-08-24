@@ -53,12 +53,13 @@ public class BusinessController {
 
     @GetMapping("/data")
     @PreAuthorize("hasAuthority('QUERY_EXECUTE')")
+    // 服务层返回遗留 Map 载荷，columns/rows 需一次性收窄；方法级抑制以覆盖构造器实参中的两处受检转换
+    @SuppressWarnings("unchecked")
     public ApiResponse<TableDataVO> data(@RequestParam String library,
                                          @RequestParam String table,
                                          @RequestParam(required = false) String keyword,
                                          @RequestParam(defaultValue = "1") int page,
                                          @RequestParam(defaultValue = "10") int size) {
-        @SuppressWarnings("unchecked")
         Map<String, Object> raw = businessService.data(library, table, keyword, page, size);
         return ApiResponse.success(new TableDataVO(
                 raw.get("total") instanceof Number n ? n.longValue() : 0L,

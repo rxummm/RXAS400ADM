@@ -1,4 +1,5 @@
 package com.rxas400adm.security.controller;
+import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
@@ -11,8 +12,6 @@ import com.rxas400adm.security.vo.IpRuleVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,7 +49,7 @@ public class IpRuleController {
     @PreAuthorize("hasAuthority('SYS_IP_MANAGE')")
     @OperateLog(module = "登录安全", operation = "新增 IP 规则")
     public ApiResponse<IpRuleVO> create(@Valid @RequestBody IpRuleCreateDTO dto) {
-        return ApiResponse.success(IpRuleVO.from(ipRuleService.create(dto, currentUsername())));
+        return ApiResponse.success(IpRuleVO.from(ipRuleService.create(dto, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/{id}")
@@ -66,9 +65,5 @@ public class IpRuleController {
     public ApiResponse<Void> delete(@PathVariable Long id) {
         ipRuleService.delete(id);
         return ApiResponse.success(null);
-    }
-
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 }

@@ -61,10 +61,10 @@
 // keep-alive 缓存标识，需与路由 name 一致
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'Monitor' })
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElNotification } from 'element-plus'
-import * as echarts from '@/utils/echarts'
+import { useECharts } from '@/composables/useECharts'
 import { useStompClient } from '@/composables/useStompClient'
 import { fetchCapacity, fetchMetrics, fetchOverview, type CapacityResponse, type MetricOverview, type MetricPoint } from '@/api/monitor'
 import AppPagination from '@/components/AppPagination.vue'
@@ -95,13 +95,45 @@ const onMetricsSizeChange = () => {
   metricsCurrent.value = 1
 }
 
-let cpuInstance: echarts.ECharts | null = null
-let memoryInstance: echarts.ECharts | null = null
-let diskInstance: echarts.ECharts | null = null
-let capacityInstance: echarts.ECharts | null = null
 const cpuData = ref<number[]>([])
 const memoryData = ref<number[]>([])
 const diskData = ref<number[]>([])
+
+/** 四图基准配置 + 生命周期全交由 useECharts 托管（init/resize/dispose） */
+const lineBase = (title: string) => ({
+  title: { text: title, left: 'center' },
+  tooltip: { trigger: 'axis' },
+  xAxis: { type: 'category', data: [] as number[] },
+  yAxis: { type: 'value', max: 100 },
+  series: [{ type: 'line', smooth: true, areaStyle: {}, data: [] as number[] }],
+})
+const cpu = useECharts(cpuChart, () => lineBase(t('monitor.cpu')))
+const memory = useECharts(memoryChart, () => lineBase(t('monitor.memory')))
+const disk = useECharts(diskChart, () => lineBase(t('monitor.disk')))
+const capacityChartCtl = useECharts(capacityChart, () => ({
+  title: { text: t('monitor.capacity'), left: 'center' },
+  tooltip: { trigger: 'axis' },
+  legend: { data: [t('monitor.capAvg'), t('monitor.capPred')], bottom: 0 },
+  xAxis: { type: 'category', data: [] as string[] },
+  yAxis: { type: 'value', max: 100 },
+  series: [
+    { name: t('monitor.capAvg'), type: 'line', smooth: true, areaStyle: {}, data: [] as (number | null)[] },
+    { name: t('monitor.capPred'), type: 'line', smooth: true, lineStyle: { type: 'dashed' }, data: [] as (number | null)[] },
+  ],
+}))
+
+/** 追加数据点并重绘单序列折线（30 点滑动窗口，原 pushCpu/pushMemory/pushDisk 三胞胎收敛于此） */
+const pushLine = (chart: ReturnType<typeof useECharts>, data: Ref<number[]>, v: number) => {
+  data.value.push(v)
+  if (data.value.length > 30) data.value.shift()
+  chart.setOption({
+    xAxis: { data: data.value.map((_, i) => i + 1) },
+    series: [{ data: data.value }],
+  })
+}
+const pushCpu = (v: number) => pushLine(cpu, cpuData, v)
+const pushMemory = (v: number) => pushLine(memory, memoryData, v)
+const pushDisk = (v: number) => pushLine(disk, diskData, v)
 
 /** 当前监控服务器 id（F-02：替代硬编码 1，随 X-AS400-Server 切换）
  * 注意不能用 `?? 1`：currentServerId 初始为 0，`0 ?? 1` 仍得 0；
@@ -110,72 +142,6 @@ const sid = (): number => {
   if (as400Store.currentServerId) return as400Store.currentServerId
   const def = as400Store.serverList.find((s) => s.defaultServer)
   return def?.id || 1
-}
-
-const initCharts = () => {
-  cpuInstance = echarts.init(cpuChart.value!)
-  memoryInstance = echarts.init(memoryChart.value!)
-  diskInstance = echarts.init(diskChart.value!)
-  cpuInstance.setOption({
-    title: { text: t('monitor.cpu'), left: 'center' },
-    tooltip: { trigger: 'axis' },
-    xAxis: { type: 'category', data: [] },
-    yAxis: { type: 'value', max: 100 },
-    series: [{ type: 'line', smooth: true, areaStyle: {}, data: [] }],
-  })
-  memoryInstance.setOption({
-    title: { text: t('monitor.memory'), left: 'center' },
-    tooltip: { trigger: 'axis' },
-    xAxis: { type: 'category', data: [] },
-    yAxis: { type: 'value', max: 100 },
-    series: [{ type: 'line', smooth: true, areaStyle: {}, data: [] }],
-  })
-  diskInstance.setOption({
-    title: { text: t('monitor.disk'), left: 'center' },
-    tooltip: { trigger: 'axis' },
-    xAxis: { type: 'category', data: [] },
-    yAxis: { type: 'value', max: 100 },
-    series: [{ type: 'line', smooth: true, areaStyle: {}, data: [] }],
-  })
-  capacityInstance = echarts.init(capacityChart.value!)
-  capacityInstance.setOption({
-    title: { text: t('monitor.capacity'), left: 'center' },
-    tooltip: { trigger: 'axis' },
-    legend: { data: [t('monitor.capAvg'), t('monitor.capPred')], bottom: 0 },
-    xAxis: { type: 'category', data: [] },
-    yAxis: { type: 'value', max: 100 },
-    series: [
-      { name: t('monitor.capAvg'), type: 'line', smooth: true, areaStyle: {}, data: [] },
-      { name: t('monitor.capPred'), type: 'line', smooth: true, lineStyle: { type: 'dashed' }, data: [] },
-    ],
-  })
-}
-
-const pushCpu = (v: number) => {
-  cpuData.value.push(v)
-  if (cpuData.value.length > 30) cpuData.value.shift()
-  cpuInstance?.setOption({
-    xAxis: { data: cpuData.value.map((_, i) => i + 1) },
-    series: [{ data: cpuData.value }],
-  })
-}
-
-const pushMemory = (v: number) => {
-  memoryData.value.push(v)
-  if (memoryData.value.length > 30) memoryData.value.shift()
-  memoryInstance?.setOption({
-    xAxis: { data: memoryData.value.map((_, i) => i + 1) },
-    series: [{ data: memoryData.value }],
-  })
-}
-
-const pushDisk = (v: number) => {
-  diskData.value.push(v)
-  if (diskData.value.length > 30) diskData.value.shift()
-  diskInstance?.setOption({
-    xAxis: { data: diskData.value.map((_, i) => i + 1) },
-    series: [{ data: diskData.value }],
-  })
 }
 
 let wsNotifyClose: (() => void) | null = null
@@ -208,8 +174,8 @@ const connectSocket = () => {
       // 断线回调：显示重连提示（不自动关闭）
       if (!wsNotifyClose) {
         wsNotifyClose = ElNotification({
-          title: '⚡ 实时连接断开',
-          message: '正在尝试重新连接…',
+          title: t('monitor.wsDisconnected'),
+          message: t('monitor.wsReconnecting'),
           type: 'warning',
           duration: 0,
           position: 'bottom-right',
@@ -227,7 +193,7 @@ const loadCapacity = async () => {
     const pred = data.prediction || []
     const dates = points.map((p: { date: string }) => p.date)
     const predDates = pred.map((p: { date: string }) => p.date)
-    capacityInstance?.setOption({
+    capacityChartCtl.setOption({
       xAxis: { data: [...dates, ...predDates] },
       series: [
         { data: [...points.map((p: { avg: number }) => p.avg), ...predDates.map(() => null)] },
@@ -260,23 +226,13 @@ const load = async () => {
 // P2：监控轮询定时器句柄——模块级变量（组件卸载即清理，无全局泄漏）
 let pollTimer: number | undefined
 
-// P3：窗口 resize 时联动 4 个 ECharts（与 topology 页一致的响应式行为）
-const onResize = () => {
-  cpuInstance?.resize()
-  memoryInstance?.resize()
-  diskInstance?.resize()
-  capacityInstance?.resize()
-}
-
 onMounted(async () => {
-  initCharts()
   // 先确保服务器列表已加载（selector 挂载前 store 可能为空，currentServerId 为 0）
   await as400Store.fetchServers()
   load()
   loadCapacity()
   connectSocket()
   pollTimer = window.setInterval(load, 10000)
-  window.addEventListener('resize', onResize)
 })
 
 watch(
@@ -296,11 +252,6 @@ onBeforeUnmount(() => {
     clearInterval(pollTimer)
     pollTimer = undefined
   }
-  window.removeEventListener('resize', onResize)
-  cpuInstance?.dispose()
-  memoryInstance?.dispose()
-  diskInstance?.dispose()
-  capacityInstance?.dispose()
 })
 </script>
 

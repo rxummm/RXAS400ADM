@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 报表定时任务（2.5.18）：按 cron 生成 PDF/Excel 并通过邮件通道推送。

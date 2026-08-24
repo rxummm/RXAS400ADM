@@ -20,9 +20,14 @@ class MockIfsClient implements IfsClient {
         this.state = state;
     }
 
+    /** 路径规范化：反斜杠统一为正斜杠，null 视为空串（中-12：11 处重复 replace 收敛于此） */
+    private static String normalizePath(String path) {
+        return path == null ? "" : path.replace('\\', '/');
+    }
+
     @Override
     public List<IfsEntry> listIfsDir(String path) {
-        String dir = path == null || path.isBlank() ? "/QOpenSys/rxas400" : path.replace('\\', '/');
+        String dir = path == null || path.isBlank() ? "/QOpenSys/rxas400" : normalizePath(path);
         while (dir.length() > 1 && dir.endsWith("/")) {
             dir = dir.substring(0, dir.length() - 1);
         }
@@ -45,7 +50,7 @@ class MockIfsClient implements IfsClient {
         }
         String targetDirForDirs = dir;
         state.mockIfsDirs.forEach(dirPath -> {
-            String normalized = dirPath.replace('\\', '/');
+            String normalized = normalizePath(dirPath);
             int slash = normalized.lastIndexOf('/');
             String parent = slash <= 0 ? "/" : normalized.substring(0, slash);
             if (parent.equalsIgnoreCase(targetDirForDirs)) {
@@ -54,7 +59,7 @@ class MockIfsClient implements IfsClient {
         });
         String targetDir = dir;
         state.mockIfsFiles.forEach((filePath, content) -> {
-            String normalized = filePath.replace('\\', '/');
+            String normalized = normalizePath(filePath);
             int slash = normalized.lastIndexOf('/');
             String parent = slash <= 0 ? "/" : normalized.substring(0, slash);
             if (parent.equalsIgnoreCase(targetDir)) {
@@ -74,7 +79,7 @@ class MockIfsClient implements IfsClient {
         List<IfsEntry> rows = new ArrayList<>();
         TreeSet<String> seenDirs = new TreeSet<>();
         state.mockIfsFiles.forEach((filePath, content) -> {
-            String normalized = filePath.replace('\\', '/');
+            String normalized = normalizePath(filePath);
             if (!normalized.toUpperCase().startsWith(IfsClient.TRASH_ROOT.toUpperCase())) {
                 return;
             }
@@ -94,7 +99,7 @@ class MockIfsClient implements IfsClient {
             }
         });
         state.mockIfsDirs.forEach(dirPath -> {
-            String normalized = dirPath.replace('\\', '/');
+            String normalized = normalizePath(dirPath);
             if (!normalized.toUpperCase().startsWith(IfsClient.TRASH_ROOT.toUpperCase())) {
                 return;
             }
@@ -121,7 +126,7 @@ class MockIfsClient implements IfsClient {
 
     @Override
     public String readIfsFile(String path) {
-        String name = path == null ? "" : path.replace('\\', '/');
+        String name = normalizePath(path);
         String file = name.substring(name.lastIndexOf('/') + 1);
         if (state.mockIfsFiles.containsKey(name)) {
             return new String(state.mockIfsFiles.get(name), StandardCharsets.UTF_8);
@@ -145,7 +150,7 @@ class MockIfsClient implements IfsClient {
         if (path == null || path.isBlank()) {
             return false;
         }
-        String file = path.replace('\\', '/');
+        String file = normalizePath(path);
         while (file.length() > 1 && file.endsWith("/")) {
             file = file.substring(0, file.length() - 1);
         }
@@ -158,7 +163,7 @@ class MockIfsClient implements IfsClient {
         if (path == null || path.isBlank()) {
             return false;
         }
-        String dir = path.replace('\\', '/');
+        String dir = normalizePath(path);
         while (dir.length() > 1 && dir.endsWith("/")) {
             dir = dir.substring(0, dir.length() - 1);
         }
@@ -171,7 +176,7 @@ class MockIfsClient implements IfsClient {
         if (path == null || path.isBlank()) {
             return null;
         }
-        String file = path.replace('\\', '/');
+        String file = normalizePath(path);
         while (file.length() > 1 && file.endsWith("/")) {
             file = file.substring(0, file.length() - 1);
         }
@@ -202,7 +207,7 @@ class MockIfsClient implements IfsClient {
         if (trashPath == null || trashPath.isBlank()) {
             return false;
         }
-        String t = trashPath.replace('\\', '/');
+        String t = normalizePath(trashPath);
         while (t.length() > 1 && t.endsWith("/")) {
             t = t.substring(0, t.length() - 1);
         }
@@ -237,7 +242,7 @@ class MockIfsClient implements IfsClient {
         if (path == null || path.isBlank()) {
             return null;
         }
-        String name = path.replace('\\', '/');
+        String name = normalizePath(path);
         if (state.mockIfsFiles.containsKey(name)) {
             return state.mockIfsFiles.get(name);
         }

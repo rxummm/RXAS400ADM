@@ -12,8 +12,8 @@
         <el-input v-model="form.email" />
       </el-form-item>
       <el-form-item :label="t('users.roles')">
-        <el-select v-model="form.roleIds as any" multiple class="w-full" :placeholder="t('users.roles')">
-          <el-option v-for="r in roles" :key="r.id" :label="r.roleName || r.roleCode" :value="r.id" />
+        <el-select v-model="form.roleIds as number[]" multiple class="w-full" :placeholder="t('users.roles')">
+          <el-option v-for="r in roles" :key="r.id" :label="r.roleName || r.roleCode" :value="r.id as number" />
         </el-select>
       </el-form-item>
       <el-form-item v-if="isEdit" :label="t('common.status')">

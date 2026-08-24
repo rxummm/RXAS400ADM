@@ -106,6 +106,8 @@ export default {
   },
   config: {
     title: '系统配置',
+    add: '新建配置',
+    edit: '编辑配置',
     key: '参数键',
     keyHint: '如 alert.webhook.url',
     value: '参数值',

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 快捷收藏（rx_favorite）：按用户增删查；同一 path 幂等切换。

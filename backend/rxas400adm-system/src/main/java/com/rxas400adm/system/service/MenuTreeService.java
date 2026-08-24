@@ -175,38 +175,12 @@ public class MenuTreeService {
     }
 
     private Set<Long> collectDescendants(Long parentId, List<SysMenu> allMenus) {
-        Set<Long> result = new java.util.HashSet<>();
-        Map<Long, List<SysMenu>> byParent = allMenus.stream()
-                .filter(m -> m.getParentId() != null)
-                .collect(Collectors.groupingBy(SysMenu::getParentId));
-        java.util.Deque<Long> stack = new java.util.ArrayDeque<>();
-        stack.push(parentId);
-        while (!stack.isEmpty()) {
-            Long cur = stack.pop();
-            for (SysMenu child : byParent.getOrDefault(cur, List.of())) {
-                result.add(child.getId());
-                stack.push(child.getId());
-            }
-        }
-        return result;
+        return MenuTreeSupport.collectDescendants(parentId, allMenus);
     }
 
     /** 构建树（通用） */
     List<SysMenu> buildTree(List<SysMenu> menus) {
-        Map<Long, SysMenu> byId = menus.stream().collect(Collectors.toMap(SysMenu::getId, m -> m));
-        List<SysMenu> roots = new ArrayList<>();
-        for (SysMenu menu : menus) {
-            if (menu.getParentId() != null && byId.containsKey(menu.getParentId())) {
-                SysMenu parent = byId.get(menu.getParentId());
-                if (parent.getChildren() == null) {
-                    parent.setChildren(new ArrayList<>());
-                }
-                parent.getChildren().add(menu);
-            } else {
-                roots.add(menu);
-            }
-        }
-        return roots;
+        return MenuTreeSupport.buildTree(menus);
     }
 
     public List<MenuVO> toMenuVOList(List<SysMenu> menus) {

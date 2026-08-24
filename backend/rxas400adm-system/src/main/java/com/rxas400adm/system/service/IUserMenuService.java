@@ -19,6 +19,4 @@ public interface IUserMenuService {
     void addUserMenus(Long userId, List<Long> menuIds);
 
     void removeUserMenus(Long userId, List<Long> menuIds);
-
-    void setUserMenus(Long userId, List<Long> menuIds);
 }

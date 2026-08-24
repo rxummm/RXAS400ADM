@@ -142,45 +142,13 @@ public class UserMenuService implements IUserMenuService {
         }
     }
 
-    /** 设置授权（替换模式：清空后写入勾选，不影响角色授权） */
-    
-    public void setUserMenus(Long userId, List<Long> menuIds) {
-        requireUser(userId);
-        userMenuMapper.deleteByUserId(userId);
-        addUserMenus(userId, menuIds == null ? List.of() : menuIds);
-    }
-
-    /** 递归收集所有子孙节点 ID */
+    /** 递归收集所有子孙节点 ID（共享实现见 MenuTreeSupport） */
     private Set<Long> collectDescendantIds(Long parentId, List<SysMenu> allMenus) {
-        Set<Long> result = new HashSet<>();
-        Map<Long, List<SysMenu>> byParent = allMenus.stream()
-                .filter(m -> m.getParentId() != null)
-                .collect(Collectors.groupingBy(SysMenu::getParentId));
-        java.util.Deque<Long> stack = new java.util.ArrayDeque<>();
-        stack.push(parentId);
-        while (!stack.isEmpty()) {
-            Long cur = stack.pop();
-            for (SysMenu child : byParent.getOrDefault(cur, List.of())) {
-                result.add(child.getId());
-                stack.push(child.getId());
-            }
-        }
-        return result;
+        return MenuTreeSupport.collectDescendants(parentId, allMenus);
     }
 
     private List<SysMenu> buildTree(List<SysMenu> menus) {
-        Map<Long, SysMenu> byId = menus.stream().collect(Collectors.toMap(SysMenu::getId, m -> m));
-        List<SysMenu> roots = new ArrayList<>();
-        for (SysMenu menu : menus) {
-            if (menu.getParentId() != null && byId.containsKey(menu.getParentId())) {
-                SysMenu parent = byId.get(menu.getParentId());
-                if (parent.getChildren() == null) parent.setChildren(new ArrayList<>());
-                parent.getChildren().add(menu);
-            } else {
-                roots.add(menu);
-            }
-        }
-        return roots;
+        return MenuTreeSupport.buildTree(menus);
     }
 
     private void requireUser(Long userId) {

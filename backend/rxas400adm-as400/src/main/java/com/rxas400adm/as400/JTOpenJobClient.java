@@ -15,6 +15,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import static com.rxas400adm.as400.JTOpenConnectionState.str;
+import static com.rxas400adm.as400.JTOpenConnectionState.lng;
 
 /**
  * JTOpen JobClient 委托实现（作业队列 / SPOOL / SLA / 依赖图）。
@@ -166,23 +168,5 @@ class JTOpenJobClient implements JobClient {
                 String.valueOf(o).trim().replace(' ', 'T')));
     }
 
-    private static String str(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        return v == null ? "" : String.valueOf(v);
-    }
 
-    private static long lng(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        if (v instanceof Number n) {
-            return n.longValue();
-        }
-        if (v != null && !String.valueOf(v).isBlank()) {
-            try {
-                return Long.parseLong(String.valueOf(v).trim());
-            } catch (NumberFormatException ignored) {
-                return 0;
-            }
-        }
-        return 0;
-    }
 }

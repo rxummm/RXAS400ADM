@@ -18,19 +18,19 @@
               <template #default="{ row }">
                 <el-switch v-has-perm="'WEBHOOK_MANAGE'"
                   :model-value="row.enabled === 1"
-                  @change="(val: any) => onToggle(row, val)"
+                  @change="(val: string | number | boolean) => onToggle(row as WebhookConfig, Boolean(val))"
                 />
               </template>
             </el-table-column>
             <el-table-column :label="$t('common.operation')" width="200" fixed="right">
               <template #default="{ row }">
-                <el-button v-has-perm="'WEBHOOK_MANAGE'" link type="primary" size="small" @click="onTest(row)">
+                <el-button v-has-perm="'WEBHOOK_MANAGE'" link type="primary" size="small" @click="onTest(row as WebhookConfig)">
                   {{ $t('webhooks.test') }}
                 </el-button>
                 <el-button v-has-perm="'WEBHOOK_MANAGE'" link type="primary" size="small" @click="openEdit(row)">
                   {{ $t('common.edit') }}
                 </el-button>
-                <el-button v-has-perm="'WEBHOOK_MANAGE'" link type="danger" size="small" @click="onDelete(row)">
+                <el-button v-has-perm="'WEBHOOK_MANAGE'" link type="danger" size="small" @click="onDelete(row as WebhookConfig)">
                   {{ $t('common.delete') }}
                 </el-button>
               </template>

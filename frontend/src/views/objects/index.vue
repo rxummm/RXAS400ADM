@@ -35,7 +35,7 @@
         <el-table-column prop="OBJECT_CREATION_TIMESTAMP" :label="$t('objects.created')" width="180" />
         <el-table-column :label="$t('common.operation')" width="100" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" type="primary" plain @click="openDetail(row)">{{ $t('objects.detail') }}</el-button>
+            <el-button size="small" type="primary" plain @click="openDetail(row as ObjectRow)">{{ $t('objects.detail') }}</el-button>
           </template>
         </el-table-column>
       </el-table>

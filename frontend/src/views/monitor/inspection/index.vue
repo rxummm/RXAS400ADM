@@ -194,7 +194,5 @@ onMounted(async () => {
 .info-row span {
   color: var(--text-secondary);
 }
-.mt16 {
-  margin-top: 16px;
-}
+/* 低-10：mt16 已收敛至 src/styles/common.css 全局工具类，删除 scoped 重复定义 */
 </style>

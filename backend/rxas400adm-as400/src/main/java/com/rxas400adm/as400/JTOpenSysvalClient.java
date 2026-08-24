@@ -3,7 +3,7 @@ package com.rxas400adm.as400;
 import com.rxas400adm.as400.model.SysvalRow;
 
 import java.util.List;
-import java.util.Map;
+import static com.rxas400adm.as400.JTOpenConnectionState.str;
 
 /**
  * JTOpen SysvalClient 委托实现（系统值查询与修改）。
@@ -37,8 +37,4 @@ class JTOpenSysvalClient implements SysvalClient {
                 + ") VALUE('" + value.trim().replace("'", "''") + "')");
     }
 
-    private static String str(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        return v == null ? "" : String.valueOf(v);
-    }
 }

@@ -1,5 +1,6 @@
 package com.rxas400adm.as400;
 
+import com.rxas400adm.as400.model.MessageDescriptor;
 import com.rxas400adm.as400.model.MessageFileRow;
 import com.rxas400adm.as400.model.MessageRow;
 
@@ -64,8 +65,9 @@ class MockMessageFileClient implements MessageFileClient {
     }
 
     @Override
-    public CommandResult addMessage(String library, String file, String id, String text,
-                                    String secondLevel, int severity) {
+    public CommandResult addMessage(MessageDescriptor msg) {
+        String library = msg.library(); String file = msg.file(); String id = msg.id();
+        String text = msg.text(); String secondLevel = msg.secondLevel(); int severity = msg.severity();
         if (file == null || file.isBlank() || id == null || id.isBlank()) {
             return CommandResult.fail("消息文件与消息 ID 不能为空");
         }
@@ -80,8 +82,9 @@ class MockMessageFileClient implements MessageFileClient {
     }
 
     @Override
-    public CommandResult updateMessage(String library, String file, String id, String text,
-                                       String secondLevel, int severity) {
+    public CommandResult updateMessage(MessageDescriptor msg) {
+        String library = msg.library(); String file = msg.file(); String id = msg.id();
+        String text = msg.text(); String secondLevel = msg.secondLevel(); int severity = msg.severity();
         if (file == null || file.isBlank() || id == null || id.isBlank()) {
             return CommandResult.fail("消息文件与消息 ID 不能为空");
         }

@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**

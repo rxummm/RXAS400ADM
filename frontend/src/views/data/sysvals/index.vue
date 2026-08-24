@@ -52,7 +52,7 @@
         <el-table-column prop="SYSTEM_VALUE_TYPE" :label="$t('sysvals.type')" width="90" align="center" />
         <el-table-column :label="$t('common.operation')" width="100" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button v-has-perm="'SYSVAL_EDIT'" size="small" type="primary" plain :icon="Edit" @click="openEdit(row)">
+            <el-button v-has-perm="'SYSVAL_EDIT'" size="small" type="primary" plain :icon="Edit" @click="openEdit(row as SystemValue)">
               {{ $t('sysvals.modify') }}
             </el-button>
           </template>

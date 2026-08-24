@@ -10,8 +10,7 @@ import com.rxas400adm.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.rxas400adm.common.util.SecurityUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
@@ -47,7 +45,7 @@ public class ScheduleController {
     @PreAuthorize("hasAuthority('SCHEDULE_MANAGE')")
     @OperateLog(module = "作业调度", operation = "创建调度任务")
     public ApiResponse<JobScheduleVO> create(@Valid @RequestBody JobScheduleRequest request) {
-        return ApiResponse.success(JobScheduleVO.from(scheduleService.create(request, currentUsername())));
+        return ApiResponse.success(JobScheduleVO.from(scheduleService.create(request, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/{id}")
@@ -86,7 +84,5 @@ public class ScheduleController {
         return ApiResponse.success(scheduleService.history(id).stream().map(JobScheduleHistoryVO::from).toList());
     }
 
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
-    }
+
 }

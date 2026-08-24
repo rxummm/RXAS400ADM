@@ -44,19 +44,19 @@
               v-has-perm="'ALERT_MANAGE'"
               :model-value="row.enabled"
               size="small"
-              @change="(v: any) => toggle(row, v)"
+              @change="(v: string | number | boolean) => toggle(row as AlertRule, Boolean(v))"
             />
           </template>
         </el-table-column>
         <el-table-column prop="description" :label="$t('alertRules.description')" min-width="180" show-overflow-tooltip>
-          <template #default="{ row }">{{ descText(row) }}</template>
+          <template #default="{ row }">{{ descText(row as AlertRule) }}</template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="140" fixed="right">
           <template #default="{ row }">
-            <el-button v-has-perm="'ALERT_MANAGE'" size="small" type="warning" plain @click="openEdit(row)">
+            <el-button v-has-perm="'ALERT_MANAGE'" size="small" type="warning" plain @click="openEdit(row as AlertRule)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button v-has-perm="'ALERT_MANAGE'" size="small" type="danger" plain @click="remove(row)">
+            <el-button v-has-perm="'ALERT_MANAGE'" size="small" type="danger" plain @click="remove(row as AlertRule)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -66,7 +66,7 @@
       <AppPagination :total="rows.length" v-model:current="current" v-model:size="size" @change="() => {}" @size-change="() => { current = 1 }" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="form.id ? $t('alertRules.edit') : $t('alertRules.add')" width="560px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px">
       <el-form :model="form" label-width="110px">
         <el-form-item :label="$t('alertRules.metric')" required>
           <el-select v-model="form.metricName" filterable allow-create default-first-option class="w-full">
@@ -96,8 +96,7 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('alertRules.server')">
-          <el-select v-model="form.serverId as any" class="w-full" clearable>
-            <el-option :label="$t('alertRules.allServers')" :value="undefined" />
+          <el-select v-model="form.serverId as number | null" class="w-full" clearable :placeholder="$t('alertRules.allServers')" @clear="form.serverId = null">
             <el-option v-for="s in servers" :key="s.id" :label="`${s.name} (${s.host})`" :value="s.id" />
           </el-select>
         </el-form-item>
@@ -119,7 +118,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="saving" @click="save">{{ $t('common.save') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="onSubmit">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -135,6 +134,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useAs400ServerStore, type As400Server } from '@/stores/as400Server'
+import { useFormDialog } from '@/composables/useFormDialog'
 import {
   createAlertRule,
   deleteAlertRule,
@@ -148,8 +148,7 @@ import RxSkeleton from '@/components/RxSkeleton.vue'
 
 const { t, te } = useI18n()
 
-/** W3：种子规则 description 存 code（cpuCritical 等），映射 i18n；用户自建规则存原文直接展示。
- * 不能用 $t(...) || row.description 兜底——vue-i18n 缺失 key 返回 key 本身（truthy），兜底永不生效。 */
+/** W3：种子规则 description 存 code（cpuCritical 等），映射 i18n；用户自建规则存原文直接展示。 */
 const descText = (row: AlertRule) => {
   const key = `alertRules.descriptions.${row.description}`
   return te(key) ? t(key) : (row.description || '-')
@@ -160,7 +159,6 @@ const metricOptions = ['CPU', 'MEMORY', 'DISK', 'NETWORK', 'MSGW', 'LCKW', 'PRIN
 const servers = ref<As400Server[]>([])
 const rows = ref<AlertRule[]>([])
 const loading = ref(false)
-const saving = ref(false)
 const current = ref(1)
 const size = ref(10)
 
@@ -192,63 +190,48 @@ const load = async () => {
   }
 }
 
-const emptyForm = () => ({
-  id: undefined as number | undefined,
-  metricName: 'CPU',
-  operator: '>',
-  threshold: 90,
-  durationSeconds: 300,
-  level: 'WARNING',
-  channel: 'ALL',
-  serverId: null as number | null,
-  description: '',
-  enabled: true,
+type AlertRuleForm = {
+  id?: number
+  metricName: string
+  operator: string
+  threshold: number
+  durationSeconds: number
+  level: string
+  channel: string
+  serverId: number | null
+  description: string
+  enabled: boolean
+}
+
+const {
+  dialogVisible,
+  dialogTitle,
+  loading: saving,
+  form,
+  openCreate,
+  openEdit,
+  onSubmit,
+} = useFormDialog<AlertRuleForm>({
+  defaultForm: () => ({
+    metricName: 'CPU',
+    operator: '>',
+    threshold: 90,
+    durationSeconds: 300,
+    level: 'WARNING',
+    channel: 'ALL',
+    serverId: null,
+    description: '',
+    enabled: true,
+  }),
+  saveApi: async (isEdit, data) => {
+    const { id: _id, ...payload } = data
+    if (isEdit && data.id) await updateAlertRule(data.id, payload)
+    else await createAlertRule(payload)
+  },
+  onSuccess: () => load(),
+  i18nPrefix: 'alertRules',
+  validate: false,
 })
-
-const dialogVisible = ref(false)
-const form = ref(emptyForm())
-
-const openCreate = () => {
-  form.value = emptyForm()
-  dialogVisible.value = true
-}
-
-const openEdit = (row: AlertRule) => {
-  form.value = {
-    id: row.id,
-    metricName: row.metricName,
-    operator: row.operator,
-    threshold: row.threshold,
-    durationSeconds: row.durationSeconds || 0,
-    level: row.level,
-    channel: row.channel || 'ALL',
-    serverId: row.serverId ?? null,
-    description: row.description || '',
-    enabled: row.enabled !== false,
-  }
-  dialogVisible.value = true
-}
-
-const save = async () => {
-  if (!form.value.metricName || form.value.threshold == null) {
-    ElMessage.warning(t('alertRules.required'))
-    return
-  }
-  saving.value = true
-  try {
-    const { id: _id, ...payload } = form.value
-    if (form.value.id) {
-      await updateAlertRule(form.value.id, payload)
-    } else {
-      await createAlertRule(payload)
-    }
-    ElMessage.success(t('common.save'))
-    dialogVisible.value = false
-    await load()
-  } finally {
-    saving.value = false
-  }
-}
 
 const toggle = async (row: AlertRule, v: boolean) => {
   await toggleAlertRule(row.id!, v)

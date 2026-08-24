@@ -55,6 +55,7 @@ export default {
   },
   schedule: {
     title: 'Job Schedule Center (Timed CL / SQL)',
+    add: 'Create Task',
     create: 'Create Task',
     edit: 'Edit Task',
     name: 'Task Name',
@@ -81,6 +82,7 @@ export default {
   },
   scripts: {
     title: 'Command Script Center (Save/Reuse CL)',
+    add: 'Create Script',
     create: 'Create Script',
     edit: 'Edit Script',
     name: 'Script Name',
@@ -120,7 +122,9 @@ export default {
     title: 'Job SLA',
     rules: 'SLA Rules',
     executions: 'Recent Execution Comparison',
+    add: 'Add SLA Rule',
     addRule: 'Add Rule',
+    edit: 'Edit SLA Rule',
     editTitle: 'Edit SLA Rule',
     jobName: 'Job Name',
     scheduleName: 'Description/Schedule',

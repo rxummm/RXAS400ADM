@@ -26,10 +26,10 @@
         <el-table-column prop="description" :label="$t('config.description')" min-width="220" show-overflow-tooltip />
         <el-table-column :label="$t('common.operation')" width="140" fixed="right">
           <template #default="{ row }">
-            <el-button v-has-perm="'SYS_CONFIG_MANAGE'" link type="primary" size="small" @click="openEdit(row)">
+            <el-button v-has-perm="'SYS_CONFIG_MANAGE'" link type="primary" size="small" @click="openEdit(row as SysConfig)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button v-has-perm="'SYS_CONFIG_MANAGE'" link type="danger" size="small" @click="onDelete(row)">
+            <el-button v-has-perm="'SYS_CONFIG_MANAGE'" link type="danger" size="small" @click="onDelete(row as SysConfig)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -40,7 +40,7 @@
     </div>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px" :close-on-click-modal="false">
-      <el-form ref="formRef" :model="form" :rules="formRules" label-width="90px">
+      <el-form :model="form" label-width="90px">
         <el-form-item :label="$t('config.key')" prop="configKey">
           <el-input v-model="form.configKey" :disabled="isEdit" :placeholder="$t('config.keyHint')" />
         </el-form-item>
@@ -53,14 +53,14 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="onSubmit">{{ $t('common.confirm') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="onSubmit">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -68,6 +68,7 @@ import { listConfigs, updateConfig, deleteConfig, type SysConfig } from '@/api/c
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
+import { useFormDialog } from '@/composables/useFormDialog'
 
 defineOptions({ name: 'SysConfig' })
 
@@ -95,17 +96,26 @@ const onSizeChange = () => {
   current.value = 1
 }
 
-const dialogVisible = ref(false)
-const dialogTitle = ref('')
-const isEdit = ref(false)
-const submitLoading = ref(false)
-const formRef = ref()
+type ConfigForm = { configKey: string; configValue: string; description: string }
 
-const defaultForm = () => ({ configKey: '', configValue: '', description: '' })
-const form = reactive(defaultForm())
-const formRules = {
-  configKey: [{ required: true, message: () => t('config.keyRequired'), trigger: 'blur' }],
-}
+const {
+  dialogVisible,
+  dialogTitle,
+  isEdit,
+  loading: saving,
+  form,
+  openCreate,
+  openEdit,
+  onSubmit,
+} = useFormDialog<ConfigForm>({
+  defaultForm: () => ({ configKey: '', configValue: '', description: '' }),
+  saveApi: async (_isEdit, data) => {
+    await updateConfig(data.configKey, { configValue: data.configValue, description: data.description })
+  },
+  onSuccess: () => forceSearch(),
+  i18nPrefix: 'config',
+  validate: false,
+})
 
 const resetSearch = () => {
   baseResetSearch()
@@ -113,20 +123,6 @@ const resetSearch = () => {
 
 const onSearch = () => {
   forceSearch()
-}
-
-function openCreate() {
-  isEdit.value = false
-  dialogTitle.value = t('common.create')
-  Object.assign(form, defaultForm())
-  dialogVisible.value = true
-}
-
-function openEdit(row: SysConfig) {
-  isEdit.value = true
-  dialogTitle.value = t('common.edit')
-  Object.assign(form, { configKey: row.configKey, configValue: row.configValue || '', description: row.description || '' })
-  dialogVisible.value = true
 }
 
 async function onDelete(row: SysConfig) {
@@ -137,20 +133,6 @@ async function onDelete(row: SysConfig) {
     forceSearch()
   } catch {
     /* cancelled */
-  }
-}
-
-async function onSubmit() {
-  const valid = await formRef.value?.validate().catch(() => false)
-  if (!valid) return
-  submitLoading.value = true
-  try {
-    await updateConfig(form.configKey, { configValue: form.configValue, description: form.description })
-    ElMessage.success(isEdit.value ? t('common.updateSuccess') : t('common.addSuccess'))
-    dialogVisible.value = false
-    forceSearch()
-  } finally {
-    submitLoading.value = false
   }
 }
 </script>

@@ -54,19 +54,19 @@
             <el-table-column prop="createdTime" :label="$t('users.createdTime')" width="180" />
             <el-table-column :label="$t('common.operation')" width="310" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
-                <el-button size="small" type="primary" plain @click="openPermManage(row)">
+                <el-button size="small" @click="openEdit(row as UserVO)">{{ $t('common.edit') }}</el-button>
+                <el-button size="small" type="primary" plain @click="openPermManage(row as UserVO)">
                   {{ $t('users.permManage') }}
                 </el-button>
                 <el-button
                   size="small"
                   :type="row.status === 'ACTIVE' ? 'warning' : 'success'"
                   plain
-                  @click="toggleStatus(row)"
+                  @click="toggleStatus(row as UserVO)"
                 >
                   {{ row.status === 'ACTIVE' ? $t('users.statusDisabled') : $t('users.statusActive') }}
                 </el-button>
-                <el-button size="small" type="danger" @click="remove(row)">
+                <el-button size="small" type="danger" @click="remove(row as UserVO)">
                   {{ $t('common.delete') }}
                 </el-button>
               </template>
@@ -113,7 +113,7 @@
             <el-table-column prop="lastFailTime" :label="$t('users.lastFail')" width="170" />
             <el-table-column :label="$t('common.operation')" width="90" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" type="primary" plain @click="unlock(row)">{{ $t('users.unlock') }}</el-button>
+                <el-button size="small" type="primary" plain @click="unlock(row as LoginAttemptRecord)">{{ $t('users.unlock') }}</el-button>
               </template>
             </el-table-column>
           </el-table>

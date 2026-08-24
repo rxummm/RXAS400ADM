@@ -1,4 +1,5 @@
 package com.rxas400adm.system.controller;
+import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
@@ -7,8 +8,6 @@ import com.rxas400adm.system.service.INotificationService;
 import com.rxas400adm.system.vo.NotificationVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,7 +22,6 @@ import com.rxas400adm.system.vo.BatchDeleteResultVO;
 import com.rxas400adm.system.vo.UnreadCountVO;
 
 import jakarta.validation.Valid;
-import java.util.List;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
@@ -42,25 +40,25 @@ public class NotificationController {
     public ApiResponse<PageResult<NotificationVO>> mine(@RequestParam(defaultValue = "1") int current,
                                                       @RequestParam(defaultValue = "20") int size,
                                                       @RequestParam(defaultValue = "false") boolean unreadOnly) {
-        return ApiResponse.success(notificationService.mine(currentUsername(), current, size, unreadOnly));
+        return ApiResponse.success(notificationService.mine(SecurityUtils.currentUsername(), current, size, unreadOnly));
     }
 
     @GetMapping("/unread-count")
     public ApiResponse<UnreadCountVO> unreadCount() {
-        return ApiResponse.success(new UnreadCountVO(notificationService.unreadCount(currentUsername())));
+        return ApiResponse.success(new UnreadCountVO(notificationService.unreadCount(SecurityUtils.currentUsername())));
     }
 
     @PostMapping("/{id}/read")
     @OperateLog(module = "通知中心", operation = "标记已读")
     public ApiResponse<Void> markRead(@PathVariable Long id) {
-        notificationService.markRead(id, currentUsername());
+        notificationService.markRead(id, SecurityUtils.currentUsername());
         return ApiResponse.success(null);
     }
 
     @PostMapping("/read-all")
     @OperateLog(module = "通知中心", operation = "全部标记已读")
     public ApiResponse<Void> markAllRead() {
-        notificationService.markAllRead(currentUsername());
+        notificationService.markAllRead(SecurityUtils.currentUsername());
         return ApiResponse.success(null);
     }
 
@@ -69,7 +67,7 @@ public class NotificationController {
     @PreAuthorize("hasAuthority('NOTIFICATION_MANAGE')")
     @OperateLog(module = "通知中心", operation = "删除通知")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        notificationService.delete(id, currentUsername());
+        notificationService.delete(id, SecurityUtils.currentUsername());
         return ApiResponse.success(null);
     }
 
@@ -78,11 +76,7 @@ public class NotificationController {
     @PreAuthorize("hasAuthority('NOTIFICATION_MANAGE')")
     @OperateLog(module = "通知中心", operation = "批量删除通知")
     public ApiResponse<BatchDeleteResultVO> batchDelete(@Valid @RequestBody BatchDeleteDTO body) {
-        int deleted = notificationService.deleteBatch(body.getIds(), currentUsername());
+        int deleted = notificationService.deleteBatch(body.getIds(), SecurityUtils.currentUsername());
         return ApiResponse.success(new BatchDeleteResultVO(deleted));
-    }
-
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 }

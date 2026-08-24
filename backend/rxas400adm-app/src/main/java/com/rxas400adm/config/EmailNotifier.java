@@ -24,7 +24,7 @@ public class EmailNotifier {
             return; // 未配置邮件，跳过
         }
         String to = sysConfigService.get("alert.email.to", "");
-        send(title, message, to, null, null, null, "alert.email");
+        send(new MailRequest(title, message, to, null, null, null, "alert.email"));
     }
 
     /**
@@ -32,14 +32,25 @@ public class EmailNotifier {
      * 附件为 null 时退化为纯文本邮件。SMTP 配置统一读 alert.email.*。
      */
     public void sendAttachment(String title, String text, String recipients, String filename, byte[] data) {
-        send(title, text, recipients, filename, data,
+        send(new MailRequest(title, text, recipients, filename, data,
                 filename != null && filename.toLowerCase().endsWith(".pdf")
                         ? "application/pdf" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "report.email");
+                "report.email"));
     }
 
-    private void send(String title, String text, String recipients, String filename, byte[] data,
-                      String contentType, String logTag) {
+    /** 邮件发送参数对象（中-6）：七参签名收敛 */
+    record MailRequest(String title, String text, String recipients, String filename,
+                       byte[] data, String contentType, String logTag) {
+    }
+
+    private void send(MailRequest req) {
+        String title = req.title();
+        String text = req.text();
+        String recipients = req.recipients();
+        String filename = req.filename();
+        byte[] data = req.data();
+        String contentType = req.contentType();
+        String logTag = req.logTag();
         String host = sysConfigService.get("alert.email.host", "");
         if (host.isBlank()) {
             log.debug("[{}] 未配置 SMTP（alert.email.host），跳过", logTag);

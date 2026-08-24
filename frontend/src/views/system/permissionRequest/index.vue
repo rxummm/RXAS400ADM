@@ -188,8 +188,12 @@ const menuTypeLabel = (type?: number) =>
         ? t('permissionRequest.typeButton')
         : t('permissionRequest.typeTab')
 
-function handleTreeCheck(_cur: any, state: any) {
-  checkedIds.value = state.checkedKeys
+interface TreeCheckState {
+  checkedKeys: Array<number | string>
+}
+
+function handleTreeCheck(_cur: unknown, state: TreeCheckState) {
+  checkedIds.value = state.checkedKeys as number[]
 }
 
 function removeMenu(menu: RequestableMenu) {

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import com.rxas400adm.common.config.ProfileResolver;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -55,6 +56,9 @@ class CompileControllerSecurityTest {
     private CompileService compileService;
     @MockBean
     private AuditLogMapper auditLogMapper;
+    // 切片过滤器排除普通 @Component（GlobalExceptionHandler 依赖），显式 Mock
+    @MockBean
+    private ProfileResolver profileResolver;
 
     @Test
     @DisplayName("未登录编译 → 401")

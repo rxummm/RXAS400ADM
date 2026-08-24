@@ -55,6 +55,7 @@ export default {
   },
   schedule: {
     title: '作业调度中心（定时执行 CL / SQL）',
+    add: '新建任务',
     create: '新建任务',
     edit: '编辑任务',
     name: '任务名称',
@@ -81,6 +82,7 @@ export default {
   },
   scripts: {
     title: '命令脚本中心（保存/复用 CL 命令）',
+    add: '新建脚本',
     create: '新建脚本',
     edit: '编辑脚本',
     name: '脚本名称',
@@ -120,7 +122,9 @@ export default {
     title: '作业 SLA',
     rules: 'SLA 规则',
     executions: '最近执行对比',
+    add: '新增 SLA 规则',
     addRule: '新增规则',
+    edit: '编辑 SLA 规则',
     editTitle: '编辑 SLA 规则',
     jobName: '作业名',
     scheduleName: '说明/调度名',

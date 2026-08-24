@@ -27,7 +27,7 @@
               link
               :type="row.favorite ? 'warning' : 'info'"
               :icon="row.favorite ? StarFilled : Star"
-              @click="toggleFav(row)"
+              @click="toggleFav(row as CommandScript)"
             />
           </template>
         </el-table-column>
@@ -47,11 +47,11 @@
             <el-select v-model="runServer[row.id]" :placeholder="$t('scripts.selectServer')" size="small" class="w-120">
               <el-option v-for="s in servers" :key="s.id" :label="s.name" :value="s.id" />
             </el-select>
-            <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" type="primary" plain :loading="runningId === row.id" @click="run(row)">
+            <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" type="primary" plain :loading="runningId === row.id" @click="run(row as CommandScript)">
               {{ $t('scripts.run') }}
             </el-button>
-            <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
-            <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" type="danger" plain @click="remove(row)">{{ $t('common.delete') }}</el-button>
+            <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" @click="openEdit(row as CommandScript)">{{ $t('common.edit') }}</el-button>
+            <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" type="danger" plain @click="remove(row as CommandScript)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -59,7 +59,7 @@
       <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="form.id ? $t('scripts.edit') : $t('scripts.create')" width="560px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px">
       <el-form :model="form" label-width="90px">
         <el-form-item :label="$t('scripts.name')" required>
           <el-input v-model="form.name" />
@@ -76,7 +76,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="saving" @click="save">{{ $t('common.save') }}</el-button>
+        <el-button type="primary" :loading="loading" @click="onSubmit">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -94,6 +94,7 @@ import QueryBar from '@/components/QueryBar.vue'
 import { useI18n } from 'vue-i18n'
 import { useAs400ServerStore, type As400Server } from '@/stores/as400Server'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
+import { useFormDialog } from '@/composables/useFormDialog'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 import {
@@ -112,7 +113,6 @@ const { t } = useI18n()
 const as400Store = useAs400ServerStore()
 const allTags = ref<string[]>([])
 const servers = ref<As400Server[]>([])
-const saving = ref(false)
 const runningId = ref(0)
 const tagFilter = ref<string | null>(null)
 const favOnly = ref(false)
@@ -151,8 +151,26 @@ const onFilterChange = () => {
   void fetchData({}, true)
 }
 
-const dialogVisible = ref(false)
-const form = ref<Partial<CommandScript> & { id?: number }>({ name: '', command: '', tags: '', favorite: false })
+type ScriptForm = Partial<CommandScript> & { id?: number }
+
+const {
+  dialogVisible,
+  dialogTitle,
+  loading: saving,
+  form,
+  openCreate,
+  openEdit,
+  onSubmit,
+} = useFormDialog<ScriptForm>({
+  defaultForm: () => ({ name: '', command: '', tags: '', favorite: false }),
+  saveApi: async (isEdit, data) => {
+    if (isEdit && data.id) await updateScript(data.id, data)
+    else await createScript(data)
+  },
+  onSuccess: () => fetchData({}, true),
+  i18nPrefix: 'scripts',
+  validate: false,
+})
 
 const splitTags = (tags?: string) => (tags || '').split(',').map((s) => s.trim()).filter(Boolean)
 
@@ -161,36 +179,6 @@ const loadTags = async () => {
     allTags.value = (await listScriptTags()) as string[]
   } catch {
     allTags.value = []
-  }
-}
-
-const openCreate = () => {
-  form.value = { name: '', command: '', tags: '', favorite: false }
-  dialogVisible.value = true
-}
-
-const openEdit = (row: CommandScript) => {
-  form.value = { id: row.id, name: row.name, command: row.command, tags: row.tags || '', favorite: row.favorite }
-  dialogVisible.value = true
-}
-
-const save = async () => {
-  if (!form.value.name || !form.value.command) {
-    ElMessage.warning(t('scripts.required'))
-    return
-  }
-  saving.value = true
-  try {
-    if (form.value.id) {
-      await updateScript(form.value.id, form.value)
-    } else {
-      await createScript(form.value)
-    }
-    ElMessage.success(t('common.save'))
-    dialogVisible.value = false
-    await fetchData({}, true)
-  } finally {
-    saving.value = false
   }
 }
 

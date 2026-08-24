@@ -89,6 +89,7 @@ public class SysUserServiceImpl implements SysUserService {
         user.setEmail(dto.getEmail());
         user.setStatus(dto.getStatus() == null ? "ACTIVE" : dto.getStatus());
         user.setLoginSource("PLATFORM");
+        user.setCreatedBy(com.rxas400adm.common.util.SecurityUtils.currentUsername());
         user.setCreatedTime(LocalDateTime.now());
         user.setUpdatedTime(LocalDateTime.now());
         userMapper.insert(user);

@@ -42,16 +42,16 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="300" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" type="primary" plain :loading="testingId === row.id" @click="test(row)">
+            <el-button size="small" type="primary" plain :loading="testingId === row.id" @click="test(row as IbmiSystem)">
               {{ $t('assets.test') }}
             </el-button>
-            <el-button v-has-perm="'AS400_MANAGE'" size="small" type="info" plain @click="openCommand(row)">
+            <el-button v-has-perm="'AS400_MANAGE'" size="small" type="info" plain @click="openCommand(row as IbmiSystem)">
               {{ $t('assets.command') }}
             </el-button>
-            <el-button v-has-perm="'AS400_MANAGE'" size="small" type="warning" plain @click="openEdit(row)">
+            <el-button v-has-perm="'AS400_MANAGE'" size="small" type="warning" plain @click="openEdit(row as IbmiSystem)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button v-has-perm="'AS400_MANAGE'" size="small" type="danger" plain @click="remove(row)">
+            <el-button v-has-perm="'AS400_MANAGE'" size="small" type="danger" plain @click="remove(row as IbmiSystem)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -62,7 +62,7 @@
     </div>
 
     <!-- 新增/编辑 -->
-    <el-dialog v-model="dialogVisible" :title="form.id ? $t('assets.edit') : $t('assets.add')" width="600px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px">
       <el-form :model="form" label-width="120px">
         <el-form-item :label="$t('assets.name')" required>
           <el-input v-model="form.name" />
@@ -123,7 +123,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="saving" @click="save">{{ $t('common.save') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="onSubmit">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
@@ -159,6 +159,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useAs400ServerStore } from '@/stores/as400Server'
+import { useFormDialog } from '@/composables/useFormDialog'
 import {
   createSystem,
   deleteSystem,
@@ -177,7 +178,6 @@ const as400Store = useAs400ServerStore()
 const systems = ref<IbmiSystem[]>([])
 const loading = ref(false)
 const testingId = ref(0)
-const saving = ref(false)
 const current = ref(1)
 const size = ref(10)
 
@@ -199,96 +199,82 @@ const envType = (env: string) => {
 const load = async () => {
   loading.value = true
   try {
-    // N2：资产清单为管理面（AS400_MANAGE），走完整 detail 接口拿到 username 等凭据字段
-    // 维护结果同步到全站：管理面改动后再刷一次普通列表给顶栏选择器/报表
     systems.value = await fetchSystemDetail()
-    // N2：管理面改动后强制刷新全站共享的服务器列表（顶栏选择器/报表等）
     as400Store.refreshServers()
   } finally {
     loading.value = false
   }
 }
 
-const emptyForm = () => ({
-  id: undefined as number | undefined,
-  name: '',
-  host: '',
-  port: 8470,
-  username: '',
-  password: '',
-  environment: 'TEST',
-  criticalLevel: 'NORMAL',
-  region: '',
-  haGroup: '',
-  defaultLibraries: '',
-  ccsid: 37,
-  sortOrder: 0,
-  description: '',
-  enabled: true,
-  defaultServer: false,
-  sslEnabled: false,
-})
-
-const dialogVisible = ref(false)
-const form = ref(emptyForm())
-
-const openCreate = () => {
-  form.value = emptyForm()
-  dialogVisible.value = true
+type AssetForm = {
+  id?: number
+  name: string
+  host: string
+  port: number
+  username: string
+  password: string
+  environment: string
+  criticalLevel: string
+  region: string
+  haGroup: string
+  defaultLibraries: string
+  ccsid: number
+  sortOrder: number
+  description: string
+  enabled: boolean
+  defaultServer: boolean
+  sslEnabled: boolean
 }
 
-const openEdit = (row: IbmiSystem) => {
-  form.value = {
-    id: row.id,
-    name: row.name,
-    host: row.host,
-    port: row.port,
-    username: row.username || '',
+const {
+  dialogVisible,
+  dialogTitle,
+  loading: saving,
+  form,
+  openCreate,
+  openEdit,
+  onSubmit,
+} = useFormDialog<AssetForm>({
+  defaultForm: () => ({
+    name: '',
+    host: '',
+    port: 8470,
+    username: '',
     password: '',
-    environment: row.environment || 'TEST',
-    criticalLevel: row.criticalLevel || 'NORMAL',
-    region: row.region || '',
-    haGroup: row.haGroup || '',
-    defaultLibraries: row.defaultLibraries || '',
-    ccsid: row.ccsid || 37,
-    sortOrder: row.sortOrder || 0,
-    description: row.description || '',
-    enabled: row.enabled !== false,
-    defaultServer: !!row.defaultServer,
-    sslEnabled: !!row.sslEnabled,
-  }
-  dialogVisible.value = true
-}
-
-const save = async () => {
-  if (!form.value.name || !form.value.host) {
-    ElMessage.warning(t('assets.required'))
-    return
-  }
-  if (!form.value.id && !form.value.password) {
-    ElMessage.warning(t('assets.passwordRequired'))
-    return
-  }
-  saving.value = true
-  try {
-    const payload: Partial<IbmiSystem> = { ...form.value }
+    environment: 'TEST',
+    criticalLevel: 'NORMAL',
+    region: '',
+    haGroup: '',
+    defaultLibraries: '',
+    ccsid: 37,
+    sortOrder: 0,
+    description: '',
+    enabled: true,
+    defaultServer: false,
+    sslEnabled: false,
+  }),
+  saveApi: async (isEdit, data) => {
+    if (!data.name || !data.host) {
+      ElMessage.warning(t('assets.required'))
+      return
+    }
+    if (!isEdit && !data.password) {
+      ElMessage.warning(t('assets.passwordRequired'))
+      return
+    }
+    const payload: Partial<IbmiSystem> = { ...data }
     delete payload.id
     if (payload.password) {
       payload.passwordEncrypt = payload.password
     }
     delete payload.password
-    if (form.value.id) {
-      await updateSystem(form.value.id, payload)
-    } else {
-      await createSystem(payload)
-    }
-    ElMessage.success(t('common.save'))
-    dialogVisible.value = false
-    await load()
-  } finally {
-    saving.value = false
-  }
-}
+    if (isEdit && data.id) await updateSystem(data.id, payload)
+    else await createSystem(payload)
+  },
+  onSuccess: () => load(),
+  i18nPrefix: 'assets',
+  validate: false,
+})
 
 const test = async (row: IbmiSystem) => {
   testingId.value = row.id

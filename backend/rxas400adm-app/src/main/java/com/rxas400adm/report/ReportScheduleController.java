@@ -1,4 +1,5 @@
 package com.rxas400adm.report;
+import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
@@ -6,8 +7,6 @@ import com.rxas400adm.report.dto.ReportScheduleDTO;
 import com.rxas400adm.report.vo.ScheduleExecuteResultVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
@@ -45,7 +43,7 @@ public class ReportScheduleController {
     @PreAuthorize("hasAuthority('REPORT_MANAGE')")
     @OperateLog(module = "报表中心", operation = "创建定时报表任务")
     public ApiResponse<ReportScheduleVO> create(@Valid @RequestBody ReportScheduleDTO schedule) {
-        return ApiResponse.success(ReportScheduleVO.from(scheduleService.create(schedule, currentUsername())));
+        return ApiResponse.success(ReportScheduleVO.from(scheduleService.create(schedule, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/{id}")
@@ -82,8 +80,5 @@ public class ReportScheduleController {
     public ApiResponse<List<ReportScheduleHistoryVO>> history(@PathVariable Long id) {
         return ApiResponse.success(scheduleService.history(id));
     }
-
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
-    }
 }
+

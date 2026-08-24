@@ -1,4 +1,5 @@
 package com.rxas400adm.security.controller;
+import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.constants.SecurityConstants;
@@ -29,8 +30,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +45,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -185,7 +183,7 @@ public class AuthController {
     @OperateLog(module = "登录安全", operation = "修改密码")
     public ApiResponse<Void> changePassword(@Valid @RequestBody ChangePasswordDTO dto,
                                             HttpServletRequest httpRequest) {
-        String username = currentUsername();
+        String username = SecurityUtils.currentUsername();
         userService.changePassword(username, dto.getOldPassword(), dto.getNewPassword());
         auditLogin("PASSWORD_CHANGE", username, clientIp(httpRequest), "PLATFORM", null, "修改登录密码");
         return ApiResponse.success(null);
@@ -203,7 +201,7 @@ public class AuthController {
 
     @GetMapping("/profile")
     public ApiResponse<com.rxas400adm.security.vo.ProfileVO> profile() {
-        return ApiResponse.success(authService.getProfile(currentUsername()));
+        return ApiResponse.success(authService.getProfile(SecurityUtils.currentUsername()));
     }
 
     /**
@@ -217,7 +215,7 @@ public class AuthController {
      */
     @GetMapping("/menu")
     public ApiResponse<MenuDataResponseVO> menu() {
-        String username = currentUsername();
+        String username = SecurityUtils.currentUsername();
         UserMenuDataVO menuData = menuService.userMenuData(username);
         Set<String> perms = new LinkedHashSet<>(permissionService.loadPermissions(username));
         perms.addAll(menuData.perms());
@@ -227,7 +225,8 @@ public class AuthController {
 
     private void auditLogin(String action, String username, String ip, String source,
                             Long serverId, String detail) {
-        auditLogService.auditLogin(action, username, ip, source, serverId, detail);
+        auditLogService.auditLogin(new com.rxas400adm.system.service.LoginAuditContext(
+                action, username, ip, source, serverId, detail));
     }
 
     /**
@@ -255,7 +254,4 @@ public class AuthController {
                 .anyMatch(p -> "*".equals(p) || p.equalsIgnoreCase(remoteAddr));
     }
 
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
-    }
 }

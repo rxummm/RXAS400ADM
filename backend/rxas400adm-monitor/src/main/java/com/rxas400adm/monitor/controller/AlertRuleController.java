@@ -2,8 +2,7 @@ package com.rxas400adm.monitor.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
-import com.rxas400adm.monitor.dto.AlertRuleCreateDTO;
-import com.rxas400adm.monitor.dto.AlertRuleUpdateDTO;
+import com.rxas400adm.monitor.dto.AlertRuleDTO;
 import com.rxas400adm.monitor.service.AlertRuleService;
 import com.rxas400adm.monitor.vo.AlertRuleVO;
 import jakarta.validation.Valid;
@@ -43,14 +42,14 @@ public class AlertRuleController {
     @PostMapping
     @PreAuthorize("hasAuthority('ALERT_MANAGE')")
     @OperateLog(module = "告警规则", operation = "新增告警规则")
-    public ApiResponse<AlertRuleVO> create(@Valid @RequestBody AlertRuleCreateDTO dto) {
+    public ApiResponse<AlertRuleVO> create(@Valid @RequestBody AlertRuleDTO dto) {
         return ApiResponse.success(AlertRuleVO.from(alertRuleService.create(dto)));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ALERT_MANAGE')")
     @OperateLog(module = "告警规则", operation = "更新告警规则")
-    public ApiResponse<AlertRuleVO> update(@PathVariable Long id, @Valid @RequestBody AlertRuleUpdateDTO dto) {
+    public ApiResponse<AlertRuleVO> update(@PathVariable Long id, @Valid @RequestBody AlertRuleDTO dto) {
         return ApiResponse.success(AlertRuleVO.from(alertRuleService.update(id, dto)));
     }
 

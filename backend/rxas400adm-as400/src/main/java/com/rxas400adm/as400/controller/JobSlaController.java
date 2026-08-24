@@ -8,8 +8,7 @@ import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.rxas400adm.common.util.SecurityUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
@@ -47,7 +45,7 @@ public class JobSlaController {
     @PreAuthorize("hasAuthority('SLA_MANAGE')")
     @OperateLog(module = "作业 SLA", operation = "新增 SLA 规则")
     public ApiResponse<JobSlaVO> create(@Valid @RequestBody JobSlaDTO sla) {
-        return ApiResponse.success(JobSlaVO.from(slaService.create(sla, currentUsername())));
+        return ApiResponse.success(JobSlaVO.from(slaService.create(sla, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/rules/{id}")
@@ -73,7 +71,5 @@ public class JobSlaController {
                 .map(SlaExecutionVO::from).toList());
     }
 
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
-    }
+
 }

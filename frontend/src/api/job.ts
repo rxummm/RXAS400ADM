@@ -40,13 +40,13 @@ export const fetchMsgwJobs = (): Promise<JobInfo[]> => request.get('/jobs/msgw')
 export const fetchLckwJobs = (): Promise<JobInfo[]> => request.get('/jobs/lckw')
 
 export const endJob = (jobName: string, jobUser: string, jobNumber: string): Promise<void> =>
-  request.post('/jobs/end', { params: { jobName, jobUser, jobNumber } })
+  request.post('/jobs/end', null, { params: { jobName, jobUser, jobNumber } })
 
 export const holdJob = (jobName: string, jobUser: string, jobNumber: string): Promise<void> =>
-  request.post('/jobs/hold', { params: { jobName, jobUser, jobNumber } })
+  request.post('/jobs/hold', null, { params: { jobName, jobUser, jobNumber } })
 
 export const releaseJob = (jobName: string, jobUser: string, jobNumber: string): Promise<void> =>
-  request.post('/jobs/release', { params: { jobName, jobUser, jobNumber } })
+  request.post('/jobs/release', null, { params: { jobName, jobUser, jobNumber } })
 
 /** 作业日志行（后端 QSYS2.JOBLOG_INFO，大写列名） */
 export interface JobLogRow {
@@ -77,7 +77,7 @@ export interface MsgwMessage {
 export const fetchMsgwMessages = (): Promise<MsgwMessage[]> => request.get('/jobs/msgw/messages')
 
 export const replyMsg = (jobName: string, jobUser: string, jobNumber: string): Promise<void> =>
-  request.post('/jobs/reply', { params: { jobName, jobUser, jobNumber } })
+  request.post('/jobs/reply', null, { params: { jobName, jobUser, jobNumber } })
 
 export const fetchJobQueues = (): Promise<JobQueueInfo[]> => request.get('/jobs/queues')
 

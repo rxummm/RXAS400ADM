@@ -3,7 +3,6 @@ package com.rxas400adm.report;
 import com.rxas400adm.report.dto.ReportScheduleDTO;
 
 import java.util.List;
-import java.util.Map;
 
 public interface IReportScheduleService {
 

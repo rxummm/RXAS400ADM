@@ -5,6 +5,7 @@ import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.entity.IbmiSystem;
 import com.rxas400adm.as400.mapper.IbmiSystemMapper;
+import com.rxas400adm.as400.model.UserProfileRow;
 import com.rxas400adm.system.entity.SysUser;
 import com.rxas400adm.system.entity.SysUserRole;
 import com.rxas400adm.system.mapper.SysUserMapper;
@@ -12,7 +13,6 @@ import com.rxas400adm.system.mapper.SysUserRoleMapper;
 import com.rxas400adm.common.config.ProfileResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -58,70 +58,102 @@ public class As400LoginSyncService implements IAs400LoginSyncService {
         }
         List<IbmiSystem> systems = systemMapper.selectList(
                 new LambdaQueryWrapper<IbmiSystem>().eq(IbmiSystem::getEnabled, true));
-        int cleaned = 0;
-        int converged = 0;
+        SyncResult total = SyncResult.ZERO;
         for (IbmiSystem system : systems) {
             try {
-                AS400Client client = clientProvider.forServer(system.getId());
-                List<SysUser> users = userMapper.selectList(
-                        new LambdaQueryWrapper<SysUser>()
-                                .eq(SysUser::getLoginSource, "AS400")
-                                .eq(SysUser::getAs400ServerId, system.getId()));
-                if (users.isEmpty()) {
-                    continue;
-                }
-                // 先探测全部账号，再按命中情况区分「整机故障」与「个别失效」
-                List<SysUser> missing = new ArrayList<>();
-                for (SysUser user : users) {
-                    com.rxas400adm.as400.model.UserProfileRow profile = client.userProfile(user.getUsername());
-                    if (profile == null || profile.userName() == null || profile.userName().isBlank()) {
-                        missing.add(user);
-                    } else {
-                        // 组角色收敛：按映射重算并覆盖
-                        String group = profile.groupProfile() == null
-                                ? "" : profile.groupProfile();
-                        String roleCode = as400LoginService.loadGroupRoleMapping()
-                                .getOrDefault(group, As400LoginService.DEFAULT_ROLE);
-                        as400LoginService.applyRoles(user.getId(), List.of(roleCode));
-                        // 角色收敛后失效权限缓存，下次请求即按新角色加载
-                        permissionService.evict(user.getUsername());
-                        converged++;
-                    }
-                }
-                if (missing.isEmpty()) {
-                    outageStreak.remove(system.getId());
-                    continue;
-                }
-                boolean allMissing = missing.size() == users.size();
-                if (allMissing) {
-                    // M2：整机疑似故障/断连——全部 profile 查询为空，暂缓清理，连续 N 轮仍全空才按失效处理
-                    int streak = outageStreak.merge(system.getId(), 1, Integer::sum);
-                    log.warn("[AS400同步] 服务器 {} 全部 {} 个 AS400 账号 profile 查询为空（连续 {} 轮），疑似故障，暂缓清理",
-                            system.getName(), users.size(), streak);
-                    if (streak < OUTAGE_STREAK_LIMIT) {
-                        continue;
-                    }
-                    log.error("[AS400同步] 服务器 {} 连续 {} 轮全空，仍按失效账号清理 {} 个",
-                            system.getName(), streak, users.size());
-                    outageStreak.remove(system.getId());
-                } else {
-                    // 部分缺失：个别账号确实在 IBM i 上已删除，正常清理
-                    outageStreak.remove(system.getId());
-                }
-                for (SysUser user : missing) {
-                    // 失效账号：IBM i 上已删除（整机故障场景下为连续 N 轮确认后）
-                    userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>()
-                            .eq(SysUserRole::getUserId, user.getId()));
-                    userMapper.deleteById(user.getId());
-                    // S1：删除后立即失效权限缓存，其 token 不再有权限
-                    permissionService.evict(user.getUsername());
-                    cleaned++;
-                    log.info("[AS400同步] 清理失效账号 {} (server={})", user.getUsername(), system.getName());
-                }
+                total = total.plus(syncServer(system));
             } catch (Exception e) {
                 log.warn("[AS400同步] 服务器 {} 处理失败，跳过: {}", system.getName(), e.getMessage());
             }
         }
-        log.info("[AS400同步] 完成：清理 {}，收敛 {}", cleaned, converged);
+        log.info("[AS400同步] 完成：清理 {}，收敛 {}", total.cleaned(), total.converged());
+    }
+
+    /** 单服务器同步结果（中-5：dailySync 四职责拆分后的聚合返回值） */
+    private record SyncResult(int cleaned, int converged) {
+        static final SyncResult ZERO = new SyncResult(0, 0);
+
+        SyncResult plus(SyncResult o) {
+            return new SyncResult(cleaned + o.cleaned, converged + o.converged);
+        }
+    }
+
+    /** 单服务器：探测全部账号 profile → 命中者组角色收敛；缺失者经熔断确认后清理 */
+    private SyncResult syncServer(IbmiSystem system) {
+        AS400Client client = clientProvider.forServer(system.getId());
+        List<SysUser> users = userMapper.selectList(
+                new LambdaQueryWrapper<SysUser>()
+                        .eq(SysUser::getLoginSource, "AS400")
+                        .eq(SysUser::getAs400ServerId, system.getId()));
+        if (users.isEmpty()) {
+            return SyncResult.ZERO;
+        }
+        // 先探测全部账号，再按命中情况区分「整机故障」与「个别失效」
+        List<SysUser> missing = new ArrayList<>();
+        int converged = 0;
+        for (SysUser user : users) {
+            UserProfileRow profile = client.userProfile(user.getUsername());
+            if (isMissing(profile)) {
+                missing.add(user);
+            } else {
+                convergeRoles(user, profile);
+                converged++;
+            }
+        }
+        if (missing.isEmpty()) {
+            outageStreak.remove(system.getId());
+            return new SyncResult(0, converged);
+        }
+        if (!confirmCleanup(system, users.size(), missing.size())) {
+            return new SyncResult(0, converged);
+        }
+        return new SyncResult(cleanupMissing(system, missing), converged);
+    }
+
+    /** profile 查询为空视为账号在 IBM i 上已不存在 */
+    private static boolean isMissing(UserProfileRow profile) {
+        return profile == null || profile.userName() == null || profile.userName().isBlank();
+    }
+
+    /** 组角色收敛：按映射重算并整体覆盖，随后失效权限缓存（下次请求即按新角色加载） */
+    private void convergeRoles(SysUser user, UserProfileRow profile) {
+        String group = profile.groupProfile() == null ? "" : profile.groupProfile();
+        String roleCode = as400LoginService.loadGroupRoleMapping()
+                .getOrDefault(group, As400LoginService.DEFAULT_ROLE);
+        as400LoginService.applyRoles(user.getId(), List.of(roleCode));
+        permissionService.evict(user.getUsername());
+    }
+
+    /** M2 整机故障熔断：部分缺失直接放行；全部缺失需连续 N 轮确认才放行清理 */
+    private boolean confirmCleanup(IbmiSystem system, int totalUsers, int missingCount) {
+        if (missingCount < totalUsers) {
+            // 部分缺失：个别账号确实在 IBM i 上已删除，正常清理
+            outageStreak.remove(system.getId());
+            return true;
+        }
+        int streak = outageStreak.merge(system.getId(), 1, Integer::sum);
+        log.warn("[AS400同步] 服务器 {} 全部 {} 个 AS400 账号 profile 查询为空（连续 {} 轮），疑似故障，暂缓清理",
+                system.getName(), totalUsers, streak);
+        if (streak < OUTAGE_STREAK_LIMIT) {
+            return false;
+        }
+        log.error("[AS400同步] 服务器 {} 连续 {} 轮全空，仍按失效账号清理 {} 个",
+                system.getName(), streak, totalUsers);
+        outageStreak.remove(system.getId());
+        return true;
+    }
+
+    /** 失效账号清理：删角色关系 + 删用户 + 失效权限缓存（其 token 不再有权限） */
+    private int cleanupMissing(IbmiSystem system, List<SysUser> missing) {
+        int cleaned = 0;
+        for (SysUser user : missing) {
+            userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>()
+                    .eq(SysUserRole::getUserId, user.getId()));
+            userMapper.deleteById(user.getId());
+            permissionService.evict(user.getUsername());
+            cleaned++;
+            log.info("[AS400同步] 清理失效账号 {} (server={})", user.getUsername(), system.getName());
+        }
+        return cleaned;
     }
 }

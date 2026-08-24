@@ -29,7 +29,7 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="onClear(row)">
+            <el-button link type="primary" size="small" @click="onClear(row as CacheInfo)">
               {{ $t('cache.clear') }}
             </el-button>
           </template>

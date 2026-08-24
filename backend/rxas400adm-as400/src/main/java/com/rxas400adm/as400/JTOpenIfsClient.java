@@ -16,6 +16,8 @@ import java.util.List;
 
 /**
  * JTOpen IfsClient 委托实现（IFS 目录 / 文件读写 / 回收站）。
+ * 8 个方法的 connect→try/catch/invalidate/log 样板收敛为 {@link #ifsCall} 模板（中-11），
+ * 各方法只保留业务主体与兜底值。
  */
 @Slf4j
 class JTOpenIfsClient implements IfsClient {
@@ -26,13 +28,37 @@ class JTOpenIfsClient implements IfsClient {
         this.state = state;
     }
 
+    /** IFS 业务主体：允许抛出 JT400 受检异常（IOException/AS400SecurityException 等），由模板统一兜底 */
+    @FunctionalInterface
+    private interface IfsAction<T> {
+        T run(AS400 system) throws Exception;
+    }
+
+    /**
+     * IFS 调用模板：connect → 业务执行；异常时 invalidate 连接、记脱敏告警日志并返回 fallback。
+     *
+     * @param op       操作名（仅用于日志，如「目录读取」）
+     * @param path     目标路径（日志用）
+     * @param fallback 失败兜底返回值
+     * @param action   以已连接 AS400 为入参的业务主体
+     */
+    private <T> T ifsCall(String op, String path, T fallback, IfsAction<T> action) {
+        AS400 system = state.connect();
+        try {
+            return action.run(system);
+        } catch (Exception e) {
+            state.invalidate(system);
+            log.warn("IFS {}失败(host={}, path={}): {}", op, state.host, path, state.redact(e.getMessage()));
+            return fallback;
+        }
+    }
+
     @Override
     public List<IfsEntry> listIfsDir(String path) {
         if (path == null || path.isBlank()) {
             return List.of();
         }
-        AS400 system = state.connect();
-        try {
+        return ifsCall("目录读取", path, List.of(), system -> {
             IFSFile dir = new IFSFile(system, path);
             IFSFile[] children = dir.listFiles();
             List<IfsEntry> rows = new ArrayList<>();
@@ -47,11 +73,7 @@ class JTOpenIfsClient implements IfsClient {
                         child.getAbsolutePath()));
             }
             return rows;
-        } catch (Exception e) {
-            state.invalidate(system);
-            log.warn("IFS 目录读取失败(host={}, path={}): {}", state.host, path, state.redact(e.getMessage()));
-            return List.of();
-        }
+        });
     }
 
     @Override
@@ -59,20 +81,17 @@ class JTOpenIfsClient implements IfsClient {
         if (path == null || path.isBlank()) {
             return "";
         }
-        AS400 system = state.connect();
-        StringBuilder content = new StringBuilder();
-        try (IFSFileInputStream in = new IFSFileInputStream(system, path);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                content.append(line).append('\n');
+        return ifsCall("文件读取", path, "", system -> {
+            StringBuilder content = new StringBuilder();
+            try (IFSFileInputStream in = new IFSFileInputStream(system, path);
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line).append('\n');
+                }
             }
             return content.toString();
-        } catch (Exception e) {
-            state.invalidate(system);
-            log.warn("IFS 文件读取失败(host={}, path={}): {}", state.host, path, state.redact(e.getMessage()));
-            return "";
-        }
+        });
     }
 
     @Override
@@ -85,8 +104,7 @@ class JTOpenIfsClient implements IfsClient {
         if (path == null || path.isBlank()) {
             return false;
         }
-        AS400 system = state.connect();
-        try {
+        return ifsCall("文件写入", path, false, system -> {
             IFSFile file = new IFSFile(system, path);
             IFSFile parent = file.getParentFile();
             if (parent != null && !parent.exists()) {
@@ -96,11 +114,7 @@ class JTOpenIfsClient implements IfsClient {
                 out.write(content == null ? new byte[0] : content);
             }
             return true;
-        } catch (Exception e) {
-            state.invalidate(system);
-            log.warn("IFS 文件写入失败(host={}, path={}): {}", state.host, path, state.redact(e.getMessage()));
-            return false;
-        }
+        });
     }
 
     @Override
@@ -108,18 +122,13 @@ class JTOpenIfsClient implements IfsClient {
         if (path == null || path.isBlank()) {
             return false;
         }
-        AS400 system = state.connect();
-        try {
+        return ifsCall("目录创建", path, false, system -> {
             IFSFile dir = new IFSFile(system, path);
             if (!dir.exists()) {
                 return dir.mkdirs();
             }
             return dir.isDirectory();
-        } catch (Exception e) {
-            state.invalidate(system);
-            log.warn("IFS 目录创建失败(host={}, path={}): {}", state.host, path, state.redact(e.getMessage()));
-            return false;
-        }
+        });
     }
 
     @Override
@@ -127,8 +136,7 @@ class JTOpenIfsClient implements IfsClient {
         if (path == null || path.isBlank()) {
             return null;
         }
-        AS400 system = state.connect();
-        try {
+        return ifsCall("移入回收站", path, null, system -> {
             IFSFile file = new IFSFile(system, path);
             if (!file.exists()) {
                 return null;
@@ -144,11 +152,7 @@ class JTOpenIfsClient implements IfsClient {
                 return null;
             }
             return trashPath;
-        } catch (Exception e) {
-            state.invalidate(system);
-            log.warn("IFS 移入回收站失败(host={}, path={}): {}", state.host, path, state.redact(e.getMessage()));
-            return null;
-        }
+        });
     }
 
     @Override
@@ -156,8 +160,7 @@ class JTOpenIfsClient implements IfsClient {
         if (trashPath == null || trashPath.isBlank()) {
             return false;
         }
-        AS400 system = state.connect();
-        try {
+        return ifsCall("恢复", trashPath, false, system -> {
             IFSFile file = new IFSFile(system, trashPath);
             if (!file.exists()) {
                 return false;
@@ -169,11 +172,7 @@ class JTOpenIfsClient implements IfsClient {
                 parent.mkdirs();
             }
             return file.renameTo(target);
-        } catch (Exception e) {
-            state.invalidate(system);
-            log.warn("IFS 恢复失败(host={}, path={}): {}", state.host, trashPath, state.redact(e.getMessage()));
-            return false;
-        }
+        });
     }
 
     @Override
@@ -181,14 +180,11 @@ class JTOpenIfsClient implements IfsClient {
         if (path == null || path.isBlank()) {
             return null;
         }
-        AS400 system = state.connect();
-        try (IFSFileInputStream in = new IFSFileInputStream(system, path)) {
-            return in.readAllBytes();
-        } catch (Exception e) {
-            state.invalidate(system);
-            log.warn("IFS 文件读取失败(host={}, path={}): {}", state.host, path, state.redact(e.getMessage()));
-            return null;
-        }
+        return ifsCall("文件读取", path, null, system -> {
+            try (IFSFileInputStream in = new IFSFileInputStream(system, path)) {
+                return in.readAllBytes();
+            }
+        });
     }
 
     @Override
@@ -196,13 +192,6 @@ class JTOpenIfsClient implements IfsClient {
         if (path == null || path.isBlank()) {
             return null;
         }
-        AS400 system = state.connect();
-        try {
-            return new IFSFileInputStream(system, path);
-        } catch (Exception e) {
-            state.invalidate(system);
-            log.warn("IFS 文件打开失败(host={}, path={}): {}", state.host, path, state.redact(e.getMessage()));
-            return null;
-        }
+        return ifsCall("文件打开", path, null, system -> new IFSFileInputStream(system, path));
     }
 }

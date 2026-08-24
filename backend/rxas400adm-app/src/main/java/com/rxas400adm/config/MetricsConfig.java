@@ -3,7 +3,6 @@ package com.rxas400adm.config;
 import com.rxas400adm.as400.entity.IbmiSystem;
 import com.rxas400adm.as400.service.IIbmiSystemService;
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

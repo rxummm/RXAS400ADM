@@ -5,11 +5,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * 告警规则更新请求（P2-10 遗留）：与 Create 分离以便分别校验。
- * 前端更新时提交完整表单（与旧 @RequestBody Entity 行为一致：核心字段必填），
- * id 仅取自路径，杜绝请求体覆盖主键。
+ * 告警规则请求体（中-16 合并 Create/Update 双类）：两原类逐字相同（Update 亦要求核心字段必填，
+ * 前端提交完整表单），合并为单一 DTO 消除双份维护。输入面与实体解耦，消除 mass-assignment；
+ * id 仅取自路径，不可由请求体注入。
  */
-public record AlertRuleUpdateDTO(
+public record AlertRuleDTO(
         @NotBlank(message = "{validation.notBlank}") String metricName,
         @NotBlank(message = "{validation.notBlank}") String operator,
         @NotNull(message = "{validation.notNull}") Double threshold,

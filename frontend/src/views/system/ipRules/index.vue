@@ -46,7 +46,7 @@
             <el-button link type="primary" size="small" @click="openEdit(row)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button link type="danger" size="small" @click="onDelete(row)">
+            <el-button link type="danger" size="small" @click="onDelete(row as IpRule)">
               {{ $t('common.delete') }}
             </el-button>
           </template>

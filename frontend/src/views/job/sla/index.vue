@@ -1,7 +1,7 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-button v-has-perm="'SLA_MANAGE'" type="success" :icon="Plus" @click="openDialog()">
+      <el-button v-has-perm="'SLA_MANAGE'" type="success" :icon="Plus" @click="() => openCreate()">
         {{ $t('jobSla.addRule') }}
       </el-button>
       <el-button :icon="Refresh" @click="loadAll">{{ $t('common.refresh') }}</el-button>
@@ -27,16 +27,16 @@
             <el-switch
               v-has-perm="'SLA_MANAGE'"
               :model-value="row.enabled"
-              @change="toggle(row)"
+              @change="toggle(row as JobSla)"
             />
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="130" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button v-has-perm="'SLA_MANAGE'" size="small" type="primary" plain :icon="Edit" @click="openDialogWrap(row)">
+            <el-button v-has-perm="'SLA_MANAGE'" size="small" type="primary" plain :icon="Edit" @click="openEdit(row as JobSla)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button v-has-perm="'SLA_MANAGE'" size="small" type="danger" plain :icon="Delete" @click="handleDelete(row)">
+            <el-button v-has-perm="'SLA_MANAGE'" size="small" type="danger" plain :icon="Delete" @click="handleDelete(row as JobSla)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -72,7 +72,7 @@
       <el-empty v-if="!execLoading && !executions.length" :description="$t('common.noData')" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="editing ? $t('jobSla.editTitle') : $t('jobSla.addRule')" width="460px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="460px">
       <el-form :model="form" label-width="120px">
         <el-form-item :label="$t('jobSla.jobName')" required>
           <el-input v-model="form.jobName" :placeholder="$t('jobSla.jobNamePlaceholder')" />
@@ -89,7 +89,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">{{ $t('common.save') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="onSubmit">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -100,10 +100,11 @@
 // keep-alive 缓存标识，需与路由 name 一致
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'JobSla' })
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Edit, Plus, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import { useFormDialog } from '@/composables/useFormDialog'
 import {
   createSlaRule,
   deleteSlaRule,
@@ -122,16 +123,35 @@ const executions = ref<SlaExecution[]>([])
 const loading = ref(false)
 const execLoading = ref(false)
 
-const dialogVisible = ref(false)
-const saving = ref(false)
-const editing = ref(false)
-const editingId = ref(0)
-const form = reactive<JobSla>({
-  jobName: '',
-  scheduleName: '',
-  expectedDurationSec: 600,
-  deviationPercent: 20,
-  enabled: true,
+type SlaForm = { id?: number } & Omit<JobSla, 'id'>
+
+const {
+  dialogVisible,
+  dialogTitle,
+  loading: saving,
+  form,
+  openCreate,
+  openEdit,
+  onSubmit,
+} = useFormDialog<SlaForm>({
+  defaultForm: () => ({
+    jobName: '',
+    scheduleName: '',
+    expectedDurationSec: 600,
+    deviationPercent: 20,
+    enabled: true,
+  }),
+  saveApi: async (isEdit, data) => {
+    if (!data.jobName.trim()) {
+      ElMessage.warning(t('jobSla.jobNameRequired'))
+      return
+    }
+    if (isEdit && data.id) await updateSlaRule(data.id, data)
+    else await createSlaRule(data)
+  },
+  onSuccess: () => loadRules(),
+  i18nPrefix: 'jobSla',
+  validate: false,
 })
 
 const loadRules = async () => {
@@ -157,43 +177,6 @@ const loadAll = () => {
   loadExecutions()
 }
 
-const openDialog = (row?: JobSla) => {
-  editing.value = !!row
-  form.jobName = row?.jobName || ''
-  form.scheduleName = row?.scheduleName || ''
-  form.expectedDurationSec = row?.expectedDurationSec || 600
-  form.deviationPercent = row?.deviationPercent ?? 20
-  form.enabled = row?.enabled ?? true
-  dialogVisible.value = true
-}
-
-/** 编辑入口：记录当前编辑的规则 id */
-const openDialogWrap = (row?: JobSla) => {
-  editingId.value = row?.id || 0
-  openDialog(row)
-}
-
-const handleSave = async () => {
-  if (!form.jobName.trim()) {
-    ElMessage.warning(t('jobSla.jobNameRequired'))
-    return
-  }
-  saving.value = true
-  try {
-    if (editing.value) {
-      await updateSlaRule(editingId.value, { ...form })
-      ElMessage.success(t('common.updated'))
-    } else {
-      await createSlaRule({ ...form })
-      ElMessage.success(t('common.created'))
-    }
-    dialogVisible.value = false
-    loadRules()
-  } finally {
-    saving.value = false
-  }
-}
-
 const handleDelete = async (row: JobSla) => {
   await ElMessageBox.confirm(t('jobSla.deleteConfirm', { name: row.jobName }), t('common.warning'), {
     type: 'warning',
@@ -213,10 +196,5 @@ onMounted(loadAll)
 </script>
 
 <style scoped>
-.mt16 {
-  margin-top: 16px;
-}
-.mb8 {
-  margin-bottom: 8px;
-}
+/* 低-10：mt16/mb8 已收敛至 src/styles/common.css 全局工具类，删除 scoped 重复定义 */
 </style>

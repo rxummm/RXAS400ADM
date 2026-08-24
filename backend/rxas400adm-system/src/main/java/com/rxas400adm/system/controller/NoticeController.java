@@ -1,4 +1,5 @@
 package com.rxas400adm.system.controller;
+import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
@@ -8,8 +9,6 @@ import com.rxas400adm.system.service.INoticeService;
 import com.rxas400adm.system.vo.NoticeVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,7 +53,7 @@ public class NoticeController {
     @PreAuthorize("hasAuthority('NOTICE_MANAGE')")
     @OperateLog(module = "通知公告", operation = "发布公告")
     public ApiResponse<NoticeVO> create(@Valid @RequestBody NoticeDTO notice) {
-        return ApiResponse.success(NoticeVO.from(noticeService.create(notice, currentUsername())));
+        return ApiResponse.success(NoticeVO.from(noticeService.create(notice, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/{id}")
@@ -70,9 +69,5 @@ public class NoticeController {
     public ApiResponse<Void> delete(@PathVariable Long id) {
         noticeService.delete(id);
         return ApiResponse.success(null);
-    }
-
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 }

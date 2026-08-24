@@ -9,7 +9,7 @@ import com.rxas400adm.as400.vo.QueryResult;
 import com.rxas400adm.common.constants.PageConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.rxas400adm.common.util.SecurityUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -61,7 +61,7 @@ public class SqlQueryService implements ISqlQueryService {
     /** P2-12：SQL 历史按用户隔离——只返回当前登录用户自己的查询记录 */
     public List<SqlHistory> history(int limit) {
         return historyMapper.selectList(new LambdaQueryWrapper<SqlHistory>()
-                .eq(SqlHistory::getOperator, currentUsername())
+                .eq(SqlHistory::getOperator, SecurityUtils.currentUsername())
                 .orderByDesc(SqlHistory::getCreatedTime)
                 .last(PageConstants.limitClause(Math.max(1, Math.min(limit, 200)))));
     }
@@ -71,7 +71,7 @@ public class SqlQueryService implements ISqlQueryService {
         history.setSqlText(sql.length() > 4000 ? sql.substring(0, 4000) : sql);
         history.setRowsReturned(rows);
         history.setCostMs(costMs);
-        history.setOperator(currentUsername());
+        history.setOperator(SecurityUtils.currentUsername());
         history.setCreatedTime(LocalDateTime.now());
         try {
             historyMapper.insert(history);
@@ -80,7 +80,5 @@ public class SqlQueryService implements ISqlQueryService {
         }
     }
 
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
-    }
+
 }

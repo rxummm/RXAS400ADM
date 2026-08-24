@@ -74,13 +74,13 @@
                   :model-value="row.status === 1"
                   :disabled="row.roleCode === 'ADMIN'"
                   size="small"
-                  @change="(val: any) => onToggleStatus(row, val)"
+                  @change="(val: string | number | boolean) => onToggleStatus(row as SysRole, Boolean(val))"
                 />
               </template>
             </el-table-column>
             <el-table-column :label="$t('common.operation')" width="120" fixed="right">
               <template #default="{ row }">
-                <el-button link type="primary" size="small" @click.stop="openEdit(row)">
+                <el-button link type="primary" size="small" @click.stop="openEdit(row as SysRole)">
                   {{ $t('common.edit') }}
                 </el-button>
                 <el-button
@@ -88,7 +88,7 @@
                   type="danger"
                   size="small"
                   :disabled="row.roleCode === 'ADMIN'"
-                  @click.stop="onDelete(row)"
+                  @click.stop="onDelete(row as SysRole)"
                 >
                   {{ $t('common.delete') }}
                 </el-button>
@@ -199,15 +199,16 @@ const {
 })
 
 // ==================== 列显隐配置 ====================
-const columnOptions = [
+// 低-19：computed 惰性求值，切语言后列标题随响应式更新（原 setup 期一次性快照）
+const columnOptions = computed(() => [
   { key: 'roleName', label: t('role.roleName') },
   { key: 'roleCode', label: t('role.roleCode') },
   { key: 'description', label: t('role.description') },
   { key: 'sort', label: t('common.sort') },
   { key: 'status', label: t('common.status') },
-]
-const visibleColumns = ref<string[]>(columnOptions.map((c) => c.key))
-const exportColumns = columnOptions.map((c) => ({ key: c.key, label: c.label }))
+])
+const visibleColumns = ref<string[]>(['roleName', 'roleCode', 'description', 'sort', 'status'])
+const exportColumns = computed(() => columnOptions.value.map((c) => ({ key: c.key, label: c.label })))
 
 // ==================== 多选 / 批量删除 ====================
 const selectedIds = ref<number[]>([])

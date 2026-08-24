@@ -1,4 +1,5 @@
 package com.rxas400adm.system.controller;
+import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
@@ -8,8 +9,6 @@ import com.rxas400adm.system.service.IPermissionRequestService;
 import com.rxas400adm.system.vo.PermissionRequestVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.rxas400adm.system.vo.PendingCountVO;
 
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -44,14 +42,14 @@ public class PermissionRequestController {
     @OperateLog(module = "权限申请", operation = "提交权限申请")
     public ApiResponse<PermissionRequestVO> create(@Valid @RequestBody PermissionRequestCreateDTO dto) {
         return ApiResponse.success(PermissionRequestVO.from(requestService.create(
-                currentUsername(), dto.getPermissionCode(), dto.getMenuIds(), dto.getMenuNames(), dto.getReason())));
+                SecurityUtils.currentUsername(), dto.getPermissionCode(), dto.getMenuIds(), dto.getMenuNames(), dto.getReason())));
     }
 
     /** 我的申请 */
     @GetMapping("/mine")
     public ApiResponse<PageResult<PermissionRequestVO>> mine(@RequestParam(defaultValue = "1") int current,
                                                            @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(requestService.mine(currentUsername(), current, size).map(PermissionRequestVO::from));
+        return ApiResponse.success(requestService.mine(SecurityUtils.currentUsername(), current, size).map(PermissionRequestVO::from));
     }
 
     /** 管理端：全部申请（可按状态/关键字过滤） */
@@ -75,7 +73,7 @@ public class PermissionRequestController {
     @PreAuthorize("hasAuthority('SYS_PERMISSION_REQUEST')")
     @OperateLog(module = "权限申请", operation = "审批通过权限申请")
     public ApiResponse<PermissionRequestVO> approve(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
-        return ApiResponse.success(PermissionRequestVO.from(requestService.approve(id, currentUsername(),
+        return ApiResponse.success(PermissionRequestVO.from(requestService.approve(id, SecurityUtils.currentUsername(),
                 body == null ? null : body.get("comment"))));
     }
 
@@ -83,11 +81,7 @@ public class PermissionRequestController {
     @PreAuthorize("hasAuthority('SYS_PERMISSION_REQUEST')")
     @OperateLog(module = "权限申请", operation = "驳回权限申请")
     public ApiResponse<PermissionRequestVO> reject(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
-        return ApiResponse.success(PermissionRequestVO.from(requestService.reject(id, currentUsername(),
+        return ApiResponse.success(PermissionRequestVO.from(requestService.reject(id, SecurityUtils.currentUsername(),
                 body == null ? null : body.get("comment"))));
-    }
-
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 }

@@ -107,6 +107,7 @@ public class As400LoginService implements IAs400LoginService {
         created.setEmail(null);
         created.setStatus("ACTIVE");
         created.setLoginSource("AS400");
+        created.setCreatedBy("AS400-SYNC");
         created.setAs400ServerId(request.getServerId());
         created.setCreatedTime(LocalDateTime.now());
         created.setUpdatedTime(LocalDateTime.now());

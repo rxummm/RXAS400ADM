@@ -1,7 +1,6 @@
 package com.rxas400adm.report.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**

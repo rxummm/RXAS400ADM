@@ -34,7 +34,7 @@
             v-for="p in permOptions"
             :key="p.permissionCode"
             :label="`${p.permissionCode}${p.permissionName && p.permissionName !== p.permissionCode ? ' - ' + p.permissionName : ''}`"
-            :value="p.permissionCode"
+            :value="p.permissionCode as string"
           />
         </el-select>
         <div v-if="form.menuType === MenuType.TAB" class="hint mt4">{{ t('menu.manage.tabPermsHint') }}</div>

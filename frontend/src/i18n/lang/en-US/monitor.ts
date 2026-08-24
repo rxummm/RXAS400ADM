@@ -6,6 +6,8 @@
 export default {
   monitor: {
     title: 'Real-time Metrics',
+    wsDisconnected: 'Real-time connection disconnected',
+    wsReconnecting: 'Reconnecting…',
     wsHint: 'WebSocket push /topic/monitor/{serverId}',
     cpu: 'CPU Usage (%)',
     memory: 'Memory Usage (%)',

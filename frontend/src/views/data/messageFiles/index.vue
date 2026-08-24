@@ -60,10 +60,10 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="140" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button v-has-perm="'MSGF_EDIT'" size="small" type="primary" plain :icon="Edit" @click="openEditMsg(row)">
+            <el-button v-has-perm="'MSGF_EDIT'" size="small" type="primary" plain :icon="Edit" @click="openEditMsg(row as MessageFileRow)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button v-has-perm="'MSGF_DELETE'" size="small" type="danger" plain :icon="Delete" @click="handleDelete(row)">
+            <el-button v-has-perm="'MSGF_DELETE'" size="small" type="danger" plain :icon="Delete" @click="handleDelete(row as MessageFileRow)">
               {{ $t('common.delete') }}
             </el-button>
           </template>

@@ -12,10 +12,6 @@ public interface ICalendarEventService {
 
     List<CalendarEvent> month(int year, int month, Long userId);
 
-    List<CalendarEvent> range(String startDate, String endDate, Long userId);
-
-    List<CalendarEvent> today(Long userId);
-
     CalendarEvent create(CalendarEventDTO event, Long userId);
 
     CalendarEvent update(Long id, CalendarEventDTO dto, Long userId);

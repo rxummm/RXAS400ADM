@@ -2,8 +2,6 @@ package com.rxas400adm.security.filter;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
-import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -113,7 +111,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 period = Duration.ofMinutes(1);
             }
         }
-        Bandwidth bandwidth = Bandwidth.classic(permits, Refill.greedy(permits, period));
+        Bandwidth bandwidth = Bandwidth.builder()
+                .capacity(permits)
+                .refillGreedy(permits, period)
+                .build();
         return Bucket.builder().addLimit(bandwidth).build();
     }
 }

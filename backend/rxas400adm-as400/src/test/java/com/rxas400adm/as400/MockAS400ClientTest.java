@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
+import com.rxas400adm.as400.model.MessageDescriptor;
 import com.rxas400adm.as400.model.GraphData;
 import com.rxas400adm.as400.model.IfsEntry;
 import com.rxas400adm.as400.model.ObjectRefRow;
@@ -386,15 +387,15 @@ class MockAS400ClientTest {
 
     @Test
     void message_crud_shouldWork() {
-        assertTrue(client.addMessage("APP", "TESTMSG", "USR9001", "测试消息", "二级文本", 10).success());
-        assertFalse(client.addMessage("APP", "TESTMSG", "USR9001", "x", null, 1).success());
-        assertTrue(client.updateMessage("APP", "TESTMSG", "USR9001", "新文本", null, 20).success());
+        assertTrue(client.addMessage(new MessageDescriptor("APP", "TESTMSG", "USR9001", "测试消息", "二级文本", 10)).success());
+        assertFalse(client.addMessage(new MessageDescriptor("APP", "TESTMSG", "USR9001", "x", null, 1)).success());
+        assertTrue(client.updateMessage(new MessageDescriptor("APP", "TESTMSG", "USR9001", "新文本", null, 20)).success());
         List<MessageRow> found = client.listMessages("APP", "TESTMSG", "新文本");
         assertEquals(1, found.size());
         assertEquals("USR9001", found.get(0).id());
         assertTrue(client.deleteMessage("APP", "TESTMSG", "USR9001").success());
         assertFalse(client.deleteMessage("APP", "TESTMSG", "USR9001").success());
-        assertFalse(client.addMessage("APP", "", "X", "t", null, 1).success());
+        assertFalse(client.addMessage(new MessageDescriptor("APP", "", "X", "t", null, 1)).success());
     }
 
     // ==================== 子系统启停 ====================

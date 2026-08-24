@@ -55,18 +55,18 @@
         <el-table-column :label="$t('common.operation')" width="330" fixed="right">
           <template #default="{ row }">
             <template v-if="viewMode === 'normal'">
-              <el-button size="small" link type="primary" @click="openDetail(row)">{{ $t('docs.view') }}</el-button>
-              <el-button v-if="['DRAFT', 'REJECTED'].includes(row.status)" size="small" link type="primary" @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
-              <el-button v-if="['DRAFT', 'REJECTED'].includes(row.status)" size="small" link type="warning" @click="doSubmit(row)">{{ $t('docs.submit') }}</el-button>
-              <el-button v-if="row.status === 'PENDING'" size="small" link type="success" @click="doApprove(row)">{{ $t('docs.approve') }}</el-button>
-              <el-button v-if="row.status === 'PENDING'" size="small" link type="danger" @click="doReject(row)">{{ $t('docs.reject') }}</el-button>
-              <el-button size="small" link @click="openVersions(row)">{{ $t('docs.history') }}</el-button>
-              <el-button v-if="row.status !== 'PENDING'" size="small" link type="danger" @click="doDelete(row)">{{ $t('common.delete') }}</el-button>
+              <el-button size="small" link type="primary" @click="openDetail(row as DocItem)">{{ $t('docs.view') }}</el-button>
+              <el-button v-if="['DRAFT', 'REJECTED'].includes(row.status)" size="small" link type="primary" @click="openEdit(row as DocItem)">{{ $t('common.edit') }}</el-button>
+              <el-button v-if="['DRAFT', 'REJECTED'].includes(row.status)" size="small" link type="warning" @click="doSubmit(row as DocItem)">{{ $t('docs.submit') }}</el-button>
+              <el-button v-if="row.status === 'PENDING'" size="small" link type="success" @click="doApprove(row as DocItem)">{{ $t('docs.approve') }}</el-button>
+              <el-button v-if="row.status === 'PENDING'" size="small" link type="danger" @click="doReject(row as DocItem)">{{ $t('docs.reject') }}</el-button>
+              <el-button size="small" link @click="openVersions(row as DocItem)">{{ $t('docs.history') }}</el-button>
+              <el-button v-if="row.status !== 'PENDING'" size="small" link type="danger" @click="doDelete(row as DocItem)">{{ $t('common.delete') }}</el-button>
             </template>
             <template v-else>
-              <el-button size="small" link type="primary" @click="openDetail(row)">{{ $t('docs.view') }}</el-button>
-              <el-button size="small" link type="success" @click="doRestore(row)">{{ $t('docs.restore') }}</el-button>
-              <el-button size="small" link type="danger" @click="doPurge(row)">{{ $t('docs.purge') }}</el-button>
+              <el-button size="small" link type="primary" @click="openDetail(row as DocItem)">{{ $t('docs.view') }}</el-button>
+              <el-button size="small" link type="success" @click="doRestore(row as DocItem)">{{ $t('docs.restore') }}</el-button>
+              <el-button size="small" link type="danger" @click="doPurge(row as DocItem)">{{ $t('docs.purge') }}</el-button>
             </template>
           </template>
         </el-table-column>
@@ -174,12 +174,13 @@ const MarkdownEditor = defineAsyncComponent(() => import('./MarkdownEditor.vue')
 defineOptions({ name: 'Docs' })
 
 const { t } = useI18n()
-const statusMap: Record<string, string> = {
+// 低-19：computed 惰性求值，切语言后 keep-alive 页文案随响应式更新（原 setup 期一次性快照）
+const statusMap = computed<Record<string, string>>(() => ({
   DRAFT: t('docs.stDraft'),
   PENDING: t('docs.stPending'),
   PUBLISHED: t('docs.stPublished'),
   REJECTED: t('docs.stRejected'),
-}
+}))
 const statusType = (s: string): 'info' | 'warning' | 'success' | 'danger' =>
   ({ DRAFT: 'info', PENDING: 'warning', PUBLISHED: 'success', REJECTED: 'danger' } as Record<string, 'info' | 'warning' | 'success' | 'danger'>)[s] || 'info'
 

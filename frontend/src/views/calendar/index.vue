@@ -105,8 +105,8 @@ defineOptions({ name: 'Calendar' })
 
 const { t, tm } = useI18n()
 
-// 数组型翻译用 tm()（t() 只返回字符串）
-const weekdays = tm('calendar.weekdays') as string[]
+// 数组型翻译用 tm()（t() 只返回字符串）；低-19：computed 惰性求值，切语言后表头随响应式更新
+const weekdays = computed(() => tm('calendar.weekdays') as string[])
 const typeOptions = computed(() => [
   { value: 'meeting', label: t('calendar.typeMeeting') },
   { value: 'task', label: t('calendar.typeTask') },

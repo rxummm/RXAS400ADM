@@ -6,10 +6,6 @@
         DELETE FROM rx_role_menu WHERE role_id = #{roleId}
     </delete>
 
-    <select id="selectMenuIdsByRoleId" resultType="long">
-        SELECT menu_id FROM rx_role_menu WHERE role_id = #{roleId}
-    </select>
-
     <insert id="insertBatch">
         INSERT INTO rx_role_menu (role_id, menu_id) VALUES
         <foreach item="menuId" collection="menuIds" separator=",">(#{roleId}, #{menuId})</foreach>

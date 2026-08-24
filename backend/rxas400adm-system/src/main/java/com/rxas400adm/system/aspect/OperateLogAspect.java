@@ -1,4 +1,5 @@
 package com.rxas400adm.system.aspect;
+import com.rxas400adm.common.util.SecurityUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,8 +16,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -62,7 +61,7 @@ public class OperateLogAspect {
 
     private void saveLog(ProceedingJoinPoint joinPoint, OperateLog operateLog, long costMs) {
         AuditLog auditLog = new AuditLog();
-        auditLog.setUserName(currentUsername());
+        auditLog.setUserName(SecurityUtils.currentUsername());
         auditLog.setModule(operateLog.module());
         auditLog.setAction(operateLog.operation());
         auditLog.setTarget(buildTarget(joinPoint));
@@ -133,9 +132,6 @@ public class OperateLogAspect {
         }
     }
 
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
-    }
 
     /**
      * S3：与 AuthController.clientIp 一致——仅当请求直接来自可信反向代理时才信任 X-Forwarded-For，

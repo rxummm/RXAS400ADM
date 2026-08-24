@@ -1,5 +1,6 @@
 package com.rxas400adm.system.service;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.system.dto.DictItemDTO;
@@ -12,11 +13,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -57,7 +56,7 @@ class DictServiceTest {
     @Test
     @DisplayName("新增字典类型 → code 重复则拒绝")
     void createType_duplicateCode_shouldThrow() {
-        when(typeMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(1L);
+        when(typeMapper.selectCount(anyWrapper())).thenReturn(1L);
 
         DictTypeDTO dto = new DictTypeDTO();
         dto.setCode("GENDER");
@@ -89,14 +88,18 @@ class DictServiceTest {
     @DisplayName("删除字典类型 → 同时清理子项")
     void deleteType_shouldCleanupItems() {
         when(typeMapper.selectById(1L)).thenReturn(new DictType());
-        when(itemMapper.delete(any(LambdaQueryWrapper.class))).thenReturn(3);
+        when(itemMapper.delete(anyWrapper())).thenReturn(3);
         when(typeMapper.deleteById(1L)).thenReturn(1);
 
         service.deleteType(1L);
 
-        verify(itemMapper).delete(any(LambdaQueryWrapper.class));
+        verify(itemMapper).delete(anyWrapper());
         verify(typeMapper).deleteById(1L);
     }
 
-
+    /** Mockito 的 Class 令牌无法表达泛型参数，Wrapper 泛型收窄统一收敛于此（全文件唯一 unchecked 抑制点） */
+    @SuppressWarnings("unchecked")
+    private static <T> Wrapper<T> anyWrapper() {
+        return (Wrapper<T>) any(LambdaQueryWrapper.class);
+    }
 }

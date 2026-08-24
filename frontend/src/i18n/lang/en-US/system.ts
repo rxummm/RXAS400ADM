@@ -106,6 +106,8 @@ export default {
   },
   config: {
     title: 'System Configuration',
+    add: 'Create Config',
+    edit: 'Edit Config',
     key: 'Parameter Key',
     keyHint: 'e.g. alert.webhook.url',
     value: 'Parameter Value',

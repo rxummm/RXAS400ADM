@@ -1,13 +1,12 @@
 package com.rxas400adm.system.service;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.SysRoleDTO;
 import com.rxas400adm.system.entity.SysRole;
-import com.rxas400adm.system.entity.SysRoleMenu;
-import com.rxas400adm.system.entity.SysUserRole;
 import com.rxas400adm.system.mapper.SysRoleMapper;
 import com.rxas400adm.system.mapper.SysRoleMenuMapper;
 import com.rxas400adm.system.mapper.SysUserRoleMapper;
@@ -15,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -62,7 +60,7 @@ class RoleServiceTest {
     @Test
     @DisplayName("新增角色 → roleCode 重复则拒绝")
     void create_duplicateCode_shouldThrow() {
-        when(roleMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(1L);
+        when(roleMapper.selectCount(anyWrapper())).thenReturn(1L);
 
         SysRoleDTO dto = new SysRoleDTO();
         dto.setRoleCode("ADMIN");
@@ -89,13 +87,13 @@ class RoleServiceTest {
         role.setId(2L);
         role.setRoleCode("TEST");
         when(roleMapper.selectById(2L)).thenReturn(role);
-        when(userRoleMapper.delete(any(LambdaQueryWrapper.class))).thenReturn(1);
+        when(userRoleMapper.delete(anyWrapper())).thenReturn(1);
         when(roleMapper.deleteById(2L)).thenReturn(1);
 
         service.delete(2L);
 
         verify(roleMenuMapper).deleteByRoleId(2L);
-        verify(userRoleMapper).delete(any(LambdaQueryWrapper.class));
+        verify(userRoleMapper).delete(anyWrapper());
         verify(roleMapper).deleteById(2L);
     }
 
@@ -108,11 +106,17 @@ class RoleServiceTest {
         role.setRoleCode("TEST");
         page.setRecords(List.of(role));
         page.setTotal(1);
-        when(roleMapper.selectPage(any(), any(LambdaQueryWrapper.class))).thenReturn(page);
+        when(roleMapper.selectPage(any(), anyWrapper())).thenReturn(page);
 
         PageResult<SysRole> result = service.page(1, 10, "TEST");
 
         assertEquals(1, result.getTotal());
         assertEquals("TEST", result.getRecords().get(0).getRoleCode());
+    }
+
+    /** Mockito 的 Class 令牌无法表达泛型参数，Wrapper 泛型收窄统一收敛于此（全文件唯一 unchecked 抑制点） */
+    @SuppressWarnings("unchecked")
+    private static <T> Wrapper<T> anyWrapper() {
+        return (Wrapper<T>) any(LambdaQueryWrapper.class);
     }
 }

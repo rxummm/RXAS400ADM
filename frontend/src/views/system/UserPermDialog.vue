@@ -189,8 +189,12 @@ function getCheckedAssignKeys() {
   return assignPermTreeRef.value?.getCheckedKeys() || []
 }
 
-function handleCurrentPermCheck(_node: any, info: any) {
-  const currentChecked = new Set<number>(info.checkedKeys)
+interface TreeCheckInfo {
+  checkedKeys: Array<number | string>
+}
+
+function handleCurrentPermCheck(_node: unknown, info: TreeCheckInfo) {
+  const currentChecked = new Set<number>(info.checkedKeys as number[])
   const toRemove = new Set<number>()
   for (const id of originalPermIds.value) {
     if (!currentChecked.has(id)) toRemove.add(id)

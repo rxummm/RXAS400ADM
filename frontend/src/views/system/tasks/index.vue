@@ -36,7 +36,7 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="110" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="onTrigger(row)">
+            <el-button link type="primary" size="small" @click="onTrigger(row as TaskBeanInfo)">
               {{ $t('tasks.trigger') }}
             </el-button>
           </template>

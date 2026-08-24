@@ -54,7 +54,7 @@
 // keep-alive 缓存标识，需与路由 name 一致
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'Topology' })
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
@@ -63,6 +63,7 @@ import * as echarts from '@/utils/echarts'
 import { topologyGraph, type TopologyLink, type TopologyNode } from '@/api/topology'
 import { objectDetail, objectReferences, type ObjectDetail, type ObjectReference } from '@/api/object'
 import { formatSize } from '@/utils/format'
+import { useECharts, type ECOption } from '@/composables/useECharts'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 
@@ -73,7 +74,7 @@ const loading = ref(false)
 const nodes = ref<TopologyNode[]>([])
 const links = ref<TopologyLink[]>([])
 const chartRef = ref<HTMLDivElement>()
-let chart: echarts.ECharts | null = null
+let clickBound = false
 
 const typeColors: Record<string, string> = {
   PGM: '#1677ff',
@@ -107,38 +108,37 @@ const onRefSizeChange = () => {
   refOutCurrent.value = 1
 }
 
-const render = () => {
-  if (!chart) return
-  chart.setOption({
-    tooltip: { formatter: (p: { dataType?: string; data?: { name?: string; type?: string } }) => (p.dataType === 'node' ? `${p.data?.name}<br/>${p.data?.type}` : '') },
-    legend: [{ bottom: 0 }],
-    series: [
-      {
-        type: 'graph',
-        layout: 'force',
-        roam: true,
-        draggable: true,
-        categories: Object.keys(typeColors).map((t) => ({
-          name: t,
-          itemStyle: { color: typeColors[t] },
-        })),
-        data: nodes.value.map((n) => ({
-          id: n.id,
-          name: n.name,
-          type: n.type,
-          category: n.type,
-          symbolSize: n.type === 'FILE' || n.type === 'MSGF' ? 26 : 34,
-          itemStyle: { color: (n.type && typeColors[n.type]) || '#1677ff' },
-        })),
-        links: links.value.map((l) => ({ source: l.source, target: l.target })),
-        force: { repulsion: 320, edgeLength: [60, 140], gravity: 0.1 },
-        label: { show: true, position: 'right', fontSize: 11 },
-        lineStyle: { color: 'source', curveness: 0.12 },
-        emphasis: { focus: 'adjacency', lineStyle: { width: 3 } },
-      },
-    ],
-  }, true)
-}
+const buildChartOption = (): ECOption => ({
+  tooltip: { formatter: (p: { dataType?: string; data?: { name?: string; type?: string } }) => (p.dataType === 'node' ? `${p.data?.name}<br/>${p.data?.type}` : '') },
+  legend: [{ bottom: 0 }],
+  series: [
+    {
+      type: 'graph',
+      layout: 'force',
+      roam: true,
+      draggable: true,
+      categories: Object.keys(typeColors).map((t) => ({
+        name: t,
+        itemStyle: { color: typeColors[t] },
+      })),
+      data: nodes.value.map((n) => ({
+        id: n.id,
+        name: n.name,
+        type: n.type,
+        category: n.type,
+        symbolSize: n.type === 'FILE' || n.type === 'MSGF' ? 26 : 34,
+        itemStyle: { color: (n.type && typeColors[n.type]) || '#1677ff' },
+      })),
+      links: links.value.map((l) => ({ source: l.source, target: l.target })),
+      force: { repulsion: 320, edgeLength: [60, 140], gravity: 0.1 },
+      label: { show: true, position: 'right', fontSize: 11 },
+      lineStyle: { color: 'source', curveness: 0.12 },
+      emphasis: { focus: 'adjacency', lineStyle: { width: 3 } },
+    },
+  ],
+})
+
+const chart = useECharts(chartRef, buildChartOption)
 
 const load = async () => {
   loading.value = true
@@ -146,16 +146,16 @@ const load = async () => {
     const data = await topologyGraph(library.value)
     nodes.value = data.nodes || []
     links.value = data.links || []
-    if (!chart) {
-      chart = echarts.init(chartRef.value!)
-      chart.on('click', (params: echarts.ECElementEvent) => {
+    chart.setOption(buildChartOption(), true)
+    // 实例只在首次初始化时创建，click 事件只绑一次
+    if (!clickBound) {
+      chart.getInstance()?.on('click', (params: echarts.ECElementEvent) => {
         if (params?.dataType === 'node' && params?.data) {
           openNode(params.data as { id?: string })
         }
       })
-      window.addEventListener('resize', onResize)
+      clickBound = true
     }
-    render()
   } catch {
     nodes.value = []
     links.value = []
@@ -194,14 +194,7 @@ const openNode = async (node: { id?: string; name?: string; type?: string }) => 
   }
 }
 
-const onResize = () => chart?.resize()
-
 onMounted(load)
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', onResize)
-  chart?.dispose()
-  chart = null
-})
 </script>
 
 <style scoped>

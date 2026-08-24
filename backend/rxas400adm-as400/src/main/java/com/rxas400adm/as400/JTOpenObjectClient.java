@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import static com.rxas400adm.as400.JTOpenConnectionState.str;
+import static com.rxas400adm.as400.JTOpenConnectionState.lng;
 
 /**
  * JTOpen ObjectClient 委托实现（对象搜索 / 详情 / 引用 / 权限 / 拓扑）。
@@ -140,23 +142,5 @@ class JTOpenObjectClient implements ObjectClient {
         return new GraphData(List.copyOf(nodes.values()), links);
     }
 
-    private static String str(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        return v == null ? "" : String.valueOf(v);
-    }
 
-    private static long lng(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        if (v instanceof Number n) {
-            return n.longValue();
-        }
-        if (v != null && !String.valueOf(v).isBlank()) {
-            try {
-                return Long.parseLong(String.valueOf(v).trim());
-            } catch (NumberFormatException ignored) {
-                return 0;
-            }
-        }
-        return 0;
-    }
 }

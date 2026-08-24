@@ -9,8 +9,7 @@ import com.rxas400adm.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.rxas400adm.common.util.SecurityUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,7 +51,7 @@ public class ScriptController {
     @PreAuthorize("hasAuthority('SCRIPT_MANAGE')")
     @OperateLog(module = "命令脚本", operation = "新建脚本")
     public ApiResponse<CommandScriptVO> create(@Valid @RequestBody CommandScriptRequest request) {
-        return ApiResponse.success(CommandScriptVO.from(scriptService.create(request, currentUsername())));
+        return ApiResponse.success(CommandScriptVO.from(scriptService.create(request, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/{id}")
@@ -85,7 +84,5 @@ public class ScriptController {
         return ApiResponse.success(scriptService.execute(id, serverId));
     }
 
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
-    }
+
 }

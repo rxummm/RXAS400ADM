@@ -5,6 +5,7 @@ import com.rxas400adm.as400.model.UserProfileRow;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
+import static com.rxas400adm.as400.JTOpenConnectionState.str;
 
 /**
  * JTOpen AuthClient 委托实现（AS400 用户凭据认证 / profile 查询）。
@@ -49,8 +50,4 @@ class JTOpenAuthClient implements AuthClient {
         return new UserProfileRow(str(row, "USER_NAME"), str(row, "GROUP_PROFILE"), str(row, "STATUS"));
     }
 
-    private static String str(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        return v == null ? "" : String.valueOf(v);
-    }
 }

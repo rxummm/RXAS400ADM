@@ -54,13 +54,13 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="row.level < 3" link type="primary" size="small" @click="openCreate(row)">
+            <el-button v-if="row.level < 3" link type="primary" size="small" @click="openCreate(row as Region)">
               {{ $t('tool.region.addChild') }}
             </el-button>
-            <el-button link type="primary" size="small" @click="openEdit(row)">
+            <el-button link type="primary" size="small" @click="openEdit(row as Region)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button link type="danger" size="small" @click="onDelete(row)">
+            <el-button link type="danger" size="small" @click="onDelete(row as Region)">
               {{ $t('common.delete') }}
             </el-button>
           </template>

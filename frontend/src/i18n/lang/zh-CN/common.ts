@@ -94,6 +94,10 @@ export default {
     lastUpdate: '最后更新',
     realtime: '实时',
     stale: '数据可能已过期',
+    offlineWarning: '网络断开',
+    offlineMessage: '网络连接已断开，部分功能可能不可用',
+    onlineRecovery: '网络恢复',
+    onlineMessage: '网络连接已恢复',
   },
   export: {
     title: '导出数据',

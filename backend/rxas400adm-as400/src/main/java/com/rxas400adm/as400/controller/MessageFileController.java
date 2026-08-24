@@ -57,9 +57,9 @@ public class MessageFileController {
     @PreAuthorize("hasAuthority('MSGF_ADD')")
     @OperateLog(module = "消息文件", operation = "新增消息描述")
     public ApiResponse<CommandResult> add(@Valid @RequestBody MessageRequest request) {
-        return ApiResponse.success(clientProvider.current().addMessage(
+        return ApiResponse.success(clientProvider.current().addMessage(new com.rxas400adm.as400.model.MessageDescriptor(
                 request.getLibrary(), request.getFile(), request.getId(),
-                request.getText(), request.getSecondLevel(), request.getSeverity()));
+                request.getText(), request.getSecondLevel(), request.getSeverity())));
     }
 
     /** 修改消息描述（CHGMSGD） */
@@ -67,9 +67,9 @@ public class MessageFileController {
     @PreAuthorize("hasAuthority('MSGF_EDIT')")
     @OperateLog(module = "消息文件", operation = "修改消息描述")
     public ApiResponse<CommandResult> update(@Valid @RequestBody MessageRequest request) {
-        return ApiResponse.success(clientProvider.current().updateMessage(
+        return ApiResponse.success(clientProvider.current().updateMessage(new com.rxas400adm.as400.model.MessageDescriptor(
                 request.getLibrary(), request.getFile(), request.getId(),
-                request.getText(), request.getSecondLevel(), request.getSeverity()));
+                request.getText(), request.getSecondLevel(), request.getSeverity())));
     }
 
     /** 删除消息描述（RMVMSGD） */

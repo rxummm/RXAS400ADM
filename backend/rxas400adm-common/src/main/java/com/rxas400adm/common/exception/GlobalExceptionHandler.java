@@ -5,6 +5,7 @@ import com.rxas400adm.common.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -107,6 +108,13 @@ public class GlobalExceptionHandler {
     public ApiResponse<Void> handleDataAccess(DataAccessException e) {
         log.error("数据库访问异常", e);
         return ApiResponse.error(500, "数据查询失败，请稍后重试或联系管理员");
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiResponse<Void> handleDuplicateKey(DuplicateKeyException e) {
+        log.warn("唯一键冲突: {}", e.getMessage());
+        return ApiResponse.error(409, "数据已存在，请勿重复提交");
     }
 
     @ExceptionHandler(Exception.class)

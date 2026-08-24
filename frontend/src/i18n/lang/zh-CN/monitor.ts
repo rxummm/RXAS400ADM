@@ -6,6 +6,8 @@
 export default {
   monitor: {
     title: '实时指标',
+    wsDisconnected: '实时连接断开',
+    wsReconnecting: '正在尝试重新连接…',
     wsHint: 'WebSocket 推送 /topic/monitor/{serverId}',
     cpu: 'CPU 使用率 (%)',
     memory: '内存使用率 (%)',

@@ -166,7 +166,8 @@ const recentResults = computed(() => {
     .map((v) => ({ name: menuLabel(v.title || ''), path: v.path }))
 })
 
-const actions = [
+// 低-19：computed 惰性求值，切语言后快捷操作名随响应式更新（原 setup 期一次性快照）
+const actions = computed(() => [
   { name: t('commandPalette.toggleTheme'), icon: FullScreen, action: () => toggleDark() },
   {
     name: t('commandPalette.toggleFullscreen'),
@@ -186,12 +187,12 @@ const actions = [
       router.push('/login')
     },
   },
-]
+])
 
 const actionResults = computed(() => {
   const kw = keyword.value.trim().toLowerCase()
   if (!kw) return []
-  return actions.filter((a) => a.name.toLowerCase().includes(kw))
+  return actions.value.filter((a) => a.name.toLowerCase().includes(kw))
 })
 
 const userResults = computed(() => {

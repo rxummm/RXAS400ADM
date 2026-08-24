@@ -101,8 +101,8 @@ rxas400:
   jwt:
     # 生产环境必须通过环境变量 RXAS400_JWT_SECRET 覆盖（≥32 字节）；空兜底避免「漏配即公开默认值」
     secret: ${RXAS400_JWT_SECRET:}
-    # B9：access token 有效期 2h（原 24h 过长），依赖已有 refresh token（默认 7d）轮换
-    expire-ms: 7200000
+    # B9：access token 有效期 24h（原 2h，已调整以匹配生产环境；依赖已有 refresh token（默认 7d）轮换）
+    expire-ms: 86400000
     # P2-1：令牌 iss/aud 声明（校验时强制匹配，换值后旧令牌全部失效需重新登录）
     issuer: rxas400adm
     audience: rxas400-ui

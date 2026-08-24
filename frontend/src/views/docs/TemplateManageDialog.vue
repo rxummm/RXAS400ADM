@@ -19,8 +19,8 @@
       <el-table-column prop="createdBy" :label="$t('docs.author')" width="100" />
       <el-table-column :label="$t('common.operation')" width="130">
         <template #default="{ row }">
-          <el-button size="small" link type="primary" @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
-          <el-button size="small" link type="danger" @click="remove(row)">{{ $t('common.delete') }}</el-button>
+          <el-button size="small" link type="primary" @click="openEdit(row as TemplateItem)">{{ $t('common.edit') }}</el-button>
+          <el-button size="small" link type="danger" @click="remove(row as TemplateItem)">{{ $t('common.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>

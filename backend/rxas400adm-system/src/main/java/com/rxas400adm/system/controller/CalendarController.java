@@ -9,8 +9,6 @@ import com.rxas400adm.system.service.SysUserService;
 import com.rxas400adm.system.vo.CalendarEventVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,19 +41,6 @@ public class CalendarController {
     public ApiResponse<List<CalendarEventVO>> month(@RequestParam int year,
                                                   @RequestParam int month) {
         return ApiResponse.success(eventService.month(year, month, currentUserId()).stream().map(CalendarEventVO::from).toList());
-    }
-
-    @GetMapping("/range")
-    @PreAuthorize("hasAuthority('CALENDAR_VIEW')")
-    public ApiResponse<List<CalendarEventVO>> range(@RequestParam String startDate,
-                                                  @RequestParam String endDate) {
-        return ApiResponse.success(eventService.range(startDate, endDate, currentUserId()).stream().map(CalendarEventVO::from).toList());
-    }
-
-    @GetMapping("/today")
-    @PreAuthorize("hasAuthority('CALENDAR_VIEW')")
-    public ApiResponse<List<CalendarEventVO>> today() {
-        return ApiResponse.success(eventService.today(currentUserId()).stream().map(CalendarEventVO::from).toList());
     }
 
     @PostMapping

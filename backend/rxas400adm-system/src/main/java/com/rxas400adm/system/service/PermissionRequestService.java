@@ -192,12 +192,10 @@ public class PermissionRequestService implements IPermissionRequestService {
                 .map(SysMenu::getId)
                 .collect(Collectors.toSet());
         boolean hasButton = menuIds.stream().anyMatch(buttonIds::contains);
-        Set<Long> grantIds = new LinkedHashSet<>();
-        for (Long menuId : menuIds) {
-            grantIds.add(menuId);
-            if (!hasButton) {
-                collectDescendantButtons(allMenus, menuId, grantIds);
-            }
+        Set<Long> grantIds = new LinkedHashSet<>(menuIds);
+        if (!hasButton) {
+            // 未精确勾选按钮时自动补全全部子孙按钮（共享迭代实现，消除原递归 O(n²) 风险）
+            grantIds.addAll(MenuTreeSupport.collectDescendantButtons(allMenus, menuIds));
         }
         // B7：一次性加载已有授权，消除循环 selectById / selectCount 的 N+1
         Set<Long> existingMenuIds = userMenuMapper.selectList(
@@ -211,17 +209,6 @@ public class PermissionRequestService implements IPermissionRequestService {
                 um.setMenuId(menuId);
                 um.setCreatedTime(LocalDateTime.now());
                 userMenuMapper.insert(um);
-            }
-        }
-    }
-
-    private void collectDescendantButtons(List<SysMenu> allMenus, Long parentId, Set<Long> result) {
-        for (SysMenu m : allMenus) {
-            if (parentId.equals(m.getParentId())) {
-                if (m.getMenuType() != null && m.getMenuType() == 3) {
-                    result.add(m.getId());
-                }
-                collectDescendantButtons(allMenus, m.getId(), result);
             }
         }
     }

@@ -49,8 +49,13 @@ public class AuditLogService implements IAuditLogService {
     }
 
     @Override
-    public void auditLogin(String action, String username, String ip, String source,
-                           Long serverId, String detail) {
+    public void auditLogin(LoginAuditContext ctx) {
+        String action = ctx.action();
+        String username = ctx.username();
+        String ip = ctx.ip();
+        String source = ctx.source();
+        Long serverId = ctx.serverId();
+        String detail = ctx.detail();
         try {
             AuditLog audit = new AuditLog();
             audit.setUserName(username);

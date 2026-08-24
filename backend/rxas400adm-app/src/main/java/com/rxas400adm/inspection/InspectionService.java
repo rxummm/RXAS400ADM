@@ -53,23 +53,13 @@ public class InspectionService implements IInspectionService {
         List<Map<String, Object>> issues = new ArrayList<>();
         double score = 100;
 
-        // 1) CPU
-        double cpu = num(overview.get("cpu"));
-        checks.add(check("CPU_USAGE", cpu + "%", cpu >= 90 ? "CRITICAL" : cpu >= 80 ? "WARNING" : "OK"));
-        if (cpu >= 90) { score -= 30; issue(issues, "CPU", "CRITICAL", "CPU_OVER_90", Map.of("value", String.format("%.1f", cpu))); }
-        else if (cpu >= 80) { score -= 15; issue(issues, "CPU", "WARNING", "CPU_OVER_80", Map.of("value", String.format("%.1f", cpu))); }
-
-        // 2) 内存
-        double mem = num(overview.get("memory"));
-        checks.add(check("MEMORY_USAGE", mem + "%", mem >= 90 ? "CRITICAL" : mem >= 85 ? "WARNING" : "OK"));
-        if (mem >= 90) { score -= 20; issue(issues, "MEMORY", "CRITICAL", "MEMORY_OVER_90", Map.of("value", String.format("%.1f", mem))); }
-        else if (mem >= 85) { score -= 10; issue(issues, "MEMORY", "WARNING", "MEMORY_OVER_85", Map.of("value", String.format("%.1f", mem))); }
-
-        // 3) 磁盘（总览 DISK）+ ASP 明细
-        double disk = num(overview.get("disk"));
-        checks.add(check("DISK_USAGE", disk + "%", disk >= 90 ? "CRITICAL" : disk >= 80 ? "WARNING" : "OK"));
-        if (disk >= 90) { score -= 20; issue(issues, "DISK", "CRITICAL", "DISK_OVER_90", Map.of("value", String.format("%.1f", disk))); }
-        else if (disk >= 80) { score -= 10; issue(issues, "DISK", "WARNING", "DISK_OVER_80", Map.of("value", String.format("%.1f", disk))); }
+        // 1-3) CPU / 内存 / 磁盘（中-1：三段同构阈值块收敛为 evaluate()，新指标上线只补一行）
+        score -= evaluate(new MetricThreshold("CPU_USAGE", "CPU", 90, 30, "CPU_OVER_90", 80, 15, "CPU_OVER_80"),
+                num(overview.get("cpu")), checks, issues);
+        score -= evaluate(new MetricThreshold("MEMORY_USAGE", "MEMORY", 90, 20, "MEMORY_OVER_90", 85, 10, "MEMORY_OVER_85"),
+                num(overview.get("memory")), checks, issues);
+        score -= evaluate(new MetricThreshold("DISK_USAGE", "DISK", 90, 20, "DISK_OVER_90", 80, 10, "DISK_OVER_80"),
+                num(overview.get("disk")), checks, issues);
         for (Map<String, Object> a : asp) {
             double used = num(a.get("USED_SPACE"));
             double total = num(a.get("TOTAL_SPACE"));
@@ -143,6 +133,29 @@ public class InspectionService implements IInspectionService {
         }
         return reportService.render(format, title,
                 new String[]{"check", "value", "status"}, rows);
+    }
+
+    /** 指标阈值规则（检查项 key / 问题类别 item / 两级阈值与扣分 / 对应 issue detailCode） */
+    private record MetricThreshold(String checkKey, String item,
+                                   double criticalAt, int criticalPenalty, String criticalCode,
+                                   double warningAt, int warningPenalty, String warningCode) {
+    }
+
+    /** 评估单个百分比指标：写检查项 + 命中阈值时记 issue 并返回扣分（未命中返回 0） */
+    private double evaluate(MetricThreshold r, double value,
+                            List<Map<String, Object>> checks, List<Map<String, Object>> issues) {
+        checks.add(check(r.checkKey(), value + "%",
+                value >= r.criticalAt() ? "CRITICAL" : value >= r.warningAt() ? "WARNING" : "OK"));
+        String formatted = String.format("%.1f", value);
+        if (value >= r.criticalAt()) {
+            issue(issues, r.item(), "CRITICAL", r.criticalCode(), Map.of("value", formatted));
+            return r.criticalPenalty();
+        }
+        if (value >= r.warningAt()) {
+            issue(issues, r.item(), "WARNING", r.warningCode(), Map.of("value", formatted));
+            return r.warningPenalty();
+        }
+        return 0;
     }
 
     private Map<String, Object> check(String name, String value, String status) {

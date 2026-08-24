@@ -5,6 +5,8 @@ import com.rxas400adm.as400.model.PfRow;
 
 import java.util.List;
 import java.util.Map;
+import static com.rxas400adm.as400.JTOpenConnectionState.str;
+import static com.rxas400adm.as400.JTOpenConnectionState.lng;
 
 /**
  * JTOpen PfClient 委托实现（物理文件列表 / 字段定义 / 记录分页查看）。
@@ -52,23 +54,5 @@ class JTOpenPfClient implements PfClient {
                 + " FETCH FIRST " + capped + " ROWS ONLY");
     }
 
-    private static String str(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        return v == null ? "" : String.valueOf(v);
-    }
 
-    private static long lng(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        if (v instanceof Number n) {
-            return n.longValue();
-        }
-        if (v != null && !String.valueOf(v).isBlank()) {
-            try {
-                return Long.parseLong(String.valueOf(v).trim());
-            } catch (NumberFormatException ignored) {
-                return 0;
-            }
-        }
-        return 0;
-    }
 }

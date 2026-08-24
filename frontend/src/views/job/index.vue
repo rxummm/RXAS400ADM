@@ -26,7 +26,7 @@
             </el-radio-group>
           </div>
           <RxSkeleton type="table" :rows="8" :loading="loading">
-            <el-table :data="pagedJobs" size="small" empty-text="">
+            <el-table :data="pagedJobs" size="small">
             <template #empty>
               <el-empty :description="$t('jobs.empty')" :image-size="80" />
             </template>
@@ -43,18 +43,18 @@
             <el-table-column prop="temporaryStorage" :label="$t('jobs.tempStorage')" width="110" />
             <el-table-column :label="$t('common.operation')" width="280" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" @click="openLog(row)">{{ $t('jobs.log') }}</el-button>
+                <el-button size="small" @click="openLog(row as JobInfo)">{{ $t('jobs.log') }}</el-button>
                 <el-button
                   v-has-perm="'JOB_END'"
                   v-if="row.jobStatus === 'HELD'"
                   size="small"
                   type="warning"
                   plain
-                  @click="handleRelease(row)"
+                  @click="handleRelease(row as JobInfo)"
                 >
                   {{ $t('jobs.release') }}
                 </el-button>
-                <el-button v-has-perm="'JOB_END'" v-else size="small" type="warning" plain @click="handleHold(row)">
+                <el-button v-has-perm="'JOB_END'" v-else size="small" type="warning" plain @click="handleHold(row as JobInfo)">
                   {{ $t('jobs.hold') }}
                 </el-button>
                 <el-button
@@ -67,7 +67,7 @@
                 >
                   {{ $t('jobs.reply') }}
                 </el-button>
-                <el-button v-has-perm="'JOB_END'" size="small" type="danger" plain @click="handleEnd(row)">
+                <el-button v-has-perm="'JOB_END'" size="small" type="danger" plain @click="handleEnd(row as JobInfo)">
                   {{ $t('jobs.end') }}
                 </el-button>
               </template>

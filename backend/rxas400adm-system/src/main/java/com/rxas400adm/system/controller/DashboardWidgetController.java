@@ -1,4 +1,5 @@
 package com.rxas400adm.system.controller;
+import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
@@ -6,8 +7,6 @@ import com.rxas400adm.system.service.IDashboardWidgetService;
 import com.rxas400adm.system.vo.DashboardWidgetVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,7 +30,7 @@ public class DashboardWidgetController {
 
     @GetMapping
     public ApiResponse<List<DashboardWidgetVO>> prefs() {
-        return ApiResponse.success(widgetService.prefs(currentUsername()).stream().map(DashboardWidgetVO::from).toList());
+        return ApiResponse.success(widgetService.prefs(SecurityUtils.currentUsername()).stream().map(DashboardWidgetVO::from).toList());
     }
 
     // P3-8：显式声明仅登录可写 + 审计（写操作不允许裸奔到匿名链/无审计）
@@ -40,10 +39,6 @@ public class DashboardWidgetController {
     @OperateLog(module = "仪表盘", operation = "更新 Widget 显隐")
     public ApiResponse<DashboardWidgetVO> update(@PathVariable String widgetKey,
                                                @RequestParam boolean enabled) {
-        return ApiResponse.success(DashboardWidgetVO.from(widgetService.update(currentUsername(), widgetKey, enabled)));
-    }
-
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
+        return ApiResponse.success(DashboardWidgetVO.from(widgetService.update(SecurityUtils.currentUsername(), widgetKey, enabled)));
     }
 }

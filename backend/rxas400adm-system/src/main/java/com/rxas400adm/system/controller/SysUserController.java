@@ -105,12 +105,5 @@ public class SysUserController {
         return ApiResponse.success(null);
     }
 
-    /** 设置授权（替换模式：清空后写入勾选，不影响角色授权） */
-    @PostMapping("/{id}/menus/set")
-    @PreAuthorize("hasAuthority('USER_MANAGE')")
-    @OperateLog(module = "用户管理", operation = "设置用户菜单授权")
-    public ApiResponse<Void> setUserMenus(@PathVariable Long id, @Valid @RequestBody UserMenuUpdateDTO body) {
-        userMenuService.setUserMenus(id, body.getMenuIds());
-        return ApiResponse.success(null);
-    }
+
 }

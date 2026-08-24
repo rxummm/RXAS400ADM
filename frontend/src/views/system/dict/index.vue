@@ -29,8 +29,8 @@
             </el-table-column>
             <el-table-column :label="$t('common.operation')" width="120" fixed="right">
               <template #default="{ row }">
-                <el-button link type="primary" size="small" @click.stop="openTypeDialog(row)">{{ $t('common.edit') }}</el-button>
-                <el-button link type="danger" size="small" @click.stop="removeType(row)">{{ $t('common.delete') }}</el-button>
+                <el-button link type="primary" size="small" @click.stop="openTypeDialog(row as DictType)">{{ $t('common.edit') }}</el-button>
+                <el-button link type="danger" size="small" @click.stop="removeType(row as DictType)">{{ $t('common.delete') }}</el-button>
               </template>
             </el-table-column>
           </el-table>

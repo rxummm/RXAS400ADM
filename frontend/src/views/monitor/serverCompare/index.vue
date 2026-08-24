@@ -27,7 +27,7 @@
         <RxSkeleton type="table" :rows="8" :loading="loading">
           <el-table :data="tableRows" size="small" border>
           <el-table-column :label="$t('serverCompare.metric')" width="120" fixed="left">
-            <template #default="{ row }: { row: { key: string } }">{{ row.key ? $t(`serverCompare.metricNames.${row.key}`) : '' }}</template>
+            <template #default="{ row }">{{ row.key ? $t(`serverCompare.metricNames.${row.key}`) : '' }}</template>
           </el-table-column>
           <el-table-column
             v-for="s in rows"
@@ -35,7 +35,7 @@
             :label="`${s.name} / ${s.host}`"
             align="center"
           >
-            <template #default="{ row }: { row: { key: string } }">
+            <template #default="{ row }">
               <template v-if="row.key === 'status'">
                 <el-tag :type="s.status === 'ONLINE' ? 'success' : 'danger'" size="small">{{ s.status }}</el-tag>
               </template>
@@ -63,12 +63,12 @@
 // keep-alive 缓存标识，需与路由 name 一致
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'ServerCompare' })
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import * as echarts from '@/utils/echarts'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useAs400ServerStore } from '@/stores/as400Server'
 import { fetchCompare, type CompareSnapshot } from '@/api/monitor'
+import { useECharts, type ECOption } from '@/composables/useECharts'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 
 const { t } = useI18n()
@@ -79,8 +79,7 @@ const selectedIds = ref<number[]>([])
 const rows = ref<CompareSnapshot[]>([])
 const loading = ref(false)
 
-const chartRef = ref<HTMLElement | null>(null)
-let chart: echarts.ECharts | null = null
+const chartRef = ref<HTMLDivElement>()
 
 // 指标行：status 为服务器在线状态，其余为数值指标
 const tableRows = computed(() =>
@@ -93,6 +92,37 @@ const fmtNum = (v: number) => {
   return Math.round(n * 10) / 10
 }
 
+const buildChartOption = (): ECOption => ({
+  title: { text: t('serverCompare.chartTitle'), left: 'center', textStyle: { fontSize: 14 } },
+  tooltip: { trigger: 'axis' },
+  legend: { bottom: 0 },
+  grid: { top: 40, left: 40, right: 20, bottom: 40 },
+  xAxis: {
+    type: 'category',
+    data: rows.value.map((s) => s.name),
+  },
+  yAxis: { type: 'value', max: 100, axisLabel: { formatter: '{value}%' } },
+  series: [
+    {
+      name: t('serverCompare.metricNames.cpu'),
+      type: 'bar',
+      data: rows.value.map((s) => Math.round(Number(s.cpu) * 10) / 10),
+    },
+    {
+      name: t('serverCompare.metricNames.memory'),
+      type: 'bar',
+      data: rows.value.map((s) => Math.round(Number(s.memory) * 10) / 10),
+    },
+    {
+      name: t('serverCompare.metricNames.disk'),
+      type: 'bar',
+      data: rows.value.map((s) => Math.round(Number(s.disk) * 10) / 10),
+    },
+  ],
+})
+
+const chart = useECharts(chartRef, buildChartOption)
+
 const compare = async () => {
   if (!selectedIds.value.length) {
     return
@@ -100,58 +130,18 @@ const compare = async () => {
   loading.value = true
   try {
     rows.value = await fetchCompare(selectedIds.value)
-    // 等待 v-if 渲染出图表容器后再 init（否则 chartRef 为 null）
+    // 等待 v-if 渲染出图表容器后再初始化（否则 chartRef 为 null）
     await nextTick()
-    renderChart()
+    chart.setOption(buildChartOption())
   } finally {
     loading.value = false
   }
-}
-
-const renderChart = () => {
-  if (!chartRef.value) return
-  if (!chart) {
-    chart = echarts.init(chartRef.value)
-  }
-  chart.setOption({
-    title: { text: t('serverCompare.chartTitle'), left: 'center', textStyle: { fontSize: 14 } },
-    tooltip: { trigger: 'axis' },
-    legend: { bottom: 0 },
-    grid: { top: 40, left: 40, right: 20, bottom: 40 },
-    xAxis: {
-      type: 'category',
-      data: rows.value.map((s) => s.name),
-    },
-    yAxis: { type: 'value', max: 100, axisLabel: { formatter: '{value}%' } },
-    series: [
-      {
-        name: t('serverCompare.metricNames.cpu'),
-        type: 'bar',
-        data: rows.value.map((s) => Math.round(Number(s.cpu) * 10) / 10),
-      },
-      {
-        name: t('serverCompare.metricNames.memory'),
-        type: 'bar',
-        data: rows.value.map((s) => Math.round(Number(s.memory) * 10) / 10),
-      },
-      {
-        name: t('serverCompare.metricNames.disk'),
-        type: 'bar',
-        data: rows.value.map((s) => Math.round(Number(s.disk) * 10) / 10),
-      },
-    ],
-  })
 }
 
 onMounted(async () => {
   if (!servers.value.length) {
     await as400Store.fetchServers()
   }
-})
-
-onBeforeUnmount(() => {
-  chart?.dispose()
-  chart = null
 })
 </script>
 

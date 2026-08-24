@@ -1,7 +1,5 @@
 package com.rxas400adm.report;
 
-import com.rxas400adm.common.response.ApiResponse;
-import com.rxas400adm.report.vo.ReportPreviewVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -15,8 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
@@ -34,11 +30,10 @@ public class ReportController {
     public ResponseEntity<byte[]> metrics(@RequestParam(defaultValue = "xlsx") String format,
                                           @RequestParam Long instanceId,
                                           @RequestParam(defaultValue = "7") int days) {
-        String title = "IBM i 指标报表（instance=" + instanceId + " 近" + days + "天）";
-        byte[] data = reportService.render(format, title,
-                new String[]{"date", "metric", "avg", "max", "min", "samples"},
+        ReportSpec spec = ReportSpec.metrics(instanceId, days);
+        byte[] data = reportService.render(format, spec.title(), spec.headerArray(),
                 reportService.metricsRows(instanceId, days));
-        return file(format, "report-metrics", title, data);
+        return file(format, "report-metrics", spec.title(), data);
     }
 
     @GetMapping("/executions")
@@ -46,11 +41,10 @@ public class ReportController {
     public ResponseEntity<byte[]> executions(@RequestParam(defaultValue = "xlsx") String format,
                                              @RequestParam(required = false) String type,
                                              @RequestParam(required = false) String status) {
-        String title = "执行记录报表";
-        byte[] data = reportService.render(format, title,
-                new String[]{"time", "source", "name", "type", "user", "server", "status", "message", "costMs"},
+        ReportSpec spec = ReportSpec.executions();
+        byte[] data = reportService.render(format, spec.title(), spec.headerArray(),
                 reportService.executionRows(type, status));
-        return file(format, "report-executions", title, data);
+        return file(format, "report-executions", spec.title(), data);
     }
 
     @GetMapping("/capacity")
@@ -58,11 +52,10 @@ public class ReportController {
     public ResponseEntity<byte[]> capacity(@RequestParam(defaultValue = "xlsx") String format,
                                            @RequestParam Long instanceId,
                                            @RequestParam(defaultValue = "30") int days) {
-        String title = "磁盘容量趋势报表（instance=" + instanceId + "）";
-        byte[] data = reportService.render(format, title,
-                new String[]{"kind", "date", "avg", "max"},
+        ReportSpec spec = ReportSpec.capacity(instanceId);
+        byte[] data = reportService.render(format, spec.title(), spec.headerArray(),
                 reportService.capacityRows(instanceId, days));
-        return file(format, "report-capacity", title, data);
+        return file(format, "report-capacity", spec.title(), data);
     }
 
     private ResponseEntity<byte[]> file(String format, String base, String title, byte[] data) {
@@ -78,19 +71,5 @@ public class ReportController {
                 .body(data);
     }
 
-    /** 供内部/测试使用的 JSON 预览（行数等元信息） */
-    @GetMapping("/preview")
-    @PreAuthorize("hasAuthority('REPORT_VIEW')")
-    public ApiResponse<ReportPreviewVO> preview(@RequestParam String kind,
-                                                  @RequestParam(required = false) Long instanceId,
-                                                  @RequestParam(required = false) String type,
-                                                  @RequestParam(required = false) String status) {
-        List<Map<String, Object>> rows = switch (kind) {
-            case "metrics" -> reportService.metricsRows(instanceId == null ? 1 : instanceId, 7);
-            case "executions" -> reportService.executionRows(type, status);
-            case "capacity" -> reportService.capacityRows(instanceId == null ? 1 : instanceId, 30);
-            default -> List.of();
-        };
-        return ApiResponse.success(new ReportPreviewVO(rows.size(), rows.isEmpty() ? null : rows.get(0)));
-    }
+
 }

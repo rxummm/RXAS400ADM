@@ -1,4 +1,5 @@
 package com.rxas400adm.system.controller;
+import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
@@ -12,8 +13,6 @@ import com.rxas400adm.system.vo.WebhookLogVO;
 import com.rxas400adm.system.vo.WebhookTestResultVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
@@ -62,7 +60,7 @@ public class WebhookController {
     @PreAuthorize("hasAuthority('WEBHOOK_MANAGE')")
     @OperateLog(module = "Webhook", operation = "新增 Webhook")
     public ApiResponse<WebhookConfigVO> create(@Valid @RequestBody WebhookConfigDTO config) {
-        return ApiResponse.success(WebhookConfigVO.from(webhookService.create(config, currentUsername())));
+        return ApiResponse.success(WebhookConfigVO.from(webhookService.create(config, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/{id}")
@@ -105,9 +103,5 @@ public class WebhookController {
     public ApiResponse<BatchDeleteResultVO> cleanLogs(@RequestParam(defaultValue = "30") int keepDays) {
         int deleted = webhookService.cleanLogs(keepDays);
         return ApiResponse.success(new BatchDeleteResultVO(deleted));
-    }
-
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
     }
 }

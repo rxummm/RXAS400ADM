@@ -9,6 +9,7 @@
  */
 import { onMounted, onUnmounted, ref } from 'vue'
 import { ElNotification } from 'element-plus'
+import i18n from '@/i18n'
 
 let instanceCount = 0
 let notificationClose: (() => void) | null = null
@@ -19,8 +20,8 @@ export function useNetworkStatus() {
   const showOfflineNotice = () => {
     if (notificationClose) return // 已存在
     notificationClose = ElNotification({
-      title: '⚠️ 网络断开',
-      message: '网络连接已断开，部分功能可能不可用',
+      title: i18n.global.t('common.connection.offlineWarning'),
+      message: i18n.global.t('common.connection.offlineMessage'),
       type: 'warning',
       duration: 0, // 不自动关闭
       position: 'top-right',
@@ -35,8 +36,8 @@ export function useNetworkStatus() {
     }
     if (isOnline.value) {
       ElNotification({
-        title: '✅ 网络恢复',
-        message: '网络连接已恢复',
+        title: i18n.global.t('common.connection.onlineRecovery'),
+        message: i18n.global.t('common.connection.onlineMessage'),
         type: 'success',
         duration: 3000,
         position: 'top-right',

@@ -7,6 +7,7 @@ import com.rxas400adm.common.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -128,6 +129,29 @@ class JTOpenConnectionState {
             return message;
         }
         return message.replace(password, "***");
+    }
+
+
+    /** 行取值工具：NULL 安全转字符串（各 JTOpen 委托客户端共用，消除 7 处复制） */
+    static String str(Map<String, Object> row, String key) {
+        Object v = row.get(key);
+        return v == null ? "" : String.valueOf(v);
+    }
+
+    /** 行取值工具：数字/数字字符串安全转 long，异常归 0（各 JTOpen 委托客户端共用） */
+    static long lng(Map<String, Object> row, String key) {
+        Object v = row.get(key);
+        if (v instanceof Number n) {
+            return n.longValue();
+        }
+        if (v != null && !String.valueOf(v).isBlank()) {
+            try {
+                return Long.parseLong(String.valueOf(v).trim());
+            } catch (NumberFormatException ignored) {
+                return 0;
+            }
+        }
+        return 0;
     }
 
     static String requireIdentifier(String value, String label) {

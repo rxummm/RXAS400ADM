@@ -1,9 +1,14 @@
 package com.rxas400adm.as400;
 
+import java.util.Set;
+
 /**
  * Mock CommandClient 委托实现（CL 命令仿真 / 连接测试）。
  */
 class MockCommandClient implements CommandClient {
+
+    /** 视为「模拟执行成功」的命令动词前缀（中-8：替代 startsWith 长布尔链，便于扩充） */
+    private static final Set<String> OK_VERB_PREFIXES = Set.of("CRT", "SAV", "RST", "END", "CHG");
 
     private final MockState state;
 
@@ -19,8 +24,7 @@ class MockCommandClient implements CommandClient {
     @Override
     public CommandResult execute(String command) {
         String cmd = command.trim().toUpperCase();
-        if (cmd.startsWith("CRT") || cmd.startsWith("SAV") || cmd.startsWith("RST")
-                || cmd.startsWith("END") || cmd.startsWith("CHG")) {
+        if (OK_VERB_PREFIXES.stream().anyMatch(cmd::startsWith)) {
             return CommandResult.ok("模拟执行成功: " + command.split("\\s+")[0]);
         }
         return CommandResult.ok("模拟执行完成: " + command);

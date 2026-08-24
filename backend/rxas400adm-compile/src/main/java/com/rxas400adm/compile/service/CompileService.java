@@ -8,7 +8,7 @@ import com.rxas400adm.compile.dto.CompileRequest;
 import com.rxas400adm.compile.entity.CompileRecord;
 import com.rxas400adm.compile.mapper.CompileRecordMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.rxas400adm.common.util.SecurityUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -35,7 +35,7 @@ public class CompileService implements ICompileService {
         record.setCommand(request.getCommand());
         record.setStatus(result.success() ? "SUCCESS" : "FAILED");
         record.setMessage(result.message());
-        record.setOperator(currentUsername());
+        record.setOperator(SecurityUtils.currentUsername());
         record.setCreatedTime(LocalDateTime.now());
         recordMapper.insert(record);
         return record;
@@ -74,7 +74,5 @@ public class CompileService implements ICompileService {
         return v;
     }
 
-    private String currentUsername() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
-    }
+
 }

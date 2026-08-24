@@ -4,8 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.monitor.alert.AlertRule;
-import com.rxas400adm.monitor.dto.AlertRuleCreateDTO;
-import com.rxas400adm.monitor.dto.AlertRuleUpdateDTO;
+import com.rxas400adm.monitor.dto.AlertRuleDTO;
 import com.rxas400adm.monitor.mapper.AlertRuleMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,7 @@ public class AlertRuleService {
                 .orderByAsc(AlertRule::getThreshold));
     }
 
-    public AlertRule create(AlertRuleCreateDTO dto) {
+    public AlertRule create(AlertRuleDTO dto) {
         AlertRule rule = dto.toEntity();
         rule.setId(null);
         if (rule.getChannel() == null || rule.getChannel().isBlank()) {
@@ -41,7 +40,7 @@ public class AlertRuleService {
         return rule;
     }
 
-    public AlertRule update(Long id, AlertRuleUpdateDTO dto) {
+    public AlertRule update(Long id, AlertRuleDTO dto) {
         require(id);
         AlertRule rule = dto.toEntity();
         rule.setId(id);
