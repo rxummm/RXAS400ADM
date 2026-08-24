@@ -70,9 +70,13 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'Query' })
 import { computed, onMounted, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { executeSql, fetchQueryHistory, type QueryHistoryRow, type QueryResult } from '@/api/query'
 import AppPagination from '@/components/AppPagination.vue'
+
+const { t } = useI18n()
 
 const sql = ref('SELECT * FROM TABLE(QSYS2.ACTIVE_JOB_INFO()) X')
 const running = ref(false)
@@ -99,6 +103,15 @@ const onHistorySizeChange = () => {
 
 const run = async () => {
   if (!sql.value.trim()) return
+  try {
+    await ElMessageBox.confirm(
+      t('confirm.dangerExecuteCommand', { command: sql.value.substring(0, 50) + (sql.value.length > 50 ? '...' : '') }),
+      t('confirm.dangerConfirm'),
+      { type: 'warning' },
+    )
+  } catch {
+    return
+  }
   running.value = true
   resultCurrent.value = 1
   try {

@@ -193,6 +193,15 @@ const run = async (row: CommandScript) => {
     ElMessage.warning(t('scripts.selectServerFirst'))
     return
   }
+  try {
+    await ElMessageBox.confirm(
+      t('confirm.dangerExecuteScript', { script: row.name }),
+      t('confirm.dangerConfirm'),
+      { type: 'warning' },
+    )
+  } catch {
+    return
+  }
   runningId.value = row.id
   try {
     const result: ScriptRunResult = await executeScript(row.id, serverId)

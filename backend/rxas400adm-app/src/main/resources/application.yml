@@ -37,9 +37,14 @@ spring:
       # IFS 上传/文档附件上限：显式声明并防内存耗尽，超限由 GlobalExceptionHandler 转 400 友好提示
       max-file-size: 100MB
       max-request-size: 100MB
+  lifecycle:
+    # 优雅停机超时时间（30秒）
+    timeout-per-shutdown-phase: 30s
 
 server:
   port: 8080
+  # 优雅停机：等待进行中的操作完成后再关闭应用
+  shutdown: graceful
 
 # P2: Actuator 健康检查 + 指标端点（仅暴露必要端点，管理端点需 ADMIN 角色）
 management:
@@ -112,6 +117,17 @@ rxas400:
     collect-interval-ms: 10000
     # 指标保留天数（2.1.7）：每日凌晨清理超过该天数的历史指标
     retention-days: 30
+  alert:
+    # 告警未处理自动升级配置
+    upgrade:
+      # 功能开关（默认关闭）
+      enabled: ${RXAS400_ALERT_UPGRADE_ENABLED:false}
+      # 检查间隔（分钟）
+      check-interval-minutes: 5
+      # 未处理多久后升级（分钟）
+      upgrade-after-minutes: 30
+      # 升级通知的角色
+      notify-role: ADMIN
   crypto:
     # AS400 连接密码 AES-256-GCM 加密密钥。生产环境必须通过环境变量覆盖。
     # 生成方式: openssl rand -base64 32

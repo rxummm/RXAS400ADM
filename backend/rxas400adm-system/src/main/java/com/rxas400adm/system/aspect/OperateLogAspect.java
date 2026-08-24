@@ -9,6 +9,9 @@ import com.rxas400adm.system.entity.AuditLog;
 import com.rxas400adm.system.mapper.AuditLogMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +41,7 @@ public class OperateLogAspect {
 
     private final AuditLogMapper auditLogMapper;
     private final ObjectMapper objectMapper;
+    private static final ExpressionParser parser = new SpelExpressionParser();
 
     /** 可信反向代理 IP 列表（逗号分隔，S3）；留空则完全忽略 X-Forwarded-For */
     @Value("${rxas400.security.trusted-proxies:}")
@@ -46,20 +50,24 @@ public class OperateLogAspect {
     @Around("@annotation(operateLog)")
     public Object around(ProceedingJoinPoint joinPoint, OperateLog operateLog) throws Throwable {
         long start = System.currentTimeMillis();
+        boolean success = false;
         Object result;
         try {
             result = joinPoint.proceed();
+            success = true;
             return result;
+        } catch (Throwable e) {
+            throw e;
         } finally {
             try {
-                saveLog(joinPoint, operateLog, System.currentTimeMillis() - start);
+                saveLog(joinPoint, operateLog, System.currentTimeMillis() - start, success);
             } catch (Exception e) {
                 log.warn("写入审计日志失败: {}", e.getMessage());
             }
         }
     }
 
-    private void saveLog(ProceedingJoinPoint joinPoint, OperateLog operateLog, long costMs) {
+    private void saveLog(ProceedingJoinPoint joinPoint, OperateLog operateLog, long costMs, boolean success) {
         AuditLog auditLog = new AuditLog();
         auditLog.setUserName(SecurityUtils.currentUsername());
         auditLog.setModule(operateLog.module());
@@ -67,6 +75,9 @@ public class OperateLogAspect {
         auditLog.setTarget(buildTarget(joinPoint));
         auditLog.setIp(currentIp());
         auditLog.setDetail(buildDetail(joinPoint));
+        auditLog.setOperateTarget(resolveTarget(joinPoint, operateLog));
+        auditLog.setResult(success ? "SUCCESS" : "FAIL");
+        auditLog.setCostMs(costMs);
         auditLog.setCreatedTime(LocalDateTime.now());
         auditLogMapper.insert(auditLog);
     }
@@ -74,6 +85,40 @@ public class OperateLogAspect {
     private String buildTarget(ProceedingJoinPoint joinPoint) {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         return signature.getDeclaringType().getSimpleName() + "#" + signature.getName();
+    }
+
+    /**
+     * 解析操作对象表达式（SpEL）
+     */
+    private String resolveTarget(ProceedingJoinPoint joinPoint, OperateLog operateLog) {
+        String targetExpr = operateLog.target();
+        if (!StringUtils.hasText(targetExpr)) {
+            return null;
+        }
+        try {
+            MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+            String[] paramNames = signature.getParameterNames();
+            Object[] args = joinPoint.getArgs();
+
+            StandardEvaluationContext context = new StandardEvaluationContext();
+            if (paramNames != null) {
+                for (int i = 0; i < paramNames.length; i++) {
+                    context.setVariable(paramNames[i], args[i]);
+                }
+            }
+            // 添加 request 变量
+            ServletRequestAttributes attributes =
+                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                context.setVariable("request", attributes.getRequest());
+            }
+
+            Object value = parser.parseExpression(targetExpr).getValue(context);
+            return value != null ? String.valueOf(value) : null;
+        } catch (Exception e) {
+            log.debug("解析操作对象表达式失败: {}", targetExpr, e);
+            return null;
+        }
     }
 
     /** 敏感字段名匹配（大小写不敏感）：命中则审计详情中脱敏为 *** */

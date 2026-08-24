@@ -16,4 +16,11 @@ public @interface OperateLog {
     String module() default "";
 
     String operation() default "";
+
+    /**
+     * 操作对象表达式。
+     * 支持 SpEL 表达式，如 "#id" 或 "#request.getParameter('path')"。
+     * 示例：@OperateLog(module = "IFS", operation = "删除文件", target = "#path")
+     */
+    String target() default "";
 }
