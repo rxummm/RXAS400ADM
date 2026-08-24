@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.notify.WebhookNotifier;
-import com.rxas400adm.common.security.SsrfGuard;
 import com.rxas400adm.system.dto.WebhookConfigDTO;
 import com.rxas400adm.system.entity.WebhookConfig;
 import com.rxas400adm.system.entity.WebhookLog;

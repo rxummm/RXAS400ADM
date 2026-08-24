@@ -2,7 +2,6 @@ package com.rxas400adm.system.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.common.exception.BusinessException;
-import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.system.dto.I18nEntryDTO;
 import com.rxas400adm.system.entity.I18nEntry;
 import com.rxas400adm.system.mapper.I18nMapper;

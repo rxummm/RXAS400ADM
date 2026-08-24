@@ -2,7 +2,6 @@ package com.rxas400adm.system.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.common.exception.BusinessException;
-import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.system.dto.DocTemplateDTO;
 import com.rxas400adm.system.entity.DocTemplate;
 import com.rxas400adm.system.mapper.DocTemplateMapper;
@@ -10,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
