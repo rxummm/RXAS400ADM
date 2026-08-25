@@ -41,7 +41,7 @@ V38_EXPECT_ROLE_CODES="ADMIN DEVELOPER OPERATOR VIEWER"
 
 # ---- V38 之后的结构增量（后续迁移新增结构时同步更新：全量结构 = V38 种子 + 增量） ----
 # V47__add_flowcharts_menu.sql 新增「模块流程图」叶子菜单 1 条（menu_type=2）。
-POST_V38_MENUS_BY_TYPE="2:1"
+POST_V38_MENUS_BY_TYPE="2:2"  # V47 flowcharts + V50 notifications
 
 mysql=("mysql" "-u$MYSQL_USER" "-p$MYSQL_PWD" "-h$MYSQL_HOST" "-P$MYSQL_PORT" "--default-character-set=utf8mb4")
 

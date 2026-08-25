@@ -49,6 +49,21 @@
       <AppPagination :total="systems.length" v-model:current="overviewCurrent" v-model:size="overviewSize" @change="() => {}" @size-change="onOverviewSizeChange" />
     </el-card>
 
+    <el-card v-if="widgetEnabled('favoriteScripts')" shadow="never" class="mt16">
+      <template #header>
+        <div class="flex-row-center">
+          <span>{{ $t('dashboard.favoriteScripts') }}</span>
+          <el-button link type="primary" size="small" class="ml8" @click="$router.push('/scripts')">{{ $t('common.viewAll') }}</el-button>
+        </div>
+      </template>
+      <el-table :data="favoriteScripts" size="small" border>
+        <el-table-column prop="name" :label="$t('scripts.name')" min-width="120" />
+        <el-table-column prop="command" :label="$t('scripts.command')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="runCount" :label="$t('scripts.runCount')" width="80" />
+      </el-table>
+      <el-empty v-if="favoriteScripts.length === 0" :description="$t('dashboard.noFavoriteScripts')" />
+    </el-card>
+
     <el-dialog v-model="customizeVisible" :title="$t('dashboard.customize')" width="420px">
       <el-alert type="info" :title="$t('dashboard.customizeHint')" :closable="false" class="mb16" />
       <div v-for="w in widgetOptions" :key="w.key" class="widget-toggle">
@@ -66,6 +81,7 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { fetchSystems, type IbmiSystem } from '@/api/as400'
 import { getDashboardWidgets, updateDashboardWidget } from '@/api/dashboardWidget'
+import { listScripts, type CommandScript } from '@/api/script'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 
@@ -77,6 +93,9 @@ const prefs = ref<Record<string, number>>({})
 const customizeVisible = ref(false)
 const overviewCurrent = ref(1)
 const overviewSize = ref(10)
+
+// 常用命令
+const favoriteScripts = ref<CommandScript[]>([])
 
 const pagedSystems = computed(() =>
   systems.value.slice((overviewCurrent.value - 1) * overviewSize.value, overviewCurrent.value * overviewSize.value),
@@ -92,6 +111,7 @@ const widgetOptions = [
   { key: 'production', label: 'dashboard.production' },
   { key: 'alerts', label: 'dashboard.alerts' },
   { key: 'overview', label: 'dashboard.overview' },
+  { key: 'favoriteScripts', label: 'dashboard.favoriteScripts' },
 ]
 
 const cards = computed(() => [
@@ -160,9 +180,18 @@ const load = async () => {
   }
 }
 
+async function loadFavoriteScripts() {
+  try {
+    favoriteScripts.value = await listScripts({ favorite: true })
+  } catch {
+    /* ignored */
+  }
+}
+
 onMounted(() => {
   load()
   loadPrefs()
+  loadFavoriteScripts()
 })
 </script>
 
@@ -201,5 +230,9 @@ onMounted(() => {
   justify-content: space-between;
   padding: 10px 4px;
   border-bottom: 1px solid var(--border-light);
+}
+.flex-row-center {
+  display: flex;
+  align-items: center;
 }
 </style>

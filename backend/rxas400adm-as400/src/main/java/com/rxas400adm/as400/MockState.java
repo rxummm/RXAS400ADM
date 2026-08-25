@@ -1,6 +1,7 @@
 package com.rxas400adm.as400;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -81,7 +82,7 @@ class MockState {
     }
 
     static Map<String, Object> row(Object... kv) {
-        Map<String, Object> map = new java.util.LinkedHashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         for (int i = 0; i < kv.length; i += 2) {
             map.put(String.valueOf(kv[i]), kv[i + 1]);
         }

@@ -1,16 +1,19 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
+      <el-input v-model="keyword" :placeholder="$t('common.keyword')" clearable class="w-200" @keyup.enter="forceSearch" />
+      <el-button type="primary" @click="forceSearch">{{ $t('common.search') }}</el-button>
+      <div class="flex-1" />
       <el-button type="primary" v-has-perm="'ALERT_MANAGE'" :icon="Plus" @click="() => openCreate()">
         {{ $t('alertRules.add') }}
       </el-button>
-      <el-button :icon="Refresh" @click="load">{{ $t('common.refresh') }}</el-button>
+      <el-button :icon="Refresh" @click="forceSearch">{{ $t('common.refresh') }}</el-button>
       <span class="hint ml8">{{ $t('alertRules.hint') }}</span>
     </div>
 
     <div class="table-wrapper">
       <RxSkeleton type="table" :rows="8" :loading="loading">
-        <el-table :data="pagedRows" size="small" border>
+        <el-table :data="tableData" size="small" border>
         <el-table-column prop="metricName" :label="$t('alertRules.metric')" width="120" />
         <el-table-column :label="$t('alertRules.condition')" width="160">
           <template #default="{ row }">
@@ -63,7 +66,7 @@
         </el-table-column>
       </el-table>
       </RxSkeleton>
-      <AppPagination :total="rows.length" v-model:current="current" v-model:size="size" @change="() => {}" @size-change="() => { current = 1 }" />
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="forceSearch" @size-change="forceSearch" />
     </div>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px">
@@ -129,11 +132,12 @@
 // keep-alive 缓存标识，需与路由 name 一致
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'AlertRules' })
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useAs400ServerStore, type As400Server } from '@/stores/as400Server'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { useFormDialog } from '@/composables/useFormDialog'
 import {
   createAlertRule,
@@ -157,12 +161,25 @@ const as400Store = useAs400ServerStore()
 
 const metricOptions = ['CPU', 'MEMORY', 'DISK', 'NETWORK', 'MSGW', 'LCKW', 'PRINTER']
 const servers = ref<As400Server[]>([])
-const rows = ref<AlertRule[]>([])
-const loading = ref(false)
-const current = ref(1)
-const size = ref(10)
 
-const pagedRows = computed(() => rows.value.slice((current.value - 1) * size.value, current.value * size.value))
+const {
+  tableData,
+  keyword,
+  loading,
+  current,
+  size,
+  total,
+  forceSearch,
+} = useSmartQueryTable<AlertRule>({
+  fetchApi: async () => {
+    const data = await listAlertRules()
+    return data as AlertRule[]
+  },
+  frontendPage: true,
+  autoFetch: false,
+  searchFields: ['metricName', 'description', 'level'],
+  showRefresh: false,
+})
 
 const channelType = (ch: string) => {
   if (ch === 'NONE') return 'info'
@@ -181,14 +198,7 @@ const channelLabel = (ch: string) => {
 
 const serverName = (id: number) => servers.value.find((s) => s.id === id)?.name || `#${id}`
 
-const load = async () => {
-  loading.value = true
-  try {
-    rows.value = (await listAlertRules()) as AlertRule[]
-  } finally {
-    loading.value = false
-  }
-}
+const load = () => forceSearch()
 
 type AlertRuleForm = {
   id?: number

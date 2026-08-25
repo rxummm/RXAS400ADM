@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -106,7 +107,7 @@ public class MenuManageService {
      * 沿 parent 链上溯检测环：新父节点若是自身或自身子孙。
      */
     private boolean wouldCreateCycle(Long candidateParentId, Long nodeId) {
-        Set<Long> seen = new java.util.HashSet<>();
+        Set<Long> seen = new HashSet<>();
         Long cur = candidateParentId;
         while (cur != null) {
             if (cur.equals(nodeId)) {

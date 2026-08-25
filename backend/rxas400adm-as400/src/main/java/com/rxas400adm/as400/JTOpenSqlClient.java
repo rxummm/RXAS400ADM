@@ -8,6 +8,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLNonTransientConnectionException;
+import java.sql.SQLRecoverableException;
+import java.sql.SQLTransientConnectionException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -64,9 +67,9 @@ class JTOpenSqlClient implements SqlClient {
         } catch (SQLException e) {
             String sqlState = e.getSQLState();
             boolean connectionIssue = (sqlState != null && sqlState.startsWith("08"))
-                    || e instanceof java.sql.SQLNonTransientConnectionException
-                    || e instanceof java.sql.SQLTransientConnectionException
-                    || e instanceof java.sql.SQLRecoverableException;
+                    || e instanceof SQLNonTransientConnectionException
+                    || e instanceof SQLTransientConnectionException
+                    || e instanceof SQLRecoverableException;
             if (connectionIssue) {
                 throw new BusinessException(ErrorCode.AS400_CONNECTION_FAILED,
                         "IBM i 连接失败: " + state.redact(e.getMessage()));

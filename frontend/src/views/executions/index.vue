@@ -23,6 +23,35 @@
     </QueryBar>
 
     <div class="table-wrapper">
+      <el-row :gutter="16" class="mb16">
+        <el-col :span="6">
+          <el-card shadow="hover" class="metric-card">
+            <div class="metric-card__title">{{ $t('executions.totalExecutions') }}</div>
+            <div class="metric-card__value">{{ stats?.totalExecutions ?? '-' }}</div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover" class="metric-card">
+            <div class="metric-card__title">{{ $t('executions.successRate') }}</div>
+            <div class="metric-card__value" :style="{ color: (stats?.successRate ?? 0) >= 90 ? 'var(--color-success)' : 'var(--color-danger)' }">
+              {{ stats ? stats.successRate.toFixed(1) + '%' : '-' }}
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover" class="metric-card">
+            <div class="metric-card__title">{{ $t('executions.successCount') }}</div>
+            <div class="metric-card__value metric-card__value--success">{{ stats?.successCount ?? '-' }}</div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover" class="metric-card">
+            <div class="metric-card__title">{{ $t('executions.failedCount') }}</div>
+            <div class="metric-card__value metric-card__value--danger">{{ stats?.failedCount ?? '-' }}</div>
+          </el-card>
+        </el-col>
+      </el-row>
+
       <RxSkeleton type="table" :rows="8" :loading="loading">
         <el-table :data="pagedData" size="small" border>
         <el-table-column :label="$t('executions.source')" width="100">
@@ -65,10 +94,10 @@
 // keep-alive 缓存标识，需与路由 name 一致
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'Executions' })
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Download } from '@element-plus/icons-vue'
 import QueryBar from '@/components/QueryBar.vue'
-import { listExecutions, type ExecutionRecord } from '@/api/execution'
+import { listExecutions, getExecutionStats, type ExecutionRecord, type ExecutionStats } from '@/api/execution'
 import { triggerBlobDownload } from '@/api/blobClient'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { formatDate } from '@/utils/format'
@@ -77,6 +106,7 @@ import RxSkeleton from '@/components/RxSkeleton.vue'
 
 const typeFilter = ref<string | null>(null)
 const statusFilter = ref<string | null>(null)
+const stats = ref<ExecutionStats | null>(null)
 
 const {
   pagedData,
@@ -131,8 +161,37 @@ const exportCsv = async () => {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
   triggerBlobDownload(blob, `rxas400-executions-${new Date().toISOString().slice(0, 10)}.csv`)
 }
+
+async function loadStats() {
+  try {
+    stats.value = await getExecutionStats()
+  } catch {
+    /* ignored */
+  }
+}
+
+onMounted(() => {
+  loadStats()
+})
 </script>
 
 <style scoped>
-/* card-header 已收敛至 src/styles/common.css */
+.metric-card {
+  text-align: center;
+}
+.metric-card__title {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.metric-card__value {
+  font-size: 24px;
+  font-weight: 700;
+}
+.metric-card__value--success {
+  color: var(--color-success);
+}
+.metric-card__value--danger {
+  color: var(--color-danger);
+}
 </style>

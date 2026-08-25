@@ -14,5 +14,4 @@ ALTER TABLE rx_ibmi_system ADD COLUMN updated_time DATETIME DEFAULT CURRENT_TIME
 -- rx_job_schedule_history 补 updated_time
 ALTER TABLE rx_job_schedule_history ADD COLUMN updated_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
 
--- rx_doc 补 updated_time
-ALTER TABLE rx_doc ADD COLUMN updated_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+-- rx_doc.updated_time 已在 V7 创建，无需重复添加

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -84,7 +85,7 @@ public class MenuTreeService {
         }
         List<SysMenu> allMenus = menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
                 .eq(SysMenu::getStatus, 1).orderByAsc(SysMenu::getSort));
-        Set<Long> excluded = new java.util.HashSet<>();
+        Set<Long> excluded = new HashSet<>();
         allMenus.stream().filter(m -> m.getAdminOnly() != null && m.getAdminOnly() == 1)
                 .forEach(m -> excluded.addAll(collectDescendants(m.getId(), allMenus)));
         allMenus.stream().filter(m -> "permissionRequest".equals(m.getTitle()))

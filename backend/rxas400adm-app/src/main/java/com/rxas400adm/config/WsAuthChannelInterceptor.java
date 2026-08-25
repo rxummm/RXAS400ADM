@@ -6,6 +6,7 @@ import com.rxas400adm.security.service.IPermissionService;
 import com.rxas400adm.security.service.ITokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
@@ -43,11 +44,11 @@ public class WsAuthChannelInterceptor implements ChannelInterceptor {
     private final ITokenBlacklistService tokenBlacklistService;
 
     /** P2-1：WS 链路是否启用 JWT 吊销名单检查（与 JwtAuthenticationFilter 一致，默认开启） */
-    @org.springframework.beans.factory.annotation.Value("${rxas400.jwt.blacklist-enabled:true}")
+    @Value("${rxas400.jwt.blacklist-enabled:true}")
     private boolean blacklistEnabled;
 
     /** P2-5：与 JwtAuthenticationFilter 一致——DB 故障时是否回退 token 内嵌权限（默认 false=拒绝闭合） */
-    @org.springframework.beans.factory.annotation.Value("${rxas400.security.permission-fallback-on-error:false}")
+    @Value("${rxas400.security.permission-fallback-on-error:false}")
     private boolean permissionFallbackOnError;
 
     @Override

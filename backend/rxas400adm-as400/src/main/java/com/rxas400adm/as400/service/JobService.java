@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -117,9 +119,9 @@ public class JobService implements IJobService {
      */
     public List<Map<String, Object>> msgwMessages() {
         List<JobInfo> msgwJobs = msgwJobs();
-        List<Map<String, Object>> messages = new java.util.ArrayList<>();
+        List<Map<String, Object>> messages = new ArrayList<>();
         for (JobInfo job : msgwJobs) {
-            Map<String, Object> row = new java.util.LinkedHashMap<>();
+            Map<String, Object> row = new LinkedHashMap<>();
             row.put("JOB_NAME", job.getJobName());
             row.put("JOB_USER", job.getJobUser());
             row.put("JOB_NUMBER", job.getJobNumber());

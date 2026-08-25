@@ -8,7 +8,9 @@ import com.rxas400adm.as400.model.JobSlaExecRow;
 import com.rxas400adm.as400.model.SpoolRow;
 import lombok.extern.slf4j.Slf4j;
 
+import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -158,10 +160,10 @@ class JTOpenJobClient implements JobClient {
     }
 
     private java.sql.Timestamp toTimestamp(Object o) {
-        if (o instanceof java.sql.Timestamp ts) {
+        if (o instanceof Timestamp ts) {
             return ts;
         }
-        if (o instanceof java.time.LocalDateTime ldt) {
+        if (o instanceof LocalDateTime ldt) {
             return java.sql.Timestamp.valueOf(ldt);
         }
         return java.sql.Timestamp.valueOf(java.time.LocalDateTime.parse(

@@ -1,5 +1,7 @@
 package com.rxas400adm.config;
 
+import java.io.File;
+
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.entity.IbmiSystem;
@@ -68,6 +70,34 @@ public class HealthController {
 
         return ApiResponse.success(new HealthReportVO(
                 LocalDateTime.now(), database, schedulerStatus,
-                servers, healthService.countOpenAlerts()));
+                servers, healthService.countOpenAlerts(),
+                getDiskSpaceInfo(), getMemoryInfo()));
+    }
+
+    private HealthReportVO.DiskSpaceVO getDiskSpaceInfo() {
+        try {
+            File root = new File("/");
+            long total = root.getTotalSpace();
+            long free = root.getFreeSpace();
+            return new HealthReportVO.DiskSpaceVO("UP", total, free,
+                    formatBytes(total), formatBytes(free));
+        } catch (Exception e) {
+            return new HealthReportVO.DiskSpaceVO("DOWN", 0, 0, "0 B", "0 B");
+        }
+    }
+
+    private HealthReportVO.MemoryVO getMemoryInfo() {
+        Runtime runtime = Runtime.getRuntime();
+        long max = runtime.maxMemory();
+        long used = runtime.totalMemory() - runtime.freeMemory();
+        return new HealthReportVO.MemoryVO("UP", used, max,
+                formatBytes(used), formatBytes(max));
+    }
+
+    private String formatBytes(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
+        if (bytes < 1024 * 1024 * 1024) return String.format("%.1f MB", bytes / (1024.0 * 1024));
+        return String.format("%.1f GB", bytes / (1024.0 * 1024 * 1024));
     }
 }

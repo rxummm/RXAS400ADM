@@ -1,16 +1,19 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
+      <el-input v-model="keyword" :placeholder="$t('common.keyword')" clearable class="w-200" @keyup.enter="forceSearch" />
+      <el-button type="primary" @click="forceSearch">{{ $t('common.search') }}</el-button>
+      <div class="flex-1" />
       <el-button type="primary" v-has-perm="'AS400_MANAGE'" :icon="Plus" @click="() => openCreate()">
         {{ $t('assets.add') }}
       </el-button>
-      <el-button :icon="Refresh" @click="load">{{ $t('common.refresh') }}</el-button>
+      <el-button :icon="Refresh" @click="forceSearch">{{ $t('common.refresh') }}</el-button>
       <span class="hint ml8">{{ $t('assets.serverSyncHint') }}</span>
     </div>
 
     <div class="table-wrapper">
       <RxSkeleton type="table" :rows="8" :loading="loading">
-        <el-table :data="pagedRows" size="small" border>
+        <el-table :data="tableData" size="small" border>
         <el-table-column prop="name" :label="$t('assets.name')" min-width="120" />
         <el-table-column prop="host" :label="$t('assets.host')" min-width="140" />
         <el-table-column prop="port" :label="$t('assets.port')" width="70" />
@@ -58,7 +61,7 @@
         </el-table-column>
       </el-table>
       </RxSkeleton>
-      <AppPagination :total="systems.length" v-model:current="current" v-model:size="size" @change="() => {}" @size-change="onSizeChange" />
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="forceSearch" @size-change="forceSearch" />
     </div>
 
     <!-- 新增/编辑 -->
@@ -154,11 +157,12 @@
 // keep-alive 缓存标识，需与路由 name 一致
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'Assets' })
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useAs400ServerStore } from '@/stores/as400Server'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { useFormDialog } from '@/composables/useFormDialog'
 import {
   createSystem,
@@ -170,24 +174,32 @@ import {
   type IbmiSystem,
   type CommandResult,
 } from '@/api/as400'
-import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 
 const { t } = useI18n()
 const as400Store = useAs400ServerStore()
-const systems = ref<IbmiSystem[]>([])
-const loading = ref(false)
 const testingId = ref(0)
-const current = ref(1)
-const size = ref(10)
 
-const pagedRows = computed(() =>
-  systems.value.slice((current.value - 1) * size.value, current.value * size.value),
-)
-
-const onSizeChange = () => {
-  current.value = 1
-}
+const {
+  tableData,
+  keyword,
+  loading,
+  current,
+  size,
+  total,
+  forceSearch,
+  handleRefresh,
+} = useSmartQueryTable<IbmiSystem>({
+  fetchApi: async () => {
+    const data = await fetchSystemDetail()
+    as400Store.refreshServers()
+    return data
+  },
+  frontendPage: true,
+  autoFetch: false,
+  searchFields: ['name', 'host', 'description'],
+  showRefresh: false,
+})
 
 const envType = (env: string) => {
   if (env === 'PROD') return 'danger'
@@ -196,15 +208,7 @@ const envType = (env: string) => {
   return 'success'
 }
 
-const load = async () => {
-  loading.value = true
-  try {
-    systems.value = await fetchSystemDetail()
-    as400Store.refreshServers()
-  } finally {
-    loading.value = false
-  }
-}
+const load = () => forceSearch()
 
 type AssetForm = {
   id?: number

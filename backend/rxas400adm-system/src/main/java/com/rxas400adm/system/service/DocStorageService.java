@@ -9,6 +9,7 @@ import com.rxas400adm.system.mapper.DocMapper;
 import com.rxas400adm.system.vo.DocFileVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -25,7 +26,7 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class DocStorageService {
 
-    @org.springframework.beans.factory.annotation.Value("${rxas400.ifs.doc-root:/QOpenSys/rxas400/document}")
+    @Value("${rxas400.ifs.doc-root:/QOpenSys/rxas400/document}")
     private String docRoot = "/QOpenSys/rxas400/document";
 
     private final AS400ClientProvider clientProvider;

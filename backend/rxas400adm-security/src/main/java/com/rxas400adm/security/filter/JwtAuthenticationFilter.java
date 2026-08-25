@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -35,12 +36,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final ITokenBlacklistService tokenBlacklistService;
 
     /** P2-1：是否启用 JWT 吊销名单检查（默认开启，可配 rxas400.jwt.blacklist-enabled=false 关闭） */
-    @org.springframework.beans.factory.annotation.Value("${rxas400.jwt.blacklist-enabled:true}")
+    @Value("${rxas400.jwt.blacklist-enabled:true}")
     private boolean blacklistEnabled;
 
     /** P2-5：数据库加载权限抛异常时是否回退 token 内嵌声明（默认 false=拒绝闭合）。
      *  开启后 DB 故障窗口内被禁用/删除用户可能凭旧 token 继续访问（可用性优先，需自行权衡）。 */
-    @org.springframework.beans.factory.annotation.Value("${rxas400.security.permission-fallback-on-error:false}")
+    @Value("${rxas400.security.permission-fallback-on-error:false}")
     private boolean permissionFallbackOnError;
 
     @Override
