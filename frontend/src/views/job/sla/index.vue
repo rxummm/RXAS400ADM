@@ -11,7 +11,7 @@
     <div class="table-wrapper">
       <div class="section">{{ $t('jobSla.rules') }}</div>
       <RxSkeleton type="table" :rows="5" :loading="loading">
-        <el-table :data="rules" size="small" border>
+        <el-table :data="slaRules" size="small" border>
         <el-table-column prop="jobName" :label="$t('jobSla.jobName')" min-width="140" />
         <el-table-column prop="scheduleName" :label="$t('jobSla.scheduleName')" min-width="160">
           <template #default="{ row }">{{ row.scheduleName || '-' }}</template>
@@ -73,14 +73,14 @@
     </div>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="460px">
-      <el-form :model="form" label-width="120px">
-        <el-form-item :label="$t('jobSla.jobName')" required>
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="120px">
+        <el-form-item :label="$t('jobSla.jobName')" prop="jobName">
           <el-input v-model="form.jobName" :placeholder="$t('jobSla.jobNamePlaceholder')" />
         </el-form-item>
-        <el-form-item :label="$t('jobSla.scheduleName')">
+        <el-form-item :label="$t('jobSla.scheduleName')" prop="scheduleName">
           <el-input v-model="form.scheduleName" />
         </el-form-item>
-        <el-form-item :label="$t('jobSla.expectedSec')" required>
+        <el-form-item :label="$t('jobSla.expectedSec')" prop="expectedDurationSec">
           <el-input-number v-model="form.expectedDurationSec" :min="1" :max="86400" />
         </el-form-item>
         <el-form-item :label="$t('jobSla.deviation')">
@@ -118,7 +118,7 @@ import RxSkeleton from '@/components/RxSkeleton.vue'
 
 const { t } = useI18n()
 
-const rules = ref<JobSla[]>([])
+const slaRules = ref<JobSla[]>([])
 const executions = ref<SlaExecution[]>([])
 const loading = ref(false)
 const execLoading = ref(false)
@@ -129,7 +129,9 @@ const {
   dialogVisible,
   dialogTitle,
   loading: saving,
+  formRef,
   form,
+  rules: formRules,
   openCreate,
   openEdit,
   onSubmit,
@@ -141,23 +143,22 @@ const {
     deviationPercent: 20,
     enabled: true,
   }),
+  rules: {
+    jobName: [{ required: true, message: () => t('jobSla.jobNameRequired'), trigger: 'blur' }],
+    expectedDurationSec: [{ required: true, message: () => t('common.required'), trigger: 'change' }],
+  },
   saveApi: async (isEdit, data) => {
-    if (!data.jobName.trim()) {
-      ElMessage.warning(t('jobSla.jobNameRequired'))
-      return
-    }
     if (isEdit && data.id) await updateSlaRule(data.id, data)
     else await createSlaRule(data)
   },
   onSuccess: () => loadRules(),
   i18nPrefix: 'jobSla',
-  validate: false,
 })
 
 const loadRules = async () => {
   loading.value = true
   try {
-    rules.value = await fetchSlaRules()
+    slaRules.value = await fetchSlaRules()
   } finally {
     loading.value = false
   }

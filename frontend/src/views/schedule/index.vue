@@ -68,25 +68,25 @@
     </div>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px">
-      <el-form :model="form" label-width="100px">
-        <el-form-item :label="$t('schedule.name')" required>
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+        <el-form-item :label="$t('schedule.name')" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item :label="$t('schedule.server')" required>
+        <el-form-item :label="$t('schedule.server')" prop="serverId">
           <el-select v-model="form.serverId" class="w-full">
             <el-option v-for="s in servers" :key="s.id" :label="`${s.name} (${s.host})`" :value="s.id" />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('schedule.type')" required>
+        <el-form-item :label="$t('schedule.type')" prop="scheduleType">
           <el-radio-group v-model="form.scheduleType">
             <el-radio-button value="CL">CL</el-radio-button>
             <el-radio-button value="SQL">SQL</el-radio-button>
           </el-radio-group>
         </el-form-item>
-        <el-form-item :label="$t('schedule.command')" required>
+        <el-form-item :label="$t('schedule.command')" prop="command">
           <el-input v-model="form.command" type="textarea" :rows="4" :placeholder="$t('schedule.commandHint')" />
         </el-form-item>
-        <el-form-item label="Cron" required>
+        <el-form-item label="Cron" prop="cronExpr">
           <el-input v-model="form.cronExpr" placeholder="0 0 6 * * ?" />
           <div class="cron-hint">{{ $t('schedule.cronHint') }}</div>
         </el-form-item>
@@ -180,7 +180,9 @@ const {
   dialogVisible,
   dialogTitle,
   loading: saving,
+  formRef,
   form,
+  rules,
   openCreate,
   openEdit,
   onSubmit,
@@ -193,6 +195,12 @@ const {
     cronExpr: '0 0 6 * * ?',
     enabled: true,
   }),
+  rules: {
+    name: [{ required: true, message: () => t('common.required'), trigger: 'blur' }],
+    serverId: [{ required: true, message: () => t('common.required'), trigger: 'change' }],
+    command: [{ required: true, message: () => t('common.required'), trigger: 'blur' }],
+    cronExpr: [{ required: true, message: () => t('common.required'), trigger: 'blur' }],
+  },
   saveApi: async (isEdit, data) => {
     const payload: JobScheduleRequest = {
       name: data.name,
@@ -207,7 +215,6 @@ const {
   },
   onSuccess: () => fetchData({}, true),
   i18nPrefix: 'schedule',
-  validate: false,
 })
 
 const historyVisible = ref(false)

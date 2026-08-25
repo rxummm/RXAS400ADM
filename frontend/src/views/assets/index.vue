@@ -66,11 +66,11 @@
 
     <!-- 新增/编辑 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px">
-      <el-form :model="form" label-width="120px">
-        <el-form-item :label="$t('assets.name')" required>
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+        <el-form-item :label="$t('assets.name')" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item :label="$t('assets.host')" required>
+        <el-form-item :label="$t('assets.host')" prop="host">
           <el-input v-model="form.host" placeholder="US400CND / 10.0.0.5" />
         </el-form-item>
         <el-form-item :label="$t('assets.port')">
@@ -79,7 +79,7 @@
         <el-form-item :label="$t('assets.username')">
           <el-input v-model="form.username" placeholder="QPGMR / QSECOFR" />
         </el-form-item>
-        <el-form-item :label="$t('assets.password')">
+        <el-form-item :label="$t('assets.password')" prop="password">
           <el-input v-model="form.password" type="password" show-password :placeholder="form.id ? $t('assets.passwordPlaceholder') : $t('assets.passwordRequired')" />
         </el-form-item>
         <el-form-item :label="$t('assets.environment')">
@@ -234,7 +234,9 @@ const {
   dialogVisible,
   dialogTitle,
   loading: saving,
+  formRef,
   form,
+  rules,
   openCreate,
   openEdit,
   onSubmit,
@@ -257,15 +259,20 @@ const {
     defaultServer: false,
     sslEnabled: false,
   }),
+  rules: {
+    name: [{ required: true, message: () => t('assets.required'), trigger: 'blur' }],
+    host: [{ required: true, message: () => t('assets.required'), trigger: 'blur' }],
+    password: [{
+      required: true,
+      message: () => t('assets.passwordRequired'),
+      trigger: 'blur',
+      validator: (_rule: unknown, value: string, callback: (err?: Error) => void) => {
+        if (!form.value.id && !value) callback(new Error(t('assets.passwordRequired')))
+        else callback()
+      },
+    }],
+  },
   saveApi: async (isEdit, data) => {
-    if (!data.name || !data.host) {
-      ElMessage.warning(t('assets.required'))
-      return
-    }
-    if (!isEdit && !data.password) {
-      ElMessage.warning(t('assets.passwordRequired'))
-      return
-    }
     const payload: Partial<IbmiSystem> = { ...data }
     delete payload.id
     if (payload.password) {
@@ -277,7 +284,6 @@ const {
   },
   onSuccess: () => load(),
   i18nPrefix: 'assets',
-  validate: false,
 })
 
 const test = async (row: IbmiSystem) => {

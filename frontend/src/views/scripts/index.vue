@@ -60,11 +60,11 @@
     </div>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px">
-      <el-form :model="form" label-width="90px">
-        <el-form-item :label="$t('scripts.name')" required>
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
+        <el-form-item :label="$t('scripts.name')" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item :label="$t('scripts.command')" required>
+        <el-form-item :label="$t('scripts.command')" prop="command">
           <el-input v-model="form.command" type="textarea" :rows="4" placeholder="WRKACTJOB" />
         </el-form-item>
         <el-form-item :label="$t('scripts.tags')">
@@ -157,19 +157,24 @@ const {
   dialogVisible,
   dialogTitle,
   loading: saving,
+  formRef,
   form,
+  rules,
   openCreate,
   openEdit,
   onSubmit,
 } = useFormDialog<ScriptForm>({
   defaultForm: () => ({ name: '', command: '', tags: '', favorite: false }),
+  rules: {
+    name: [{ required: true, message: () => t('common.required'), trigger: 'blur' }],
+    command: [{ required: true, message: () => t('common.required'), trigger: 'blur' }],
+  },
   saveApi: async (isEdit, data) => {
     if (isEdit && data.id) await updateScript(data.id, data)
     else await createScript(data)
   },
   onSuccess: () => fetchData({}, true),
   i18nPrefix: 'scripts',
-  validate: false,
 })
 
 const splitTags = (tags?: string) => (tags || '').split(',').map((s) => s.trim()).filter(Boolean)
