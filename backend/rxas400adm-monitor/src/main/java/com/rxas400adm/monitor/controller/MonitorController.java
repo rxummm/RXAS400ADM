@@ -1,13 +1,12 @@
 package com.rxas400adm.monitor.controller;
 
-import com.rxas400adm.as400.entity.IbmiSystem;
-import com.rxas400adm.as400.service.IIbmiSystemService;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.monitor.vo.AlertEventVO;
 import com.rxas400adm.monitor.service.AlertEventService;
 import com.rxas400adm.monitor.service.IBaselineService;
 import com.rxas400adm.monitor.service.ICapacityService;
 import com.rxas400adm.monitor.service.IMetricService;
+import com.rxas400adm.monitor.service.MonitorService;
 import com.rxas400adm.monitor.vo.BaselineDataVO;
 import com.rxas400adm.monitor.vo.CapacityTrendVO;
 import com.rxas400adm.monitor.vo.CompareResultVO;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -36,10 +34,7 @@ public class MonitorController {
     private final AlertEventService alertEventService;
     private final ICapacityService capacityService;
     private final IBaselineService baselineService;
-    private final IIbmiSystemService ibmiSystemService;
-
-    /** 服务器对比最大数量（P2-17） */
-    private static final int MAX_COMPARE_IDS = 20;
+    private final MonitorService monitorService;
 
     @GetMapping("/overview/{id}")
     @PreAuthorize("hasAuthority('MONITOR_VIEW')")
@@ -72,22 +67,11 @@ public class MonitorController {
     }
 
     /** 服务器对比：多服务器当前指标快照并排（借鉴旧项目 serverCompare，指标维度）
-     *  P2-17：最多对比 20 台，超出部分静默截断（防逐台实时查询被大列表打满） */
+     *  【R2】【P4】组装与并行编排下沉 MonitorService.compare（P2-17 截断逻辑随迁） */
     @GetMapping("/compare")
     @PreAuthorize("hasAuthority('MONITOR_VIEW')")
     public ApiResponse<List<CompareResultVO>> compare(@RequestParam List<Long> ids) {
-        List<CompareResultVO> result = new ArrayList<>();
-        for (Long id : ids.stream().distinct().limit(MAX_COMPARE_IDS).toList()) {
-            IbmiSystem system = ibmiSystemService.get(id);
-            result.add(new CompareResultVO(
-                    id,
-                    system == null ? "SERVER-" + id : system.getName(),
-                    system == null ? "-" : system.getHost(),
-                    system == null ? "-" : system.getEnvironment(),
-                    system == null ? "-" : system.getStatus(),
-                    metricService.overview(id)));
-        }
-        return ApiResponse.success(result);
+        return ApiResponse.success(monitorService.compare(ids));
     }
 
     @GetMapping("/alerts")

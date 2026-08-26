@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-
 /**
  * 平台定时任务服务：@Scheduled 任务自省列举 + 手动触发。
  *
@@ -49,7 +49,11 @@ public class PlatformTaskService {
 
     /** M4：每任务手动触发限频（毫秒），防止洪峰反复触发破坏性维护 */
     private static final long TRIGGER_MIN_INTERVAL_MS = 5_000;
-    private final ConcurrentHashMap<String, Long> lastTriggeredAt = new ConcurrentHashMap<>();
+    /** C13：CAS 时间槽——原 putIfAbsent→判断→put 三段式非原子；merge 方案在同毫秒重复触发时会误放行 */
+    private final ConcurrentHashMap<String, AtomicLong> lastTriggeredAt = new ConcurrentHashMap<>();
+
+    /** C5：执行中任务集合——同一任务手动触发未结束前拒绝再次触发（含与调度 tick 撞车时的手动侧防护） */
+    private final Set<String> runningTriggers = ConcurrentHashMap.newKeySet();
 
     // Spring 容器管理线程池生命周期，无需手动 shutdown
 
@@ -99,13 +103,20 @@ public class PlatformTaskService {
         checkRateLimit(beanName, methodName);
         Object bean = resolveBean(beanName);
         Method method = validateMethod(bean, beanName, methodName);
+        String taskKey = beanName + "." + methodName;
+        // C5：同任务上一轮手动触发尚未结束时拒绝重入
+        if (!runningTriggers.add(taskKey)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "任务正在执行中，请稍后再试: " + taskKey);
+        }
         platformTaskPool.execute(() -> {
             try {
-                log.info("[任务] 手动触发 {}:{} 开始", beanName, methodName);
+                log.info("[任务] 手动触发 {} 开始", taskKey);
                 method.invoke(bean);
-                log.info("[任务] 手动触发 {}:{} 完成", beanName, methodName);
+                log.info("[任务] 手动触发 {} 完成", taskKey);
             } catch (Exception e) {
-                log.error("[任务] 手动触发 {}:{} 失败: {}", beanName, methodName, e.getMessage(), e);
+                log.error("[任务] 手动触发 {} 失败: {}", taskKey, e.getMessage(), e);
+            } finally {
+                runningTriggers.remove(taskKey);
             }
         });
         return LocalDateTime.now();
@@ -121,17 +132,23 @@ public class PlatformTaskService {
         }
     }
 
-    /** 阶段②：M4 每任务限频——同任务 5 秒内不得重复手动触发 */
+    /**
+     * 阶段②：M4 每任务限频——同任务 5 秒内不得重复手动触发。
+     * C13：AtomicLong CAS 实现，原子且正确处理「同毫秒第二次触发」。
+     */
     private void checkRateLimit(String beanName, String methodName) {
         long now = System.currentTimeMillis();
-        Long prev = lastTriggeredAt.putIfAbsent(beanName + "." + methodName, now);
-        if (prev != null) {
+        AtomicLong slot = lastTriggeredAt.computeIfAbsent(beanName + "." + methodName, k -> new AtomicLong());
+        while (true) {
+            long prev = slot.get();
             long wait = TRIGGER_MIN_INTERVAL_MS - (now - prev);
-            if (wait > 0) {
+            if (prev != 0L && wait > 0) {
                 throw new BusinessException(ErrorCode.BAD_REQUEST,
                         "触发过于频繁，请 " + (wait / 1000 + 1) + " 秒后再试");
             }
-            lastTriggeredAt.put(beanName + "." + methodName, now);
+            if (slot.compareAndSet(prev, now)) {
+                return;
+            }
         }
     }
 

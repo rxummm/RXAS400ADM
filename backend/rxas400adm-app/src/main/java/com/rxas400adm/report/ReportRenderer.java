@@ -81,30 +81,42 @@ final class ReportRenderer {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Document document = new Document(PageSize.A4.rotate());
             PdfWriter.getInstance(document, out);
-            document.open();
-            BaseFont baseFont = cjkBaseFont();
-            if (baseFont == null) {
-                return new byte[0]; // 字体不可用，放弃 PDF 渲染
-            }
-            Font titleFont = new Font(baseFont, 16, com.lowagie.text.Font.BOLD);
-            Font cellFont = new Font(baseFont, 9, com.lowagie.text.Font.NORMAL);
-            document.add(new Paragraph(title, titleFont));
-            PdfPTable table = new PdfPTable(headers.length);
-            table.setWidthPercentage(100);
-            for (String header : headers) {
-                PdfPCell cell = new PdfPCell(new Phrase(header, new Font(baseFont, 9, com.lowagie.text.Font.BOLD)));
-                cell.setPadding(3);
-                table.addCell(cell);
-            }
-            for (Map<String, Object> row : rows) {
+            // 【E14】open 后统一 try/finally 保证 close：渲染中途异常不再滞留 writer 缓冲。
+            // 注意：iText 在 close 时才写 PDF 尾部（xref/trailer），字节必须在 close 之后提取
+            byte[] payload;
+            try {
+                document.open();
+                BaseFont baseFont = cjkBaseFont();
+                if (baseFont == null) {
+                    return new byte[0]; // 字体不可用，放弃 PDF 渲染
+                }
+                Font titleFont = new Font(baseFont, 16, com.lowagie.text.Font.BOLD);
+                Font cellFont = new Font(baseFont, 9, com.lowagie.text.Font.NORMAL);
+                document.add(new Paragraph(title, titleFont));
+                PdfPTable table = new PdfPTable(headers.length);
+                table.setWidthPercentage(100);
                 for (String header : headers) {
-                    Object value = row.get(header);
-                    table.addCell(new Phrase(value == null ? "" : String.valueOf(value), cellFont));
+                    PdfPCell cell = new PdfPCell(new Phrase(header, new Font(baseFont, 9, com.lowagie.text.Font.BOLD)));
+                    cell.setPadding(3);
+                    table.addCell(cell);
+                }
+                for (Map<String, Object> row : rows) {
+                    for (String header : headers) {
+                        Object value = row.get(header);
+                        table.addCell(new Phrase(value == null ? "" : String.valueOf(value), cellFont));
+                    }
+                }
+                document.add(table);
+            } finally {
+                // close 异常仅忽略，不覆盖主流程结果/异常
+                try {
+                    document.close();
+                } catch (Exception ignored) {
+                    // 忽略关闭异常
                 }
             }
-            document.add(table);
-            document.close();
-            return out.toByteArray();
+            payload = out.toByteArray();
+            return payload;
         } catch (Exception e) {
             log.warn("PDF 报表生成失败: {}", e.getMessage());
             return new byte[0];

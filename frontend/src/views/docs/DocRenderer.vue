@@ -1,9 +1,10 @@
 <template>
   <div class="doc-renderer">
     <template v-if="isTextType">
+      <el-empty v-if="!content" :description="t('docs.emptyContent')" />
       <!-- eslint-disable-next-line vue/no-v-html -- 内容已经 DOMPurify 消毒（markdown/html 渲染），禁止绕过消毒 -->
-      <div v-if="renderHtml" class="doc-html" v-html="renderHtml"></div>
-      <pre v-else class="content">{{ content || '' }}</pre>
+      <div v-else-if="renderHtml" class="doc-html" v-html="renderHtml"></div>
+      <pre v-else class="content">{{ content }}</pre>
     </template>
     <template v-else-if="isBinaryType">
       <iframe v-if="docType === 'PDF' && fileUrl" class="doc-iframe" :src="fileUrl" :title="t('docs.preview')"></iframe>

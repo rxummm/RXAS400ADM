@@ -64,7 +64,7 @@
       <el-empty v-if="favoriteScripts.length === 0" :description="$t('dashboard.noFavoriteScripts')" />
     </el-card>
 
-    <el-dialog v-model="customizeVisible" :title="$t('dashboard.customize')" width="420px">
+    <el-dialog v-model="customizeVisible" :title="$t('dashboard.customize')" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
       <el-alert type="info" :title="$t('dashboard.customizeHint')" :closable="false" class="mb16" />
       <div v-for="w in widgetOptions" :key="w.key" class="widget-toggle">
         <span>{{ $t(w.label) }}</span>
@@ -230,9 +230,5 @@ onMounted(() => {
   justify-content: space-between;
   padding: 10px 4px;
   border-bottom: 1px solid var(--border-light);
-}
-.flex-row-center {
-  display: flex;
-  align-items: center;
 }
 </style>

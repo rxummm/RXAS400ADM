@@ -2,13 +2,17 @@ package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.util.SecurityUtils;
 import com.rxas400adm.system.dto.CalendarEventDTO;
 import com.rxas400adm.system.entity.SysUser;
 import com.rxas400adm.system.service.ICalendarEventService;
 import com.rxas400adm.system.service.SysUserService;
 import com.rxas400adm.system.vo.CalendarEventVO;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +33,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/api/v1/calendar/events")
+@Validated
 @RequiredArgsConstructor
 @Tag(name = "日历管理")
 public class CalendarController {
@@ -38,8 +43,8 @@ public class CalendarController {
 
     @GetMapping("/month")
     @PreAuthorize("hasAuthority('CALENDAR_VIEW')")
-    public ApiResponse<List<CalendarEventVO>> month(@RequestParam int year,
-                                                  @RequestParam int month) {
+    public ApiResponse<List<CalendarEventVO>> month(@RequestParam @Min(1970) @Max(9999) int year,
+                                                  @RequestParam @Min(1) @Max(12) int month) {
         return ApiResponse.success(eventService.month(year, month, currentUserId()).stream().map(CalendarEventVO::from).toList());
     }
 
@@ -66,7 +71,7 @@ public class CalendarController {
     }
 
     private Long currentUserId() {
-        String username = com.rxas400adm.common.util.SecurityUtils.currentUsername();
+        String username = SecurityUtils.currentUsername();
         SysUser user = userService.getByUsername(username);
         return user == null ? -1L : user.getId();
     }

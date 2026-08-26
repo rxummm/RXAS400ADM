@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -99,9 +101,9 @@ class As400LoginSyncServiceTest {
         alive.setLoginSource("AS400");
         alive.setAs400ServerId(1L);
         when(userMapper.selectList(any())).thenReturn(List.of(stale, alive));
-        when(client.userProfile("as400user")).thenReturn(null);
-        when(client.userProfile("as400alive")).thenReturn(
-                new com.rxas400adm.as400.model.UserProfileRow("AS400ALIVE", "GRPDEV", "*ENABLED"));
+        // P15：批量探测改为 stub 单条 USER_INFO 查询——stale 不在 IBM i 全库结果中，alive 命中
+        when(client.queryListCheckedBounded(anyString(), anyInt())).thenReturn(List.of(
+                Map.of("AUTHORIZATION_NAME", "AS400ALIVE", "GROUP_PROFILE_NAME", "GRPDEV")));
         when(as400LoginService.loadGroupRoleMapping()).thenReturn(Map.of("GRPDEV", "DEVELOPER"));
 
         service.dailySync();
@@ -119,7 +121,8 @@ class As400LoginSyncServiceTest {
         when(systemMapper.selectList(any())).thenReturn(List.of(system()));
         when(clientProvider.forServer(1L)).thenReturn(client);
         when(userMapper.selectList(any())).thenReturn(List.of(user()));
-        when(client.userProfile("as400user")).thenReturn(null);
+        // P15：全库查询 0 行 → 该账号在 IBM i 上不存在
+        when(client.queryListCheckedBounded(anyString(), anyInt())).thenReturn(List.of());
 
         service.dailySync();
 
@@ -134,7 +137,8 @@ class As400LoginSyncServiceTest {
         when(systemMapper.selectList(any())).thenReturn(List.of(system()));
         when(clientProvider.forServer(1L)).thenReturn(client);
         when(userMapper.selectList(any())).thenReturn(List.of(user()));
-        when(client.userProfile("as400user")).thenReturn(null);
+        // P15：全库查询 0 行 → 该账号在 IBM i 上不存在
+        when(client.queryListCheckedBounded(anyString(), anyInt())).thenReturn(List.of());
 
         service.dailySync(); // 第 1 轮：streak=1，暂缓
         service.dailySync(); // 第 2 轮：streak=2 = LIMIT，按失效清理
@@ -150,8 +154,9 @@ class As400LoginSyncServiceTest {
         when(systemMapper.selectList(any())).thenReturn(List.of(system()));
         when(clientProvider.forServer(1L)).thenReturn(client);
         when(userMapper.selectList(any())).thenReturn(List.of(user()));
-        when(client.userProfile("as400user")).thenReturn(
-                new com.rxas400adm.as400.model.UserProfileRow("AS400USER", "GRPDEV", "*ENABLED"));
+        // P15：全库查询命中该账号（大写 AUTHORIZATION_NAME + 组 profile）
+        when(client.queryListCheckedBounded(anyString(), anyInt())).thenReturn(List.of(
+                Map.of("AUTHORIZATION_NAME", "AS400USER", "GROUP_PROFILE_NAME", "GRPDEV")));
         when(as400LoginService.loadGroupRoleMapping()).thenReturn(Map.of("GRPDEV", "DEVELOPER"));
 
         service.dailySync();

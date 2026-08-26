@@ -30,12 +30,17 @@ class DocTemplateServiceTest {
         service = new DocTemplateService(templateMapper);
     }
 
+    /** 类型安全占位符：利用 any() 的目标类型推断消除裸 Class 字面量的 unchecked 转换警告 */
+    private static LambdaQueryWrapper<DocTemplate> anyWrapper() {
+        return any();
+    }
+
     // ---------------- listTemplates ----------------
 
     @Test
     @DisplayName("listTemplates → 无 category 过滤返回全部")
     void listTemplates_noFilter() {
-        when(templateMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
+        when(templateMapper.selectList(anyWrapper())).thenReturn(List.of());
         var result = service.listTemplates(null);
         assertNotNull(result);
         assertTrue(result.isEmpty());
@@ -46,7 +51,7 @@ class DocTemplateServiceTest {
     void listTemplates_withCategory() {
         DocTemplate t = new DocTemplate();
         t.setName("模板1");
-        when(templateMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(t));
+        when(templateMapper.selectList(anyWrapper())).thenReturn(List.of(t));
 
         var result = service.listTemplates("运维");
         assertEquals(1, result.size());

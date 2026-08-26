@@ -2,6 +2,7 @@ package com.rxas400adm.common.exception;
 
 import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.response.ApiResponse;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -11,8 +12,10 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -47,9 +50,18 @@ public class GlobalExceptionHandler {
         return ApiResponse.error(400, msg);
     }
 
+    /**
+     * 【E9】参数约束违反：不再回显 e.getMessage() 原文（可能含属性路径/非法值等内部细节），
+     * 只取首个约束的简洁文案返回，完整信息留 warn 日志；HTTP 状态语义保持 400 不变
+     */
     @ExceptionHandler(ConstraintViolationException.class)
     public ApiResponse<Void> handleConstraint(ConstraintViolationException e) {
-        return ApiResponse.error(400, e.getMessage());
+        log.warn("参数约束违反: {}", e.getMessage());
+        String msg = e.getConstraintViolations().stream()
+                .findFirst()
+                .map(ConstraintViolation::getMessage)
+                .orElse("参数校验失败");
+        return ApiResponse.error(400, msg);
     }
 
     /** 缺失必填请求参数（@RequestParam 未传 / 传错位置）：客户端请求畸形，按 400 处理，避免落兜底 500 */
@@ -77,6 +89,22 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
     public ApiResponse<Void> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
         return ApiResponse.error(405, "请求方法不被允许");
+    }
+
+    /** 【E10】异步请求超时（DeferredResult/流式响应超时未完成）：显式 503 + 固定文案，避免落入兜底 500 */
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ApiResponse<Void> handleAsyncTimeout(AsyncRequestTimeoutException e) {
+        log.warn("异步请求超时: {}", e.getMessage());
+        return ApiResponse.error(503, "请求超时，请重试");
+    }
+
+    /** 【E10】Content-Type 不被接口支持：显式 415，避免落入兜底 500 */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+    public ApiResponse<Void> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException e) {
+        log.warn("不支持的 Content-Type: {}", e.getContentType());
+        return ApiResponse.error(415, "不支持的 Content-Type");
     }
 
     /** 上传文件超限（spring.servlet.multipart 上限）：转 400 友好提示，避免落成 500 */

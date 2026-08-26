@@ -54,7 +54,7 @@
             <el-button v-has-perm="'AS400_MANAGE'" size="small" type="warning" plain @click="openEdit(row as IbmiSystem)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button v-has-perm="'AS400_MANAGE'" size="small" type="danger" plain @click="remove(row as IbmiSystem)">
+            <el-button v-has-perm="'AS400_MANAGE'" size="small" type="danger" plain :loading="removeLoading === row.id" @click="confirmRemove(row)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -65,8 +65,8 @@
     </div>
 
     <!-- 新增/编辑 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-md)" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="var(--rx-form-label-width-wide)">
         <el-form-item :label="$t('assets.name')" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
@@ -131,7 +131,7 @@
     </el-dialog>
 
     <!-- 执行 CL 命令 -->
-    <el-dialog v-model="commandVisible" :title="`${$t('assets.command')} - ${commandSystem?.name || ''}`" width="640px">
+    <el-dialog v-model="commandVisible" :title="`${$t('assets.command')} - ${commandSystem?.name || ''}`" width="var(--rx-dialog-md)" :close-on-click-modal="false">
       <el-input
         v-model="command"
         type="textarea"
@@ -158,7 +158,8 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'Assets' })
 import { onMounted, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { Plus, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useAs400ServerStore } from '@/stores/as400Server'
@@ -188,7 +189,6 @@ const {
   size,
   total,
   forceSearch,
-  handleRefresh,
 } = useSmartQueryTable<IbmiSystem>({
   fetchApi: async () => {
     const data = await fetchSystemDetail()
@@ -299,16 +299,11 @@ const test = async (row: IbmiSystem) => {
   }
 }
 
-const remove = async (row: IbmiSystem) => {
-  await ElMessageBox.confirm(
-    t('assets.deleteConfirm', { name: row.name }),
-    t('common.confirm'),
-    { type: 'warning' },
-  )
-  await deleteSystem(row.id)
-  ElMessage.success(t('common.delete'))
-  await load()
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: IbmiSystem) => deleteSystem(row.id),
+  onSuccess: load,
+  confirmMessage: 'assets.deleteConfirm',
+})
 
 const commandVisible = ref(false)
 const commandSystem = ref<IbmiSystem | null>(null)

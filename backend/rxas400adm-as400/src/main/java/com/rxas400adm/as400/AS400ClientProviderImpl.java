@@ -50,6 +50,9 @@ public class AS400ClientProviderImpl implements AS400ClientProvider {
         if (serverId != null) {
             return forServer(serverId);
         }
+        // C10：非请求线程（@Async/Quartz/采集线程）调用 current() 时 holder 为空——
+        // 静默回落默认服务器会造成「错服路由且无报错」，至少留痕 warn 供排查
+        log.warn("current() 在无 X-AS400-Server 上下文的线程中调用，回落默认服务器（如非预期请改用 forServer(id)）");
         return defaultClient();
     }
 

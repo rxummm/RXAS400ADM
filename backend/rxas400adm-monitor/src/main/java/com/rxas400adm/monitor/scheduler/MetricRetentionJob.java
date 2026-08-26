@@ -1,6 +1,6 @@
 package com.rxas400adm.monitor.scheduler;
 
-import com.rxas400adm.monitor.service.IMetricService;
+import com.rxas400adm.monitor.mapper.MetricMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +18,10 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class MetricRetentionJob {
 
-    private final IMetricService metricService;
+    /** P18：单批删除行数上限（MySQL LIMIT 分批，避免一次性 DELETE 全量的大事务长锁） */
+    private static final int BATCH_SIZE = 5000;
+
+    private final MetricMapper metricMapper;
 
     @Value("${rxas400.monitor.retention-days:30}")
     private int retentionDays;
@@ -29,10 +32,18 @@ public class MetricRetentionJob {
         int days = Math.max(1, retentionDays);
         LocalDateTime cutoff = LocalDateTime.now().minusDays(days);
         try {
-            metricService.cleanBefore(cutoff);
-            log.info("[指标保留] 已清理 {} 天前的指标（截止 {}）", days, cutoff);
+            // P18：分批循环删除直至影响行数为 0（批间无需 sleep）；
+            // DB2 for i 方言下 deleteByCreatedTimeBefore 内部退回一次性整删，首轮即清空
+            long total = 0L;
+            int affected;
+            do {
+                affected = metricMapper.deleteByCreatedTimeBefore(cutoff, BATCH_SIZE);
+                total += affected;
+            } while (affected > 0);
+            log.info("[指标保留] 已清理 {} 天前的指标 {} 行（截止 {}）", days, total, cutoff);
         } catch (Exception e) {
-            log.warn("[指标保留] 清理失败: {}", e.getMessage());
+            // 【E5-4】追加异常对象，保留完整堆栈（原仅拼 getMessage 丢堆栈）
+            log.warn("[指标保留] 清理失败: {}", e.getMessage(), e);
         }
     }
 }

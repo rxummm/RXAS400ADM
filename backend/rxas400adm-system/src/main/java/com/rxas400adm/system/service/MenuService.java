@@ -64,10 +64,27 @@ public class MenuService implements IMenuService {
         if (ctx == null) {
             return new UserMenuDataVO(List.of(), List.of(), List.of());
         }
-        List<SysMenu> menus = treeService.loadAuthorizedMenus(ctx);
-        List<MenuVO> menuTree = treeService.toMenuVOList(menus);
-        List<SysMenu> permMenus = treeService.loadAllAuthorizedMenus(ctx);
-        List<String> perms = permMenus.stream()
+        // P8 合并查询：授权菜单行集（含 perms 列）只取一次，内存分流构建菜单树与权限码，
+        // 消除原先 loadAuthorizedMenus/loadAllAuthorizedMenus 对同一递归 CTE
+        // （SysMenuMapper.selectAuthorizedMenusByUserId）的两次调用。admin 直通分支语义不变。
+        List<SysMenu> authorizedRows;
+        if (ctx.isAdmin()) {
+            // admin：全量启用菜单（原两分支分别为 type 1/2 与全类型，取超集后内存过滤）
+            authorizedRows = menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
+                    .eq(SysMenu::getStatus, 1)
+                    .orderByAsc(SysMenu::getSort));
+        } else {
+            // 非 admin：递归 CTE 仅调 1 次，统一排除 admin_only 子树
+            authorizedRows = menuMapper.selectAuthorizedMenusByUserId(ctx.user().getId()).stream()
+                    .filter(m -> m.getAdminOnly() == null || m.getAdminOnly() != 1)
+                    .toList();
+        }
+        // 菜单树：仅目录(1)/菜单页(2)，口径同原 loadAuthorizedMenus
+        List<MenuVO> menuTree = treeService.toMenuVOList(authorizedRows.stream()
+                .filter(m -> m.getMenuType() != null && (m.getMenuType() == 1 || m.getMenuType() == 2))
+                .toList());
+        // 权限码：全部类型菜单的 perms 去重，口径同原 loadAllAuthorizedMenus
+        List<String> perms = authorizedRows.stream()
                 .map(SysMenu::getPerms)
                 .filter(StringUtils::hasText)
                 .distinct()
@@ -89,31 +106,6 @@ public class MenuService implements IMenuService {
                 StringUtils.hasText(tab.getPerms()) ? tab.getPerms() : null
         )).toList();
         return new UserMenuDataVO(menuTree, perms, tabList);
-    }
-
-    /** 用户可见 Tab 列表（供 /auth/menu tabs 字段 + 页面级独立查询） */
-    public List<TabVO> userTabs(String username) {
-        MenuTreeService.UserContext ctx = treeService.loadUserContext(username);
-        if (ctx == null) {
-            return List.of();
-        }
-        boolean isAdmin = ctx.isAdmin();
-        List<SysMenu> tabs = menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
-                .eq(SysMenu::getMenuType, 4)
-                .orderByAsc(SysMenu::getSort));
-        if (!isAdmin) {
-            tabs = tabs.stream()
-                    .filter(m -> m.getAdminOnly() == null || m.getAdminOnly() != 1)
-                    .toList();
-        }
-        Map<Long, String> parentTitle = buildParentTitleMap(tabs);
-        return tabs.stream().map(tab -> new TabVO(
-                parentTitle.getOrDefault(tab.getParentId(), ""),
-                tab.getTitle(),
-                tab.getMenuName(),
-                tab.getStatus(),
-                StringUtils.hasText(tab.getPerms()) ? tab.getPerms() : null
-        )).toList();
     }
 
     /* ---------------- CRUD（委托 MenuManageService） ---------------- */

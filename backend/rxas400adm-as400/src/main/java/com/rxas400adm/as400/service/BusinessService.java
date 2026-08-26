@@ -1,6 +1,7 @@
 package com.rxas400adm.as400.service;
 
 import com.rxas400adm.as400.AS400ClientProvider;
+import com.rxas400adm.common.constants.As400Identifiers;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,8 @@ public class BusinessService implements IBusinessService {
     private static final int MAX_TABLE_RESULTS = 500;
 
     /** IBM i 系统对象名：A-Z 0-9 _ $ # @（已按大写归一） */
-    private static final Pattern IDENTIFIER = Pattern.compile("^[A-Z0-9_$#@]+$");
+    /** S6：收敛至共享常量（原四处独立复制正则） */
+    private static final Pattern IDENTIFIER = As400Identifiers.IDENTIFIER;
 
     private final AS400ClientProvider clientProvider;
 
@@ -89,7 +91,9 @@ public class BusinessService implements IBusinessService {
             total = cnt instanceof Number n ? n.longValue() : Long.parseLong(String.valueOf(cnt));
         }
 
-        int offset = (safePage - 1) * safeSize;
+        // B3：page 上限钳制——防 (page-1)*size 溢出为负拼出 OFFSET -20 ROWS（DB2 SQL 错误）
+        safePage = Math.min(safePage, 10_000);
+        long offset = (long) (safePage - 1) * safeSize;
         String dataSql = "SELECT * FROM " + lib + "." + tbl + where
                 + " ORDER BY 1 OFFSET " + offset + " ROWS FETCH NEXT " + safeSize + " ROWS ONLY";
         List<Map<String, Object>> rows = clientProvider.current().queryList(dataSql, params.toArray());

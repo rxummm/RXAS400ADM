@@ -7,6 +7,7 @@ import data from './data'
 import assets from './assets'
 import system from './system'
 import docs from './docs'
+import opTemplate from './opTemplate'
 
 export default {
   // 2026-08-16 修复（模块拆分盲区）：$t() 引用一律按「文件内顶层命名空间」书写
@@ -24,4 +25,5 @@ export default {
   ...assets,
   ...system,
   ...docs,
+  ...opTemplate,
 }

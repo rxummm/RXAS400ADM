@@ -19,8 +19,6 @@ public interface IIfsService {
 
     boolean writeBytes(String path, byte[] content);
 
-    byte[] readBytes(String path);
-
     /** 打开 IFS 文件输入流（流式下载，避免大文件整读内存）；失败返回 null，调用方负责关闭 */
     InputStream readStream(String path);
 

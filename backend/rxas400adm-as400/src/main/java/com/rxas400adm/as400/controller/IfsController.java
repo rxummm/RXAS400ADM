@@ -14,6 +14,7 @@ import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -48,6 +50,14 @@ public class IfsController {
 
     /** 上传大小上限（与 application.yml spring.servlet.multipart.max-file-size 对齐，100MB） */
     private static final long MAX_UPLOAD_BYTES = 100L * 1024 * 1024;
+
+    /**
+     * S1：允许访问的 IFS 根目录白名单（逗号分隔）。默认限定平台工作目录 /QOpenSys/rxas400，
+     * 防止任意路径读写连接账号可达的系统文件（/etc、/QOpenSys/usr/bin 等）。
+     * 回收站 TRASH_ROOT 位于该目录之下，无需单独配置。
+     */
+    @Value("${rxas400.ifs.allowed-roots:/QOpenSys/rxas400}")
+    private String allowedRoots;
 
     private final IIfsService ifsService;
 
@@ -181,6 +191,11 @@ public class IfsController {
         if (normalized == null || normalized.isBlank()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "回收站路径不能为空");
         }
+        // S2：仅允许恢复回收站内的路径——防止 substring(36) 构成任意文件「搬运」原语
+        if (!normalized.startsWith(IfsClient.TRASH_ROOT + "/")) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST,
+                    "仅允许恢复回收站内路径（" + IfsClient.TRASH_ROOT + "/*）: " + normalized);
+        }
         if (!ifsService.restore(normalized)) {
             throw new BusinessException(ErrorCode.AS400_COMMAND_FAILED, "IFS 恢复失败: " + normalized);
         }
@@ -214,6 +229,18 @@ public class IfsController {
         }
         while (normalized.length() > 1 && normalized.endsWith("/")) {
             normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        // S1：根目录白名单——必须落在某个允许根之内（等于根或其子路径）
+        // normalized 在上方 while 中被重赋值（非 effectively final），lambda 捕获需拷贝
+        final String candidate = normalized;
+        final String rootsConfig = allowedRoots;
+        boolean allowed = Arrays.stream(rootsConfig.split(","))
+                .map(String::trim)
+                .filter(root -> !root.isEmpty())
+                .anyMatch(root -> candidate.equals(root) || candidate.startsWith(root + "/"));
+        if (!allowed) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST,
+                    "IFS 路径不在允许范围内（rxas400.ifs.allowed-roots）: " + path);
         }
         return normalized;
     }

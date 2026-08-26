@@ -10,6 +10,8 @@ export default {
     production: 'Production Systems',
     alerts: 'Alerts',
     overview: 'IBM i System Overview',
+    favoriteScripts: 'Quick Commands',
+    noFavoriteScripts: 'No favorite commands',
     name: 'System',
     host: 'Host',
     environment: 'Environment',

@@ -1,6 +1,8 @@
 package com.rxas400adm.monitor.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.rxas400adm.common.constants.SqlDialect;
+import com.rxas400adm.common.constants.SqlDialectHolder;
 import com.rxas400adm.monitor.domain.Metric;
 import org.apache.ibatis.annotations.Param;
 
@@ -56,4 +58,28 @@ public interface MetricMapper extends BaseMapper<Metric> {
      * 替代 5 次独立 SELECT * ORDER BY collect_time DESC LIMIT 1。
      */
     List<Map<String, Object>> selectLatestOverview(@Param("instanceId") Long instanceId);
+
+    /**
+     * P5：批量入库多值 INSERT（列对照 rx_metric 表结构，id 自增不写）。
+     * SQL 见 resources/mapper/MetricMapper.xml。
+     */
+    int insertBatch(@Param("list") List<Metric> list);
+
+    /**
+     * P18：分批删除入口——按当前数据源方言分支（SqlDialectHolder 启动时注入）：
+     * MySQL 走 LIMIT 单批删除（调用方循环直至影响行数为 0）；
+     * 其余方言（DB2 for i 无 LIMIT DELETE 语法）退回一次性整删，量大时依赖既有的整删窗口。
+     */
+    default int deleteByCreatedTimeBefore(LocalDateTime cutoff, int limit) {
+        if (SqlDialectHolder.get() == SqlDialect.MYSQL) {
+            return deleteBeforeLimit(cutoff, limit);
+        }
+        return deleteBeforeAll(cutoff);
+    }
+
+    /** P18：MySQL 方言单批删除（LIMIT 控制单批行数，避免大事务长锁）。SQL 见 XML。 */
+    int deleteBeforeLimit(@Param("cutoff") LocalDateTime cutoff, @Param("limit") int limit);
+
+    /** P18：非 MySQL 方言回退：一次性整删。SQL 见 XML。 */
+    int deleteBeforeAll(@Param("cutoff") LocalDateTime cutoff);
 }

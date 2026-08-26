@@ -10,8 +10,20 @@
         DELETE FROM rx_user_menu WHERE user_id = #{userId}
     </delete>
 
-    <delete id="deleteByUserIdAndMenuId">
-        DELETE FROM rx_user_menu WHERE user_id = #{userId} AND menu_id = #{menuId}
+    <!-- P6 批量插入：多值 INSERT 一次写入，列对照 V17__user_menu_auth.sql -->
+    <insert id="insertBatch">
+        INSERT INTO rx_user_menu (user_id, menu_id, created_time) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId}, #{item.menuId}, #{item.createdTime})
+        </foreach>
+    </insert>
+
+    <!-- P6 批量删除：IN 条件一次删除，替代逐条 delete 的 N 次 DB 往返 -->
+    <delete id="deleteByUserIdAndMenuIds">
+        DELETE FROM rx_user_menu WHERE user_id = #{userId} AND menu_id IN
+        <foreach collection="menuIds" item="menuId" open="(" separator="," close=")">
+            #{menuId}
+        </foreach>
     </delete>
 
 </mapper>

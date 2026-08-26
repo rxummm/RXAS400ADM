@@ -11,6 +11,7 @@ import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.SysPermissionDTO;
 import com.rxas400adm.system.entity.SysMenu;
 import com.rxas400adm.system.entity.SysPermission;
+import com.rxas400adm.system.entity.SysRolePermission;
 import com.rxas400adm.system.mapper.SysMenuMapper;
 import com.rxas400adm.system.mapper.SysPermissionMapper;
 import com.rxas400adm.system.mapper.SysRolePermissionMapper;
@@ -200,8 +201,8 @@ public class PermissionManageService implements IPermissionManageService {
         long menuUsed = menuMapper.selectCount(new LambdaQueryWrapper<SysMenu>()
                 .eq(SysMenu::getPerms, p.getPermissionCode()));
         long roleUsed = rolePermissionMapper.selectCount(
-                new LambdaQueryWrapper<com.rxas400adm.system.entity.SysRolePermission>()
-                        .eq(com.rxas400adm.system.entity.SysRolePermission::getPermissionId, id));
+                new LambdaQueryWrapper<SysRolePermission>()
+                        .eq(SysRolePermission::getPermissionId, id));
         if (menuUsed > 0 || roleUsed > 0) {
             throw new BusinessException(ErrorCode.FORBIDDEN,
                     "权限码 " + p.getPermissionCode() + " 正在被使用（菜单 " + menuUsed + " 处 / 角色绑定 " + roleUsed + " 处），不能删除");

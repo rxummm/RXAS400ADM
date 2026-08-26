@@ -17,7 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -27,9 +26,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -135,8 +135,8 @@ class UserMenuServiceTest {
         givenNonAdminContext(7L);
         when(roleMenuMapper.selectMenuIdsByRoleIds(any())).thenReturn(List.of(12L));
         when(menuMapper.selectBatchIds(any())).thenReturn(List.of(p12));
-        // 第一次调用：全量启用菜单；第二次：admin_only 菜单
-        when(menuMapper.selectList(any())).thenReturn(all, List.of(a20));
+        // 第一次调用：全量启用菜单；第二次：admin_only 菜单（doReturn 链避免 varargs 泛型数组警告）
+        doReturn(all).doReturn(List.of(a20)).when(menuMapper).selectList(any());
 
         var tree = service.getManageableMenuTree(7L);
 
@@ -153,23 +153,38 @@ class UserMenuServiceTest {
     // ---------------- addUserMenus / removeUserMenus ----------------
 
     @Test
-    @DisplayName("addUserMenus → 幂等：已存在授权不重复插入；新授权写入；不存在的菜单跳过")
-    void addUserMenus_idempotentAndSkipsMissingMenu() {
+    @DisplayName("addUserMenus → 批量幂等：已存在授权不重复插入；剩余一次 insertBatch")
+    void addUserMenus_batchInsertSkipsGranted() {
         when(userMapper.selectById(7L)).thenReturn(new SysUser());
-        when(menuMapper.selectById(11L)).thenReturn(new SysMenu());
-        when(menuMapper.selectById(12L)).thenReturn(new SysMenu());
-        when(menuMapper.selectById(99L)).thenReturn(null);
-        when(userMenuMapper.selectCount(any())).thenReturn(1L, 0L);
+        when(menuMapper.selectBatchIds(any())).thenReturn(List.of(menu(11L, 0L, 2), menu(12L, 0L, 3)));
+        SysUserMenu granted = new SysUserMenu();
+        granted.setUserId(7L);
+        granted.setMenuId(11L);
+        when(userMenuMapper.selectList(any())).thenReturn(List.of(granted));
 
-        service.addUserMenus(7L, List.of(11L, 12L, 11L, 99L));
+        service.addUserMenus(7L, List.of(11L, 12L, 11L));
 
-        ArgumentCaptor<SysUserMenu> captor = ArgumentCaptor.forClass(SysUserMenu.class);
-        verify(userMenuMapper, times(1)).insert(captor.capture());
-        assertEquals(12L, captor.getValue().getMenuId());
+        verify(userMenuMapper).insertBatch(argThat(list ->
+                list != null && list.size() == 1
+                        && Long.valueOf(12L).equals(list.get(0).getMenuId())
+                        && Long.valueOf(7L).equals(list.get(0).getUserId())));
     }
 
     @Test
-    @DisplayName("removeUserMenus → 目录级联删除子孙；按钮仅删自身")
+    @DisplayName("addUserMenus → 不存在的菜单抛 BAD_REQUEST 且不写入")
+    void addUserMenus_missingMenuThrowsBadRequest() {
+        when(userMapper.selectById(7L)).thenReturn(new SysUser());
+        when(menuMapper.selectBatchIds(any())).thenReturn(List.of(menu(11L, 0L, 2)));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> service.addUserMenus(7L, List.of(11L, 99L)));
+
+        assertEquals(ErrorCode.BAD_REQUEST.getCode(), ex.getCode());
+        verify(userMenuMapper, never()).insertBatch(any());
+    }
+
+    @Test
+    @DisplayName("removeUserMenus → 目录级联删除子孙；按钮仅删自身；一次 IN 批量删除")
     void removeUserMenus_cascadesDirectoryDescendants() {
         when(userMapper.selectById(7L)).thenReturn(new SysUser());
         SysMenu dir = menu(10L, 0L, 1);
@@ -180,10 +195,8 @@ class UserMenuServiceTest {
 
         service.removeUserMenus(7L, List.of(10L, 13L));
 
-        ArgumentCaptor<Long> ids = ArgumentCaptor.forClass(Long.class);
-        verify(userMenuMapper, times(4)).deleteByUserIdAndMenuId(anyLong(), ids.capture());
-        var removed = ids.getAllValues().stream().sorted().toList();
-        assertEquals(List.of(10L, 11L, 12L, 13L), removed);
+        verify(userMenuMapper).deleteByUserIdAndMenuIds(eq(7L), argThat(ids -> ids != null
+                && List.of(10L, 11L, 12L, 13L).equals(ids.stream().sorted().toList())));
     }
 
     @Test

@@ -51,7 +51,7 @@
               {{ $t('scripts.run') }}
             </el-button>
             <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" @click="openEdit(row as CommandScript)">{{ $t('common.edit') }}</el-button>
-            <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" type="danger" plain @click="remove(row as CommandScript)">{{ $t('common.delete') }}</el-button>
+            <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" type="danger" plain :loading="removeLoading === row.id" @click="confirmRemove(row)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -59,8 +59,8 @@
       <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('scripts.name')" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
@@ -89,6 +89,7 @@
 defineOptions({ name: 'Scripts' })
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { Plus, Star, StarFilled } from '@element-plus/icons-vue'
 import QueryBar from '@/components/QueryBar.vue'
 import { useI18n } from 'vue-i18n'
@@ -156,7 +157,6 @@ type ScriptForm = Partial<CommandScript> & { id?: number }
 const {
   dialogVisible,
   dialogTitle,
-  loading: saving,
   formRef,
   form,
   rules,
@@ -217,12 +217,11 @@ const run = async (row: CommandScript) => {
   }
 }
 
-const remove = async (row: CommandScript) => {
-  await ElMessageBox.confirm(t('scripts.deleteConfirm'), t('common.confirm'), { type: 'warning' })
-  await deleteScript(row.id)
-  ElMessage.success(t('common.delete'))
-  await fetchData({}, true)
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: CommandScript) => deleteScript(row.id),
+  onSuccess: () => fetchData({}, true),
+  confirmMessage: 'scripts.deleteConfirm',
+})
 
 onMounted(async () => {
   servers.value = await as400Store.fetchServers()

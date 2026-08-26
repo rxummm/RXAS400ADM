@@ -77,6 +77,10 @@ public class DataInitializer implements CommandLineRunner {
 
         SysRole adminRole = roleMapper.selectOne(
                 new LambdaQueryWrapper<SysRole>().eq(SysRole::getRoleCode, "ADMIN"));
+        /* B12：V38 种子被破坏时 fail-fast 给出明确原因，替代裸 NPE */
+        if (adminRole == null) {
+            throw new IllegalStateException("ADMIN 角色缺失：V38 种子数据被破坏，请检查 Flyway 迁移");
+        }
         SysUserRole userRole = new SysUserRole();
         userRole.setUserId(admin.getId());
         userRole.setRoleId(adminRole.getId());

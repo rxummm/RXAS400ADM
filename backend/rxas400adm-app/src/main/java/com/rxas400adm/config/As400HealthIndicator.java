@@ -1,39 +1,35 @@
 package com.rxas400adm.config;
 
-import com.rxas400adm.as400.AS400ClientProvider;
-import com.rxas400adm.as400.entity.IbmiSystem;
+import com.rxas400adm.config.vo.HealthReportVO;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * AS400 服务器连接健康指示器：
  * - UP：至少一台服务器可达
  * - DOWN：所有服务器均不可达
+ * <p>
+ * 【P3】不再逐台直连，复用 HealthService.probeServers() 的并行探测 + 30s Caffeine 缓存
+ * （与 REST 巡检 /api/v1/health 共用同一份快照），单台失败已在服务层降级为 FAIL 行。
  */
-@Slf4j
 @Component("as400")
 @RequiredArgsConstructor
 public class As400HealthIndicator implements HealthIndicator {
 
-    private final AS400ClientProvider clientProvider;
     private final HealthService healthService;
 
     @Override
     public Health health() {
-        int total = 0;
+        List<HealthReportVO.ServerHealthVO> servers = healthService.probeServers();
+        int total = servers.size();
         int ok = 0;
-        for (IbmiSystem system : healthService.listSystemsOrdered()) {
-            total++;
-            try {
-                var result = clientProvider.forServer(system.getId()).testConnection();
-                if (result.success()) {
-                    ok++;
-                }
-            } catch (Exception e) {
-                log.debug("AS400 health check failed for {}: {}", system.getName(), e.getMessage());
+        for (HealthReportVO.ServerHealthVO server : servers) {
+            if ("OK".equals(server.connect())) {
+                ok++;
             }
         }
         if (total == 0) {

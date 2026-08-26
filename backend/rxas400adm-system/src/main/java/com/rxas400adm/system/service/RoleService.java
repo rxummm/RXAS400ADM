@@ -7,8 +7,10 @@ import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.SysRoleDTO;
+import com.rxas400adm.system.entity.SysMenu;
 import com.rxas400adm.system.entity.SysRole;
 import com.rxas400adm.system.entity.SysUserRole;
+import com.rxas400adm.system.mapper.SysMenuMapper;
 import com.rxas400adm.system.mapper.SysRoleMapper;
 import com.rxas400adm.system.entity.SysRoleMenu;
 import com.rxas400adm.system.mapper.SysRoleMenuMapper;
@@ -22,6 +24,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 角色管理（参照旧项目 SysRoleService）：
@@ -38,6 +41,7 @@ public class RoleService implements IRoleService {
     private final SysRoleMapper roleMapper;
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysUserRoleMapper userRoleMapper;
+    private final SysMenuMapper menuMapper;
 
     /** 角色列表（含各角色已授权菜单 ID，供前端回显） */
     public List<SysRole> listAll() {
@@ -68,10 +72,10 @@ public class RoleService implements IRoleService {
         Map<Long, List<Long>> grouped = roleMenuMapper.selectList(
                         new LambdaQueryWrapper<SysRoleMenu>().in(SysRoleMenu::getRoleId, roleIds))
                 .stream()
-                .collect(java.util.stream.Collectors.groupingBy(
+                .collect(Collectors.groupingBy(
                         SysRoleMenu::getRoleId,
-                        java.util.stream.Collectors.mapping(SysRoleMenu::getMenuId,
-                                java.util.stream.Collectors.toList())));
+                        Collectors.mapping(SysRoleMenu::getMenuId,
+                                Collectors.toList())));
         roles.forEach(r -> r.setMenuIds(grouped.getOrDefault(r.getId(), List.of())));
     }
 
@@ -91,9 +95,11 @@ public class RoleService implements IRoleService {
         }
         if (role.getSort() == null) role.setSort(0);
         if (role.getStatus() == null) role.setStatus(1);
+        // T1：先校验后写——menuIds 含不存在项在插入角色前即拒绝，杜绝「删旧成功、插新失败」的权限丢失
+        List<Long> validMenuIds = validatedMenuIds(role.getMenuIds());
         role.setId(null);
         roleMapper.insert(role);
-        saveMenuIds(role.getId(), role.getMenuIds());
+        saveMenuIds(role.getId(), validMenuIds);
         return role;
     }
 
@@ -112,11 +118,13 @@ public class RoleService implements IRoleService {
         if (dto.getSort() != null) role.setSort(dto.getSort());
         if (dto.getStatus() != null) role.setStatus(dto.getStatus());
         roleMapper.updateById(role);
-        // 菜单授权：menuIds 非 null 时整体重建（空数组=清空该角色权限）
-        // 菜单查询实时读库，授权变更后用户下次拉 /auth/menu 立即生效
+        // 菜单与权限（menuIds 传 null 时跳过重建，空数组=清空该角色权限）
+        // 菜单查询实时查库，授权变更用户下次请求 /auth/menu 即时生效
         if (dto.getMenuIds() != null) {
+            // T1：校验前置于删除——insertBatch 中途失败不再导致该角色授权全部丢失
+            List<Long> validMenuIds = validatedMenuIds(dto.getMenuIds());
             roleMenuMapper.deleteByRoleId(id);
-            saveMenuIds(id, dto.getMenuIds());
+            saveMenuIds(id, validMenuIds);
         }
         return role;
     }
@@ -162,5 +170,26 @@ public class RoleService implements IRoleService {
             return;
         }
         roleMenuMapper.insertBatch(roleId, menuIds.stream().filter(Objects::nonNull).distinct().toList());
+    }
+
+    /**
+     * T1：menuIds 存在性校验——含不存在项抛 BAD_REQUEST 并列出非法 id。
+     * 必须在任何 delete/insert 之前调用（无事务架构下删除不可回滚）。
+     */
+    private List<Long> validatedMenuIds(List<Long> menuIds) {
+        List<Long> ids = menuIds == null ? List.of()
+                : menuIds.stream().filter(Objects::nonNull).distinct().toList();
+        if (ids.isEmpty()) {
+            return ids;
+        }
+        List<SysMenu> existing = menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
+                .select(SysMenu::getId)
+                .in(SysMenu::getId, ids));
+        java.util.Set<Long> existingIds = existing.stream().map(SysMenu::getId).collect(Collectors.toSet());
+        List<Long> invalid = ids.stream().filter(i -> !existingIds.contains(i)).toList();
+        if (!invalid.isEmpty()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "菜单不存在: " + invalid);
+        }
+        return ids;
     }
 }

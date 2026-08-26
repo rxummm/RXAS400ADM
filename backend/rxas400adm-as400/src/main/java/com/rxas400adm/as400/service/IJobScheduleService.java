@@ -3,6 +3,7 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.dto.JobScheduleRequest;
 import com.rxas400adm.as400.entity.JobSchedule;
 import com.rxas400adm.as400.entity.JobScheduleHistory;
+import com.rxas400adm.as400.vo.ScheduleExecuteResultVO;
 
 import java.util.List;
 
@@ -22,9 +23,9 @@ public interface IJobScheduleService {
 
     JobSchedule toggle(Long id, Boolean enabled);
 
-    com.rxas400adm.as400.vo.ScheduleExecuteResultVO executeNow(Long id);
+    ScheduleExecuteResultVO executeNow(Long id);
 
-    com.rxas400adm.as400.vo.ScheduleExecuteResultVO execute(Long id);
+    ScheduleExecuteResultVO execute(Long id);
 
     List<JobScheduleHistory> history(Long scheduleId);
 }

@@ -38,7 +38,8 @@ public class SqlQueryService implements ISqlQueryService {
         SqlReadOnlyValidator.assertReadOnly(sql);
         AS400Client client = clientProvider.current();
         long start = System.currentTimeMillis();
-        List<Map<String, Object>> rows = client.queryListChecked(sql.trim());
+        // S7：行数上限下推 JDBC setMaxRows——大表查询不再全量拉回内存后才截断
+        List<Map<String, Object>> rows = client.queryListCheckedBounded(sql.trim(), MAX_ROWS);
         long costMs = System.currentTimeMillis() - start;
 
         // 列名去重保序（前端表格列）

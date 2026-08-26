@@ -49,9 +49,7 @@ const ERROR_CODE_I18N_MAP: Record<number, string> = {
   // 报表/SQL (60000+)
   60001: 'common.error.REPORT_GENERATE_FAILED',
   60002: 'common.error.SQL_READONLY_REQUIRED',
-  // 编译 (70000+)
-  70001: 'common.error.COMPILE_FAILED',
-  70002: 'common.error.COMPILE_TARGET_REQUIRED',
+  // 编译 (70000+) 错误码已随 V56 下线删除，号段保留勿复用
   // 源文件 (80000+)
   80001: 'common.error.SOURCE_NOT_FOUND',
   80002: 'common.error.SOURCE_READ_FAILED',
@@ -66,7 +64,6 @@ const ERROR_CODE_I18N_MAP: Record<number, string> = {
   110003: 'common.error.ROLE_ADMIN_PROTECTED',
   // 密码/编译 (120000+)
   120001: 'common.error.PASSWORD_POLICY_VIOLATION',
-  120002: 'common.error.COMPILE_UNSUPPORTED',
 }
 
 /** D2: 根据错误码获取 i18n 文案，未命中则返回 null */

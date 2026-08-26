@@ -1,6 +1,6 @@
 <template>
-  <el-dialog v-model="visible" :title="title" width="460px" @closed="emit('closed')">
-    <el-form :model="form" :label-width="'80px'">
+  <el-dialog v-model="visible" :title="title" width="var(--rx-dialog-xs)" @closed="emit('closed')" :close-on-click-modal="false">
+    <el-form :model="form" label-width="var(--rx-form-label-width)">
       <el-form-item :label="t('users.username')">
         <el-input v-model="form.username" :disabled="isEdit" />
       </el-form-item>

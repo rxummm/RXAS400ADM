@@ -2,6 +2,7 @@ package com.rxas400adm.security.service;
 
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
+import com.rxas400adm.as400.model.UserProfileRow;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.security.dto.As400LoginRequest;
 import com.rxas400adm.security.dto.LoginResponse;
@@ -34,9 +35,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 
 @ExtendWith(MockitoExtension.class)
 class As400LoginServiceTest {
+
+    /** T5：批量插入参数捕获（@Captor 泛型安全，避免裸 Class 强转） */
+    @Captor
+    private ArgumentCaptor<List<SysUserRole>> roleBatchCaptor;
 
     @Mock
     private AS400ClientProvider clientProvider;
@@ -143,14 +149,17 @@ class As400LoginServiceTest {
         verify(userMapper).insert(captor.capture());
         assertEquals("AS400", captor.getValue().getLoginSource());
         assertEquals(1L, captor.getValue().getAs400ServerId());
-        verify(userRoleMapper).insert(org.mockito.ArgumentMatchers.<SysUserRole>any());
+        // T5：角色写入改为单条多值批量 INSERT
+        verify(userRoleMapper).insertBatch(roleBatchCaptor.capture());
+        assertEquals(1, roleBatchCaptor.getValue().size());
+        assertEquals(10L, roleBatchCaptor.getValue().get(0).getRoleId());
     }
 
     @Test
     void login_groupRoleMapping_shouldAssignMappedRole() {
         when(client.authenticate("as400user", "secret")).thenReturn(true);
         when(client.userProfile("as400user")).thenReturn(
-                new com.rxas400adm.as400.model.UserProfileRow("AS400USER", "GRPDEV", "*ENABLED"));
+                new UserProfileRow("AS400USER", "GRPDEV", "*ENABLED"));
         when(sysConfigService.get(As400LoginService.GROUP_ROLE_MAPPING_KEY, ""))
                 .thenReturn("{\"GRPDEV\":\"DEVELOPER\"}");
         when(userService.getByUsername("as400user")).thenReturn(null);
@@ -163,8 +172,8 @@ class As400LoginServiceTest {
 
         service.login(request());
 
-        ArgumentCaptor<SysUserRole> urCaptor = ArgumentCaptor.forClass(SysUserRole.class);
-        verify(userRoleMapper).insert(urCaptor.capture());
-        assertEquals(20L, urCaptor.getValue().getRoleId());
+        // T5：验证批量写入携带映射后的 roleId
+        verify(userRoleMapper).insertBatch(roleBatchCaptor.capture());
+        assertEquals(20L, roleBatchCaptor.getValue().get(0).getRoleId());
     }
 }

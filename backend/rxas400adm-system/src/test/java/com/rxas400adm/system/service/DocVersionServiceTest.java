@@ -33,6 +33,11 @@ class DocVersionServiceTest {
         service = new DocVersionService(docMapper, versionMapper);
     }
 
+    /** 类型安全占位符：利用 any() 的目标类型推断消除裸 Class 字面量的 unchecked 转换警告 */
+    private static LambdaQueryWrapper<DocVersion> anyWrapper() {
+        return any();
+    }
+
     // ---------------- versions ----------------
 
     @Test
@@ -42,7 +47,7 @@ class DocVersionServiceTest {
         v1.setVersion(2);
         DocVersion v2 = new DocVersion();
         v2.setVersion(1);
-        when(versionMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(v1, v2));
+        when(versionMapper.selectList(anyWrapper())).thenReturn(List.of(v1, v2));
 
         var result = service.versions(1L);
         assertEquals(2, result.size());
@@ -84,7 +89,7 @@ class DocVersionServiceTest {
         doc.setId(1L);
         doc.setStatus("DRAFT");
         when(docMapper.selectById(1L)).thenReturn(doc);
-        when(versionMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(null);
+        when(versionMapper.selectOne(anyWrapper())).thenReturn(null);
         assertThrows(BusinessException.class, () -> service.rollback(1L, 99, "admin"));
     }
 
@@ -101,7 +106,7 @@ class DocVersionServiceTest {
         DocVersion snapshot = new DocVersion();
         snapshot.setTitle("old title");
         snapshot.setContent("old content");
-        when(versionMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(snapshot);
+        when(versionMapper.selectOne(anyWrapper())).thenReturn(snapshot);
         when(versionMapper.selectCount(any())).thenReturn(0L);
 
         service.rollback(1L, 1, "admin");
@@ -125,7 +130,7 @@ class DocVersionServiceTest {
         DocVersion snapshot = new DocVersion();
         snapshot.setTitle("v2 title");
         snapshot.setContent("v2 content");
-        when(versionMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(snapshot);
+        when(versionMapper.selectOne(anyWrapper())).thenReturn(snapshot);
         when(versionMapper.selectCount(any())).thenReturn(0L);
 
         service.rollback(1L, 2, "admin");
@@ -177,8 +182,8 @@ class DocVersionServiceTest {
     @Test
     @DisplayName("deleteVersions → 删除指定文档所有版本")
     void deleteVersions() {
-        when(versionMapper.delete(any(LambdaQueryWrapper.class))).thenReturn(5);
+        when(versionMapper.delete(anyWrapper())).thenReturn(5);
         service.deleteVersions(1L);
-        verify(versionMapper).delete(any(LambdaQueryWrapper.class));
+        verify(versionMapper).delete(anyWrapper());
     }
 }

@@ -7,6 +7,7 @@ import com.rxas400adm.as400.entity.JobScheduleHistory;
 import com.rxas400adm.as400.mapper.CommandScriptMapper;
 import com.rxas400adm.as400.mapper.JobScheduleHistoryMapper;
 import com.rxas400adm.as400.mapper.JobScheduleMapper;
+import com.rxas400adm.common.constants.ExecutionStatus;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.monitor.mapper.MetricMapper;
 import com.rxas400adm.monitor.service.ICapacityService;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 报表引擎（3.11）：指标日报/周报、执行记录报表、容量趋势报表。
@@ -74,7 +76,7 @@ public class ReportService implements IReportService {
             List<Long> scheduleIds = histories.stream().map(JobScheduleHistory::getScheduleId).toList();
             Map<Long, JobSchedule> scheduleMap = scheduleIds.isEmpty() ? Map.of()
                     : scheduleMapper.selectBatchIds(scheduleIds).stream()
-                            .collect(java.util.stream.Collectors.toMap(JobSchedule::getId, s -> s));
+                            .collect(Collectors.toMap(JobSchedule::getId, s -> s));
             for (JobScheduleHistory h : histories) {
                 JobSchedule schedule = scheduleMap.get(h.getScheduleId());
                 Map<String, Object> row = new LinkedHashMap<>();
@@ -103,7 +105,8 @@ public class ReportService implements IReportService {
                 row.put("type", "CL");
                 row.put("user", s.getCreatedBy());
                 row.put("server", null);
-                row.put("status", "SUCCESS".equalsIgnoreCase(s.getLastRunStatus()) ? "SUCCESS" : "FAILED");
+                row.put("status", ExecutionStatus.SUCCESS.equalsIgnoreCase(s.getLastRunStatus())
+                        ? ExecutionStatus.SUCCESS : ExecutionStatus.FAILED);
                 row.put("message", s.getLastResult());
                 row.put("costMs", null);
                 rows.add(row);

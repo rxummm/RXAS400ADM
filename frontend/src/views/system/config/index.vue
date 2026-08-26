@@ -29,7 +29,7 @@
             <el-button v-has-perm="'SYS_CONFIG_MANAGE'" link type="primary" size="small" @click="openEdit(row as SysConfig)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button v-has-perm="'SYS_CONFIG_MANAGE'" link type="danger" size="small" @click="onDelete(row as SysConfig)">
+            <el-button v-has-perm="'SYS_CONFIG_MANAGE'" link type="danger" size="small" :loading="removeLoading === row.configKey" @click="confirmRemove(row)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -39,8 +39,8 @@
       <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="() => {}" @size-change="onSizeChange" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px" :close-on-click-modal="false">
-      <el-form :model="form" label-width="90px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+      <el-form :model="form" label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('config.key')" prop="configKey">
           <el-input v-model="form.configKey" :disabled="isEdit" :placeholder="$t('config.keyHint')" />
         </el-form-item>
@@ -60,10 +60,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
-import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { listConfigs, updateConfig, deleteConfig, type SysConfig } from '@/api/config'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
@@ -71,8 +70,6 @@ import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { useFormDialog } from '@/composables/useFormDialog'
 
 defineOptions({ name: 'SysConfig' })
-
-const { t } = useI18n()
 
 const {
   tableData,
@@ -125,14 +122,11 @@ const onSearch = () => {
   forceSearch()
 }
 
-async function onDelete(row: SysConfig) {
-  try {
-    await ElMessageBox.confirm(t('config.deleteConfirm', { key: row.configKey }), t('common.tip'), { type: 'warning' })
-    await deleteConfig(row.configKey)
-    ElMessage.success(t('common.deleteSuccess'))
-    forceSearch()
-  } catch {
-    /* cancelled */
-  }
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: SysConfig) => deleteConfig(row.configKey),
+  onSuccess: forceSearch,
+  confirmMessage: 'config.deleteConfirm',
+  confirmTitle: 'common.tip',
+  idField: 'configKey',
+})
 </script>

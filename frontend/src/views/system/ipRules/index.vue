@@ -46,7 +46,7 @@
             <el-button link type="primary" size="small" @click="openEdit(row)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button link type="danger" size="small" @click="onDelete(row as IpRule)">
+            <el-button link type="danger" size="small" :loading="removeLoading === row.id" @click="confirmRemove(row)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -57,8 +57,8 @@
         @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="520px" :close-on-click-modal="false">
-      <el-form ref="formRef" :model="form" :rules="formRules" label-width="90px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('ipRules.ip')" prop="ip">
           <el-input v-model="form.ip" :placeholder="$t('ipRules.ipHint')" />
         </el-form-item>
@@ -87,7 +87,7 @@
 import { ref } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { listIpRules, createIpRule, updateIpRule, deleteIpRule, type IpRule } from '@/api/ipRule'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
@@ -142,14 +142,10 @@ const {
   i18nPrefix: 'ipRules',
 })
 
-async function onDelete(row: IpRule) {
-  try {
-    await ElMessageBox.confirm(t('ipRules.deleteConfirm'), t('common.tip'), { type: 'warning' })
-    if (row.id) await deleteIpRule(row.id)
-    ElMessage.success(t('common.deleteSuccess'))
-    handleRefresh()
-  } catch {
-    /* cancelled */
-  }
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: IpRule) => deleteIpRule(row.id!),
+  onSuccess: handleRefresh,
+  confirmMessage: 'ipRules.deleteConfirm',
+  confirmTitle: 'common.tip',
+})
 </script>

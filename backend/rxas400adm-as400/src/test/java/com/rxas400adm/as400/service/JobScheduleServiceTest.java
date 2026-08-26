@@ -1,14 +1,19 @@
 package com.rxas400adm.as400.service;
 
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.CommandResult;
 import com.rxas400adm.as400.dto.JobScheduleRequest;
 import com.rxas400adm.as400.entity.JobSchedule;
 import com.rxas400adm.as400.entity.JobScheduleHistory;
+import com.rxas400adm.as400.entity.ScheduleAlertEvent;
 import com.rxas400adm.as400.mapper.JobScheduleHistoryMapper;
 import com.rxas400adm.as400.mapper.JobScheduleMapper;
 import com.rxas400adm.as400.mapper.ScheduleAlertEventMapper;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +25,7 @@ import org.quartz.TriggerKey;
 import org.springframework.context.ApplicationEventPublisher;
 
 import com.rxas400adm.as400.vo.ScheduleExecuteResultVO;
+import com.rxas400adm.common.security.DangerousClCommandValidator;
 
 import java.util.List;
 import java.util.Map;
@@ -27,12 +33,28 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JobScheduleServiceTest {
+
+    /**
+     * C8/T4 后服务内构造 LambdaUpdateWrapper/LambdaQueryWrapper，
+     * Mockito 环境无 MyBatis-Plus 启动上下文，需为涉及实体初始化 TableInfo 缓存
+     * （范式同 system 模块 SqlInjectionTest.initTableInfo）。
+     */
+    @BeforeAll
+    static void initTableInfo() {
+        MapperBuilderAssistant assistant =
+                new MapperBuilderAssistant(new MybatisConfiguration(), "");
+        TableInfoHelper.initTableInfo(assistant, JobSchedule.class);
+        TableInfoHelper.initTableInfo(assistant, JobScheduleHistory.class);
+    }
 
     @Mock
     private JobScheduleMapper scheduleMapper;
@@ -55,14 +77,18 @@ class JobScheduleServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    /** S4：构造签名适配——mock 校验器默认放行（doNothing） */
+    @Mock
+    private DangerousClCommandValidator clValidator;
+
     private JobScheduleService service;
 
     @BeforeEach
     void setUp() throws Exception {
         service = new JobScheduleService(scheduleMapper, historyMapper, clientProvider,
-                scheduler, alertEventMapper, eventPublisher);
-        org.mockito.Mockito.lenient().when(clientProvider.forServer(1L)).thenReturn(client);
-        org.mockito.Mockito.lenient().when(scheduler.checkExists(any(TriggerKey.class))).thenReturn(false);
+                scheduler, alertEventMapper, eventPublisher, clValidator);
+        lenient().when(clientProvider.forServer(1L)).thenReturn(client);
+        lenient().when(scheduler.checkExists(any(TriggerKey.class))).thenReturn(false);
     }
 
     private JobScheduleRequest sqlRequest() {
@@ -100,12 +126,14 @@ class JobScheduleServiceTest {
     void execute_sqlSuccess_shouldWriteHistoryAndUpdateLastRun() {
         JobSchedule schedule = scheduleEntity();
         when(scheduleMapper.selectById(1L)).thenReturn(schedule);
-        when(client.queryListChecked(any())).thenReturn(List.of(Map.of("A", 1), Map.of("A", 2)));
+        when(client.queryListCheckedBounded(any(), anyInt()))
+                .thenReturn(List.of(Map.of("A", 1), Map.of("A", 2)));
 
         ScheduleExecuteResultVO result = service.execute(1L);
 
         assertEquals("SUCCESS", result.status());
-        assertEquals("SUCCESS", schedule.getStatus());
+        // C8：结果走针对性 UPDATE（不再回写内存实体），验证其发生即可
+        verify(scheduleMapper).update(isNull(), any());
         ArgumentCaptor<JobScheduleHistory> captor = ArgumentCaptor.forClass(JobScheduleHistory.class);
         verify(historyMapper).insert(captor.capture());
         assertEquals("SUCCESS", captor.getValue().getStatus());
@@ -123,18 +151,19 @@ class JobScheduleServiceTest {
         assertEquals("FAILED", result.status());
         verify(client, never()).queryList(any());
         // 失败应写告警事件（复用 rx_alert_event 通道）
-        verify(alertEventMapper).insert(any(com.rxas400adm.as400.entity.ScheduleAlertEvent.class));
+        verify(alertEventMapper).insert(any(ScheduleAlertEvent.class));
     }
 
     @Test
     void execute_success_shouldNotWriteAlert() {
         JobSchedule schedule = scheduleEntity();
         when(scheduleMapper.selectById(1L)).thenReturn(schedule);
-        when(client.queryListChecked(any())).thenReturn(List.of(Map.of("A", 1)));
+        when(client.queryListCheckedBounded(any(), anyInt()))
+                .thenReturn(List.of(Map.of("A", 1)));
 
         service.execute(1L);
 
-        verify(alertEventMapper, never()).insert(any(com.rxas400adm.as400.entity.ScheduleAlertEvent.class));
+        verify(alertEventMapper, never()).insert(any(ScheduleAlertEvent.class));
     }
 
     @Test

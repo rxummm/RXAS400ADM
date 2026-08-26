@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" :title="$t('profile.changePassword')" width="420px" :close-on-click-modal="false">
+  <el-dialog v-model="visible" :title="$t('profile.changePassword')" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
     <el-descriptions :column="1" size="small" class="mb16">
       <el-descriptions-item :label="$t('profile.username')">{{ username }}</el-descriptions-item>
       <el-descriptions-item :label="$t('profile.email')">{{ email || '-' }}</el-descriptions-item>
@@ -7,7 +7,7 @@
         {{ permissionCount }}
       </el-descriptions-item>
     </el-descriptions>
-    <el-form ref="formRef" :model="form" :rules="formRules" label-width="90px">
+    <el-form ref="formRef" :model="form" :rules="formRules" label-width="var(--rx-form-label-width)">
       <el-form-item :label="$t('profile.oldPassword')" prop="oldPassword">
         <el-input v-model="form.oldPassword" type="password" show-password />
       </el-form-item>

@@ -6,6 +6,7 @@ import com.rxas400adm.as400.model.AuthorityRow;
 import com.rxas400adm.as400.model.ObjectDetail;
 import com.rxas400adm.as400.model.ObjectRefRow;
 import com.rxas400adm.as400.model.ObjectRow;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,9 +48,9 @@ public class ObjectService implements IObjectService {
             }).toList();
         }
         int total = all.size();
-        int from = Math.min((current - 1) * size, total);
-        int to = Math.min(from + size, total);
-        List<ObjectRow> records = from >= to ? List.of() : all.subList(from, to);
+        // B2：long 运算防 (page-1)*size int 溢出 → subList 负索引
+        int[] bounds = PageConstants.sliceBounds(current, size, total);
+        List<ObjectRow> records = bounds[0] >= bounds[1] ? List.of() : all.subList(bounds[0], bounds[1]);
         return new PageResult<>(total, records);
     }
 

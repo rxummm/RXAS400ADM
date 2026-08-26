@@ -23,6 +23,8 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 文档管理（3.9）：模板起草 → 版本管理 → 审批流 → 发布。
@@ -95,11 +97,11 @@ public class DocService implements IDocService {
         // 批量预取模板名，避免 N+1
         List<Long> templateIds = page.getRecords().stream()
                 .map(Doc::getTemplateId)
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .distinct().toList();
         Map<Long, String> templateNames = templateIds.isEmpty() ? Map.of()
                 : templateMapper.selectBatchIds(templateIds).stream()
-                        .collect(java.util.stream.Collectors.toMap(DocTemplate::getId, DocTemplate::getName));
+                        .collect(Collectors.toMap(DocTemplate::getId, DocTemplate::getName));
         page.getRecords().forEach(doc -> {
             if (doc.getTemplateId() != null) {
                 doc.setTemplateName(templateNames.get(doc.getTemplateId()));

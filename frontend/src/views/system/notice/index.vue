@@ -45,7 +45,7 @@
             <el-button link type="primary" size="small" @click="onPreview(row as Notice)">
               {{ $t('docs.preview') }}
             </el-button>
-            <el-button link type="danger" size="small" @click="onDelete(row as Notice)">
+            <el-button link type="danger" size="small" :loading="removeLoading === row.id" @click="confirmRemove(row)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -56,8 +56,8 @@
         @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="620px" :close-on-click-modal="false">
-      <el-form ref="formRef" :model="form" :rules="formRules" label-width="70px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-md)" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('notice.title')" prop="title">
           <el-input v-model="form.title" />
         </el-form-item>
@@ -80,7 +80,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="previewVisible" :title="previewTitle" width="560px">
+    <el-dialog v-model="previewVisible" :title="previewTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
       <pre class="notice-preview">{{ previewContent }}</pre>
     </el-dialog>
   </div>
@@ -90,7 +90,7 @@
 import { ref } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { listNotices, createNotice, updateNotice, deleteNotice, type Notice } from '@/api/notice'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
@@ -159,16 +159,12 @@ function onPreview(row: Notice) {
   previewVisible.value = true
 }
 
-async function onDelete(row: Notice) {
-  try {
-    await ElMessageBox.confirm(t('notice.deleteConfirm'), t('common.tip'), { type: 'warning' })
-    if (row.id) await deleteNotice(row.id)
-    ElMessage.success(t('common.deleteSuccess'))
-    handleRefresh()
-  } catch {
-    /* cancelled */
-  }
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: Notice) => deleteNotice(row.id!),
+  onSuccess: handleRefresh,
+  confirmMessage: 'notice.deleteConfirm',
+  confirmTitle: 'common.tip',
+})
 </script>
 
 <style scoped>

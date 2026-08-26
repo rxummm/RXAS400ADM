@@ -5,9 +5,11 @@ import com.rxas400adm.security.controller.AuthController;
 import com.rxas400adm.security.filter.JwtAuthenticationFilter;
 import com.rxas400adm.security.jwt.JwtUtil;
 import com.rxas400adm.security.service.As400LoginService;
+import com.rxas400adm.security.service.AuthService;
 import com.rxas400adm.security.service.IpRuleService;
 import com.rxas400adm.security.service.LoginAttemptService;
 import com.rxas400adm.security.service.PermissionService;
+import com.rxas400adm.security.service.TokenBlacklistService;
 import com.rxas400adm.system.aspect.OperateLogAspect;
 import com.rxas400adm.system.entity.AuditLog;
 import com.rxas400adm.system.mapper.AuditLogMapper;
@@ -29,12 +31,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -62,7 +66,7 @@ class AuthControllerSecurityTest {
     @MockBean
     private PermissionService permissionService;
     @MockBean
-    private com.rxas400adm.security.service.TokenBlacklistService tokenBlacklistService;
+    private TokenBlacklistService tokenBlacklistService;
     @MockBean
     private As400LoginService as400LoginService;
     @MockBean
@@ -76,7 +80,7 @@ class AuthControllerSecurityTest {
     @MockBean
     private MenuService menuService;
     @MockBean
-    private com.rxas400adm.security.service.AuthService authService;
+    private AuthService authService;
 
     @Test
     @DisplayName("未登录访问受保护端点 → 401")
@@ -131,11 +135,10 @@ class AuthControllerSecurityTest {
     @DisplayName("登录接口公开（PERMIT_ALL）：无需认证即可访问")
     void login_isPermitAll() throws Exception {
         // 无 token 也能到达 Controller（未被安全链拦截为 401/403，即证明登录接口是公开的）
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                        .post("/api/v1/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(result -> org.junit.jupiter.api.Assertions.assertNotEquals(401, result.getResponse().getStatus()))
-                .andExpect(result -> org.junit.jupiter.api.Assertions.assertNotEquals(403, result.getResponse().getStatus()));
+                .andExpect(result -> assertNotEquals(401, result.getResponse().getStatus()))
+                .andExpect(result -> assertNotEquals(403, result.getResponse().getStatus()));
     }
 }

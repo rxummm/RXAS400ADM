@@ -84,7 +84,7 @@ export default {
     type: '类型',
     modify: '修改',
     valuePlaceholder: '输入新值',
-    changeConfirm: '确认修改系统值',
+    changeConfirm: '确认修改系统值「{name} = {value}」？',
     changed: '系统值已修改',
     all: '全部',
     common: '常用',

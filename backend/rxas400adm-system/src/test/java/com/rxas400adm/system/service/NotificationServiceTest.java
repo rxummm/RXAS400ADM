@@ -8,6 +8,7 @@ import com.rxas400adm.system.entity.Notification;
 import com.rxas400adm.system.entity.SysUser;
 import com.rxas400adm.system.mapper.NotificationMapper;
 import com.rxas400adm.system.mapper.SysUserMapper;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,13 +36,26 @@ class NotificationServiceTest {
     @BeforeAll
     static void initTableInfo() {
         org.apache.ibatis.builder.MapperBuilderAssistant assistant =
-                new org.apache.ibatis.builder.MapperBuilderAssistant(new MybatisConfiguration(), "");
+                new MapperBuilderAssistant(new MybatisConfiguration(), "");
         TableInfoHelper.initTableInfo(assistant, Notification.class);
     }
 
     @BeforeEach
     void setUp() {
         service = new NotificationService(notificationMapper, userMapper, messagingTemplate);
+    }
+
+    /** 类型安全占位符：利用 any() 的目标类型推断消除裸 Class 字面量的 unchecked 转换警告 */
+    private static LambdaQueryWrapper<SysUser> anyUserWrapper() {
+        return any();
+    }
+
+    private static LambdaQueryWrapper<Notification> anyNotificationWrapper() {
+        return any();
+    }
+
+    private static Wrapper<Notification> anyUpdateWrapper() {
+        return any();
     }
 
     // ---------------- send ----------------
@@ -68,7 +82,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName("sendToAllActiveUsers → 无活跃用户返回 0")
     void sendToAllActiveUsers_noUsers_returnsZero() {
-        when(userMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
+        when(userMapper.selectList(anyUserWrapper())).thenReturn(List.of());
         assertEquals(0, service.sendToAllActiveUsers("NOTICE", "t", "c"));
     }
 
@@ -81,7 +95,7 @@ class NotificationServiceTest {
         SysUser u2 = new SysUser();
         u2.setId(2L);
         u2.setUsername("bob");
-        when(userMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(u1, u2));
+        when(userMapper.selectList(anyUserWrapper())).thenReturn(List.of(u1, u2));
         when(notificationMapper.insertBatch(any())).thenReturn(2);
 
         int count = service.sendToAllActiveUsers("NOTICE", "t", "c");
@@ -96,9 +110,9 @@ class NotificationServiceTest {
     @Test
     @DisplayName("markRead → 更新 readFlag=1")
     void markRead_setsReadFlag() {
-        when(notificationMapper.update(isNull(), any(Wrapper.class))).thenReturn(1);
+        when(notificationMapper.update(isNull(), anyUpdateWrapper())).thenReturn(1);
         service.markRead(10L, "alice");
-        verify(notificationMapper).update(isNull(), any(Wrapper.class));
+        verify(notificationMapper).update(isNull(), anyUpdateWrapper());
     }
 
     // ---------------- markAllRead ----------------
@@ -106,9 +120,9 @@ class NotificationServiceTest {
     @Test
     @DisplayName("markAllRead → 批量更新 readFlag=1")
     void markAllRead() {
-        when(notificationMapper.update(isNull(), any(Wrapper.class))).thenReturn(3);
+        when(notificationMapper.update(isNull(), anyUpdateWrapper())).thenReturn(3);
         service.markAllRead("alice");
-        verify(notificationMapper).update(isNull(), any(Wrapper.class));
+        verify(notificationMapper).update(isNull(), anyUpdateWrapper());
     }
 
     // ---------------- delete ----------------
@@ -116,9 +130,9 @@ class NotificationServiceTest {
     @Test
     @DisplayName("delete → 按 ID + username 删除")
     void delete_byIdAndUsername() {
-        when(notificationMapper.delete(any(LambdaQueryWrapper.class))).thenReturn(1);
+        when(notificationMapper.delete(anyNotificationWrapper())).thenReturn(1);
         service.delete(10L, "alice");
-        verify(notificationMapper).delete(any(LambdaQueryWrapper.class));
+        verify(notificationMapper).delete(anyNotificationWrapper());
     }
 
     // ---------------- deleteBatch ----------------
@@ -133,7 +147,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName("deleteBatch → 正常批量删除")
     void deleteBatch_normal() {
-        when(notificationMapper.delete(any(LambdaQueryWrapper.class))).thenReturn(2);
+        when(notificationMapper.delete(anyNotificationWrapper())).thenReturn(2);
         assertEquals(2, service.deleteBatch(List.of(1L, 2L, 3L), "alice"));
     }
 
@@ -142,7 +156,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName("unreadCount → 返回未读数")
     void unreadCount() {
-        when(notificationMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(5L);
+        when(notificationMapper.selectCount(anyNotificationWrapper())).thenReturn(5L);
         assertEquals(5L, service.unreadCount("alice"));
     }
 }

@@ -15,6 +15,14 @@ export interface ExecutionRecord {
   runCount?: number | null
 }
 
+export interface ExecutionStats {
+  totalExecutions: number
+  successCount: number
+  failedCount: number
+  successRate: number
+  avgCostMs: number
+}
+
 export const listExecutions = (params: {
   type?: string
   status?: string
@@ -23,3 +31,5 @@ export const listExecutions = (params: {
   size?: number
   limit?: number
 } = {}) => request.get<{ total: number; records: ExecutionRecord[] }>('/executions', { params })
+
+export const getExecutionStats = (): Promise<ExecutionStats> => request.get('/executions/stats')

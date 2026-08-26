@@ -113,7 +113,7 @@
             <el-table-column prop="lastFailTime" :label="$t('users.lastFail')" width="170" />
             <el-table-column :label="$t('common.operation')" width="90" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" type="primary" plain @click="unlock(row as LoginAttemptRecord)">{{ $t('users.unlock') }}</el-button>
+                <el-button size="small" type="primary" plain :loading="removeLoading_unlock === row.username" @click="unlock(row as LoginAttemptRecord)">{{ $t('users.unlock') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -234,16 +234,26 @@ const loadIpStats = async () => {
   }
 }
 
+const removeLoading_unlock = ref<string | null>(null)
 const unlock = async (row: LoginAttemptRecord) => {
-  await ElMessageBox.confirm(
-    `${t('users.unlockConfirm')} ${row.username}？`,
-    t('common.confirm'),
-    { type: 'warning' },
-  )
-  await unlockUser(row.username, row.serverId)
-  ElMessage.success(t('users.unlocked'))
-  await loadAttempts()
-  await loadIpStats()
+  try {
+    await ElMessageBox.confirm(
+      t('users.unlockConfirm', { username: row.username }),
+      t('common.confirm'),
+      { type: 'warning' },
+    )
+  } catch {
+    return
+  }
+  removeLoading_unlock.value = row.username
+  try {
+    await unlockUser(row.username, row.serverId)
+    ElMessage.success(t('users.unlocked'))
+    await loadAttempts()
+    await loadIpStats()
+  } finally {
+    removeLoading_unlock.value = null
+  }
 }
 
 const openCreate = () => {
@@ -269,15 +279,25 @@ const toggleStatus = async (row: UserVO) => {
   await forceSearch()
 }
 
+const removeLoading_remove = ref<number | null>(null)
 const remove = async (row: UserVO) => {
-  await ElMessageBox.confirm(
-    `${t('users.deleteConfirm')} ${row.username}？`,
-    t('common.confirm'),
-    { type: 'warning' },
-  )
-  await deleteUser(row.id)
-  ElMessage.success(t('users.deleted'))
-  await forceSearch()
+  try {
+    await ElMessageBox.confirm(
+      t('users.deleteConfirm', { username: row.username }),
+      t('common.confirm'),
+      { type: 'warning' },
+    )
+  } catch {
+    return
+  }
+  removeLoading_remove.value = row.id
+  try {
+    await deleteUser(row.id)
+    ElMessage.success(t('common.deleteSuccess'))
+    await forceSearch()
+  } finally {
+    removeLoading_remove.value = null
+  }
 }
 
 function openPermManage(row: UserVO) {

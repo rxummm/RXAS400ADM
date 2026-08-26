@@ -1,7 +1,9 @@
 package com.rxas400adm.report;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.rxas400adm.as400.util.CronValidator;
+import com.rxas400adm.common.constants.ExecutionStatus;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
@@ -9,6 +11,7 @@ import com.rxas400adm.config.EmailNotifier;
 import com.rxas400adm.report.dto.ReportScheduleDTO;
 import com.rxas400adm.report.mapper.ReportScheduleHistoryMapper;
 import com.rxas400adm.report.mapper.ReportScheduleMapper;
+import com.rxas400adm.report.vo.ScheduleExecuteResultVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.CronScheduleBuilder;
@@ -59,8 +62,10 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
         schedule.setCreatedTime(LocalDateTime.now());
         schedule.setUpdatedTime(LocalDateTime.now());
         scheduleMapper.insert(schedule);
-        if (Boolean.TRUE.equals(schedule.getEnabled())) {
-            register(schedule);
+        if (Boolean.TRUE.equals(schedule.getEnabled()) && !register(schedule)) {
+            // T2：注册失败回写禁用标记，避免「enabled 但永不触发」静默缺口
+            disableAfterRegisterFailure(schedule);
+            schedule.setEnabled(false);
         }
         return schedule;
     }
@@ -74,7 +79,10 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
         schedule.setUpdatedTime(LocalDateTime.now());
         scheduleMapper.updateById(schedule);
         if (Boolean.TRUE.equals(schedule.getEnabled())) {
-            register(schedule);
+            if (!register(schedule)) {
+                disableAfterRegisterFailure(schedule);
+                schedule.setEnabled(false);
+            }
         } else {
             unregister(id);
         }
@@ -84,6 +92,10 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
     
     public void delete(Long id) {
         require(id);
+        // T4：先落禁用守卫写再注销——防止后续失败时重启复活已删除任务
+        scheduleMapper.update(null, new LambdaUpdateWrapper<ReportSchedule>()
+                .eq(ReportSchedule::getId, id)
+                .set(ReportSchedule::getEnabled, false));
         unregister(id);
         historyMapper.delete(new LambdaQueryWrapper<ReportScheduleHistory>()
                 .eq(ReportScheduleHistory::getScheduleId, id));
@@ -97,7 +109,10 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
         schedule.setUpdatedTime(LocalDateTime.now());
         scheduleMapper.updateById(schedule);
         if (Boolean.TRUE.equals(schedule.getEnabled())) {
-            register(schedule);
+            if (!register(schedule)) {
+                disableAfterRegisterFailure(schedule);
+                schedule.setEnabled(false);
+            }
         } else {
             unregister(id);
         }
@@ -105,16 +120,20 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
     }
 
     /** 手动立即执行（返回执行结果） */
-    public com.rxas400adm.report.vo.ScheduleExecuteResultVO executeNow(Long id) {
+    public ScheduleExecuteResultVO executeNow(Long id) {
         return execute(id);
     }
 
-    /** 实际执行：生成报表字节 → 写历史 → 邮件推送附件；P2-14：状态更新 + 历史写入同事务 */
+    /**
+     * 实际执行：生成报表字节 → 写历史 → 邮件推送附件。
+     * C8：结果回写针对性 UPDATE（仅状态/时间/结果字段），避免并发丢失更新；
+     * 无事务架构：两条写语句各自原子。
+     */
 
-    public com.rxas400adm.report.vo.ScheduleExecuteResultVO execute(Long id) {
+    public ScheduleExecuteResultVO execute(Long id) {
         ReportSchedule schedule = require(id);
         long start = System.currentTimeMillis();
-        String status = "SUCCESS";
+        String status = ExecutionStatus.SUCCESS;
         String message;
         long fileBytes = 0;
         try {
@@ -136,16 +155,19 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
             emailNotifier.sendAttachment(title, text, schedule.getRecipients(), filename, data);
             message = "已生成并推送邮件附件（" + fileBytes + " 字节）";
         } catch (Exception e) {
-            status = "FAILED";
+            status = ExecutionStatus.FAILED;
             message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-            log.error("[报表定时] 任务 {} 执行失败: {}", schedule.getName(), message);
+            // 【E5-3】追加异常对象，保留完整堆栈（原仅拼 getMessage 丢堆栈）
+            log.error("[报表定时] 任务 {} 执行失败: {}", schedule.getName(), message, e);
         }
         long costMs = System.currentTimeMillis() - start;
-        schedule.setStatus(status);
-        schedule.setLastRunTime(LocalDateTime.now());
-        schedule.setLastResult(truncate(status + ": " + message, 500));
-        schedule.setUpdatedTime(LocalDateTime.now());
-        scheduleMapper.updateById(schedule);
+        // C8：针对性回写执行结果
+        scheduleMapper.update(null, new LambdaUpdateWrapper<ReportSchedule>()
+                .eq(ReportSchedule::getId, id)
+                .set(ReportSchedule::getStatus, status)
+                .set(ReportSchedule::getLastRunTime, LocalDateTime.now())
+                .set(ReportSchedule::getLastResult, truncate(status + ": " + message, 500))
+                .set(ReportSchedule::getUpdatedTime, LocalDateTime.now()));
 
         ReportScheduleHistory history = new ReportScheduleHistory();
         history.setScheduleId(id);
@@ -156,7 +178,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
         history.setCreatedTime(LocalDateTime.now());
         historyMapper.insert(history);
         log.info("[报表定时] 任务 {} 执行完成 {}（{}ms）", schedule.getName(), status, costMs);
-        return new com.rxas400adm.report.vo.ScheduleExecuteResultVO(status, message, fileBytes);
+        return new ScheduleExecuteResultVO(status, message, fileBytes);
     }
 
     public List<ReportScheduleHistoryVO> history(Long scheduleId) {
@@ -236,7 +258,20 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
         return value.substring(0, max);
     }
 
-    private void register(ReportSchedule schedule) {
+    /** T2：注册失败回写禁用标记（报表任务无告警通道，仅日志留痕） */
+    private void disableAfterRegisterFailure(ReportSchedule schedule) {
+        try {
+            scheduleMapper.update(null, new LambdaUpdateWrapper<ReportSchedule>()
+                    .eq(ReportSchedule::getId, schedule.getId())
+                    .set(ReportSchedule::getEnabled, false)
+                    .set(ReportSchedule::getUpdatedTime, LocalDateTime.now()));
+        } catch (Exception e) {
+            log.error("[报表定时] 注册失败后回写禁用标记失败: id={}", schedule.getId(), e);
+        }
+    }
+
+    /** T2：返回注册是否成功——失败由调用方决定禁用回写；启动期 run() 失败仅记日志（下次重启重试） */
+    private boolean register(ReportSchedule schedule) {
         try {
             JobKey jobKey = JobKey.jobKey("report-schedule-" + schedule.getId());
             JobDetail detail = JobBuilder.newJob(ReportScheduleQuartzJob.class)
@@ -254,8 +289,10 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
             } else {
                 scheduler.scheduleJob(detail, trigger);
             }
+            return true;
         } catch (SchedulerException | RuntimeException e) {
-            log.error("[报表定时] 注册任务 {} 失败: {}", schedule.getName(), e.getMessage());
+            log.error("[报表定时] 注册任务 {} 失败: {}", schedule.getName(), e.getMessage(), e);
+            return false;
         }
     }
 

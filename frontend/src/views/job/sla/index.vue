@@ -36,7 +36,7 @@
             <el-button v-has-perm="'SLA_MANAGE'" size="small" type="primary" plain :icon="Edit" @click="openEdit(row as JobSla)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button v-has-perm="'SLA_MANAGE'" size="small" type="danger" plain :icon="Delete" @click="handleDelete(row as JobSla)">
+            <el-button v-has-perm="'SLA_MANAGE'" size="small" type="danger" plain :icon="Delete" :loading="removeLoading === row.id" @click="confirmRemove(row)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -72,8 +72,8 @@
       <el-empty v-if="!execLoading && !executions.length" :description="$t('common.noData')" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="460px">
-      <el-form ref="formRef" :model="form" :rules="formRules" label-width="120px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="var(--rx-form-label-width-wide)">
         <el-form-item :label="$t('jobSla.jobName')" prop="jobName">
           <el-input v-model="form.jobName" :placeholder="$t('jobSla.jobNamePlaceholder')" />
         </el-form-item>
@@ -101,7 +101,8 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'JobSla' })
 import { onMounted, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { Delete, Edit, Plus, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useFormDialog } from '@/composables/useFormDialog'
@@ -178,14 +179,12 @@ const loadAll = () => {
   loadExecutions()
 }
 
-const handleDelete = async (row: JobSla) => {
-  await ElMessageBox.confirm(t('jobSla.deleteConfirm', { name: row.jobName }), t('common.warning'), {
-    type: 'warning',
-  })
-  await deleteSlaRule(row.id!)
-  ElMessage.success(t('common.deleted'))
-  loadRules()
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: JobSla) => deleteSlaRule(row.id!),
+  onSuccess: loadRules,
+  confirmMessage: 'jobSla.deleteConfirm',
+  confirmTitle: 'common.warning',
+})
 
 const toggle = async (row: JobSla) => {
   await updateSlaRule(row.id!, { ...row, enabled: !row.enabled })

@@ -61,12 +61,12 @@
               <el-button v-if="row.status === 'PENDING'" size="small" link type="success" @click="doApprove(row as DocItem)">{{ $t('docs.approve') }}</el-button>
               <el-button v-if="row.status === 'PENDING'" size="small" link type="danger" @click="doReject(row as DocItem)">{{ $t('docs.reject') }}</el-button>
               <el-button size="small" link @click="openVersions(row as DocItem)">{{ $t('docs.history') }}</el-button>
-              <el-button v-if="row.status !== 'PENDING'" size="small" link type="danger" @click="doDelete(row as DocItem)">{{ $t('common.delete') }}</el-button>
+              <el-button v-if="row.status !== 'PENDING'" size="small" link type="danger" :loading="removeLoading_doDelete === row.id" @click="doDelete(row as DocItem)">{{ $t('common.delete') }}</el-button>
             </template>
             <template v-else>
               <el-button size="small" link type="primary" @click="openDetail(row as DocItem)">{{ $t('docs.view') }}</el-button>
-              <el-button size="small" link type="success" @click="doRestore(row as DocItem)">{{ $t('docs.restore') }}</el-button>
-              <el-button size="small" link type="danger" @click="doPurge(row as DocItem)">{{ $t('docs.purge') }}</el-button>
+              <el-button size="small" link type="success" :loading="removeLoading_doRestore === row.id" @click="doRestore(row as DocItem)">{{ $t('docs.restore') }}</el-button>
+              <el-button size="small" link type="danger" :loading="removeLoading_doPurge === row.id" @click="doPurge(row as DocItem)">{{ $t('docs.purge') }}</el-button>
             </template>
           </template>
         </el-table-column>
@@ -82,8 +82,8 @@
     </div>
 
     <!-- 新建/编辑 -->
-    <el-dialog v-model="editVisible" :title="editing ? $t('docs.edit') : $t('docs.create')" width="760px">
-      <el-form label-width="80px">
+    <el-dialog v-model="editVisible" :title="editing ? $t('docs.edit') : $t('docs.create')" width="var(--rx-dialog-lg)" :close-on-click-modal="false">
+      <el-form label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('docs.docTitle')" required>
           <el-input v-model="form.title" />
         </el-form-item>
@@ -133,7 +133,7 @@
     </el-drawer>
 
     <!-- 驳回原因 -->
-    <el-dialog v-model="rejectVisible" :title="$t('docs.reject')" width="420px">
+    <el-dialog v-model="rejectVisible" :title="$t('docs.reject')" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
       <el-input v-model="rejectReason" type="textarea" :rows="3" :placeholder="$t('docs.rejectReason')" />
       <template #footer>
         <el-button @click="rejectVisible = false">{{ $t('common.cancel') }}</el-button>
@@ -380,39 +380,55 @@ const confirmReject = async () => {
   reload()
 }
 
+const removeLoading_doDelete = ref<number | null>(null)
 const doDelete = async (row: DocItem) => {
   try {
     const ifsNote = row.ifsPath ? `\n${t('docs.deleteIfsNote')}: ${row.ifsPath}` : ''
     await ElMessageBox.confirm(t('docs.deleteConfirm') + ifsNote, t('common.confirm'), { type: 'warning' })
-    // V49：IFS 附件移入回收站由后端 DELETE /docs/{id} 联动完成
-    await deleteDoc(row.id)
-    ElMessage.success(t('common.delete'))
-    reload()
   } catch {
-    /* cancelled */
+    return
+  }
+  removeLoading_doDelete.value = row.id
+  try {
+    await deleteDoc(row.id)
+    ElMessage.success(t('common.deleteSuccess'))
+    reload()
+  } finally {
+    removeLoading_doDelete.value = null
   }
 }
 
+const removeLoading_doRestore = ref<number | null>(null)
 const doRestore = async (row: DocItem) => {
   try {
     await ElMessageBox.confirm(t('docs.restoreConfirm'), t('common.confirm'), { type: 'info' })
-    // V49：IFS 附件从历史目录恢复由后端 POST /docs/{id}/restore 联动完成
+  } catch {
+    return
+  }
+  removeLoading_doRestore.value = row.id
+  try {
     await restoreDoc(row.id)
     ElMessage.success(t('docs.restored'))
     reload()
-  } catch {
-    /* cancelled */
+  } finally {
+    removeLoading_doRestore.value = null
   }
 }
 
+const removeLoading_doPurge = ref<number | null>(null)
 const doPurge = async (row: DocItem) => {
   try {
     await ElMessageBox.confirm(t('docs.purgeConfirm'), t('common.confirm'), { type: 'warning' })
+  } catch {
+    return
+  }
+  removeLoading_doPurge.value = row.id
+  try {
     await purgeDoc(row.id)
     ElMessage.success(t('docs.purged'))
     reload()
-  } catch {
-    /* cancelled */
+  } finally {
+    removeLoading_doPurge.value = null
   }
 }
 

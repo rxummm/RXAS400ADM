@@ -1,11 +1,15 @@
 package com.rxas400adm.system.service;
 
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.system.entity.Doc;
 import com.rxas400adm.system.mapper.DocMapper;
 import com.rxas400adm.system.vo.DocFileVO;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +24,17 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DocStorageServiceTest {
+
+    /**
+     * 终检 3b：publishToIfs 回写改 LambdaUpdateWrapper 条件更新，
+     * 纯 Mockito 环境需为 Doc 实体初始化 MyBatis-Plus TableInfo 缓存（范式同 SqlInjectionTest）。
+     */
+    @BeforeAll
+    static void initTableInfo() {
+        MapperBuilderAssistant assistant =
+                new MapperBuilderAssistant(new MybatisConfiguration(), "");
+        TableInfoHelper.initTableInfo(assistant, Doc.class);
+    }
 
     @Mock private AS400ClientProvider clientProvider;
     @Mock private AS400Client as400Client;
@@ -71,7 +86,8 @@ class DocStorageServiceTest {
 
         verify(as400Client).writeIfsFile(eq("/QOpenSys/rxas400/document/5/doc.md"), eq("# Hello"));
         assertEquals("/QOpenSys/rxas400/document/5/doc.md", doc.getIfsPath());
-        verify(docMapper).updateById(doc);
+        // 终检 3b：回写改为条件 UPDATE（仅 set ifs_path，防 sweep 陈旧实体覆盖并发编辑）
+        verify(docMapper).update(isNull(), any());
     }
 
     @Test

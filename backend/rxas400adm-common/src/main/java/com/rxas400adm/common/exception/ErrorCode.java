@@ -55,8 +55,7 @@ public enum ErrorCode {
     SQL_READONLY_REQUIRED(60002, "仅允许执行单条只读 SELECT 查询"),
 
     // ---------- 编译 (70000+) ----------
-    COMPILE_FAILED(70001, "编译失败"),
-    COMPILE_TARGET_REQUIRED(70002, "请指定编译目标"),
+    // 编译功能已下线（V56），70001/70002 错误码随之删除，勿复用该号段于其他语义
 
     // ---------- 源文件 (80000+) ----------
     SOURCE_NOT_FOUND(80001, "源文件不存在"),
@@ -73,9 +72,8 @@ public enum ErrorCode {
     ROLE_CODE_EXISTS(110002, "角色编码已存在"),
     ROLE_ADMIN_PROTECTED(110003, "内置 ADMIN 角色不可修改或删除"),
 
-    // ---------- 密码 / 编译 (120000+) ----------
-    PASSWORD_POLICY_VIOLATION(120001, "密码不符合安全策略"),
-    COMPILE_UNSUPPORTED(120002, "不支持的编译类型");
+    // ---------- 密码 (120000+) ----------
+    PASSWORD_POLICY_VIOLATION(120001, "密码不符合安全策略");
 
     private final int code;
     private final String message;

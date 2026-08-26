@@ -27,5 +27,8 @@ public class AlertEvent {
 
     private String status;
 
+    /** E1 升级通知去重：0=未发送 1=已发送（V55） */
+    private Integer upgradeNotified;
+
     private LocalDateTime createdTime;
 }

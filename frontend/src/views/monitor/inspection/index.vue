@@ -90,7 +90,7 @@ import { computed, onMounted, ref } from 'vue'
 import { Document, Download, Refresh } from '@element-plus/icons-vue'
 import { useAs400ServerStore } from '@/stores/as400Server'
 import { useFlash } from '@/composables/useFlash'
-import { exportInspection, fetchInspection, type InspectionReport, type InspectionCheck, type InspectionIssue } from '@/api/monitor'
+import { exportInspection, fetchInspection, type InspectionReport } from '@/api/monitor'
 
 const as400Store = useAs400ServerStore()
 

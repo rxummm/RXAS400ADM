@@ -2,15 +2,20 @@ package com.rxas400adm.system.service;
 
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.system.dto.DocDTO;
 import com.rxas400adm.system.dto.DocTemplateDTO;
 import com.rxas400adm.system.entity.Doc;
 import com.rxas400adm.system.entity.DocTemplate;
+import com.rxas400adm.system.entity.DocVersion;
 import com.rxas400adm.system.mapper.DocMapper;
 import com.rxas400adm.system.mapper.DocTemplateMapper;
 import com.rxas400adm.system.mapper.DocVersionMapper;
 import com.rxas400adm.system.vo.DocTemplateVO;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +34,17 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DocServiceTest {
+
+    /**
+     * 终检 3b：publishToIfs 回写改 LambdaUpdateWrapper 条件更新，
+     * 纯 Mockito 环境需为 Doc 实体初始化 MyBatis-Plus TableInfo 缓存（范式同 SqlInjectionTest）。
+     */
+    @BeforeAll
+    static void initTableInfo() {
+        MapperBuilderAssistant assistant =
+                new MapperBuilderAssistant(new MybatisConfiguration(), "");
+        TableInfoHelper.initTableInfo(assistant, Doc.class);
+    }
 
     @Mock
     private DocMapper docMapper;
@@ -86,7 +102,7 @@ class DocServiceTest {
         assertEquals(1, created.getVersion());
         assertEquals(DocService.STATUS_DRAFT, created.getStatus());
         assertEquals(DocService.DOC_TYPE_MARKDOWN, created.getDocType());
-        verify(versionMapper).insert(any(com.rxas400adm.system.entity.DocVersion.class));
+        verify(versionMapper).insert(any(DocVersion.class));
     }
 
     @Test
@@ -157,7 +173,7 @@ class DocServiceTest {
 
         assertEquals(2, result.getVersion());
         assertEquals(DocService.STATUS_DRAFT, result.getStatus());
-        verify(versionMapper).insert(any(com.rxas400adm.system.entity.DocVersion.class));
+        verify(versionMapper).insert(any(DocVersion.class));
     }
 
     @Test
@@ -209,7 +225,7 @@ class DocServiceTest {
     void rollback_shouldRestoreSnapshot() {
         Doc published = draftDoc(1L, DocService.STATUS_PUBLISHED);
         when(docMapper.selectById(1L)).thenReturn(published);
-        com.rxas400adm.system.entity.DocVersion version = new com.rxas400adm.system.entity.DocVersion();
+        DocVersion version = new DocVersion();
         version.setDocId(1L);
         version.setVersion(1);
         version.setTitle("变更单");

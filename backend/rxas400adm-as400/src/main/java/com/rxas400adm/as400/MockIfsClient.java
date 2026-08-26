@@ -181,8 +181,11 @@ class MockIfsClient implements IfsClient {
             file = file.substring(0, file.length() - 1);
         }
         String trashPath = IfsClient.TRASH_ROOT + file;
-        if (state.mockIfsFiles.containsKey(file)) {
-            state.mockIfsFiles.put(trashPath, state.mockIfsFiles.remove(file));
+        /* C16：get 判空后再移除+放入，替代 remove 结果直 put 的非原子写法 */
+        byte[] content = state.mockIfsFiles.get(file);
+        if (content != null) {
+            state.mockIfsFiles.remove(file);
+            state.mockIfsFiles.put(trashPath, content);
             return trashPath;
         }
         if (state.mockIfsDirs.contains(file.toUpperCase())) {
@@ -195,7 +198,13 @@ class MockIfsClient implements IfsClient {
                 }
             }
             for (String key : moved) {
-                state.mockIfsFiles.put(IfsClient.TRASH_ROOT + key, state.mockIfsFiles.remove(key));
+                /* C16：get 判空后再移除+放入，key 消失时跳过而非写入 null */
+                byte[] childContent = state.mockIfsFiles.get(key);
+                if (childContent == null) {
+                    continue;
+                }
+                state.mockIfsFiles.remove(key);
+                state.mockIfsFiles.put(IfsClient.TRASH_ROOT + key, childContent);
             }
             return trashPath;
         }
@@ -215,8 +224,11 @@ class MockIfsClient implements IfsClient {
             return false;
         }
         String original = t.substring(IfsClient.TRASH_ROOT.length());
-        if (state.mockIfsFiles.containsKey(t)) {
-            state.mockIfsFiles.put(original, state.mockIfsFiles.remove(t));
+        /* C16：get 判空后再移除+放入，替代 remove 结果直 put 的非原子写法 */
+        byte[] content = state.mockIfsFiles.get(t);
+        if (content != null) {
+            state.mockIfsFiles.remove(t);
+            state.mockIfsFiles.put(original, content);
             return true;
         }
         if (state.mockIfsDirs.contains(t.toUpperCase())) {
@@ -230,7 +242,13 @@ class MockIfsClient implements IfsClient {
             }
             for (String key : moved) {
                 String restored = key.substring(IfsClient.TRASH_ROOT.length());
-                state.mockIfsFiles.put(restored, state.mockIfsFiles.remove(key));
+                /* C16：get 判空后再移除+放入，key 消失时跳过而非写入 null */
+                byte[] restoredContent = state.mockIfsFiles.get(key);
+                if (restoredContent == null) {
+                    continue;
+                }
+                state.mockIfsFiles.remove(key);
+                state.mockIfsFiles.put(restored, restoredContent);
             }
             return true;
         }

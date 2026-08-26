@@ -6,8 +6,10 @@ import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.system.entity.SysMenu;
 import com.rxas400adm.system.entity.SysRole;
 import com.rxas400adm.system.entity.SysUserMenu;
+import com.rxas400adm.system.entity.SysUserRole;
 import com.rxas400adm.system.mapper.SysMenuMapper;
 import com.rxas400adm.system.mapper.SysRoleMapper;
+import com.rxas400adm.system.mapper.SysRoleMenuMapper;
 import com.rxas400adm.system.mapper.SysUserMapper;
 import com.rxas400adm.system.mapper.SysUserMenuMapper;
 import com.rxas400adm.system.mapper.SysUserRoleMapper;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,14 +42,14 @@ public class UserMenuService implements IUserMenuService {
     private final SysUserRoleMapper userRoleMapper;
     private final SysRoleMapper roleMapper;
     private final SysUserMapper userMapper;
-    private final com.rxas400adm.system.mapper.SysRoleMenuMapper roleMenuMapper;
+    private final SysRoleMenuMapper roleMenuMapper;
 
     /** 用户已有菜单 ID（角色授权 ∪ 直接授权）；ADMIN 返回全部启用菜单 */
     public Set<Long> getUserMenuIds(Long userId) {
         Set<Long> ids = new HashSet<>(userMenuMapper.selectMenuIdsByUserId(userId));
-        List<Long> roleIds = userRoleMapper.selectList(new LambdaQueryWrapper<com.rxas400adm.system.entity.SysUserRole>()
-                        .eq(com.rxas400adm.system.entity.SysUserRole::getUserId, userId))
-                .stream().map(com.rxas400adm.system.entity.SysUserRole::getRoleId).toList();
+        List<Long> roleIds = userRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>()
+                        .eq(SysUserRole::getUserId, userId))
+                .stream().map(SysUserRole::getRoleId).toList();
         if (!roleIds.isEmpty()) {
             List<SysRole> roles = roleMapper.selectBatchIds(roleIds);
             if (roles.stream().anyMatch(r -> "ADMIN".equals(r.getRoleCode()))) {
@@ -101,33 +104,51 @@ public class UserMenuService implements IUserMenuService {
     }
 
     /** 勾选授权（追加模式，幂等） */
-    
+
     public void addUserMenus(Long userId, List<Long> menuIds) {
         requireUser(userId);
-        if (menuIds == null || menuIds.isEmpty()) return;
-        for (Long menuId : new HashSet<>(menuIds)) {
-            if (menuMapper.selectById(menuId) == null) continue;
-            long exists = userMenuMapper.selectCount(new LambdaQueryWrapper<SysUserMenu>()
-                    .eq(SysUserMenu::getUserId, userId).eq(SysUserMenu::getMenuId, menuId));
-            if (exists == 0) {
-                SysUserMenu um = new SysUserMenu();
-                um.setUserId(userId);
-                um.setMenuId(menuId);
-                um.setCreatedTime(LocalDateTime.now());
-                userMenuMapper.insert(um);
-            }
+        // P6-① 入参清洗：去 null、去重，空集直接返回
+        List<Long> ids = menuIds == null ? List.of()
+                : menuIds.stream().filter(Objects::nonNull).distinct().toList();
+        if (ids.isEmpty()) return;
+        // P6-② 批量存在性校验（selectBatchIds 一次取回；风格对齐 RoleService.validatedMenuIds）
+        Set<Long> existingIds = menuMapper.selectBatchIds(ids).stream()
+                .map(SysMenu::getId).collect(Collectors.toSet());
+        List<Long> invalid = ids.stream().filter(i -> !existingIds.contains(i)).toList();
+        if (!invalid.isEmpty()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "菜单不存在: " + invalid);
+        }
+        // P6-③ 过滤已授权关联，规避 uk_user_menu 唯一键冲突
+        Set<Long> granted = userMenuMapper.selectList(new LambdaQueryWrapper<SysUserMenu>()
+                        .eq(SysUserMenu::getUserId, userId).in(SysUserMenu::getMenuId, ids))
+                .stream().map(SysUserMenu::getMenuId).collect(Collectors.toSet());
+        // P6-④ 剩余项一次 insertBatch，替代逐条 insert 的 N 次 DB 往返
+        List<SysUserMenu> toInsert = ids.stream()
+                .filter(i -> !granted.contains(i))
+                .map(i -> {
+                    SysUserMenu um = new SysUserMenu();
+                    um.setUserId(userId);
+                    um.setMenuId(i);
+                    um.setCreatedTime(LocalDateTime.now());
+                    return um;
+                }).toList();
+        if (!toInsert.isEmpty()) {
+            userMenuMapper.insertBatch(toInsert);
         }
     }
 
     /** 移除授权（目录/菜单页移除时连带子孙） */
-    
+
     public void removeUserMenus(Long userId, List<Long> menuIds) {
         requireUser(userId);
-        if (menuIds == null || menuIds.isEmpty()) return;
+        // P6-⑤ 入参清洗：去 null、去重，空集直接返回
+        List<Long> ids = menuIds == null ? List.of()
+                : menuIds.stream().filter(Objects::nonNull).distinct().toList();
+        if (ids.isEmpty()) return;
         List<SysMenu> allMenus = menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
                 .eq(SysMenu::getStatus, 1));
         Set<Long> toRemove = new HashSet<>();
-        for (Long menuId : menuIds) {
+        for (Long menuId : ids) {
             toRemove.add(menuId);
             SysMenu menu = allMenus.stream().filter(m -> m.getId().equals(menuId)).findFirst().orElse(null);
             // 目录/菜单页递归移除子孙，按钮只移除自身
@@ -135,8 +156,9 @@ public class UserMenuService implements IUserMenuService {
                 toRemove.addAll(collectDescendantIds(menuId, allMenus));
             }
         }
-        for (Long menuId : toRemove) {
-            userMenuMapper.deleteByUserIdAndMenuId(userId, menuId);
+        // P6-⑥ 级联展开后一次 IN 批量删除，替代逐条 delete
+        if (!toRemove.isEmpty()) {
+            userMenuMapper.deleteByUserIdAndMenuIds(userId, toRemove);
         }
     }
 

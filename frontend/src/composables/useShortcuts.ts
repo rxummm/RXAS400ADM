@@ -1,92 +1,61 @@
-/**
- * 全局快捷键（参照旧项目 composables/useKeyboardShortcuts.js，TypeScript 化）
- * - 统一注册/注销机制，输入框内自动忽略（Esc 除外）
- * - 默认快捷键由 layout 注册：Ctrl+B 折叠 / Ctrl+D 主题 / Ctrl+R 刷新 / ? 帮助
- */
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 
-export interface ShortcutDef {
+export interface Shortcut {
   key: string
   description: string
-  handler: (e: KeyboardEvent) => void
+  handler: (event: KeyboardEvent) => void
 }
 
-const shortcuts = new Map<string, ShortcutDef>()
-const enabled = ref(true)
-let globalListenerAttached = false
+export function useShortcuts(shortcuts: Shortcut[]) {
+  const registeredShortcuts = shortcuts.map((s) => ({ key: s.key, description: s.description }))
 
-function normalizeKey(key: string): string {
-  return key
-    .toLowerCase()
-    .replace(/\s+/g, '')
-    .replace('ctrl', 'control')
-    .replace('left', 'arrowleft')
-    .replace('right', 'arrowright')
-    .replace('up', 'arrowup')
-    .replace('down', 'arrowdown')
-}
-
-function parseKeyEvent(e: KeyboardEvent): string {
-  const keys: string[] = []
-  if (e.ctrlKey || e.metaKey) keys.push('control')
-  if (e.altKey) keys.push('alt')
-  if (e.shiftKey) keys.push('shift')
-  if (e.key === ' ') keys.push('space')
-  else if (e.key.startsWith('Arrow')) keys.push(e.key.toLowerCase())
-  else if (e.key.length === 1) keys.push(e.key.toLowerCase())
-  else keys.push(e.key.toLowerCase())
-  return keys.join('+')
-}
-
-function formatKeyDisplay(key: string): string {
-  return key
-    .replace('control', 'Ctrl')
-    .replace('alt', 'Alt')
-    .replace('shift', 'Shift')
-    .replace('arrowleft', '←')
-    .replace('arrowright', '→')
-    .replace('space', 'Space')
-    .split('+')
-    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-    .join(' + ')
-}
-
-function handleKeyDown(e: KeyboardEvent) {
-  if (!enabled.value) return
-  // 输入框内忽略（Esc 除外，用于关闭弹窗）
-  const target = e.target as HTMLElement
-  const isInput =
-    target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
-  if (isInput && e.key !== 'Escape') return
-
-  const combo = parseKeyEvent(e)
-  const def = shortcuts.get(combo)
-  if (def) {
-    e.preventDefault()
-    e.stopPropagation()
-    def.handler(e)
-  }
-}
-
-export function useShortcuts(configs: ShortcutDef[] = []) {
-  onMounted(() => {
-    configs.forEach((c) => shortcuts.set(normalizeKey(c.key), c))
-    if (!globalListenerAttached) {
-      document.addEventListener('keydown', handleKeyDown, true)
-      globalListenerAttached = true
+  function parseKeyCombination(key: string): { ctrl: boolean; shift: boolean; alt: boolean; meta: boolean; code: string } {
+    const lower = key.toLowerCase()
+    return {
+      ctrl: lower.includes('ctrl+'),
+      shift: lower.includes('shift+'),
+      alt: lower.includes('alt+'),
+      meta: lower.includes('meta+'),
+      code: key.split('+').pop()!.toLowerCase(),
     }
+  }
+
+  function matchKey(event: KeyboardEvent, combo: ReturnType<typeof parseKeyCombination>): boolean {
+    if (combo.ctrl !== event.ctrlKey) return false
+    if (combo.shift !== event.shiftKey) return false
+    if (combo.alt !== event.altKey) return false
+    if (combo.meta !== event.metaKey) return false
+
+    const eventKey = event.key.toLowerCase()
+    if (combo.code === '?' || combo.code === '/') {
+      return event.key === '?' || (event.key === '/' && event.shiftKey)
+    }
+    return eventKey === combo.code
+  }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    const target = event.target as HTMLElement
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+      if (event.key !== '?') return
+    }
+
+    for (const shortcut of shortcuts) {
+      const combo = parseKeyCombination(shortcut.key)
+      if (matchKey(event, combo)) {
+        event.preventDefault()
+        shortcut.handler(event)
+        return
+      }
+    }
+  }
+
+  onMounted(() => {
+    document.addEventListener('keydown', handleKeyDown)
   })
 
   onUnmounted(() => {
-    configs.forEach((c) => shortcuts.delete(normalizeKey(c.key)))
+    document.removeEventListener('keydown', handleKeyDown)
   })
 
-  /** 帮助面板展示列表（按 key 排序） */
-  function getRegisteredShortcuts(): { key: string; description: string }[] {
-    return [...shortcuts.entries()]
-      .map(([k, v]) => ({ key: formatKeyDisplay(k), description: v.description }))
-      .sort((a, b) => a.key.localeCompare(b.key))
-  }
-
-  return { getRegisteredShortcuts, enabled }
+  return { getRegisteredShortcuts: () => registeredShortcuts }
 }

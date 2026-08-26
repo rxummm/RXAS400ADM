@@ -8,6 +8,8 @@ import com.rxas400adm.common.event.UserPermissionGrantedEvent;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.PageResult;
+import com.rxas400adm.common.security.PasswordPolicy;
+import com.rxas400adm.common.util.SecurityUtils;
 import com.rxas400adm.system.dto.UserDTO;
 import com.rxas400adm.system.dto.UserUpdateDTO;
 import com.rxas400adm.system.entity.SysPermission;
@@ -22,6 +24,7 @@ import com.rxas400adm.system.mapper.SysUserMapper;
 import com.rxas400adm.system.mapper.SysUserRoleMapper;
 import com.rxas400adm.system.vo.UserVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +47,7 @@ public class SysUserServiceImpl implements SysUserService {
     private final SysUserRoleMapper userRoleMapper;
     private final SysRolePermissionMapper rolePermissionMapper;
     private final PasswordEncoder passwordEncoder;
-    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public SysUser getByUsername(String username) {
@@ -81,15 +84,15 @@ public class SysUserServiceImpl implements SysUserService {
         // P2-3：未指定密码时生成强随机密码（不再用公开的 123456 兜底）；指定则校验强度
         String rawPassword = dto.getPassword();
         if (rawPassword == null || rawPassword.isBlank()) {
-            rawPassword = com.rxas400adm.common.security.PasswordPolicy.generateRandom();
+            rawPassword = PasswordPolicy.generateRandom();
         } else {
-            com.rxas400adm.common.security.PasswordPolicy.validate(rawPassword);
+            PasswordPolicy.validate(rawPassword);
         }
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setEmail(dto.getEmail());
         user.setStatus(dto.getStatus() == null ? "ACTIVE" : dto.getStatus());
         user.setLoginSource("PLATFORM");
-        user.setCreatedBy(com.rxas400adm.common.util.SecurityUtils.currentUsername());
+        user.setCreatedBy(SecurityUtils.currentUsername());
         user.setCreatedTime(LocalDateTime.now());
         user.setUpdatedTime(LocalDateTime.now());
         userMapper.insert(user);
@@ -225,6 +228,10 @@ public class SysUserServiceImpl implements SysUserService {
             return;
         }
         List<Long> distinctIds = roleIds.stream().filter(Objects::nonNull).distinct().toList();
+        /* B5：过滤后判空提前返回（清空角色场景静默 return），避免 selectBatchIds 空列表 */
+        if (distinctIds.isEmpty()) {
+            return;
+        }
         Map<Long, SysRole> existingRoles = roleMapper.selectBatchIds(distinctIds).stream()
                 .collect(Collectors.toMap(SysRole::getId, r -> r));
         List<Long> missing = distinctIds.stream().filter(id -> !existingRoles.containsKey(id)).toList();
@@ -254,16 +261,23 @@ public class SysUserServiceImpl implements SysUserService {
         List<Long> roleIds = userRoles.stream().map(SysUserRole::getRoleId).distinct().toList();
         Map<Long, SysRole> roleMap = roleMapper.selectBatchIds(roleIds).stream()
                 .collect(Collectors.toMap(SysRole::getId, r -> r));
+        /* B11：孤儿 role_id（角色已被删）过滤，避免 VO.roles 出现 null 元素 */
         return userRoles.stream().collect(Collectors.groupingBy(
                 SysUserRole::getUserId,
-                Collectors.mapping(ur -> roleMap.get(ur.getRoleId()), Collectors.toList())));
+                Collectors.mapping(ur -> roleMap.get(ur.getRoleId()),
+                        Collectors.filtering(Objects::nonNull, Collectors.toList()))));
     }
 
     private List<SysRole> rolesByIds(List<Long> roleIds) {
         if (roleIds == null || roleIds.isEmpty()) {
             return List.of();
         }
-        return roleMapper.selectBatchIds(roleIds.stream().filter(Objects::nonNull).distinct().toList());
+        /* B5：filter 后判空提前返回，避免 selectBatchIds 空列表 */
+        List<Long> distinctIds = roleIds.stream().filter(Objects::nonNull).distinct().toList();
+        if (distinctIds.isEmpty()) {
+            return List.of();
+        }
+        return roleMapper.selectBatchIds(distinctIds);
     }
 
     private UserVO toVO(SysUser user, List<SysRole> roles) {

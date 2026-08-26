@@ -17,10 +17,12 @@ import com.rxas400adm.system.mapper.SysUserMapper;
 import com.rxas400adm.system.mapper.SysRoleMenuMapper;
 import com.rxas400adm.system.mapper.SysUserMenuMapper;
 import com.rxas400adm.system.mapper.SysUserRoleMapper;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
@@ -52,7 +54,7 @@ class SqlInjectionTest {
     @org.junit.jupiter.api.BeforeAll
     static void initTableInfo() {
         org.apache.ibatis.builder.MapperBuilderAssistant assistant =
-                new org.apache.ibatis.builder.MapperBuilderAssistant(new MybatisConfiguration(), "");
+                new MapperBuilderAssistant(new MybatisConfiguration(), "");
         TableInfoHelper.initTableInfo(assistant, Region.class);
         TableInfoHelper.initTableInfo(assistant, SysUser.class);
     }
@@ -205,7 +207,7 @@ class SqlInjectionTest {
         void usernameWithQuoteIsParameterized() {
             SysUserServiceImpl service = new SysUserServiceImpl(
                     userMapper, null, null, null, null, new BCryptPasswordEncoder(),
-                    mock(org.springframework.context.ApplicationEventPublisher.class));
+                    mock(ApplicationEventPublisher.class));
             when(userMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(null);
 
             UserDTO dto = new UserDTO();
@@ -230,7 +232,7 @@ class SqlInjectionTest {
         void usernameWithSemicolonNoMultiStatement() {
             SysUserServiceImpl service = new SysUserServiceImpl(
                     userMapper, null, null, null, null, new BCryptPasswordEncoder(),
-                    mock(org.springframework.context.ApplicationEventPublisher.class));
+                    mock(ApplicationEventPublisher.class));
             when(userMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(null);
 
             UserDTO dto = new UserDTO();

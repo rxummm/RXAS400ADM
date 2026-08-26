@@ -1,9 +1,9 @@
 package com.rxas400adm.security.jwt;
 
+import com.rxas400adm.security.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -22,16 +22,13 @@ public class JwtUtil {
     private final String issuer;
     private final String audience;
 
-    public JwtUtil(@Value("${rxas400.jwt.secret}") String secret,
-                   @Value("${rxas400.jwt.expire-ms:86400000}") long expireMs,
-                   @Value("${rxas400.jwt.refresh-expire-ms:604800000}") long refreshExpireMs,
-                   @Value("${rxas400.jwt.issuer:rxas400adm}") String issuer,
-                   @Value("${rxas400.jwt.audience:rxas400-ui}") String audience) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expireMs = expireMs;
-        this.refreshExpireMs = refreshExpireMs;
-        this.issuer = issuer;
-        this.audience = audience;
+    // R7：5 处 @Value 收敛为 JwtProperties 单点绑定（rxas400.jwt.*）
+    public JwtUtil(JwtProperties properties) {
+        this.key = Keys.hmacShaKeyFor(properties.getSecret().getBytes(StandardCharsets.UTF_8));
+        this.expireMs = properties.getExpireMs();
+        this.refreshExpireMs = properties.getRefreshExpireMs();
+        this.issuer = properties.getIssuer();
+        this.audience = properties.getAudience();
     }
 
     /** Access token 有效期（毫秒），供前端计算主动刷新时机 */

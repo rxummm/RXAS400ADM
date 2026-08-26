@@ -10,6 +10,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * 告警推送监听器：监控告警与作业调度失败事件（AlertRaisedEvent）统一在这里处理——
@@ -34,7 +35,7 @@ public class AlertWebhookListener {
     public void onAlert(AlertRaisedEvent event) {
         try {
             alertNotifyPool.execute(() -> dispatch(event));
-        } catch (java.util.concurrent.RejectedExecutionException e) {
+        } catch (RejectedExecutionException e) {
             log.warn("[告警] 通知队列已满，丢弃推送: {}", event.message());
         }
     }

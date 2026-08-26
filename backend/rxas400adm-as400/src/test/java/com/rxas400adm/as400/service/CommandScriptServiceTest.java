@@ -6,6 +6,7 @@ import com.rxas400adm.as400.CommandResult;
 import com.rxas400adm.as400.dto.CommandScriptRequest;
 import com.rxas400adm.as400.entity.CommandScript;
 import com.rxas400adm.as400.mapper.CommandScriptMapper;
+import com.rxas400adm.common.security.DangerousClCommandValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,11 +31,15 @@ class CommandScriptServiceTest {
     @Mock
     private AS400Client client;
 
+    /** S4：构造签名适配——mock 校验器默认放行（doNothing） */
+    @Mock
+    private DangerousClCommandValidator clValidator;
+
     private CommandScriptService service;
 
     @BeforeEach
     void setUp() {
-        service = new CommandScriptService(scriptMapper, clientProvider);
+        service = new CommandScriptService(scriptMapper, clientProvider, clValidator);
         org.mockito.Mockito.lenient().when(clientProvider.forServer(1L)).thenReturn(client);
     }
 

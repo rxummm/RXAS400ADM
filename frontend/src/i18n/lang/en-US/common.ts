@@ -6,6 +6,10 @@
 export default {
   common: {
     refresh: 'Refresh',
+    autoRefresh: 'Auto Refresh',
+    refreshInterval: 'Refresh Interval',
+    refreshSeconds: '{n}s',
+    viewAll: 'View All',
     noPermission: 'No Permission',
     requestFailed: 'Request Failed',
     networkError: 'Network Error',
@@ -46,6 +50,7 @@ export default {
     export: 'Export CSV',
     addSuccess: 'Created Successfully',
     updateSuccess: 'Updated Successfully',
+    confirmDelete: 'Are you sure you want to delete? This action cannot be undone.',
     deleteSuccess: 'Deleted Successfully',
     loadFailed: 'Failed to load data. Please try again later.',
     refreshDone: 'Refreshed',
@@ -170,8 +175,6 @@ export default {
     SYSTEM_SCHEDULER_LOCKED: 'Scheduler is locked by another node',
     REPORT_GENERATE_FAILED: 'Report generation failed',
     SQL_READONLY_REQUIRED: 'Only single read-only SELECT queries are allowed',
-    COMPILE_FAILED: 'Compilation failed',
-    COMPILE_TARGET_REQUIRED: 'Please specify a compile target',
     SOURCE_NOT_FOUND: 'Source file not found',
     SOURCE_READ_FAILED: 'Failed to read source file',
     FILE_PATH_INVALID: 'Invalid file path',
@@ -182,7 +185,6 @@ export default {
     ROLE_CODE_EXISTS: 'Role code already exists',
     ROLE_ADMIN_PROTECTED: 'Built-in ADMIN role cannot be modified or deleted',
     PASSWORD_POLICY_VIOLATION: 'Password does not meet security policy',
-    COMPILE_UNSUPPORTED: 'Unsupported compile type',
   },
   layout: {
     logoTitle: 'RXAS400',

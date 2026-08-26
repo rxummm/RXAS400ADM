@@ -51,7 +51,8 @@
               type="danger"
               size="small"
               :disabled="(row.menuUsage || 0) + (row.roleUsage || 0) > 0"
-              @click="onDelete(row)"
+              :loading="removeLoading === row.id"
+              @click="confirmRemove(row)"
             >
               {{ $t('common.delete') }}
             </el-button>
@@ -63,8 +64,8 @@
         @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="520px" :close-on-click-modal="false">
-      <el-form ref="formRef" :model="form" :rules="formRules" label-width="90px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('permissions.code')" prop="permissionCode">
           <el-input v-model="form.permissionCode" :disabled="isEdit" placeholder="JOB_END" class="w-full" />
         </el-form-item>
@@ -89,7 +90,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { Plus, Search } from '@element-plus/icons-vue'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
@@ -180,21 +181,12 @@ async function loadModules() {
   }
 }
 
-async function onDelete(row: PermissionCode) {
-  try {
-    await ElMessageBox.confirm(
-      t('permissions.deleteConfirm', { code: row.permissionCode }),
-      t('common.tip'),
-      { type: 'warning' },
-    )
-    if (row.id) await deletePermissionCode(row.id)
-    ElMessage.success(t('common.deleteSuccess'))
-    handleRefresh()
-    loadModules()
-  } catch {
-    /* cancelled */
-  }
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: PermissionCode) => deletePermissionCode(row.id!),
+  onSuccess: () => { handleRefresh(); loadModules() },
+  confirmMessage: 'permissions.deleteConfirm',
+  confirmTitle: 'common.tip',
+})
 
 onMounted(loadModules)
 </script>

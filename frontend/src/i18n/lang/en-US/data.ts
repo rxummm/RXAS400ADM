@@ -84,7 +84,7 @@ export default {
     type: 'Type',
     modify: 'Modify',
     valuePlaceholder: 'Enter new value',
-    changeConfirm: 'Confirm to modify system value',
+    changeConfirm: 'Confirm to modify system value "{name} = {value}"?',
     changed: 'System value modified',
     all: 'All',
     common: 'Common',

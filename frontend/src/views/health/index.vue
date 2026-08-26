@@ -52,7 +52,7 @@
 defineOptions({ name: 'Health' })
 import { computed, onMounted, ref } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
-import { healthReport, type HealthReport, type HealthServer } from '@/api/health'
+import { healthReport, type HealthReport } from '@/api/health'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 

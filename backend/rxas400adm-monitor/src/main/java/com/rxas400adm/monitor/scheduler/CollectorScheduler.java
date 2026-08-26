@@ -15,10 +15,15 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -67,6 +72,9 @@ public class CollectorScheduler {
 
     private volatile ExecutorService collectPool;
 
+    /** C2：采集中的服务器 ID 集合——上一轮未完成则本轮跳过，防止超时残留任务与新任务重叠 */
+    private final Set<Long> inFlightServers = ConcurrentHashMap.newKeySet();
+
     @PreDestroy
     private void shutdown() {
         ExecutorService p = collectPool;
@@ -95,7 +103,7 @@ public class CollectorScheduler {
                     p = new ThreadPoolExecutor(
                             Math.max(2, poolSize), Math.max(2, poolSize),
                             0L, TimeUnit.MILLISECONDS,
-                            new java.util.concurrent.LinkedBlockingQueue<>(100),
+                            new LinkedBlockingQueue<>(100),
                             factory,
                             new ThreadPoolExecutor.CallerRunsPolicy());
                     collectPool = p;
@@ -137,33 +145,77 @@ public class CollectorScheduler {
         }
     }
 
-    /** P2：per-server 并行采集，整轮超时（超时仅放弃剩余服务器，不影响下一轮调度） */
+    /** P2：per-server 并行采集，整轮超时（C2：超时取消在途任务 + in-flight 跨轮去重） */
     private void collectParallel(List<IbmiSystem> systems) {
         ExecutorService executor = pool();
         List<CompletableFuture<Void>> futures = systems.stream()
-                .map(system -> CompletableFuture.runAsync(() -> collectServer(system), executor))
+                .map(system -> CompletableFuture.runAsync(() -> runServerGuarded(system), executor))
                 .toList();
         CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
         try {
             all.get(roundTimeoutMs, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            log.warn("采集轮次超时（{}ms），放弃未完成服务器", roundTimeoutMs);
+            // C2：超时后取消在途任务——半死服务器的阻塞调用不能跨轮残留占线程池，
+            // 否则下一轮重叠提交同一服务器，新旧两份 collectServer 并发写指标/评估告警
+            futures.forEach(f -> f.cancel(true));
+            log.warn("采集轮次超时（{}ms），已取消未完成服务器", roundTimeoutMs);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        } catch (java.util.concurrent.ExecutionException e) {
+        } catch (ExecutionException e) {
             // collectServer 内部已吞掉单台异常，理论上不会到这里；兜底记录
-            log.warn("采集并行任务异常: {}", e.getMessage());
+            // 【E5-5】追加异常对象保留堆栈（ExecutionException 的 getMessage 仅是 cause 的 toString）
+            log.warn("采集并行任务异常: {}", e.getMessage(), e);
+        }
+    }
+
+    /** C2：同一服务器上一轮未完成则本轮跳过（in-flight 标记），杜绝新旧两份采集并发 */
+    private void runServerGuarded(IbmiSystem system) {
+        if (!inFlightServers.add(system.getId())) {
+            log.warn("服务器 {} 上一轮采集未完成，本轮跳过", system.getName());
+            return;
+        }
+        try {
+            collectServer(system);
+        } finally {
+            inFlightServers.remove(system.getId());
         }
     }
 
     private void collectServer(IbmiSystem system) {
+        // P5：两段式——先全量收集再一次批量入库，替代每采集器逐条 INSERT
+        List<Metric> metrics = new ArrayList<>();
         for (MetricCollector collector : collectors) {
             try {
                 Metric metric = collector.collect(system.getId());
-                metricService.save(metric);
+                if (metric == null) {
+                    continue;
+                }
+                // 终检：跳过非有限数值（NaN/Infinity）——多值 INSERT 中一条脏数据会拖垮整批，
+                // 导致该服务器本轮 0 入库/0 告警评估
+                if (metric.getMetricValue() != null && !Double.isFinite(metric.getMetricValue())) {
+                    log.warn("丢弃非有限指标值 {}[{}]={}", system.getName(),
+                            metric.getMetricName(), metric.getMetricValue());
+                    continue;
+                }
+                metrics.add(metric);
+            } catch (Exception e) {
+                // C15：恢复中断位，保证 shutdownNow / cancel(true) 时任务能感知取消
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+                log.warn("采集失败 {}[{}]: {}", system.getName(), collector.name(), e.getMessage());
+            }
+        }
+        metricService.saveBatch(metrics);
+        // P5：入库后按收集顺序逐条评估告警（告警顺序语义与原实现一致）
+        for (Metric metric : metrics) {
+            try {
                 alertEngine.check(metric);
             } catch (Exception e) {
-                log.warn("采集失败 {}[{}]: {}", system.getName(), collector.name(), e.getMessage());
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+                log.warn("告警评估失败 {}[{}]: {}", system.getName(), metric.getMetricName(), e.getMessage());
             }
         }
     }

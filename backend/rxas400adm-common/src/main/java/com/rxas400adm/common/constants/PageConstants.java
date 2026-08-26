@@ -35,4 +35,15 @@ public final class PageConstants {
     public static String limitClause(int n) {
         return SqlDialectHolder.get().limit(Math.max(1, n));
     }
+
+    /**
+     * B2：内存分页切片边界安全计算——long 运算防 (page-1)*size int 溢出，
+     * 返回 [from, to)，调用方保证 from >= to 时不调 subList（或先判空）。
+     */
+    public static int[] sliceBounds(int current, int size, int total) {
+        long fromL = (long) (Math.max(1, current) - 1) * size;
+        int from = (int) Math.min(fromL, total);
+        int to = (int) Math.min(fromL + Math.max(1, size), total);
+        return new int[]{from, Math.max(from, to)};
+    }
 }

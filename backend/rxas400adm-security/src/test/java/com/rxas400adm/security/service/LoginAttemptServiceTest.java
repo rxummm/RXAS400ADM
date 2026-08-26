@@ -3,6 +3,7 @@ package com.rxas400adm.security.service;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.security.config.LoginSecurityProperties;
 import com.rxas400adm.security.entity.LoginAttempt;
 import com.rxas400adm.security.mapper.LoginAttemptMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,8 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +34,10 @@ class LoginAttemptServiceTest {
     @Mock
     private LoginAttemptMapper attemptMapper;
 
+    /** 【P2】运行时阈值来源 mock：get(key, default) 统一回传 default，等价于 yml 缺省 */
+    @Mock
+    private com.rxas400adm.system.service.SysConfigService sysConfigService;
+
     private LoginAttemptService service;
 
     /** 模拟数据库行：selectOne 返回，incrementFailure 原子累加 */
@@ -38,7 +45,11 @@ class LoginAttemptServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new LoginAttemptService(attemptMapper);
+        // R7：构造新增 LoginSecurityProperties——默认值 5/15/20 与原 @Value 默认逐字一致，断言不变
+        // P2：追加 SysConfigService——stub get(key, default) 原样回传 default（等价未配置 rx_config）
+        service = new LoginAttemptService(new LoginSecurityProperties(), sysConfigService, attemptMapper);
+        lenient().when(sysConfigService.get(anyString(), anyString()))
+                .thenAnswer(inv -> inv.getArgument(1));
         dbRow = new LoginAttempt();
         dbRow.setUsername("admin");
         dbRow.setServerId(0L);

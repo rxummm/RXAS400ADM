@@ -33,6 +33,18 @@ public class MetricService implements IMetricService {
         publisher.publish(metric);
     }
 
+    /** P5：批量入库一次 INSERT，入库后逐条推送保持与 save 相同的实时推送语义 */
+    @Override
+    public void saveBatch(List<Metric> metrics) {
+        if (metrics == null || metrics.isEmpty()) {
+            return;
+        }
+        metricMapper.insertBatch(metrics);
+        for (Metric metric : metrics) {
+            publisher.publish(metric);
+        }
+    }
+
     /** 总览：{ cpu, memory, disk, jobs, msgw, lckw }，均取实时/最新值 */
     public Map<String, Object> overview(Long instanceId) {
         Map<String, Object> result = new LinkedHashMap<>();

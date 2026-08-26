@@ -58,7 +58,7 @@
             <el-button v-if="inTrash" v-has-perm="'IFS_MANAGE'" size="small" type="success" plain :icon="RefreshLeft" @click="restoreRow(row)">
               {{ $t('ifs.restore') }}
             </el-button>
-            <el-button v-else v-has-perm="'IFS_MANAGE'" size="small" type="danger" plain :icon="Delete" @click="deleteRow(row)">
+            <el-button v-else v-has-perm="'IFS_MANAGE'" size="small" type="danger" plain :icon="Delete" :loading="removeLoading === row.PATH" @click="confirmRemove(row)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -70,13 +70,13 @@
       <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
 
-    <el-dialog v-model="fileVisible" :title="currentFile" width="640px">
+    <el-dialog v-model="fileVisible" :title="currentFile" width="var(--rx-dialog-md)" :close-on-click-modal="false">
       <pre class="file-content">{{ fileContent || $t('ifs.emptyContent') }}</pre>
     </el-dialog>
 
     <!-- 上传文件到当前目录 -->
-    <el-dialog v-model="uploadVisible" :title="$t('ifs.upload')" width="480px">
-      <el-form label-width="90px">
+    <el-dialog v-model="uploadVisible" :title="$t('ifs.upload')" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
+      <el-form label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('ifs.uploadTarget')">{{ uploadTargetDir }}</el-form-item>
         <el-form-item :label="$t('ifs.selectFile')" required>
           <input type="file" @change="onFileChange" />
@@ -91,8 +91,8 @@
     </el-dialog>
 
     <!-- 新建目录 -->
-    <el-dialog v-model="mkdirVisible" :title="$t('ifs.mkdir')" width="440px">
-      <el-form label-width="90px">
+    <el-dialog v-model="mkdirVisible" :title="$t('ifs.mkdir')" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
+      <el-form label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('ifs.mkdirTarget')">{{ mkdirBaseDir }}</el-form-item>
         <el-form-item :label="$t('ifs.mkdirName')" required>
           <el-input v-model="mkdirName" class="w-full" :placeholder="$t('ifs.mkdirNamePlaceholder')" />
@@ -115,7 +115,8 @@
 defineOptions({ name: 'Ifs' })
 import { computed, onMounted, ref } from 'vue'
 import { Back, Delete, Document, Download, Folder, FolderAdd, RefreshLeft, Upload } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import QueryBar from '@/components/QueryBar.vue'
 import { useI18n } from 'vue-i18n'
 import { deleteIfsFile, downloadIfsFile, listIfsDir, mkdirIfs, readIfsFile, restoreIfsFile, uploadIfsFile, type IfsEntry } from '@/api/ifs'
@@ -271,21 +272,12 @@ const downloadFile = async (row: { PATH?: string; NAME?: string }) => {
   }
 }
 
-const deleteRow = async (row: { PATH?: string; TYPE?: string; NAME?: string }) => {
-  if (!row.PATH) return
-  await ElMessageBox.confirm(
-    t('ifs.deleteConfirm', { name: row.NAME || row.PATH }),
-    t('common.confirm'),
-    { type: 'warning' },
-  )
-  try {
-    await deleteIfsFile(row.PATH)
-    ElMessage.success(t('ifs.trashed'))
-    void fetchData({}, true)
-  } catch {
-    /* 拦截器已提示 */
-  }
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: { PATH: string }) => deleteIfsFile(row.PATH),
+  onSuccess: () => fetchData({}, true),
+  confirmMessage: 'ifs.deleteConfirm',
+  idField: 'PATH',
+})
 
 const restoreRow = async (row: { PATH?: string; NAME?: string }) => {
   if (!row.PATH) return

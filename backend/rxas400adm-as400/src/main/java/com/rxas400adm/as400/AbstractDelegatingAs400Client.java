@@ -97,6 +97,12 @@ public abstract class AbstractDelegatingAs400Client implements AS400Client {
         return sqlClient().queryListChecked(sql, params);
     }
 
+    /** S7：显式转发带行数上限的变体（否则接口 default 会退化为无上限路径） */
+    @Override
+    public List<Map<String, Object>> queryListCheckedBounded(String sql, int maxRows, Object... params) {
+        return sqlClient().queryListCheckedBounded(sql, maxRows, params);
+    }
+
     // ==================== AuthClient ====================
 
     @Override

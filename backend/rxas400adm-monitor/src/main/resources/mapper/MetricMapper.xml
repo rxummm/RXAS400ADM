@@ -64,4 +64,23 @@
           )
     </select>
 
+    <!-- P5：批量入库多值 INSERT（列对照 rx_metric 表结构 V1__init.sql，id 自增不写） -->
+    <insert id="insertBatch">
+        INSERT INTO rx_metric (instance_id, metric_type, metric_name, metric_value, collect_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.instanceId}, #{item.metricType}, #{item.metricName}, #{item.metricValue}, #{item.collectTime})
+        </foreach>
+    </insert>
+
+    <!-- P18：MySQL 方言单批删除（LIMIT 控制单批行数，调用方循环直至影响行数为 0） -->
+    <delete id="deleteBeforeLimit">
+        DELETE FROM rx_metric WHERE collect_time &lt; #{cutoff} LIMIT #{limit}
+    </delete>
+
+    <!-- P18：DB2 for i 等方言回退一次性整删（无 LIMIT DELETE 语法，量大时依赖既有的整删窗口） -->
+    <delete id="deleteBeforeAll">
+        DELETE FROM rx_metric WHERE collect_time &lt; #{cutoff}
+    </delete>
+
 </mapper>

@@ -1,6 +1,7 @@
 package com.rxas400adm.system.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.system.entity.AuditLog;
 import com.rxas400adm.system.mapper.AuditLogMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,16 +28,21 @@ class AuditLogServiceTest {
         service = new AuditLogService(auditLogMapper);
     }
 
+    /** 类型安全占位符：利用 any() 的目标类型推断消除裸 Class 字面量的 unchecked 转换警告 */
+    private static LambdaQueryWrapper<AuditLog> anyWrapper() {
+        return any();
+    }
+
     // ---------------- page ----------------
 
     @Test
     @DisplayName("page → 无过滤条件时返回全部")
     void page_noFilters() {
-        when(auditLogMapper.selectPage(any(), any(LambdaQueryWrapper.class)))
-                .thenReturn(new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>());
+        when(auditLogMapper.selectPage(any(), anyWrapper()))
+                .thenReturn(new Page<>());
         var result = service.page(1, 10, null, null, null, null);
         assertNotNull(result);
-        verify(auditLogMapper).selectPage(any(), any(LambdaQueryWrapper.class));
+        verify(auditLogMapper).selectPage(any(), anyWrapper());
     }
 
     // ---------------- auditLogin ----------------

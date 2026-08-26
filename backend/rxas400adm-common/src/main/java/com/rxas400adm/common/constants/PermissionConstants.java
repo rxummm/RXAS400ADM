@@ -13,5 +13,4 @@ public final class PermissionConstants {
     public static final String MONITOR_VIEW = "MONITOR_VIEW";
     public static final String USER_MANAGE = "USER_MANAGE";
     public static final String SOURCE_VIEW = "SOURCE_VIEW";
-    public static final String COMPILE_EXECUTE = "COMPILE_EXECUTE";
 }

@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Mock SqlClient 委托实现（SQL 查询仿真路由，含活动作业/ASP/子系统/作业日志/消息队列/业务表）。
@@ -179,9 +181,9 @@ class MockSqlClient implements SqlClient {
         if (sql.toUpperCase().startsWith("SELECT COUNT(*)")) {
             return List.of(MockState.row("CNT", (long) rows.size()));
         }
-        java.util.regex.Matcher page = java.util.regex.Pattern.compile(
+        Matcher page = Pattern.compile(
                 "OFFSET\\s+(\\d+)\\s+ROWS\\s+FETCH\\s+NEXT\\s+(\\d+)\\s+ROWS",
-                java.util.regex.Pattern.CASE_INSENSITIVE).matcher(sql);
+                Pattern.CASE_INSENSITIVE).matcher(sql);
         if (page.find()) {
             int offset = Integer.parseInt(page.group(1));
             int limit = Integer.parseInt(page.group(2));
@@ -240,14 +242,14 @@ class MockSqlClient implements SqlClient {
     }
 
     private String extractTableName(String sql) {
-        java.util.regex.Matcher m =
-                java.util.regex.Pattern.compile("TABLE_NAME\\s*=\\s*'([^']+)'",
-                        java.util.regex.Pattern.CASE_INSENSITIVE).matcher(sql);
+        Matcher m =
+                Pattern.compile("TABLE_NAME\\s*=\\s*'([^']+)'",
+                        Pattern.CASE_INSENSITIVE).matcher(sql);
         if (m.find()) {
             return m.group(1).toUpperCase();
         }
-        m = java.util.regex.Pattern.compile("FROM\\s+(?:[A-Z0-9_$#@]+\\.)?([A-Z0-9_$#@]+)\\s*(?:WHERE|OFFSET|ORDER|FETCH)?",
-                java.util.regex.Pattern.CASE_INSENSITIVE).matcher(sql);
+        m = Pattern.compile("FROM\\s+(?:[A-Z0-9_$#@]+\\.)?([A-Z0-9_$#@]+)\\s*(?:WHERE|OFFSET|ORDER|FETCH)?",
+                Pattern.CASE_INSENSITIVE).matcher(sql);
         if (m.find() && !"QSYS2".equalsIgnoreCase(m.group(1))) {
             String t = m.group(1).toUpperCase();
             if (MockState.MOCK_TABLE_TEXT.containsKey(t)) {
@@ -258,8 +260,8 @@ class MockSqlClient implements SqlClient {
     }
 
     private String extractLike(String sql) {
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile(
-                "LIKE\\s*'%([^']+)%'", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(sql);
+        Matcher m = Pattern.compile(
+                "LIKE\\s*'%([^']+)%'", Pattern.CASE_INSENSITIVE).matcher(sql);
         return m.find() ? m.group(1).toUpperCase() : null;
     }
 

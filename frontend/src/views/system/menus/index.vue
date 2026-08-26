@@ -68,7 +68,7 @@
               <el-icon><Plus /></el-icon> {{ $t('menu.manage.addChild') }}
             </el-button>
             <el-button size="small" @click="openEdit(row as SysMenu)">{{ $t('common.edit') }}</el-button>
-            <el-button size="small" type="danger" @click="onDelete(row as SysMenu)">
+            <el-button size="small" type="danger" :loading="removeLoading === row.id" @click="confirmRemove(row)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -92,7 +92,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import * as Icons from '@element-plus/icons-vue'
 import { FontAwesomeIcon, isFaIcon, faIconOr } from '@/icons'
 import AppPagination from '@/components/AppPagination.vue'
@@ -204,21 +205,12 @@ async function onToggleStatus(row: SysMenu, enabled: boolean) {
   await userStore.fetchMenus()
 }
 
-async function onDelete(row: SysMenu) {
-  try {
-    await ElMessageBox.confirm(
-      t('menu.manage.deleteConfirm', { name: row.menuName }),
-      t('common.tip'),
-      { type: 'warning' },
-    )
-    if (row.id) await deleteMenu(row.id)
-    ElMessage.success(t('common.deleteSuccess'))
-    await fetchData()
-    await userStore.fetchMenus()
-  } catch {
-    /* cancelled */
-  }
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: SysMenu) => deleteMenu(row.id!),
+  onSuccess: async () => { await fetchData(); await userStore.fetchMenus() },
+  confirmMessage: 'menu.manage.deleteConfirm',
+  confirmTitle: 'common.tip',
+})
 
 onMounted(fetchData)
 </script>

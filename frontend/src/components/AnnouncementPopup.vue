@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     :title="current?.title || $t('announcement.title')"
-    width="520px"
+    width="var(--rx-dialog-sm)"
     :close-on-click-modal="true"
     @close="markRead"
   >

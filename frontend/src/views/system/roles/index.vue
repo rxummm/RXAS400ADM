@@ -17,6 +17,7 @@
               type="danger"
               plain
               :disabled="selectedIds.length === 0"
+              :loading="removeLoading_onBatchDelete === 'batch'"
               @click="onBatchDelete"
             >
               <el-icon><Delete /></el-icon> {{ $t('common.batchDelete') }}
@@ -88,6 +89,7 @@
                   type="danger"
                   size="small"
                   :disabled="row.roleCode === 'ADMIN'"
+                  :loading="removeLoading_onDelete === row.id"
                   @click.stop="onDelete(row as SysRole)"
                 >
                   {{ $t('common.delete') }}
@@ -217,6 +219,7 @@ function handleSelectionChange(selection: SysRole[]) {
   selectedIds.value = selection.map((r) => r.id as number).filter(Boolean)
 }
 
+const removeLoading_onBatchDelete = ref<string | null>(null)
 async function onBatchDelete() {
   try {
     await ElMessageBox.confirm(
@@ -224,12 +227,17 @@ async function onBatchDelete() {
       t('common.tip'),
       { type: 'warning' },
     )
+  } catch {
+    return
+  }
+  removeLoading_onBatchDelete.value = 'batch'
+  try {
     await batchDeleteRoles(selectedIds.value)
     ElMessage.success(t('common.deleteSuccess'))
     selectedIds.value = []
     void fetchData({}, true)
-  } catch {
-    /* cancelled */
+  } finally {
+    removeLoading_onBatchDelete.value = null
   }
 }
 
@@ -300,16 +308,22 @@ async function onToggleStatus(row: SysRole, enabled: boolean) {
   void fetchData({}, true)
 }
 
+const removeLoading_onDelete = ref<number>()
 async function onDelete(row: SysRole) {
   try {
     await ElMessageBox.confirm(t('role.deleteConfirm', { name: row.roleName }), t('common.tip'), {
       type: 'warning',
     })
+  } catch {
+    return
+  }
+  removeLoading_onDelete.value = row.id
+  try {
     if (row.id) await deleteRole(row.id)
     ElMessage.success(t('common.deleteSuccess'))
     void fetchData({}, true)
-  } catch {
-    /* cancelled */
+  } finally {
+    removeLoading_onDelete.value = undefined
   }
 }
 

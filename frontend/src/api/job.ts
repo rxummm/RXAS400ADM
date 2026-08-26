@@ -42,6 +42,9 @@ export const fetchLckwJobs = (): Promise<JobInfo[]> => request.get('/jobs/lckw')
 export const endJob = (jobName: string, jobUser: string, jobNumber: string): Promise<void> =>
   request.post('/jobs/end', null, { params: { jobName, jobUser, jobNumber } })
 
+export const batchEndJobs = (jobs: { jobName: string; jobUser: string; jobNumber: string }[]): Promise<void> =>
+  request.post('/jobs/batch-end', jobs)
+
 export const holdJob = (jobName: string, jobUser: string, jobNumber: string): Promise<void> =>
   request.post('/jobs/hold', null, { params: { jobName, jobUser, jobNumber } })
 

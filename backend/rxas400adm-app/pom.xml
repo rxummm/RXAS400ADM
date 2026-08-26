@@ -40,10 +40,6 @@
         </dependency>
         <dependency>
             <groupId>com.rxas400adm</groupId>
-            <artifactId>rxas400adm-compile</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.rxas400adm</groupId>
             <artifactId>rxas400adm-monitor</artifactId>
         </dependency>
 

@@ -20,6 +20,16 @@ export interface ActuatorHealth {
   components?: Record<string, ActuatorComponent>
 }
 
+/** 监控指标历史记录 */
+export interface MetricHistory {
+  id: number
+  instanceId: number
+  metricType: string
+  metricName: string
+  metricValue: number
+  collectTime: string
+}
+
 /**
  * 获取 Actuator 健康信息
  */
@@ -32,4 +42,11 @@ export function fetchHealth(): Promise<ActuatorHealth> {
  */
 export function fetchMetricDetail(name: string): Promise<MetricDetail> {
   return request.get(`/actuator/metrics/${name}`)
+}
+
+/**
+ * 获取 AS400 服务器指标历史（用于趋势图）
+ */
+export function fetchMetricsHistory(instanceId: number, limit = 50): Promise<MetricHistory[]> {
+  return request.get(`/monitor/metrics/${instanceId}`, { params: { limit } })
 }

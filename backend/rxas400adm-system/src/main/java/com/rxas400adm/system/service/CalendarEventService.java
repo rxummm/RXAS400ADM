@@ -27,6 +27,10 @@ public class CalendarEventService implements ICalendarEventService {
 
     /** 按月查询（当月第一天 ~ 最后一天） */
     public List<CalendarEvent> month(int year, int month, Long userId) {
+        /* B4：服务入口兜底校验（防绕过控制器 @Validated 的调用方），超界拒绝，避免 YearMonth.of 抛 DateTimeException */
+        if (year < 1970 || year > 9999 || month < 1 || month > 12) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "年份/月份超出范围");
+        }
         YearMonth ym = YearMonth.of(year, month);
         return eventMapper.selectList(baseWrapper(userId)
                 .ge(CalendarEvent::getEventDate, ym.atDay(1))

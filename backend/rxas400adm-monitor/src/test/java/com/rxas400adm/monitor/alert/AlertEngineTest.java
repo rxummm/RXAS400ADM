@@ -1,10 +1,12 @@
 package com.rxas400adm.monitor.alert;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.rxas400adm.common.event.AlertRaisedEvent;
 import com.rxas400adm.monitor.domain.Metric;
 import com.rxas400adm.monitor.mapper.AlertEventMapper;
 import com.rxas400adm.monitor.mapper.AlertRuleMapper;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
@@ -44,9 +46,9 @@ class AlertEngineTest {
         AlertEngine engine = new AlertEngine(ruleMapper, eventMapper, eventPublisher);
         engine.check(metric);
 
-        verify(eventMapper).insert(org.mockito.ArgumentCaptor.forClass(AlertEvent.class).capture());
+        verify(eventMapper).insert(ArgumentCaptor.forClass(AlertEvent.class).capture());
         verify(eventPublisher).publishEvent(
-                org.mockito.ArgumentMatchers.any(com.rxas400adm.common.event.AlertRaisedEvent.class));
+                any(AlertRaisedEvent.class));
     }
 
     @Test
@@ -70,7 +72,7 @@ class AlertEngineTest {
 
         verify(eventMapper, never()).insert(any(AlertEvent.class));
         verify(eventPublisher, never()).publishEvent(
-                org.mockito.ArgumentMatchers.any(com.rxas400adm.common.event.AlertRaisedEvent.class));
+                any(AlertRaisedEvent.class));
     }
 
     @Test
@@ -87,8 +89,8 @@ class AlertEngineTest {
         AlertEngine engine = new AlertEngine(ruleMapper, eventMapper, eventPublisher);
         engine.check(Metric.builder().instanceId(7L).metricName("CPU").metricValue(99.0).build());
 
-        org.mockito.ArgumentCaptor<AlertEvent> captor =
-                org.mockito.ArgumentCaptor.forClass(AlertEvent.class);
+        ArgumentCaptor<AlertEvent> captor =
+                ArgumentCaptor.forClass(AlertEvent.class);
         verify(eventMapper).insert(captor.capture());
         AlertEvent event = captor.getValue();
         assertEquals(7L, event.getInstanceId());
@@ -128,8 +130,8 @@ class AlertEngineTest {
         // t0+301：持续满 300s → 恰好一次 OPEN
         engine.advanceSeconds(241);
         engine.check(hot);
-        org.mockito.ArgumentCaptor<AlertEvent> captor =
-                org.mockito.ArgumentCaptor.forClass(AlertEvent.class);
+        ArgumentCaptor<AlertEvent> captor =
+                ArgumentCaptor.forClass(AlertEvent.class);
         verify(eventMapper, times(1)).insert(captor.capture());
         assertEquals("OPEN", captor.getValue().getStatus());
 
@@ -165,7 +167,7 @@ class AlertEngineTest {
         engine.check(cool);
         verify(eventMapper, never()).insert(any(AlertEvent.class));
         verify(eventPublisher, never()).publishEvent(
-                org.mockito.ArgumentMatchers.any(com.rxas400adm.common.event.AlertRaisedEvent.class));
+                any(AlertRaisedEvent.class));
 
         // 恢复后再次越界：重新计时，t0+11 起的 300s 内仍不告警
         engine.advanceSeconds(1);
@@ -177,16 +179,16 @@ class AlertEngineTest {
         // 满 300s → 恰好一次 OPEN
         engine.advanceSeconds(1);
         engine.check(hot);
-        org.mockito.ArgumentCaptor<AlertEvent> openCaptor =
-                org.mockito.ArgumentCaptor.forClass(AlertEvent.class);
+        ArgumentCaptor<AlertEvent> openCaptor =
+                ArgumentCaptor.forClass(AlertEvent.class);
         verify(eventMapper, times(1)).insert(openCaptor.capture());
         assertEquals("OPEN", openCaptor.getValue().getStatus());
 
         // OPEN 之后的恢复才发 CLOSED（一次）
         engine.advanceSeconds(1);
         engine.check(cool);
-        org.mockito.ArgumentCaptor<AlertEvent> closedCaptor =
-                org.mockito.ArgumentCaptor.forClass(AlertEvent.class);
+        ArgumentCaptor<AlertEvent> closedCaptor =
+                ArgumentCaptor.forClass(AlertEvent.class);
         verify(eventMapper, times(2)).insert(closedCaptor.capture());
         assertEquals("CLOSED", closedCaptor.getAllValues().get(1).getStatus());
 

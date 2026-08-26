@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     :show-close="false"
-    width="560px"
+    width="var(--rx-dialog-sm)"
     top="15vh"
     :close-on-click-modal="true"
     :close-on-press-escape="true"

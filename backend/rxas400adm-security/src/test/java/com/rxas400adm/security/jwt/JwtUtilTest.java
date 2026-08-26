@@ -1,5 +1,6 @@
 package com.rxas400adm.security.jwt;
 
+import com.rxas400adm.security.config.JwtProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -13,10 +14,20 @@ class JwtUtilTest {
 
     private JwtUtil jwtUtil;
 
+    /** R7：JwtUtil 构造改为注入 JwtProperties——测试同步适配，字段取值与原构造实参逐字一致 */
+    private static JwtProperties jwtProperties(long expireMs) {
+        JwtProperties properties = new JwtProperties();
+        properties.setSecret("RXAS400-Enterprise-IBM-i-Operation-Platform-Secret-2026");
+        properties.setExpireMs(expireMs);
+        properties.setRefreshExpireMs(604800000L);
+        properties.setIssuer("rxas400adm");
+        properties.setAudience("rxas400-ui");
+        return properties;
+    }
+
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil(
-                "RXAS400-Enterprise-IBM-i-Operation-Platform-Secret-2026", 3600000L, 604800000L, "rxas400adm", "rxas400-ui");
+        jwtUtil = new JwtUtil(jwtProperties(3600000L));
     }
 
     @Test
@@ -42,8 +53,7 @@ class JwtUtilTest {
 
     @Test
     void expiredToken_shouldBeInvalid() {
-        JwtUtil shortLived = new JwtUtil(
-                "RXAS400-Enterprise-IBM-i-Operation-Platform-Secret-2026", 0L, 604800000L, "rxas400adm", "rxas400-ui");
+        JwtUtil shortLived = new JwtUtil(jwtProperties(0L));
         String token = shortLived.generateToken("admin", List.of());
         assertFalse(shortLived.isValid(token));
     }

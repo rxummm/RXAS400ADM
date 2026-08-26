@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :model-value="visible" :title="$t('layout.shortcuts')" width="480px" @close="close">
+  <el-dialog :model-value="visible" :title="$t('layout.shortcuts')" width="var(--rx-dialog-xs)" :close-on-click-modal="false" @close="close">
     <el-table :data="shortcuts" size="small">
       <el-table-column :label="$t('layout.shortcutKey')" width="160">
         <template #default="{ row }">

@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container page-container--fit">
     <div class="search-bar">
       <el-input
         v-model="sql"
@@ -70,7 +70,7 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'Query' })
 import { computed, onMounted, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { executeSql, fetchQueryHistory, type QueryHistoryRow, type QueryResult } from '@/api/query'

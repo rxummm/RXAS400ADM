@@ -2,6 +2,7 @@ package com.rxas400adm.as400.controller;
 
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.CommandResult;
+import com.rxas400adm.as400.model.MessageDescriptor;
 import com.rxas400adm.as400.model.MessageFileRow;
 import com.rxas400adm.as400.model.MessageRow;
 import com.rxas400adm.common.annotation.OperateLog;
@@ -57,7 +58,7 @@ public class MessageFileController {
     @PreAuthorize("hasAuthority('MSGF_ADD')")
     @OperateLog(module = "消息文件", operation = "新增消息描述")
     public ApiResponse<CommandResult> add(@Valid @RequestBody MessageRequest request) {
-        return ApiResponse.success(clientProvider.current().addMessage(new com.rxas400adm.as400.model.MessageDescriptor(
+        return ApiResponse.success(clientProvider.current().addMessage(new MessageDescriptor(
                 request.getLibrary(), request.getFile(), request.getId(),
                 request.getText(), request.getSecondLevel(), request.getSeverity())));
     }
@@ -67,7 +68,7 @@ public class MessageFileController {
     @PreAuthorize("hasAuthority('MSGF_EDIT')")
     @OperateLog(module = "消息文件", operation = "修改消息描述")
     public ApiResponse<CommandResult> update(@Valid @RequestBody MessageRequest request) {
-        return ApiResponse.success(clientProvider.current().updateMessage(new com.rxas400adm.as400.model.MessageDescriptor(
+        return ApiResponse.success(clientProvider.current().updateMessage(new MessageDescriptor(
                 request.getLibrary(), request.getFile(), request.getId(),
                 request.getText(), request.getSecondLevel(), request.getSeverity())));
     }

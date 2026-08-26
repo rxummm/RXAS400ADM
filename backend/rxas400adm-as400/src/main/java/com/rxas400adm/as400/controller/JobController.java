@@ -1,6 +1,7 @@
 package com.rxas400adm.as400.controller;
 
 import com.rxas400adm.as400.CommandResult;
+import com.rxas400adm.as400.model.JobParam;
 import com.rxas400adm.as400.model.JobQueueRow;
 import com.rxas400adm.as400.model.SpoolRow;
 import com.rxas400adm.as400.service.IJobService;
@@ -9,14 +10,17 @@ import com.rxas400adm.as400.vo.JobLogVO;
 import com.rxas400adm.as400.vo.MsgwMessageVO;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -67,6 +71,17 @@ public class JobController {
                                           @RequestParam String jobUser,
                                           @RequestParam String jobNumber) {
         return ApiResponse.success(jobService.endJob(jobName, jobUser, jobNumber));
+    }
+
+    @PostMapping("/batch-end")
+    @PreAuthorize("hasAuthority('JOB_END')")
+    @OperateLog(module = "Job 中心", operation = "批量 ENDJOB 结束作业")
+    public ApiResponse<List<CommandResult>> batchEnd(@RequestBody @Valid List<JobParam> jobs) {
+        List<CommandResult> results = new ArrayList<>();
+        for (JobParam job : jobs) {
+            results.add(jobService.endJob(job.getJobName(), job.getJobUser(), job.getJobNumber()));
+        }
+        return ApiResponse.success(results);
     }
 
     @PostMapping("/hold")

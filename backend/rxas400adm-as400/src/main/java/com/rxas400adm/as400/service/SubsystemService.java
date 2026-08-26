@@ -3,6 +3,7 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.CommandResult;
 import com.rxas400adm.as400.model.SubsystemRow;
+import com.rxas400adm.common.constants.As400Identifiers;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,12 @@ public class SubsystemService implements ISubsystemService {
 
     private void require(String name) {
         if (!StringUtils.hasText(name)) {
-            throw new BusinessException(ErrorCode.NAME_REQUIRED, "子系统名不能为空");
+            throw new BusinessException(ErrorCode.NAME_REQUIRED, "子系统名称不能为空");
+        }
+        // S5：标识符白名单前移到服务层（原仅 JTOpen 客户端兜底，Mock 路径零校验，防御纵深不足）
+        if (!As400Identifiers.IDENTIFIER.matcher(name.trim().toUpperCase()).matches()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST,
+                    "子系统名称只能是字母/数字/下划线/$/#/@ 等合法标识符: " + name);
         }
     }
 }

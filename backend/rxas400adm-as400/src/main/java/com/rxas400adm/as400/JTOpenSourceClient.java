@@ -73,7 +73,7 @@ class JTOpenSourceClient implements SourceClient {
         String mbr = JTOpenConnectionState.requireIdentifier(member, "成员名");
         String sql = "SELECT MEMBER_DEFINITION FROM QSYS2.SYSMEMBER " +
                 "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND MEMBER_NAME = ?";
-        try (Connection conn = state.dataSource().getConnection();
+        try (Connection conn = state.pooledConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
             ps.setString(1, lib);
@@ -96,7 +96,7 @@ class JTOpenSourceClient implements SourceClient {
     // ---- 工具方法 ----
 
     private List<String> queryStrings(String sql) {
-        try (Connection conn = state.dataSource().getConnection();
+        try (Connection conn = state.pooledConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
             try (ResultSet rs = ps.executeQuery()) {
@@ -116,7 +116,7 @@ class JTOpenSourceClient implements SourceClient {
     }
 
     private List<String> queryStrings(String sql, String... params) {
-        try (Connection conn = state.dataSource().getConnection();
+        try (Connection conn = state.pooledConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
             for (int i = 0; i < params.length; i++) {

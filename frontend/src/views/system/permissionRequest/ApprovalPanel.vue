@@ -141,27 +141,41 @@ const reset = () => {
   load()
 }
 
+const removeLoading_onApprove = ref<number>()
 async function onApprove(row: PermissionRequest) {
   try {
     await ElMessageBox.confirm(t('permissionRequest.approveConfirm'), t('common.tip'), { type: 'warning' })
+  } catch {
+    return
+  }
+  removeLoading_onApprove.value = row.id
+  try {
     if (row.id) await approvePermissionRequest(row.id)
     ElMessage.success(t('common.updateSuccess'))
     load()
     loadPendingCount()
-  } catch {
-    /* cancelled */
+  } finally {
+    removeLoading_onApprove.value = undefined
   }
 }
 
+const removeLoading_onReject = ref<number>()
 async function onReject(row: PermissionRequest) {
+  let comment: string | undefined
   try {
     const { value } = await ElMessageBox.prompt(t('permissionRequest.comment'), t('permissionRequest.reject'), { type: 'warning' })
-    if (row.id) await rejectPermissionRequest(row.id, value || undefined)
+    comment = value || undefined
+  } catch {
+    return
+  }
+  removeLoading_onReject.value = row.id
+  try {
+    if (row.id) await rejectPermissionRequest(row.id, comment)
     ElMessage.success(t('common.updateSuccess'))
     load()
     loadPendingCount()
-  } catch {
-    /* cancelled */
+  } finally {
+    removeLoading_onReject.value = undefined
   }
 }
 

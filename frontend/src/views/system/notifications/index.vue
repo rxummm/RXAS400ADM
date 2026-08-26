@@ -5,7 +5,7 @@
         {{ $t('notification.title') }}：{{ $t('notification.unread', { count: unreadCount }) }}
       </el-checkbox>
       <div class="flex-1" />
-      <el-button v-if="canDelete" type="danger" plain :disabled="!selectedIds.length" @click="onBatchDelete">
+      <el-button v-if="canDelete" type="danger" plain :disabled="!selectedIds.length" :loading="removeLoading_onBatchDelete === 'batch'" @click="onBatchDelete">
         <el-icon><Delete /></el-icon> {{ $t('common.batchDelete') }} ({{ selectedIds.length }})
       </el-button>
       <el-button type="primary" plain @click="markAllRead">
@@ -43,7 +43,7 @@
             <el-button v-if="row.readFlag === 0" link type="primary" size="small" @click="onRead(row as Notification)">
               {{ $t('notification.markRead') }}
             </el-button>
-            <el-button v-if="canDelete" link type="danger" size="small" @click="onDelete(row as Notification)">
+            <el-button v-if="canDelete" link type="danger" size="small" :loading="removeLoading_onDelete === row.id" @click="onDelete(row as Notification)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -140,29 +140,41 @@ const onSelectionChange = (selection: Notification[]) => {
   selectedIds.value = selection.map((s) => s.id as number)
 }
 
+const removeLoading_onDelete = ref<number>()
 async function onDelete(row: Notification) {
   try {
     await ElMessageBox.confirm(t('notification.deleteConfirm'), t('common.tip'), { type: 'warning' })
+  } catch {
+    return
+  }
+  removeLoading_onDelete.value = row.id
+  try {
     if (row.id) await deleteNotification(row.id)
     ElMessage.success(t('common.deleteSuccess'))
     refreshUnread()
     load()
-  } catch {
-    /* cancelled */
+  } finally {
+    removeLoading_onDelete.value = undefined
   }
 }
 
+const removeLoading_onBatchDelete = ref<string | null>(null)
 async function onBatchDelete() {
   if (!selectedIds.value.length) return
   try {
     await ElMessageBox.confirm(t('notification.batchDeleteConfirm', { count: selectedIds.value.length }), t('common.tip'), { type: 'warning' })
+  } catch {
+    return
+  }
+  removeLoading_onBatchDelete.value = 'batch'
+  try {
     await deleteNotifications(selectedIds.value)
     ElMessage.success(t('common.deleteSuccess'))
     selectedIds.value = []
     refreshUnread()
     load()
-  } catch {
-    /* cancelled */
+  } finally {
+    removeLoading_onBatchDelete.value = null
   }
 }
 

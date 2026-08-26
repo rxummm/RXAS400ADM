@@ -6,11 +6,12 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.security.config.LoginSecurityProperties;
+import com.rxas400adm.system.service.SysConfigService;
 import com.rxas400adm.security.entity.LoginAttempt;
 import com.rxas400adm.security.mapper.LoginAttemptMapper;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
@@ -31,18 +32,72 @@ public class LoginAttemptService implements ILoginAttemptService {
     /** 平台登录的 server_id 占位 */
     static final long PLATFORM_SERVER = 0L;
 
-    /** P2-4：失败锁定阈值与时长可配置（rxas400.security.login.*），默认 5 次/15 分钟 */
-    @Value("${rxas400.security.login.max-failed:5}")
-    private int maxFailed = 5;
+    /** 【P2】rx_config 键与刷新 TTL（系统配置页可维护） */
+    static final long LOGIN_CONFIG_TTL_MS = 60_000L;
+    static final String KEY_MAX_FAILED = "security.login.max-failed";
+    static final String KEY_LOCK_MINUTES = "security.login.lock-minutes";
+    static final String KEY_MAX_IP_PER_MINUTE = "security.login.max-ip-per-minute";
 
-    @Value("${rxas400.security.login.lock-minutes:15}")
-    private long lockMinutes = 15;
+    // R7：rxas400.security.login.* 三处 @Value（max-failed/lock-minutes/max-ip-per-minute）收敛为单点绑定
+    private final LoginSecurityProperties loginSecurityProperties;
 
-    /** P3-4：IP 每分钟登录尝试上限可配置（rxas400.security.login.max-ip-per-minute），默认 20 */
-    @Value("${rxas400.security.login.max-ip-per-minute:20}")
-    private int maxIpPerMinute = 20;
+    /** 【第六章·P2】SysConfigService 运行时覆盖（security.login.*），DB 异常沿用 yml 缺省 */
+    private final SysConfigService sysConfigService;
 
     static final Duration IP_WINDOW = Duration.ofMinutes(1);
+
+    /** 【P2】三阈值 60s TTL 快照（volatile + 时间戳，避免登录热路径频繁打库） */
+    private volatile LoginRuntime loginRuntime;
+    private volatile long loginRuntimeLoadedAtMs;
+
+    /** 三阈值不可变快照（lockMinutes 对齐 Properties 的 long 类型） */
+    private record LoginRuntime(int maxFailed, long lockMinutes, int maxIpPerMinute) {
+    }
+
+    private synchronized LoginRuntime loginRuntime() {
+        long now = System.currentTimeMillis();
+        LoginRuntime rt = loginRuntime;
+        if (rt != null && now - loginRuntimeLoadedAtMs < LOGIN_CONFIG_TTL_MS) {
+            return rt;
+        }
+        try {
+            LoginRuntime fresh = new LoginRuntime(
+                    intConfig(KEY_MAX_FAILED, rt != null ? rt.maxFailed() : loginSecurityProperties.getMaxFailed()),
+                    longConfig(KEY_LOCK_MINUTES, rt != null ? rt.lockMinutes() : loginSecurityProperties.getLockMinutes()),
+                    intConfig(KEY_MAX_IP_PER_MINUTE,
+                            rt != null ? rt.maxIpPerMinute() : loginSecurityProperties.getMaxIpPerMinute()));
+            loginRuntime = fresh;
+            loginRuntimeLoadedAtMs = now;
+            return fresh;
+        } catch (Exception e) {
+            LoginRuntime fallback = rt != null ? rt
+                    : new LoginRuntime(loginSecurityProperties.getMaxFailed(),
+                            loginSecurityProperties.getLockMinutes(), loginSecurityProperties.getMaxIpPerMinute());
+            loginRuntime = fallback;
+            loginRuntimeLoadedAtMs = now;
+            log.warn("[登录安全] 读取 security.login.* 失败，沿用上次阈值: {}", e.getMessage());
+            return fallback;
+        }
+    }
+
+    private int intConfig(String key, int defaultValue) {
+        try {
+            return Math.max(1, Integer.parseInt(sysConfigService.get(key, String.valueOf(defaultValue)).trim()));
+        } catch (NumberFormatException e) {
+            log.warn("[登录安全] 配置 {} 非法整数，使用缺省 {}", key, defaultValue);
+            return defaultValue;
+        }
+    }
+
+    /** 【P2】lock-minutes 为 long 型阈值（对齐 Properties） */
+    private long longConfig(String key, long defaultValue) {
+        try {
+            return Math.max(1, Long.parseLong(sysConfigService.get(key, String.valueOf(defaultValue)).trim()));
+        } catch (NumberFormatException e) {
+            log.warn("[登录安全] 配置 {} 非法数值，使用缺省 {}", key, defaultValue);
+            return defaultValue;
+        }
+    }
 
     private final LoginAttemptMapper attemptMapper;
 
@@ -92,7 +147,7 @@ public class LoginAttemptService implements ILoginAttemptService {
         LoginAttempt updated = find(username, server);
         if (shouldLock(updated)) {
             LoginAttempt lock = new LoginAttempt();
-            lock.setLockedUntil(LocalDateTime.now().plus(Duration.ofMinutes(lockMinutes)));
+            lock.setLockedUntil(LocalDateTime.now().plus(Duration.ofMinutes(loginRuntime().lockMinutes()))); // P2：阈值运行时可调
             attemptMapper.update(lock, new LambdaUpdateWrapper<LoginAttempt>()
                     .eq(LoginAttempt::getUsername, username)
                     .eq(LoginAttempt::getServerId, server)
@@ -125,7 +180,7 @@ public class LoginAttemptService implements ILoginAttemptService {
     /** 检查并累计 IP 登录频率（超限抛异常） */
     public void checkIpRate(String ip) {
         AtomicInteger counter = ipCache.get(ip, k -> new AtomicInteger(0));
-        if (counter.incrementAndGet() > maxIpPerMinute) {
+        if (counter.incrementAndGet() > loginRuntime().maxIpPerMinute()) { // P2：阈值运行时可调
             throw new BusinessException(ErrorCode.LOGIN_TOO_MANY, "登录尝试过于频繁，请稍后再试");
         }
     }
@@ -133,7 +188,7 @@ public class LoginAttemptService implements ILoginAttemptService {
     /** 达到失败阈值且尚未锁定（中-9：四段 && 判空/阈值链收敛为谓词，锁定语义单点维护） */
     private boolean shouldLock(LoginAttempt attempt) {
         return attempt != null && attempt.getFailedCount() != null
-                && attempt.getFailedCount() >= maxFailed && attempt.getLockedUntil() == null;
+                && attempt.getFailedCount() >= loginRuntime().maxFailed() && attempt.getLockedUntil() == null; // P2：阈值运行时可调
     }
 
     private LoginAttempt find(String username, Long serverId) {

@@ -1,5 +1,7 @@
 package com.rxas400adm.security.filter;
 
+import com.rxas400adm.security.config.JwtProperties;
+import com.rxas400adm.security.config.ProxyProperties;
 import com.rxas400adm.security.jwt.JwtUtil;
 import com.rxas400adm.security.service.PermissionService;
 import com.rxas400adm.security.service.TokenBlacklistService;
@@ -9,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockFilterChain;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
@@ -46,11 +47,15 @@ class JwtAuthenticationFilterTest {
 
     private JwtAuthenticationFilter filter;
 
+    // R7：@Value 字段移除后，开关经 Properties 实例注入构造器（默认值与原 @Value 默认逐字一致）
+    private final JwtProperties jwtProperties = new JwtProperties();
+    private final ProxyProperties proxyProperties = new ProxyProperties();
+
     @BeforeEach
     void setUp() {
-        filter = new JwtAuthenticationFilter(jwtUtil, permissionService, tokenBlacklistService);
-        // P2-1：黑名单检查默认开启（@Value 注入在单测中不生效，手动注入）
-        ReflectionTestUtils.setField(filter, "blacklistEnabled", true);
+        // P2-1：黑名单检查默认开启（JwtProperties.blacklistEnabled 默认即 true）
+        filter = new JwtAuthenticationFilter(jwtUtil, permissionService, tokenBlacklistService,
+                jwtProperties, proxyProperties);
         SecurityContextHolder.clearContext();
     }
 
@@ -129,7 +134,7 @@ class JwtAuthenticationFilterTest {
     @Test
     void dbException_shouldFallBackToTokenPermissions_whenEnabled() throws Exception {
         // 显式开启 rxas400.security.permission-fallback-on-error=true 时才回退（可用性优先场景）
-        org.springframework.test.util.ReflectionTestUtils.setField(filter, "permissionFallbackOnError", true);
+        proxyProperties.setPermissionFallbackOnError(true);
         when(jwtUtil.isValid("good")).thenReturn(true);
         when(jwtUtil.getUsername("good")).thenReturn("admin");
         when(permissionService.loadPermissions("admin")).thenThrow(new RuntimeException("db down"));

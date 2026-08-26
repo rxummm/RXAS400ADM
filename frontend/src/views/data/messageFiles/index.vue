@@ -63,7 +63,7 @@
             <el-button v-has-perm="'MSGF_EDIT'" size="small" type="primary" plain :icon="Edit" @click="openEditMsg(row as MessageFileRow)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button v-has-perm="'MSGF_DELETE'" size="small" type="danger" plain :icon="Delete" @click="handleDelete(row as MessageFileRow)">
+            <el-button v-has-perm="'MSGF_DELETE'" size="small" type="danger" plain :icon="Delete" :loading="removeLoading === row.MESSAGE_ID" @click="confirmRemove(row)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -73,8 +73,8 @@
       <el-empty v-if="!loading && !filteredRows.length" :description="$t('messageFiles.empty')" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="520px">
-      <el-form :model="form" label-width="110px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+      <el-form :model="form" label-width="var(--rx-form-label-width-wide)">
         <el-form-item :label="$t('messageFiles.library')">
           <el-input v-model="form.library" :disabled="isEdit" :placeholder="$t('messageFiles.library')" />
         </el-form-item>
@@ -108,7 +108,8 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'MessageFiles' })
 import { onMounted, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { Delete, Edit, Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
@@ -241,14 +242,13 @@ const handleSave = () => {
   void onSubmit()
 }
 
-const handleDelete = async (row: MessageFileRow) => {
-  await ElMessageBox.confirm(t('messageFiles.deleteConfirm', { id: row.MESSAGE_ID }), t('common.warning'), {
-    type: 'warning',
-  })
-  await deleteMessage(library.value.trim(), file.value!.trim(), row.MESSAGE_ID)
-  ElMessage.success(t('common.deleted'))
-  void fetchData({}, true)
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: MessageFileRow) => deleteMessage(library.value.trim(), file.value!.trim(), row.MESSAGE_ID),
+  onSuccess: () => fetchData({}, true),
+  confirmMessage: 'messageFiles.deleteConfirm',
+  confirmTitle: 'common.warning',
+  idField: 'MESSAGE_ID',
+})
 
 onMounted(loadFiles)
 </script>

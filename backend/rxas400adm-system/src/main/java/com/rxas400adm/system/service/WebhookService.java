@@ -8,6 +8,7 @@ import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.notify.WebhookNotifier;
 import com.rxas400adm.common.response.PageResult;
+import com.rxas400adm.common.security.SecretMasker;
 import com.rxas400adm.common.security.SsrfGuard;
 import com.rxas400adm.system.dto.WebhookConfigDTO;
 import com.rxas400adm.system.entity.WebhookConfig;
@@ -121,7 +122,7 @@ public class WebhookService implements IWebhookService {
     /** P2-6：响应脱敏——secret 非空时替换为掩码占位，不回显明文 */
     private WebhookConfig sanitize(WebhookConfig config) {
         if (config != null && config.getSecret() != null && !config.getSecret().isBlank()) {
-            config.setSecret(com.rxas400adm.common.security.SecretMasker.MASK);
+            config.setSecret(SecretMasker.MASK);
         }
         return config;
     }

@@ -5,9 +5,11 @@ import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
+import com.rxas400adm.common.util.SecurityUtils;
 import com.rxas400adm.system.dto.DocDTO;
 import com.rxas400adm.system.dto.DocTemplateDTO;
 import com.rxas400adm.system.entity.Doc;
+import com.rxas400adm.system.service.DocVersionService;
 import com.rxas400adm.system.service.IDocService;
 import com.rxas400adm.system.vo.DocFileVO;
 import com.rxas400adm.system.vo.DocTemplateVO;
@@ -30,7 +32,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 文档管理（3.9）：模板 / 文档 CRUD + 审批流（提交/通过/驳回）+ 版本历史。
@@ -43,6 +47,7 @@ import java.util.List;
 public class DocController {
 
     private final IDocService docService;
+    private final DocVersionService docVersionService;
 
     /* ---------------- 模板 ---------------- */
 
@@ -164,6 +169,19 @@ public class DocController {
         return ApiResponse.success(docService.versions(id));
     }
 
+    /**
+     * P12 版本正文只读懒加载：版本列表已瘦身不含 content，正文按版本 id 单点拉取。
+     * 返回 { content }（content 可能为 null，故用 HashMap 而非 Map.of）。
+     */
+    @GetMapping("/docs/versions/{versionId}/content")
+    @PreAuthorize("hasAuthority('DOC_VIEW')")
+    public ApiResponse<Map<String, String>> versionContent(@PathVariable Long versionId) {
+        String content = docVersionService.versionContent(versionId);
+        Map<String, String> body = new HashMap<>();
+        body.put("content", content);
+        return ApiResponse.success(body);
+    }
+
     /** 从指定版本快照恢复为当前编辑态（DOC_MANAGE） */
     @PostMapping("/docs/{id}/rollback/{version}")
     @PreAuthorize("hasAuthority('DOC_MANAGE')")
@@ -191,6 +209,6 @@ public class DocController {
     }
 
     private String currentUser() {
-        return com.rxas400adm.common.util.SecurityUtils.currentUsername();
+        return SecurityUtils.currentUsername();
     }
 }

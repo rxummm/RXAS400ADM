@@ -1,19 +1,24 @@
 package com.rxas400adm.as400.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.CommandResult;
 import com.rxas400adm.as400.dto.CommandScriptRequest;
 import com.rxas400adm.as400.entity.CommandScript;
+import com.rxas400adm.common.constants.ExecutionStatus;
 import com.rxas400adm.as400.mapper.CommandScriptMapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.security.DangerousClCommandValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import org.springframework.util.StringUtils;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,6 +33,14 @@ public class CommandScriptService implements ICommandScriptService {
 
     private final CommandScriptMapper scriptMapper;
     private final AS400ClientProvider clientProvider;
+    /** S4：高危 CL 动词黑名单校验（执行期兜底） */
+    private final DangerousClCommandValidator clValidator;
+
+    /** P16b：tags 聚合缓存——tags() 为内存聚合且每次请求全量拉脚本表，用 60s TTL 缓存削峰，写操作失效 */
+    private final Cache<String, List<String>> tagsCache = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofSeconds(60))
+            .maximumSize(1)
+            .build();
 
     public List<CommandScript> list(Boolean favorite, String tag) {
         LambdaQueryWrapper<CommandScript> wrapper = new LambdaQueryWrapper<>();
@@ -41,8 +54,13 @@ public class CommandScriptService implements ICommandScriptService {
         return scriptMapper.selectList(wrapper);
     }
 
-    /** 全部标签（去重） */
+    /** 全部标签（去重；P16b：60s 缓存，写操作失效） */
     public List<String> tags() {
+        return tagsCache.get("tags", key -> loadTagsFromDb());
+    }
+
+    /** P16b：tags 实际聚合逻辑（原实现，全量拉脚本表后内存拆分去重） */
+    private List<String> loadTagsFromDb() {
         Set<String> result = new LinkedHashSet<>();
         for (CommandScript script : scriptMapper.selectList(null)) {
             if (StringUtils.hasText(script.getTags())) {
@@ -66,6 +84,7 @@ public class CommandScriptService implements ICommandScriptService {
         script.setCreatedTime(LocalDateTime.now());
         script.setUpdatedTime(LocalDateTime.now());
         scriptMapper.insert(script);
+        tagsCache.invalidate("tags"); // P16b：写操作失效 tags 缓存
         return script;
     }
 
@@ -75,6 +94,7 @@ public class CommandScriptService implements ICommandScriptService {
         apply(script, request);
         script.setUpdatedTime(LocalDateTime.now());
         scriptMapper.updateById(script);
+        tagsCache.invalidate("tags"); // P16b：写操作失效 tags 缓存
         return script;
     }
 
@@ -82,6 +102,7 @@ public class CommandScriptService implements ICommandScriptService {
     public void delete(Long id) {
         require(id);
         scriptMapper.deleteById(id);
+        tagsCache.invalidate("tags"); // P16b：写操作失效 tags 缓存
     }
 
     
@@ -99,13 +120,15 @@ public class CommandScriptService implements ICommandScriptService {
         if (serverId == null) {
             throw new BusinessException(ErrorCode.AS400_SERVER_REQUIRED, "请选择执行服务器");
         }
+        // S4：执行前高危动词兜底（创建侧无黑名单校验，此处防历史脏数据/直改库绕过）
+        clValidator.assertAllowed(script.getCommand());
         AS400Client client = clientProvider.forServer(serverId);
         CommandResult result = client.execute(script.getCommand());
         script.setRunCount((script.getRunCount() == null ? 0 : script.getRunCount()) + 1);
         script.setLastRunTime(LocalDateTime.now());
         script.setLastResult(result.message());
         // M1：结构化状态落库，供 ExecutionService/ReportService 直接读，不解析中文字串
-        script.setLastRunStatus(result.success() ? "SUCCESS" : "FAILED");
+        script.setLastRunStatus(result.success() ? ExecutionStatus.SUCCESS : ExecutionStatus.FAILED);
         script.setUpdatedTime(LocalDateTime.now());
         scriptMapper.updateById(script);
         return result;

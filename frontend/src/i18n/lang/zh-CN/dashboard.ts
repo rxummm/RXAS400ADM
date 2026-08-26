@@ -10,6 +10,8 @@ export default {
     production: '生产系统',
     alerts: '监控告警',
     overview: 'IBM i 系统概览',
+    favoriteScripts: '常用命令',
+    noFavoriteScripts: '暂无收藏的命令',
     name: '系统',
     host: '主机',
     environment: '环境',

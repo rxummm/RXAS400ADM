@@ -60,7 +60,7 @@
             <el-button link type="primary" size="small" @click="openEdit(row as Region)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button link type="danger" size="small" @click="onDelete(row as Region)">
+            <el-button link type="danger" size="small" :loading="removeLoading === row.id" @click="confirmRemove(row)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -70,8 +70,8 @@
       <AppPagination :total="rootRegions.length" v-model:current="current" v-model:size="size" @change="() => {}" @size-change="onSizeChange" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="520px" :close-on-click-modal="false">
-      <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('tool.region.code')" prop="code">
           <el-input v-model="form.code" :disabled="isEdit" maxlength="12" />
         </el-form-item>
@@ -113,7 +113,8 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { fetchRegionChildren, createRegion, updateRegion, deleteRegion, type Region } from '@/api/region'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
@@ -229,20 +230,12 @@ function openEdit(row: Region) {
   dialogVisible.value = true
 }
 
-async function onDelete(row: Region) {
-  try {
-    await ElMessageBox.confirm(
-      t('tool.region.deleteConfirm', { name: row.name }),
-      t('common.tip'),
-      { type: 'warning' },
-    )
-    if (row.id) await deleteRegion(row.id)
-    ElMessage.success(t('common.deleteSuccess'))
-    loadRoot()
-  } catch {
-    /* cancelled */
-  }
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: Region) => deleteRegion(row.id!),
+  onSuccess: loadRoot,
+  confirmMessage: 'tool.region.deleteConfirm',
+  confirmTitle: 'common.tip',
+})
 
 async function onSubmit() {
   const valid = await formRef.value?.validate().catch(() => false)

@@ -30,7 +30,7 @@
                 <el-button v-has-perm="'WEBHOOK_MANAGE'" link type="primary" size="small" @click="openEdit(row)">
                   {{ $t('common.edit') }}
                 </el-button>
-                <el-button v-has-perm="'WEBHOOK_MANAGE'" link type="danger" size="small" @click="onDelete(row as WebhookConfig)">
+                <el-button v-has-perm="'WEBHOOK_MANAGE'" link type="danger" size="small" :loading="removeLoading_onDelete === row.id" @click="onDelete(row as WebhookConfig)">
                   {{ $t('common.delete') }}
                 </el-button>
               </template>
@@ -89,8 +89,8 @@
       </el-tab-pane>
     </el-tabs>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px" :close-on-click-modal="false">
-      <el-form ref="formRef" :model="form" :rules="formRules" label-width="90px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('webhooks.name')" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
@@ -214,14 +214,20 @@ async function onToggle(row: WebhookConfig, val: boolean) {
   }
 }
 
+const removeLoading_onDelete = ref<number>()
 async function onDelete(row: WebhookConfig) {
   try {
     await ElMessageBox.confirm(t('webhooks.deleteConfirm', { name: row.name }), t('common.tip'), { type: 'warning' })
+  } catch {
+    return
+  }
+  removeLoading_onDelete.value = row.id
+  try {
     if (row.id) await deleteWebhook(row.id)
     ElMessage.success(t('common.deleteSuccess'))
     loadWebhooks()
-  } catch {
-    /* cancelled */
+  } finally {
+    removeLoading_onDelete.value = undefined
   }
 }
 
@@ -239,14 +245,20 @@ async function onTest(row: WebhookConfig) {
   }
 }
 
+const removeLoading_onCleanLogs = ref<string | null>(null)
 async function onCleanLogs() {
   try {
     await ElMessageBox.confirm(t('webhooks.clearLogsConfirm'), t('common.tip'), { type: 'warning' })
+  } catch {
+    return
+  }
+  removeLoading_onCleanLogs.value = 'logs'
+  try {
     await cleanWebhookLogs(30)
     ElMessage.success(t('common.deleteSuccess'))
     loadLogs()
-  } catch {
-    /* cancelled */
+  } finally {
+    removeLoading_onCleanLogs.value = null
   }
 }
 

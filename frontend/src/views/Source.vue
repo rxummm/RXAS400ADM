@@ -1,5 +1,5 @@
 <template>
-  <el-card shadow="never">
+  <el-card v-loading="loading" shadow="never">
     <el-row :gutter="16">
       <el-col :xs="24" :sm="8" :md="6">
         <el-tree
@@ -11,20 +11,6 @@
         />
       </el-col>
       <el-col :xs="24" :sm="16" :md="18">
-        <el-input
-          v-model="compileForm.member"
-          :placeholder="$t('source.empty')"
-          readonly
-          class="mb12"
-        />
-        <el-button
-          type="primary"
-          :disabled="!compileForm.member"
-          :loading="compiling"
-          @click="compile"
-        >
-          {{ $t('source.compile') }}
-        </el-button>
         <pre v-if="content" class="code">{{ content }}</pre>
         <el-empty v-else :description="$t('source.empty')" />
       </el-col>
@@ -37,11 +23,8 @@
 // keep-alive 缓存标识，需与路由 name 一致
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'SourceManager' })
-import { onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useI18n } from 'vue-i18n'
+import { onMounted, ref } from 'vue'
 import { fetchLibraries, fetchMember, fetchMembers, fetchSourceFiles } from '@/api/source'
-import { compileMember } from '@/api/compile'
 
 interface TreeNode {
   key: string
@@ -50,61 +33,46 @@ interface TreeNode {
   children?: TreeNode[]
 }
 
-const { t } = useI18n()
 const tree = ref<TreeNode[]>([])
 const content = ref('')
-const compiling = ref(false)
-
-const compileForm = reactive({ member: '' })
+const loading = ref(false)
 
 const onNodeClick = async (node: TreeNode) => {
   if (node.type === 'member') {
     const parts = node.key.split('/')
     const data: Record<string, unknown> = await fetchMember(parts[0], parts[1], parts[2])
     content.value = String(data.content ?? '')
-    compileForm.member = parts[2]
-  }
-}
-
-const compile = async () => {
-  compiling.value = true
-  try {
-    const target = tree.value
-      .flatMap((l) => (l.children || []).map((f) => ({ library: l.label, file: f })))
-      .flatMap(({ library, file }) =>
-        (file.children || []).map((m) => ({ library, sourceFile: file.label, member: m.label })),
-      )
-      .find((t) => t.member === compileForm.member)
-    if (!target) return
-    const record: Record<string, unknown> = await compileMember({ ...target, command: 'CRTBNDRPG' })
-    ElMessage.success(
-      record.status === 'SUCCESS' ? t('source.compileSuccess') : `${t('source.compileFailed')}: ${record.message}`,
-    )
-  } finally {
-    compiling.value = false
   }
 }
 
 const load = async () => {
-  const libraries = (await fetchLibraries()) as string[]
-  tree.value = []
-  for (const lib of libraries) {
-    const files = (await fetchSourceFiles(lib)) as string[]
-    const fileNodes: TreeNode[] = []
-    for (const file of files) {
-      const members = (await fetchMembers(lib, file)) as string[]
-      fileNodes.push({
-        key: `${lib}/${file}`,
-        label: file,
-        type: 'file',
-        children: members.map((member) => ({
-          key: `${lib}/${file}/${member}`,
-          label: member,
-          type: 'member',
-        })),
-      })
-    }
-    tree.value.push({ key: lib, label: lib, type: 'library', children: fileNodes })
+  loading.value = true
+  try {
+    const libraries = (await fetchLibraries()) as string[]
+    // 库级并行；每库内文件级再并行（Promise.all 保序，树结构与串行版一致）
+    tree.value = await Promise.all(
+      libraries.map(async (lib) => {
+        const files = (await fetchSourceFiles(lib)) as string[]
+        const fileNodes: TreeNode[] = await Promise.all(
+          files.map(async (file) => {
+            const members = (await fetchMembers(lib, file)) as string[]
+            return {
+              key: `${lib}/${file}`,
+              label: file,
+              type: 'file' as const,
+              children: members.map((member) => ({
+                key: `${lib}/${file}/${member}`,
+                label: member,
+                type: 'member' as const,
+              })),
+            }
+          }),
+        )
+        return { key: lib, label: lib, type: 'library' as const, children: fileNodes }
+      }),
+    )
+  } finally {
+    loading.value = false
   }
 }
 

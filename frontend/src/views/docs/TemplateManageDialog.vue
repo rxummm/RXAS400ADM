@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" :title="$t('docs.templateManage')" width="760px">
+  <el-dialog v-model="visible" :title="$t('docs.templateManage')" width="var(--rx-dialog-lg)" :close-on-click-modal="false">
     <div class="toolbar">
       <el-input v-model="form.name" :placeholder="$t('docs.tplName')" size="small" class="w-160" />
       <el-input v-model="form.category" :placeholder="$t('docs.tplCategory')" size="small" class="w-120" />
@@ -20,14 +20,14 @@
       <el-table-column :label="$t('common.operation')" width="130">
         <template #default="{ row }">
           <el-button size="small" link type="primary" @click="openEdit(row as TemplateItem)">{{ $t('common.edit') }}</el-button>
-          <el-button size="small" link type="danger" @click="remove(row as TemplateItem)">{{ $t('common.delete') }}</el-button>
+          <el-button size="small" link type="danger" :loading="removeLoading === row.id" @click="confirmRemove(row)">{{ $t('common.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 新建/编辑模板（含内容编辑器） -->
-    <el-dialog v-model="editVisible" :title="editing ? $t('docs.editTemplate') : $t('docs.addTemplate')" width="680px" append-to-body>
-      <el-form label-width="90px">
+    <el-dialog v-model="editVisible" :title="editing ? $t('docs.editTemplate') : $t('docs.addTemplate')" width="var(--rx-dialog-lg)" append-to-body :close-on-click-modal="false">
+      <el-form label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('docs.tplName')" required>
           <el-input v-model="editForm.name" />
         </el-form-item>
@@ -55,7 +55,8 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import {
   createTemplate, deleteTemplate, listTemplates, updateTemplate,
   type DocType, type TemplateItem,
@@ -144,10 +145,9 @@ const save = async () => {
   emit('changed')
 }
 
-const remove = async (row: TemplateItem) => {
-  await ElMessageBox.confirm(t('docs.deleteTplConfirm'), t('common.confirm'), { type: 'warning' })
-  await deleteTemplate(row.id)
-  await load()
-  emit('changed')
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: TemplateItem) => deleteTemplate(row.id),
+  onSuccess: async () => { await load(); emit('changed') },
+  confirmMessage: 'docs.deleteTplConfirm',
+})
 </script>

@@ -31,7 +31,7 @@
         <el-table-column :label="$t('common.operation')" width="130" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openItemDialog(row as DictItem)">{{ $t('common.edit') }}</el-button>
-            <el-button link type="danger" size="small" @click="removeItem(row as DictItem)">{{ $t('common.delete') }}</el-button>
+            <el-button link type="danger" size="small" :loading="removeLoading === row.id" @click="confirmRemove(row)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -39,8 +39,8 @@
       <el-empty v-if="!loading && items.length === 0" :description="$t('dict.emptyItems')" :image-size="60" />
     </div>
 
-    <el-dialog v-model="itemDialog" :title="itemForm.id ? $t('common.edit') : $t('dict.addItem')" width="460px">
-      <el-form :model="itemForm" label-width="80px">
+    <el-dialog v-model="itemDialog" :title="itemForm.id ? $t('common.edit') : $t('dict.addItem')" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
+      <el-form :model="itemForm" label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('dict.itemKey')" required>
           <el-input v-model="itemForm.itemKey" :disabled="!!itemForm.id" />
         </el-form-item>
@@ -64,7 +64,8 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import {
@@ -135,16 +136,12 @@ const saveItem = async () => {
   }
 }
 
-const removeItem = async (row: DictItem) => {
-  try {
-    await ElMessageBox.confirm(t('dict.deleteItemConfirm', { name: row.itemKey }), t('common.tip'), { type: 'warning' })
-    if (row.id) await deleteDictItem(row.id)
-    ElMessage.success(t('common.deleteSuccess'))
-    if (props.currentType) await loadItems(props.currentType.code)
-  } catch {
-    /* cancelled */
-  }
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: DictItem) => deleteDictItem(row.id!),
+  onSuccess: () => { if (props.currentType) loadItems(props.currentType.code) },
+  confirmMessage: 'dict.deleteItemConfirm',
+  confirmTitle: 'common.tip',
+})
 
 defineExpose({ loadItems })
 </script>

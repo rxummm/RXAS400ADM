@@ -37,7 +37,7 @@
             <el-button link type="primary" size="small" @click="openEdit(row as I18nEntry)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button link type="danger" size="small" @click="onDelete(row as I18nEntry)">
+            <el-button link type="danger" size="small" :loading="removeLoading === row.i18nKey" @click="confirmRemove(row)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -48,8 +48,8 @@
         @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="520px" :close-on-click-modal="false">
-      <el-form ref="formRef" :model="form" :rules="formRules" label-width="80px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('sysI18n.lang')" prop="lang">
           <el-select v-model="form.lang" :disabled="isEdit" class="w-full">
             <el-option :label="$t('sysI18n.langZh')" value="zh-CN" />
@@ -75,7 +75,7 @@
 import { ref } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import {
   listI18nEntries,
   saveI18nEntry,
@@ -138,14 +138,11 @@ const {
   i18nPrefix: 'sysI18n',
 })
 
-async function onDelete(row: I18nEntry) {
-  try {
-    await ElMessageBox.confirm(t('sysI18n.deleteConfirm', { key: row.i18nKey, lang: row.lang }), t('common.tip'), { type: 'warning' })
-    await deleteI18nEntry(row.lang, row.i18nKey)
-    ElMessage.success(t('common.deleteSuccess'))
-    handleRefresh()
-  } catch {
-    /* cancelled */
-  }
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: I18nEntry) => deleteI18nEntry(row.lang, row.i18nKey),
+  onSuccess: handleRefresh,
+  confirmMessage: 'sysI18n.deleteConfirm',
+  confirmTitle: 'common.tip',
+  idField: 'i18nKey',
+})
 </script>

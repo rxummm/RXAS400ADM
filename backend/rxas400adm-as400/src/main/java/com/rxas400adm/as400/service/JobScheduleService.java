@@ -1,6 +1,7 @@
 package com.rxas400adm.as400.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.CommandResult;
@@ -12,10 +13,13 @@ import com.rxas400adm.as400.mapper.JobScheduleHistoryMapper;
 import com.rxas400adm.as400.mapper.JobScheduleMapper;
 import com.rxas400adm.as400.mapper.ScheduleAlertEventMapper;
 import com.rxas400adm.as400.util.CronValidator;
+import com.rxas400adm.as400.vo.ScheduleExecuteResultVO;
+import com.rxas400adm.common.constants.ExecutionStatus;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.event.AlertRaisedEvent;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.security.DangerousClCommandValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.CronScheduleBuilder;
@@ -50,6 +54,8 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
     private final Scheduler scheduler;
     private final ScheduleAlertEventMapper alertEventMapper;
     private final ApplicationEventPublisher eventPublisher;
+    /** S4：高危 CL 动词黑名单校验（execute 的 CL 分支兜底） */
+    private final DangerousClCommandValidator clValidator;
 
     public List<JobSchedule> list() {
         return scheduleMapper.selectList(new LambdaQueryWrapper<JobSchedule>()
@@ -65,8 +71,9 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
         schedule.setCreatedTime(LocalDateTime.now());
         schedule.setUpdatedTime(LocalDateTime.now());
         scheduleMapper.insert(schedule);
-        if (Boolean.TRUE.equals(schedule.getEnabled())) {
-            register(schedule);
+        if (Boolean.TRUE.equals(schedule.getEnabled()) && !register(schedule)) {
+            // T2：注册失败回写禁用标记并发告警——避免「DB enabled=true 但永不触发」的静默缺口
+            disableAfterRegisterFailure(schedule);
         }
         return schedule;
     }
@@ -78,7 +85,10 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
         schedule.setUpdatedTime(LocalDateTime.now());
         scheduleMapper.updateById(schedule);
         if (Boolean.TRUE.equals(schedule.getEnabled())) {
-            register(schedule);
+            if (!register(schedule)) {
+                disableAfterRegisterFailure(schedule);
+                schedule.setEnabled(false);
+            }
         } else {
             unregister(id);
         }
@@ -88,6 +98,10 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
     
     public void delete(Long id) {
         require(id);
+        // T4：先落禁用守卫写再注销——若后续步骤失败，重启时不会把已删除任务复活（僵尸调度）
+        scheduleMapper.update(null, new LambdaUpdateWrapper<JobSchedule>()
+                .eq(JobSchedule::getId, id)
+                .set(JobSchedule::getEnabled, false));
         unregister(id);
         historyMapper.delete(new LambdaQueryWrapper<JobScheduleHistory>()
                 .eq(JobScheduleHistory::getScheduleId, id));
@@ -101,7 +115,10 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
         schedule.setUpdatedTime(LocalDateTime.now());
         scheduleMapper.updateById(schedule);
         if (Boolean.TRUE.equals(schedule.getEnabled())) {
-            register(schedule);
+            if (!register(schedule)) {
+                disableAfterRegisterFailure(schedule);
+                schedule.setEnabled(false);
+            }
         } else {
             unregister(id);
         }
@@ -109,16 +126,21 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
     }
 
     /** 手动立即执行（返回执行结果） */
-    public com.rxas400adm.as400.vo.ScheduleExecuteResultVO executeNow(Long id) {
+    public ScheduleExecuteResultVO executeNow(Long id) {
         return execute(id);
     }
 
-    /** 实际执行（Quartz 触发与手动执行共用）；P2-14：状态更新 + 历史写入同事务 */
+    /**
+     * 实际执行（Quartz 触发与手动执行共用）。
+     * C8：结果回写用针对性 UPDATE（仅 status/lastRunTime/lastResult/updatedTime）——
+     * 全实体 updateById 会把并发期间管理员修改的 command/cron/enabled 用执行前旧值整体覆盖回去（丢失更新）。
+     * 注：本项目为无事务架构，此处两条写语句各自原子，无「同事务」语义。
+     */
 
-    public com.rxas400adm.as400.vo.ScheduleExecuteResultVO execute(Long id) {
+    public ScheduleExecuteResultVO execute(Long id) {
         JobSchedule schedule = require(id);
         long start = System.currentTimeMillis();
-        String status = "SUCCESS";
+        String status = ExecutionStatus.SUCCESS;
         String message;
         try {
             AS400Client client = clientProvider.forServer(schedule.getServerId());
@@ -127,10 +149,13 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
                 if (!SqlReadOnlyValidator.isReadOnly(sql)) {
                     throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "仅支持只读 SELECT/WITH 查询");
                 }
-                List<Map<String, Object>> rows = client.queryListChecked(sql);
+                // S7：调度型 SQL 同样下推行数上限（内部任务取 1000 行足够聚合/校验用途）
+                List<Map<String, Object>> rows = client.queryListCheckedBounded(sql, 1000);
                 // W1：message 只存原始信息（无状态前缀/中文），成功/失败前缀由前端按 status 渲染
                 message = rows.size() + " rows";
             } else {
+                // S4：CL 分支高危动词兜底（保存时已校验，此处防历史数据/直改库绕过）
+                clValidator.assertAllowed(schedule.getCommand());
                 CommandResult result = client.execute(schedule.getCommand());
                 if (!result.success()) {
                     throw new BusinessException(ErrorCode.AS400_COMMAND_FAILED, result.message());
@@ -138,18 +163,19 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
                 message = result.message();
             }
         } catch (Exception e) {
-            status = "FAILED";
+            status = ExecutionStatus.FAILED;
             message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
             log.error("[作业调度] 任务 {} 执行失败: {}", schedule.getName(), message);
             notifyFailure(schedule, message);
         }
         long costMs = System.currentTimeMillis() - start;
-        schedule.setStatus(status);
-        schedule.setLastRunTime(LocalDateTime.now());
-        // W1：lastResult 只存原始消息（无 SUCCESS:/FAILED: 前缀），前缀由前端按 status 渲染（对齐 N1）
-        schedule.setLastResult(truncate(message, 500));
-        schedule.setUpdatedTime(LocalDateTime.now());
-        scheduleMapper.updateById(schedule);
+        // C8：针对性回写执行结果，不触碰 command/cron/enabled 等管理字段
+        scheduleMapper.update(null, new LambdaUpdateWrapper<JobSchedule>()
+                .eq(JobSchedule::getId, id)
+                .set(JobSchedule::getStatus, status)
+                .set(JobSchedule::getLastRunTime, LocalDateTime.now())
+                .set(JobSchedule::getLastResult, truncate(message, 500))
+                .set(JobSchedule::getUpdatedTime, LocalDateTime.now()));
 
         JobScheduleHistory history = new JobScheduleHistory();
         history.setScheduleId(id);
@@ -158,7 +184,7 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
         history.setMessage(truncate(message, 1000));
         history.setCostMs(costMs);
         historyMapper.insert(history);
-        return new com.rxas400adm.as400.vo.ScheduleExecuteResultVO(status, message, costMs);
+        return new ScheduleExecuteResultVO(status, message, costMs);
     }
 
     public List<JobScheduleHistory> history(Long scheduleId) {
@@ -214,11 +240,29 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
         if (cronError != null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, cronError);
         }
+        String type = request.getScheduleType() == null ? "" : request.getScheduleType().trim().toUpperCase();
+        String command = request.getCommand() == null ? "" : request.getCommand().trim();
+        // S3：保存时即校验命令——与 SQL 类型的只读校验对称，CL 不再裸奔到执行期
+        if ("SQL".equals(type)) {
+            if (!SqlReadOnlyValidator.isReadOnly(command)) {
+                throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "SQL 类型任务仅支持只读 SELECT/WITH 查询");
+            }
+        } else {
+            if (command.isEmpty()) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "CL 命令不能为空");
+            }
+            if (command.length() > 500) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "CL 命令长度不能超过 500 字符");
+            }
+            if (command.matches(".*[\\r\\n\\u0000].*")) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "CL 命令不允许包含换行/空字符");
+            }
+        }
         schedule.setName(request.getName());
         schedule.setDescription(request.getDescription());
         schedule.setServerId(request.getServerId());
-        schedule.setScheduleType(request.getScheduleType().toUpperCase());
-        schedule.setCommand(request.getCommand());
+        schedule.setScheduleType(type);
+        schedule.setCommand(command);
         schedule.setCronExpr(request.getCronExpr().trim());
         schedule.setEnabled(request.getEnabled() == null ? Boolean.TRUE : request.getEnabled());
     }
@@ -230,7 +274,37 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
         return value.substring(0, max);
     }
 
-    private void register(JobSchedule schedule) {
+    /** T2：注册失败回写禁用并发 CRITICAL 告警，消除「enabled 但永不触发」静默缺口 */
+    private void disableAfterRegisterFailure(JobSchedule schedule) {
+        try {
+            scheduleMapper.update(null, new LambdaUpdateWrapper<JobSchedule>()
+                    .eq(JobSchedule::getId, schedule.getId())
+                    .set(JobSchedule::getEnabled, false)
+                    .set(JobSchedule::getUpdatedTime, LocalDateTime.now()));
+        } catch (Exception e) {
+            log.error("[作业调度] 注册失败后回写禁用标记失败: id={}", schedule.getId(), e);
+        }
+        try {
+            ScheduleAlertEvent event = new ScheduleAlertEvent();
+            event.setInstanceId(schedule.getServerId());
+            event.setLevel("CRITICAL");
+            event.setMessage("Job schedule [" + schedule.getName()
+                    + "] Quartz register failed, task disabled: cron=" + schedule.getCronExpr());
+            event.setStatus("OPEN");
+            event.setCreatedTime(LocalDateTime.now());
+            alertEventMapper.insert(event);
+            eventPublisher.publishEvent(new AlertRaisedEvent("CRITICAL", "JOB_SCHEDULE",
+                    event.getMessage(), schedule.getServerId()));
+        } catch (Exception e) {
+            log.warn("[作业调度] 注册失败告警写入失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 注册任务到调度器。T2：返回是否成功——失败由调用方决定禁用回写；
+     * 启动期 run() 的重注册失败仅记日志（下次重启自动重试）。
+     */
+    private boolean register(JobSchedule schedule) {
         try {
             JobKey jobKey = JobKey.jobKey("schedule-" + schedule.getId());
             JobDetail detail = JobBuilder.newJob(ScheduleQuartzJob.class)
@@ -250,8 +324,10 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
                 // 双参版本一次注册 job + trigger（无需 durable）
                 scheduler.scheduleJob(detail, trigger);
             }
+            return true;
         } catch (SchedulerException | RuntimeException e) {
-            log.error("[作业调度] 注册任务 {} 失败: {}", schedule.getName(), e.getMessage());
+            log.error("[作业调度] 注册任务 {} 失败: {}", schedule.getName(), e.getMessage(), e);
+            return false;
         }
     }
 

@@ -176,22 +176,5 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.metric-card {
-  text-align: center;
-}
-.metric-card__title {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-}
-.metric-card__value {
-  font-size: 24px;
-  font-weight: 700;
-}
-.metric-card__value--success {
-  color: var(--color-success);
-}
-.metric-card__value--danger {
-  color: var(--color-danger);
-}
+
 </style>

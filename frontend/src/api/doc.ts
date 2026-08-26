@@ -35,11 +35,11 @@ export interface TemplateItem {
   updatedTime?: string
 }
 
+/** P12 版本列表瘦身：不含 content 大字段，正文经 fetchDocVersionContent 懒加载 */
 export interface DocVersion {
   id: number
   version: number
   title: string
-  content: string
   createdTime: string
   operator?: string
 }
@@ -72,6 +72,12 @@ export const rejectDoc = (id: number, reason: string) =>
   request.post(`/docs/${id}/reject`, null, { params: { reason } })
 
 export const docVersions = (id: number): Promise<DocVersion[]> => request.get(`/docs/${id}/versions`)
+
+/** P12 版本正文懒加载：按版本 id 单点拉取正文（列表接口已瘦身） */
+export const fetchDocVersionContent = async (versionId: number): Promise<string> => {
+  const res = await request.get<{ content: string }>(`/docs/versions/${versionId}/content`)
+  return res?.content ?? ''
+}
 
 export const rollbackDoc = (id: number, version: number) =>
   request.post(`/docs/${id}/rollback/${version}`)

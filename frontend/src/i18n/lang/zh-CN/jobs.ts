@@ -23,6 +23,10 @@ export default {
     release: '释放',
     holdSuccess: '挂起指令已发送',
     releaseSuccess: '释放指令已发送',
+    batchEnd: '批量结束',
+    batchEndConfirm: '确认批量结束 {count} 个作业？',
+    batchEndSuccess: '批量结束指令已发送',
+    batchEndFailed: '批量结束失败',
     log: '作业日志',
     logDrawer: '作业日志（DSPJOBLOG）',
     noLog: '暂无日志',
@@ -116,6 +120,10 @@ export default {
     allStatus: '全部状态',
     typeSchedule: '调度',
     typeScript: '脚本',
+    totalExecutions: '总执行次数',
+    successRate: '成功率',
+    successCount: '成功次数',
+    failedCount: '失败次数',
     empty: '暂无执行记录',
   },
   jobSla: {
@@ -150,9 +158,6 @@ export default {
   },
   source: {
     title: '源代码浏览（Source Library → File → Member）',
-    compile: '编译 (CRTBNDRPG)',
     empty: '在左侧选择成员查看源代码',
-    compileSuccess: '编译成功',
-    compileFailed: '编译失败',
   },
 }

@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     :title="t('users.permManage') + ' - ' + (user.username || '')"
-    width="760px"
+    width="var(--rx-dialog-lg)"
     :close-on-click-modal="false"
     @opened="initPermManage"
     @closed="resetPermManage"
@@ -215,7 +215,7 @@ async function handleRemovePerms() {
   permManageLoading.value = true
   try {
     await removeUserMenus(props.user.id, removeIds)
-    ElMessage.success(t('users.removeSuccess'))
+    ElMessage.success(t('common.deleteSuccess'))
     await refreshPermManageData(permManageTab.value)
     emit('updated')
   } catch {

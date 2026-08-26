@@ -10,7 +10,14 @@
       @reset="resetJobs"
     >
       <template #right>
-        <el-button :icon="ChatDotRound" @click="loadMessages">{{ $t('jobs.messages') }}</el-button>
+        <el-switch v-model="autoRefresh" :active-text="$t('common.autoRefresh')" size="small" />
+        <el-select v-model="refreshInterval" :disabled="!autoRefresh" size="small" class="w-100 ml8">
+          <el-option :value="5" :label="$t('common.refreshSeconds', { n: 5 })" />
+          <el-option :value="10" :label="$t('common.refreshSeconds', { n: 10 })" />
+          <el-option :value="30" :label="$t('common.refreshSeconds', { n: 30 })" />
+          <el-option :value="60" :label="$t('common.refreshSeconds', { n: 60 })" />
+        </el-select>
+        <el-button :icon="ChatDotRound" class="ml8" @click="loadMessages">{{ $t('jobs.messages') }}</el-button>
       </template>
     </QueryBar>
 
@@ -24,12 +31,24 @@
               <el-radio-button value="msgw">{{ $t('jobs.msgw') }}</el-radio-button>
               <el-radio-button value="lckw">{{ $t('jobs.lckw') }}</el-radio-button>
             </el-radio-group>
+            <el-button
+              v-has-perm="'JOB_END'"
+              type="danger"
+              size="small"
+              class="ml8"
+              :disabled="selectedJobs.length === 0"
+              :loading="batchEnding"
+              @click="batchEnd"
+            >
+              {{ $t('jobs.batchEnd') }} ({{ selectedJobs.length }})
+            </el-button>
           </div>
           <RxSkeleton type="table" :rows="8" :loading="loading">
-            <el-table :data="pagedJobs" size="small">
+            <el-table :data="pagedJobs" size="small" @selection-change="handleSelectionChange">
             <template #empty>
               <el-empty :description="$t('jobs.empty')" :image-size="80" />
             </template>
+            <el-table-column type="selection" width="45" />
             <el-table-column prop="jobName" :label="$t('jobs.jobName')" min-width="140" />
             <el-table-column prop="jobUser" :label="$t('jobs.jobUser')" width="110" />
             <el-table-column prop="jobNumber" :label="$t('jobs.jobNumber')" width="100" />
@@ -181,6 +200,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ChatDotRound, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import QueryBar from '@/components/QueryBar.vue'
 import { useUserStore } from '@/stores/user'
 import AppPagination from '@/components/AppPagination.vue'
@@ -188,6 +208,7 @@ import RxSkeleton from '@/components/RxSkeleton.vue'
 import { normalizeJobIdentity } from '@/utils/jobIdentity'
 import {
   endJob,
+  batchEndJobs,
   fetchJobLog,
   fetchJobQueues,
   fetchJobs,
@@ -209,6 +230,8 @@ const { t } = useI18n()
 const userStore = useUserStore()
 const section = ref('jobs')
 const tab = ref<'all' | 'msgw' | 'lckw'>('all')
+const selectedJobs = ref<JobInfo[]>([])
+const batchEnding = ref(false)
 
 // ==================== 活动作业（按 all/msgw/lckw 视图隔离缓存） ====================
 const {
@@ -237,10 +260,45 @@ const onTabChange = () => {
 }
 const refreshJobs = () => fetchJobsData({ view: tab.value }, true)
 
+const { autoRefresh, refreshInterval } = useAutoRefresh(refreshJobs)
+
 const resetJobs = () => {
   keyword.value = ''
   jobsCurrent.value = 1
   void fetchJobsData({ view: tab.value })
+}
+
+const handleSelectionChange = (rows: JobInfo[]) => {
+  selectedJobs.value = rows
+}
+
+const batchEnd = async () => {
+  if (selectedJobs.value.length === 0) return
+  try {
+    await ElMessageBox.confirm(
+      t('jobs.batchEndConfirm', { count: selectedJobs.value.length }),
+      t('common.confirm'),
+      { type: 'warning' },
+    )
+  } catch {
+    return
+  }
+  batchEnding.value = true
+  try {
+    const jobs = selectedJobs.value.map((j) => ({
+      jobName: j.jobName,
+      jobUser: j.jobUser,
+      jobNumber: j.jobNumber,
+    }))
+    await batchEndJobs(jobs)
+    ElMessage.success(t('jobs.batchEndSuccess'))
+    selectedJobs.value = []
+    void refreshJobs()
+  } catch {
+    ElMessage.error(t('jobs.batchEndFailed'))
+  } finally {
+    batchEnding.value = false
+  }
 }
 
 // ==================== 作业队列 ====================

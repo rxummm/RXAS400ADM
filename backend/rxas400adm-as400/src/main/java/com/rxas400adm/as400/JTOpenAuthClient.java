@@ -32,7 +32,12 @@ class JTOpenAuthClient implements AuthClient {
             log.warn("AS400 用户认证失败(host={}, user={}): {}", state.host, username, state.redact(e.getMessage()));
             return false;
         } finally {
-            system.disconnectAllServices();
+            // 【E13】清理异常不得覆盖认证结果语义：disconnect 失败仅忽略
+            try {
+                system.disconnectAllServices();
+            } catch (Exception ignored) {
+                // 连接清理失败不影响 authenticate 返回值
+            }
         }
     }
 

@@ -35,6 +35,7 @@ const MANIFEST = {
   41: ['idx_metric_name_time'],
   42: ['idx_metric_instance_time'],
   44: ['last_run_status'],
+  55: ['upgrade_notified', 'idx_alert_event_upgrade'],
 }
 
 // 已知历史遗留（⚠️ 新增重复不得进此清单）：V29/V30 同为 cleanup_deploy_and_scheduler_lock，

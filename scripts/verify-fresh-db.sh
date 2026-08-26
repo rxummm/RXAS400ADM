@@ -39,9 +39,14 @@ V38_EXPECT_ROLE_PERMS=55
 V38_EXPECT_ROLE_MENUS=197
 V38_EXPECT_ROLE_CODES="ADMIN DEVELOPER OPERATOR VIEWER"
 
-# ---- V38 之后的结构增量（后续迁移新增结构时同步更新：全量结构 = V38 种子 + 增量） ----
-# V47__add_flowcharts_menu.sql 新增「模块流程图」叶子菜单 1 条（menu_type=2）。
-POST_V38_MENUS_BY_TYPE="2:2"  # V47 flowcharts + V50 notifications
+# ---- V38 之后的结构增量（后续迁移新增结构时同步更新：全量结构 = V38 种子 + 增量）----
+# V47__add_flowcharts_menu.sql 新增「模块流程图」叶子菜单 1 条（menu_type=2）；V50 notifications +1（type=2）
+POST_V38_MENUS_BY_TYPE="2:2"
+# V56__remove_compile_feature.sql 下线编译功能：删 COMPILE_EXECUTE 权限(含 ADMIN 授权)、
+# source 页 compileExecute 按钮(menu_type=3)及其角色关联 → 负增量
+POST_V38_PERMS=-1
+POST_V38_ROLE_PERMS=-1
+POST_V38_ROLE_MENUS=-1
 
 mysql=("mysql" "-u$MYSQL_USER" "-p$MYSQL_PWD" "-h$MYSQL_HOST" "-P$MYSQL_PORT" "--default-character-set=utf8mb4")
 
@@ -130,10 +135,10 @@ check "rx_menu 目录(1)"       "$(q 'COUNT(*)' rx_menu 'WHERE menu_type=1')"   
 check "rx_menu 叶子(2)"       "$(q 'COUNT(*)' rx_menu 'WHERE menu_type=2')"   "$(exp_menu_type 2)"
 check "rx_menu 按钮(3)"       "$(q 'COUNT(*)' rx_menu 'WHERE menu_type=3')"   "$(exp_menu_type 3)"
 check "rx_menu Tab(4)"        "$(q 'COUNT(*)' rx_menu 'WHERE menu_type=4')"   "$(exp_menu_type 4)"
-check "rx_permission 总数"    "$(q 'COUNT(*)' rx_permission '')"              "$V38_EXPECT_PERMS"
+check "rx_permission 总数"    "$(q 'COUNT(*)' rx_permission '')"              "$((V38_EXPECT_PERMS + POST_V38_PERMS))"
 check "rx_role 总数"          "$(q 'COUNT(*)' rx_role '')"                    "$V38_EXPECT_ROLES"
-check "rx_role_permission"    "$(q 'COUNT(*)' rx_role_permission '')"         "$V38_EXPECT_ROLE_PERMS"
-check "rx_role_menu"          "$(q 'COUNT(*)' rx_role_menu '')"               "$V38_EXPECT_ROLE_MENUS"
+check "rx_role_permission"    "$(q 'COUNT(*)' rx_role_permission '')"         "$((V38_EXPECT_ROLE_PERMS + POST_V38_ROLE_PERMS))"
+check "rx_role_menu"          "$(q 'COUNT(*)' rx_role_menu '')"               "$((V38_EXPECT_ROLE_MENUS + POST_V38_ROLE_MENUS))"
 
 # 角色编码集合（空格分隔排序后比对）
 ROLE_CODES_ACTUAL=$(q 'GROUP_CONCAT(role_code ORDER BY role_code SEPARATOR " ")' rx_role '')

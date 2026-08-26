@@ -43,7 +43,12 @@ public class OperateLogAspect {
     private final ObjectMapper objectMapper;
     private static final ExpressionParser parser = new SpelExpressionParser();
 
-    /** 可信反向代理 IP 列表（逗号分隔，S3）；留空则完全忽略 X-Forwarded-For */
+    /**
+     * 可信反向代理 IP 列表（逗号分隔，S3）；留空则完全忽略 X-Forwarded-For。
+     * <p>R7 归属标注：该键已收敛至 security 模块 ProxyProperties（rxas400.security 前缀单点）；
+     * 因 rxas400adm-system 不依赖 security 模块（security→system 单向，反向引入会循环依赖），
+     * 此处暂保留 @Value 同键读取；判定逻辑三处复制维持不动（抽公共工具列为后续）。
+     */
     @Value("${rxas400.security.trusted-proxies:}")
     private String trustedProxies;
 
@@ -62,7 +67,8 @@ public class OperateLogAspect {
             try {
                 saveLog(joinPoint, operateLog, System.currentTimeMillis() - start, success);
             } catch (Exception e) {
-                log.warn("写入审计日志失败: {}", e.getMessage());
+                // E6：审计写入失败必须带堆栈，DB 抖动期间的审计丢失需要可追溯
+                log.warn("写入审计日志失败: {}", e.getMessage(), e);
             }
         }
     }
@@ -76,7 +82,7 @@ public class OperateLogAspect {
         auditLog.setIp(currentIp());
         auditLog.setDetail(buildDetail(joinPoint));
         auditLog.setOperateTarget(resolveTarget(joinPoint, operateLog));
-        auditLog.setResult(success ? "SUCCESS" : "FAIL");
+        auditLog.setResult(success ? RESULT_SUCCESS : RESULT_FAIL);
         auditLog.setCostMs(costMs);
         auditLog.setCreatedTime(LocalDateTime.now());
         auditLogMapper.insert(auditLog);
@@ -129,6 +135,13 @@ public class OperateLogAspect {
     /** N3：原始 String 参数（如 logout 的 Authorization 头）中的 Bearer token 脱敏 */
     private static final Pattern BEARER_TOKEN = Pattern.compile("(?i)(Bearer\\s+)([^\\s]+)");
 
+    /**
+     * R4：审计结果常量化——审计域值域为 SUCCESS/FAIL（与执行域 ExecutionStatus 的 FAILED 不同，
+     * 历史语义保持不变），收敛为常量防拼写漂移。
+     */
+    private static final String RESULT_SUCCESS = "SUCCESS";
+    private static final String RESULT_FAIL = "FAIL";
+
     private String buildDetail(ProceedingJoinPoint joinPoint) {
         Object[] args = joinPoint.getArgs();
         if (args == null || args.length == 0) {
@@ -145,15 +158,27 @@ public class OperateLogAspect {
             // N3：原始 String 参数（如 logout 的 Authorization 头）直接文本处理，
             // 否则 valueToTree 生成的文本节点不会被递归脱敏，完整 JWT 会落入审计库
             if (detail instanceof String) {
-                return BEARER_TOKEN.matcher((String) detail).replaceAll("$1" + REDACTED);
+                return truncateDetail(BEARER_TOKEN.matcher((String) detail).replaceAll("$1" + REDACTED));
             }
             // P0-4：序列化后递归脱敏，改密/重置密码等请求不再把明文密码写入审计日志
             JsonNode node = objectMapper.valueToTree(detail);
             redact(node);
-            return objectMapper.writeValueAsString(node);
+            return truncateDetail(objectMapper.writeValueAsString(node));
         } catch (Exception e) {
-            return String.valueOf(args[0]);
+            // E2：兜底路径同样必须脱敏——toString 直落审计库会绕过密码/token 脱敏
+            String raw = String.valueOf(args[0]);
+            return truncateDetail(BEARER_TOKEN.matcher(raw).replaceAll("$1" + REDACTED));
         }
+    }
+
+    /** P14：审计详情截断——大 content 字段全量入库会膨胀 rx_audit_log 并拖慢 detail LIKE 查询 */
+    private static final int MAX_DETAIL_LENGTH = 4000;
+
+    private String truncateDetail(String detail) {
+        if (detail == null || detail.length() <= MAX_DETAIL_LENGTH) {
+            return detail;
+        }
+        return detail.substring(0, MAX_DETAIL_LENGTH) + "...[truncated,total=" + detail.length() + "]";
     }
 
     /** 递归脱敏：字段名命中敏感模式则把值替换为 ***（Map / POJO / 嵌套对象均覆盖） */

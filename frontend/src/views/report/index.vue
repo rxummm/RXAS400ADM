@@ -3,7 +3,7 @@
     <div class="table-wrapper">
       <el-tabs v-model="activeTab">
         <el-tab-pane v-if="canSeeTab('reports', 'reportManualTab')" :label="$t('reports.tabManual')" name="manual">
-          <el-form label-width="110px" class="form-compact">
+          <el-form label-width="var(--rx-form-label-width-wide)" class="form-compact">
               <el-form-item :label="$t('reports.kind')">
                 <el-select v-model="kind" class="w-full">
                   <el-option :label="$t('reports.kindMetrics')" value="metrics" />
@@ -112,7 +112,7 @@
                 </el-button>
                 <el-button size="small" @click="showHistory(row as ReportSchedule)">{{ $t('reports.history') }}</el-button>
                 <el-button v-has-perm="'REPORT_MANAGE'" size="small" type="warning" plain @click="openEdit(row as ReportSchedule)">{{ $t('common.edit') }}</el-button>
-                <el-button v-has-perm="'REPORT_MANAGE'" size="small" type="danger" plain @click="remove(row as ReportSchedule)">{{ $t('common.delete') }}</el-button>
+                <el-button v-has-perm="'REPORT_MANAGE'" size="small" type="danger" plain :loading="removeLoading === row.id" @click="confirmRemove(row)">{{ $t('common.delete') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -151,7 +151,8 @@
 defineOptions({ name: 'Reports' })
 import { onMounted, ref } from 'vue'
 import { Download, Plus, Refresh } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import { downloadReport } from '@/api/report'
@@ -267,12 +268,11 @@ const run = async (row: ReportSchedule) => {
   }
 }
 
-const remove = async (row: ReportSchedule) => {
-  await ElMessageBox.confirm(t('reports.scheduleDeleteConfirm'), t('common.confirm'), { type: 'warning' })
-  await deleteReportSchedule(row.id!)
-  ElMessage.success(t('common.delete'))
-  await loadSchedules()
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: ReportSchedule) => deleteReportSchedule(row.id!),
+  onSuccess: loadSchedules,
+  confirmMessage: 'reports.scheduleDeleteConfirm',
+})
 
 const historyVisible = ref(false)
 const history = ref<ReportHistoryRow[]>([])

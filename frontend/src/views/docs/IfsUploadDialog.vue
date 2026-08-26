@@ -1,6 +1,6 @@
 <template>
-  <el-dialog v-model="visible" :title="$t('docs.uploadIfs')" width="560px">
-    <el-form label-width="100px">
+  <el-dialog v-model="visible" :title="$t('docs.uploadIfs')" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+    <el-form label-width="var(--rx-form-label-width)">
       <el-form-item :label="$t('docs.docTitle')">{{ doc?.title }}</el-form-item>
       <el-form-item :label="$t('docs.uploadSource')">
         <el-radio-group v-model="source">

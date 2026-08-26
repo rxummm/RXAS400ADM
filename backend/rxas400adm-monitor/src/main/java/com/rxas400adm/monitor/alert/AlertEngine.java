@@ -1,6 +1,8 @@
 package com.rxas400adm.monitor.alert;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.rxas400adm.common.event.AlertRaisedEvent;
 import com.rxas400adm.monitor.domain.Metric;
 import com.rxas400adm.monitor.mapper.AlertEventMapper;
@@ -10,10 +12,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 告警引擎：Metric → Rule Engine → Alert → Notification（Email/Teams/Slack/Webhook）。
@@ -30,25 +34,49 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class AlertEngine {
 
-    /** 单条规则的持续越界状态：ruleId:instanceId → 首次越界时间 + 是否已告警 */
+    /** 单条规则的持续越界状态：ruleId:instanceId → 首次越界时间 + 是否已告警（C6：CAS 原子置位） */
     private static final class BreachState {
         volatile LocalDateTime since;
-        volatile boolean alerted;
+        private final AtomicBoolean alerted = new AtomicBoolean(false);
 
         BreachState(LocalDateTime since) {
             this.since = since;
         }
+
+        /** C6：原子「检查并置位」——并发评估同一 rule:instance 时只有一个线程发 OPEN */
+        boolean markAlertedIfFirst() {
+            return alerted.compareAndSet(false, true);
+        }
+
+        boolean hasAlerted() {
+            return alerted.get();
+        }
+
+        /** 未达持续时长时回退标记，继续观察 */
+        void resetAlerted() {
+            alerted.set(false);
+        }
     }
 
     private final Map<String, BreachState> breaches = new ConcurrentHashMap<>();
+
+    /**
+     * P2：规则缓存（metricName → rules，TTL 45s）——告警每 tick × 每指标 selectList 是最高频重复查询。
+     * 规则增删改最长 45s 后生效（监控场景可接受）；如需即时生效可在规则写服务处注入本组件做失效。
+     */
+    private final Cache<String, List<AlertRule>> ruleCache = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofSeconds(45))
+            .maximumSize(500)
+            .build();
 
     private final AlertRuleMapper ruleMapper;
     private final AlertEventMapper eventMapper;
     private final ApplicationEventPublisher eventPublisher;
 
     public void check(Metric metric) {
-        List<AlertRule> rules = ruleMapper.selectList(new LambdaQueryWrapper<AlertRule>()
-                .eq(AlertRule::getMetricName, metric.getMetricName()));
+        List<AlertRule> rules = ruleCache.get(metric.getMetricName(), name ->
+                ruleMapper.selectList(new LambdaQueryWrapper<AlertRule>()
+                        .eq(AlertRule::getMetricName, name)));
         for (AlertRule rule : rules) {
             if (rule.getServerId() != null && !rule.getServerId().equals(metric.getInstanceId())) {
                 continue;
@@ -66,24 +94,26 @@ public class AlertEngine {
 
     private void onMatch(Metric metric, AlertRule rule, String key) {
         BreachState state = breaches.computeIfAbsent(key, k -> new BreachState(now()));
-        if (state.alerted) {
-            // 已 OPEN：持续超阈值不重复告警（天然去重）
+        if (!state.markAlertedIfFirst()) {
+            // C6：另一线程已抢先置位（已 OPEN）：持续超阈值不重复告警（天然去重）
+            // 注意：未达持续时长时也会先占住标记，恢复走 onRecover 释放，行为与原实现一致
             return;
         }
         long duration = rule.getDurationSeconds() == null ? 0L : rule.getDurationSeconds();
         boolean sustained = duration <= 0
-                || java.time.Duration.between(state.since, now()).getSeconds() >= duration;
+                || Duration.between(state.since, now()).getSeconds() >= duration;
         if (sustained) {
-            state.alerted = true;
             createEvent(metric, rule, "OPEN");
+            return;
         }
-        // 未达持续时长：继续观察，不告警
+        // 未达持续时长：回退标记，继续观察（否则抖动期间永久吞掉后续真实告警）
+        state.resetAlerted();
     }
 
     private void onRecover(Metric metric, AlertRule rule, String key) {
         BreachState state = breaches.remove(key);
         // 仅当已告警过才发 CLOSED；持续时长未达标就恢复的抖动不产生任何告警
-        if (state != null && state.alerted) {
+        if (state != null && state.hasAlerted()) {
             createEvent(metric, rule, "CLOSED");
         }
     }

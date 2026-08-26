@@ -2,7 +2,7 @@
 
 Spring Boot 3.3 (Java 17) 多模块 Maven + Vue 3 (TypeScript, Vite) 前后端分离项目。
 包名/工程名：`com.rxas400adm` / `rxas400adm-*`；数据库：MySQL 8，库名 `rxas400adm`。
-模块：`common / system / security / as400 / source / compile / monitor / app`（deploy 模块已于 V30 下线移除，见 `backend/pom.xml`）。
+模块：`common / system / security / as400 / source / monitor / app`（deploy 已于 V30 下线、compile 已于 V56 下线移除，见 `backend/pom.xml`）。
 前端：Vue3 + TS + Vite + Element Plus + Pinia + vue-i18n（zh-CN / en-US）+ ECharts + @stomp/stompjs。
 
 > 本文件借鉴旧项目 `D:\vueprojects\RXAS400\AGENTS.md` 与 `.opencode/skills/rx-admin-dev/SKILL.md` 中
@@ -78,7 +78,7 @@ mysql -uroot -proot -D rxas400adm -e "SOURCE script.sql"
 4. **DTO**：`dto/` 包（Create/Update/Query）；分页参数用 `@RequestParam current/size`，边界统一走 `PageConstants.clampNum/clampSize`（`common.constants.PageConstants`，MAX_PAGE_SIZE=100，禁止散落 `Math.min(100, ...)` 魔法值）
 5. **VO**：`vo/` 包，**禁止直接暴露 Entity 给前端**
 6. **Service 接口**：方法参数用 DTO，返回 `ApiResponse<T>` 或分页数据
-7. **ServiceImpl**：`@RequiredArgsConstructor` 构造器注入（`private final`），**禁止 `@Autowired` 字段注入**
+7. **ServiceImpl**：`@RequiredArgsConstructor` 构造器注入（`private final`），**禁止 `@Autowired` 字段注入**。⚠️ 唯一例外：Quartz Job 类（`ScheduleQuartzJob`/`ReportScheduleQuartzJob`）必须字段注入——SpringBeanJobFactory 反射实例化 Job 后仅 `autowireBean()`（支持字段/Setter，不支持构造器），构造器注入会导致运行时依赖永远 null、任务静默跳过（类 javadoc 已注明）
 8. **Controller**：`@RestController` + `@RequestMapping("/api/v1/xxx")`，`@PreAuthorize` 权限码
 9. **写操作**：`@Transactional` + `@OperateLog`（如无既有审计需先建对应权限码）
 10. **前端 API 模块**：`frontend/src/api/xxx.ts`，统一从 `request.ts` 导出实例调用
@@ -151,6 +151,12 @@ mysql -uroot -proot -D rxas400adm -e "SOURCE script.sql"
    ```bash
    # 审查命令：逐个核对 Controller 返回类型是否为 VO/基础类型（而非 Entity）
    grep -rn "ApiResponse<" backend --include="*Controller.java"
+   ```
+4. **Java 禁止内联全限定类名，一律顶部 import**（2026-08-24 全库清理 20 文件 40+ 处后立规）。`new com.xxx.Yyy(...)`、`com.xxx.Yyy::method`、`(com.xxx.Yyy.class)`、catch 子句 `catch (java.util.concurrent.RejectedExecutionException e)`、注解值 `value = org.springframework.http.HttpHeaders.AUTHORIZATION`、静态调用 `org.mockito.ArgumentMatchers.anyLong()` 等一律改为文件头 import + 简名引用。同包同名冲突等极少数必须用 FQN 时，加行注释说明原因。
+   ```bash
+   # 审查命令：项目类应 0 命中（排除 import/package/javadoc 行）
+   rg -n "(new |=|\(|return|throw|catch|instanceof|,) *(com\.rxas400adm|java\.(util|time|regex)|org\.(springframework|mockito|junit|quartz))\.[A-Za-z0-9_.]+\.[A-Z]" backend -g "*.java" | rg -v "@link|@throws|@see"
+   # 注意：小写静态方法调用（如 anyLong()）逃逸上面正则，需人工留意 verify(x, never()).y(anyLong()) 类写法
    ```
 
 ## 验证清单（每次改动后）

@@ -1,6 +1,8 @@
 package com.rxas400adm.security.filter;
 
 import com.rxas400adm.common.constants.SecurityConstants;
+import com.rxas400adm.security.config.JwtProperties;
+import com.rxas400adm.security.config.ProxyProperties;
 import com.rxas400adm.security.jwt.JwtUtil;
 import com.rxas400adm.security.service.IPermissionService;
 import com.rxas400adm.security.service.ITokenBlacklistService;
@@ -11,7 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -34,15 +35,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final IPermissionService permissionService;
     private final ITokenBlacklistService tokenBlacklistService;
-
-    /** P2-1：是否启用 JWT 吊销名单检查（默认开启，可配 rxas400.jwt.blacklist-enabled=false 关闭） */
-    @Value("${rxas400.jwt.blacklist-enabled:true}")
-    private boolean blacklistEnabled;
-
-    /** P2-5：数据库加载权限抛异常时是否回退 token 内嵌声明（默认 false=拒绝闭合）。
-     *  开启后 DB 故障窗口内被禁用/删除用户可能凭旧 token 继续访问（可用性优先，需自行权衡）。 */
-    @Value("${rxas400.security.permission-fallback-on-error:false}")
-    private boolean permissionFallbackOnError;
+    // R7：blacklist-enabled / permission-fallback-on-error 两处 @Value 收敛为 Properties 单点绑定
+    private final JwtProperties jwtProperties;
+    private final ProxyProperties proxyProperties;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -54,7 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(SecurityConstants.TOKEN_PREFIX.length());
             if (jwtUtil.isValid(token)) {
                 // P2-1：吊销名单检查——登出后的 token 按无权限处理（不设认证），静默放行到匿名链
-                if (blacklistEnabled && tokenBlacklistService.isBlacklisted(jwtUtil.getJti(token))) {
+                if (jwtProperties.isBlacklistEnabled() && tokenBlacklistService.isBlacklisted(jwtUtil.getJti(token))) {
                     log.debug("token 已吊销（jti={}），按匿名处理", jwtUtil.getJti(token));
                     chain.doFilter(request, response);
                     return;
@@ -70,7 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 try {
                     permissions = permissionService.loadPermissions(username);
                 } catch (Exception e) {
-                    if (permissionFallbackOnError) {
+                    if (proxyProperties.isPermissionFallbackOnError()) {
                         permissions = jwtUtil.getPermissions(token);
                     } else {
                         log.error("加载用户权限失败(用户名={})，按无权限处理: {}", username, e.getMessage());

@@ -11,11 +11,25 @@ public record HealthReportVO(
         String database,
         String scheduler,
         List<ServerHealthVO> servers,
-        long openAlerts
+        long openAlerts,
+        DiskSpaceVO diskSpace,
+        MemoryVO memory
 ) {
     /**
      * 单台服务器连接测试结果。
      */
     public record ServerHealthVO(Long id, String name, String host, String environment, String connect, String detail) {
+    }
+
+    /**
+     * 磁盘空间信息。
+     */
+    public record DiskSpaceVO(String status, long total, long free, String totalFormatted, String freeFormatted) {
+    }
+
+    /**
+     * JVM 内存信息。
+     */
+    public record MemoryVO(String status, long used, long max, String usedFormatted, String maxFormatted) {
     }
 }

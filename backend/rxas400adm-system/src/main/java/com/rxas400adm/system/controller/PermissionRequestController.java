@@ -2,9 +2,12 @@ package com.rxas400adm.system.controller;
 import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.PermissionRequestCreateDTO;
+import com.rxas400adm.system.dto.PermissionRequestReviewDTO;
 import com.rxas400adm.system.service.IPermissionRequestService;
 import com.rxas400adm.system.vo.PermissionRequestVO;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.rxas400adm.system.vo.PendingCountVO;
 
 import jakarta.validation.Valid;
-import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
@@ -72,16 +74,28 @@ public class PermissionRequestController {
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasAuthority('SYS_PERMISSION_REQUEST')")
     @OperateLog(module = "权限申请", operation = "审批通过权限申请")
-    public ApiResponse<PermissionRequestVO> approve(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
+    public ApiResponse<PermissionRequestVO> approve(@PathVariable Long id,
+                                                    @RequestBody(required = false) PermissionRequestReviewDTO dto) {
+        // R6：body 可选故 @Valid 不生效（既有设计），手动执行 DTO 上的长度约束
+        validateComment(dto);
         return ApiResponse.success(PermissionRequestVO.from(requestService.approve(id, SecurityUtils.currentUsername(),
-                body == null ? null : body.get("comment"))));
+                dto == null ? null : dto.getComment())));
     }
 
     @PostMapping("/{id}/reject")
     @PreAuthorize("hasAuthority('SYS_PERMISSION_REQUEST')")
     @OperateLog(module = "权限申请", operation = "驳回权限申请")
-    public ApiResponse<PermissionRequestVO> reject(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
+    public ApiResponse<PermissionRequestVO> reject(@PathVariable Long id,
+                                                   @RequestBody(required = false) PermissionRequestReviewDTO dto) {
+        validateComment(dto);
         return ApiResponse.success(PermissionRequestVO.from(requestService.reject(id, SecurityUtils.currentUsername(),
-                body == null ? null : body.get("comment"))));
+                dto == null ? null : dto.getComment())));
+    }
+
+    /** R6：@RequestBody(required=false) 使 @Valid 失效，这里手动对齐 DTO 的 @Size(500) 约束 */
+    private void validateComment(PermissionRequestReviewDTO dto) {
+        if (dto != null && dto.getComment() != null && dto.getComment().length() > 500) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "审批意见最长 500 字符");
+        }
     }
 }

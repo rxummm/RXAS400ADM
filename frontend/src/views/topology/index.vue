@@ -64,6 +64,7 @@ import { topologyGraph, type TopologyLink, type TopologyNode } from '@/api/topol
 import { objectDetail, objectReferences, type ObjectDetail, type ObjectReference } from '@/api/object'
 import { formatSize } from '@/utils/format'
 import { useECharts, type ECOption } from '@/composables/useECharts'
+import { cssVar } from '@/utils/cssVar'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 
@@ -77,11 +78,17 @@ const chartRef = ref<HTMLDivElement>()
 let clickBound = false
 
 const typeColors: Record<string, string> = {
-  PGM: '#1677ff',
-  SRVPGM: '#722ed1',
-  MODULE: '#13c2c2',
-  FILE: '#fa8c16',
-  MSGF: '#909399',
+  PGM: 'var(--el-color-primary)',
+  SRVPGM: 'var(--color-chart-purple)',
+  MODULE: 'var(--color-chart-cyan)',
+  FILE: 'var(--color-chart-orange)',
+  MSGF: 'var(--el-color-info)',
+}
+
+/** 解析 CSS 变量为实际色值（ECharts 需要 hex 值） */
+function resolveColor(cssValue: string): string {
+  const match = cssValue.match(/var\(([^)]+)\)/)
+  return match ? cssVar(match[1]) : cssValue
 }
 
 const drawerVisible = ref(false)
@@ -119,7 +126,7 @@ const buildChartOption = (): ECOption => ({
       draggable: true,
       categories: Object.keys(typeColors).map((t) => ({
         name: t,
-        itemStyle: { color: typeColors[t] },
+        itemStyle: { color: resolveColor(typeColors[t]) },
       })),
       data: nodes.value.map((n) => ({
         id: n.id,
@@ -127,7 +134,7 @@ const buildChartOption = (): ECOption => ({
         type: n.type,
         category: n.type,
         symbolSize: n.type === 'FILE' || n.type === 'MSGF' ? 26 : 34,
-        itemStyle: { color: (n.type && typeColors[n.type]) || '#1677ff' },
+        itemStyle: { color: n.type && typeColors[n.type] ? resolveColor(typeColors[n.type]) : cssVar('--el-color-primary') },
       })),
       links: links.value.map((l) => ({ source: l.source, target: l.target })),
       force: { repulsion: 320, edgeLength: [60, 140], gravity: 0.1 },

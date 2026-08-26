@@ -1,5 +1,6 @@
 package com.rxas400adm.common.crypto;
 
+import com.rxas400adm.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Cipher;
@@ -88,7 +89,8 @@ public final class AesCryptoService {
 
             return V2_PREFIX + Base64.getEncoder().encodeToString(combined);
         } catch (Exception e) {
-            log.error("AES 加密失败", e);
+            // 【E11】log-and-rethrow 去重：异常带 cause 抛出后由全局处理器统一记录，这里降为 debug，避免双份 error 堆栈
+            log.debug("AES 加密失败: {}", e.getMessage());
             throw new RuntimeException("AES 加密失败", e);
         }
     }
@@ -123,7 +125,8 @@ public final class AesCryptoService {
             byte[] plaintext = gcm(key, iv, Cipher.DECRYPT_MODE, encrypted);
             return new String(plaintext, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            log.error("AES 解密失败（PBKDF2 密文，密钥不匹配或数据损坏）: {}", e.getMessage());
+            // 【E11】log-and-rethrow 去重：decryptionFailed() 会被全局处理器记录，这里降为 debug 避免双份堆栈
+            log.debug("AES 解密失败（PBKDF2 密文，密钥不匹配或数据损坏）: {}", e.getMessage());
             throw decryptionFailed();
         }
     }
@@ -152,7 +155,8 @@ public final class AesCryptoService {
         } catch (Exception e) {
             // P2-7：格式上确为密文但解密失败（密钥不匹配/数据损坏）→ 抛受控异常，
             // 绝不把 Base64 密文当真实密码返回（否则登录链路会把密文当密码去认证）
-            log.error("AES 解密失败（legacy 密文，密钥不匹配或密文损坏）: {}", e.getMessage());
+            // 【E11】log-and-rethrow 去重：decryptionFailed() 会被全局处理器记录，这里降为 debug 避免双份堆栈
+            log.debug("AES 解密失败（legacy 密文，密钥不匹配或密文损坏）: {}", e.getMessage());
             throw decryptionFailed();
         }
     }
@@ -188,8 +192,8 @@ public final class AesCryptoService {
         }
     }
 
-    private static com.rxas400adm.common.exception.BusinessException decryptionFailed() {
-        return new com.rxas400adm.common.exception.BusinessException(
+    private static BusinessException decryptionFailed() {
+        return new BusinessException(
                 "AS400 连接密码解密失败：请检查 RXAS400_CRYPTO_KEY 是否与加密时一致");
     }
 }

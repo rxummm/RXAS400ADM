@@ -5,9 +5,12 @@ import com.ibm.as400.access.IFSFile;
 import com.ibm.as400.access.IFSFileInputStream;
 import com.ibm.as400.access.IFSFileOutputStream;
 import com.rxas400adm.as400.model.IfsEntry;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -23,6 +26,9 @@ import java.util.List;
 class JTOpenIfsClient implements IfsClient {
 
     private final JTOpenConnectionState state;
+
+    /** P13：整读大小上限 20MB，超限引导走流式下载接口 */
+    private static final long MAX_READ_BYTES = 20L * 1024 * 1024;
 
     JTOpenIfsClient(JTOpenConnectionState state) {
         this.state = state;
@@ -160,6 +166,11 @@ class JTOpenIfsClient implements IfsClient {
         if (trashPath == null || trashPath.isBlank()) {
             return false;
         }
+        // S2：非回收站前缀直接拒绝，防止 substring(36) 把源路径截断为任意目标路径
+        if (!trashPath.startsWith(IfsClient.TRASH_ROOT + "/")) {
+            log.warn("IFS 恢复拒绝非回收站路径: {}", trashPath);
+            return false;
+        }
         return ifsCall("恢复", trashPath, false, system -> {
             IFSFile file = new IFSFile(system, trashPath);
             if (!file.exists()) {
@@ -180,11 +191,30 @@ class JTOpenIfsClient implements IfsClient {
         if (path == null || path.isBlank()) {
             return null;
         }
-        return ifsCall("文件读取", path, null, system -> {
+        /* P13：不走 ifsCall（其吞异常返回兜底值）——超限 BusinessException 需透传，IOException 转译为命令失败 */
+        AS400 system = state.connect();
+        try {
+            IFSFile file = new IFSFile(system, path);
+            if (file.length() > MAX_READ_BYTES) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST,
+                        "IFS 文件超过整读大小上限(20MB)，请使用下载接口: " + path);
+            }
             try (IFSFileInputStream in = new IFSFileInputStream(system, path)) {
                 return in.readAllBytes();
             }
-        });
+        } catch (BusinessException e) {
+            throw e;
+        } catch (IOException e) {
+            state.invalidate(system);
+            log.warn("IFS {}失败(host={}, path={}): {}", "文件读取", state.host, path, state.redact(e.getMessage()));
+            throw new BusinessException(ErrorCode.AS400_COMMAND_FAILED,
+                    "IFS 文件读取失败: " + state.redact(e.getMessage()));
+        } catch (Exception e) {
+            state.invalidate(system);
+            log.warn("IFS {}失败(host={}, path={}): {}", "文件读取", state.host, path, state.redact(e.getMessage()));
+            throw new BusinessException(ErrorCode.AS400_COMMAND_FAILED,
+                    "IFS 文件读取失败: " + state.redact(e.getMessage()));
+        }
     }
 
     @Override

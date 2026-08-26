@@ -9,6 +9,7 @@ import org.quartz.JobExecutionContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -50,7 +51,7 @@ class ReportScheduleQuartzJobTest {
         stubScheduleId(1L);
         ReportScheduleQuartzJob job = new ReportScheduleQuartzJob(); // 不注入 → 模拟服务未就绪
         job.execute(context);
-        verify(reportScheduleService, never()).execute(org.mockito.ArgumentMatchers.anyLong());
+        verify(reportScheduleService, never()).execute(anyLong());
     }
 
     @Test

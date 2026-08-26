@@ -7,6 +7,8 @@ import com.rxas400adm.as400.entity.JobScheduleHistory;
 import com.rxas400adm.as400.mapper.CommandScriptMapper;
 import com.rxas400adm.as400.mapper.JobScheduleHistoryMapper;
 import com.rxas400adm.as400.mapper.JobScheduleMapper;
+import com.rxas400adm.as400.vo.ExecutionStatsVO;
+import com.rxas400adm.common.constants.ExecutionStatus;
 import com.rxas400adm.common.constants.PageConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,9 +40,11 @@ public class ExecutionService {
             wrapper.eq(JobScheduleHistory::getStatus, status.trim().toUpperCase());
         }
         List<JobScheduleHistory> histories = historyMapper.selectList(wrapper);
-        Map<Long, JobSchedule> scheduleById = scheduleMapper.selectBatchIds(
-                        histories.stream().map(JobScheduleHistory::getScheduleId).distinct().toList())
-                .stream().collect(Collectors.toMap(JobSchedule::getId, s -> s));
+        // B1：空结果守卫——selectBatchIds 不接受空集合（生成非法 IN ()），直接返回空页
+        List<Long> scheduleIds = histories.stream().map(JobScheduleHistory::getScheduleId).distinct().toList();
+        Map<Long, JobSchedule> scheduleById = scheduleIds.isEmpty() ? Map.of()
+                : scheduleMapper.selectBatchIds(scheduleIds)
+                        .stream().collect(Collectors.toMap(JobSchedule::getId, s -> s));
 
         List<Map<String, Object>> rows = new ArrayList<>();
         for (JobScheduleHistory h : histories) {
@@ -75,8 +79,8 @@ public class ExecutionService {
         List<Map<String, Object>> rows = new ArrayList<>();
         for (CommandScript s : scriptMapper.selectList(wrapper)) {
             // M1：读结构化状态（V44 回填，老数据也有值）；空值防御性按 SUCCESS 处理
-            String resultStatus = "SUCCESS".equalsIgnoreCase(s.getLastRunStatus())
-                    ? "SUCCESS" : "FAILED";
+            String resultStatus = ExecutionStatus.SUCCESS.equalsIgnoreCase(s.getLastRunStatus())
+                    ? ExecutionStatus.SUCCESS : ExecutionStatus.FAILED;
             if (status != null && !status.isBlank() && !resultStatus.equalsIgnoreCase(status.trim())) {
                 continue;
             }
@@ -98,6 +102,25 @@ public class ExecutionService {
             }
         }
         return rows;
+    }
+
+    /** 获取执行统计数据 */
+    public ExecutionStatsVO getStats() {
+        // P16c 统计下推：一条聚合 SQL 直出两表统计，替代原「各拉 500 条进堆再内存汇总」
+        Map<String, Object> row = historyMapper.selectExecutionStats();
+        if (row == null) { // 聚合无 GROUP BY 恒返单行，防御性兜底空 Map
+            row = Map.of();
+        }
+        long total = ((Number) row.getOrDefault("totalCnt", 0)).longValue();
+        long success = ((Number) row.getOrDefault("successCnt", 0)).longValue();
+        long failed = total - success;
+        double successRate = total > 0 ? (double) success / total * 100 : 0;
+
+        // 空表 AVG 为 NULL → 按 0 处理
+        Object avgRaw = row.get("avgCost");
+        double avgCostMs = avgRaw instanceof Number n ? n.doubleValue() : 0;
+
+        return new ExecutionStatsVO(total, success, failed, successRate, avgCostMs);
     }
 
     private boolean matchKeyword(Map<String, Object> row, String keyword) {

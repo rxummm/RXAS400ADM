@@ -2,6 +2,7 @@ package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.util.SecurityUtils;
 import com.rxas400adm.system.dto.SysMenuDTO;
 import com.rxas400adm.system.service.IMenuService;
 import com.rxas400adm.system.vo.RequestableMenuVO;
@@ -38,7 +39,7 @@ public class SysMenuController {
     /** 可申请菜单树（权限申请页：登录即可，排除 admin_only 与已拥有按钮） */
     @GetMapping("/requestable")
     public ApiResponse<List<RequestableMenuVO>> requestable() {
-        String username = com.rxas400adm.common.util.SecurityUtils.currentUsername();
+        String username = SecurityUtils.currentUsername();
         return ApiResponse.success(menuService.requestableMenuTree(username));
     }
 

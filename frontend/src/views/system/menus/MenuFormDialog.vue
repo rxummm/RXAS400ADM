@@ -1,6 +1,6 @@
 <template>
-  <el-dialog v-model="visible" :title="dialogTitle" width="560px" :close-on-click-modal="false">
-    <el-form ref="formRef" :model="form" :rules="formRules" label-width="90px">
+  <el-dialog v-model="visible" :title="dialogTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+    <el-form ref="formRef" :model="form" :rules="formRules" label-width="var(--rx-form-label-width)">
       <el-form-item :label="t('menu.manage.type')">
         <el-radio-group v-model="form.menuType" :disabled="isEdit">
           <el-radio :value="MenuType.DIR">{{ t('menu.manage.typeDir') }}</el-radio>

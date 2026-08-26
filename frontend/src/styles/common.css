@@ -613,3 +613,30 @@ html.high-contrast.dark .el-button--primary {
     font-size: 9pt;
   }
 }
+/* ====== 指标卡片（metric-card，monitor/metrics + executions 共用） ====== */
+.metric-card {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.metric-card__title {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.metric-card__value {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.metric-card__desc {
+  font-size: 11px;
+  color: var(--text-placeholder);
+}
+.metric-card__value--success {
+  color: var(--color-success);
+}
+.metric-card__value--danger {
+  color: var(--color-danger);
+}
+
+.flex-row-center { display: flex; align-items: center; }

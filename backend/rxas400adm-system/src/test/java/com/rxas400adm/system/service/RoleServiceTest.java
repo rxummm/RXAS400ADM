@@ -1,12 +1,12 @@
 package com.rxas400adm.system.service;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.SysRoleDTO;
 import com.rxas400adm.system.entity.SysRole;
+import com.rxas400adm.system.mapper.SysMenuMapper;
 import com.rxas400adm.system.mapper.SysRoleMapper;
 import com.rxas400adm.system.mapper.SysRoleMenuMapper;
 import com.rxas400adm.system.mapper.SysUserRoleMapper;
@@ -32,12 +32,15 @@ class RoleServiceTest {
     private SysRoleMenuMapper roleMenuMapper;
     @Mock
     private SysUserRoleMapper userRoleMapper;
+    /** T1：menuIds 存在性校验新增依赖 */
+    @Mock
+    private SysMenuMapper menuMapper;
 
     private RoleService service;
 
     @BeforeEach
     void setUp() {
-        service = new RoleService(roleMapper, roleMenuMapper, userRoleMapper);
+        service = new RoleService(roleMapper, roleMenuMapper, userRoleMapper, menuMapper);
     }
 
     @Test
@@ -114,9 +117,8 @@ class RoleServiceTest {
         assertEquals("TEST", result.getRecords().get(0).getRoleCode());
     }
 
-    /** Mockito 的 Class 令牌无法表达泛型参数，Wrapper 泛型收窄统一收敛于此（全文件唯一 unchecked 抑制点） */
-    @SuppressWarnings("unchecked")
+    /** 类型安全占位符：利用 any() 的目标类型推断完成泛型收窄，无需强转与 @SuppressWarnings */
     private static <T> Wrapper<T> anyWrapper() {
-        return (Wrapper<T>) any(LambdaQueryWrapper.class);
+        return any();
     }
 }

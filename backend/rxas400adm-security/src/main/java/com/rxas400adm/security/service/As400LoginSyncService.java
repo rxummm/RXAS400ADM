@@ -17,15 +17,17 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * AS400 账号每日同步（追踪文档 2.2.5，参考旧项目 As400LoginSyncService）：
  * <ul>
- *   <li><b>清理失效账号</b>：对每个启用服务器上 login_source=AS400 的本地用户，查询 IBM i
- *       user profile；已不存在（userProfile 为空）→ 删除本地用户（连带角色关系）</li>
+ *   <li><b>清理失效账号</b>：对每个启用服务器上 login_source=AS400 的本地用户，批量查询 IBM i
+ *       全库用户（P15：单条 QSYS2.USER_INFO SQL 替代逐账号 RPC）；未命中 → 删除本地用户（连带角色关系）</li>
  *   <li><b>组角色收敛</b>：按该用户当前组 profile 的映射结果整体覆盖本地角色
  *       （组中移除 → 自动失去对应角色）</li>
  * </ul>
@@ -88,11 +90,13 @@ public class As400LoginSyncService implements IAs400LoginSyncService {
         if (users.isEmpty()) {
             return SyncResult.ZERO;
         }
-        // 先探测全部账号，再按命中情况区分「整机故障」与「个别失效」
+        // P15 批量探测：一次拉全库 USER_INFO 构建 name→profile 映射，替代逐账号 RPC
+        Map<String, UserProfileRow> profiles = loadAllProfiles(client);
+        // 再按命中情况区分「整机故障」与「个别失效」
         List<SysUser> missing = new ArrayList<>();
         int converged = 0;
         for (SysUser user : users) {
-            UserProfileRow profile = client.userProfile(user.getUsername());
+            UserProfileRow profile = profiles.get(profileKey(user.getUsername()));
             if (isMissing(profile)) {
                 missing.add(user);
             } else {
@@ -108,6 +112,32 @@ public class As400LoginSyncService implements IAs400LoginSyncService {
             return new SyncResult(0, converged);
         }
         return new SyncResult(cleanupMissing(system, missing), converged);
+    }
+
+    /**
+     * P15 批量探测：一次查询 IBM i 全库用户（QSYS2.USER_INFO，全库通常 < 数千行，上限 5000 兜底），
+     * 构建「大写用户名 → profile」映射替代原逐账号 userProfile RPC。
+     * 查询失败直接抛出，由 dailySync 按服务器粒度跳过；空名行不入映射（等价原 isMissing 判定）。
+     */
+    private Map<String, UserProfileRow> loadAllProfiles(AS400Client client) {
+        List<Map<String, Object>> rows = client.queryListCheckedBounded(
+                "SELECT AUTHORIZATION_NAME, GROUP_PROFILE_NAME FROM QSYS2.USER_INFO", 5000);
+        Map<String, UserProfileRow> profiles = new HashMap<>();
+        for (Map<String, Object> row : rows) {
+            Object name = row.get("AUTHORIZATION_NAME");
+            if (name == null || String.valueOf(name).isBlank()) {
+                continue;
+            }
+            // STATUS 列不取：dailySync 原逻辑仅用 userName/groupProfile，无 *ENABLED 判断
+            String group = row.get("GROUP_PROFILE_NAME") == null ? null : String.valueOf(row.get("GROUP_PROFILE_NAME"));
+            profiles.put(profileKey(String.valueOf(name)), new UserProfileRow(String.valueOf(name), group, null));
+        }
+        return profiles;
+    }
+
+    /** P15：IBM i 用户名统一大写去空白作为映射键（AUTHORIZATION_NAME 大小写不敏感对齐） */
+    private static String profileKey(String username) {
+        return username == null ? "" : username.trim().toUpperCase();
     }
 
     /** profile 查询为空视为账号在 IBM i 上已不存在 */

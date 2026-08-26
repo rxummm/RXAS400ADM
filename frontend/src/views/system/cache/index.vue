@@ -13,7 +13,7 @@
       </el-button>
       <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
       <div class="flex-1" />
-      <el-button type="danger" plain @click="onClearAll">
+      <el-button type="danger" plain :loading="removeLoading_onClearAll === 'all'" @click="onClearAll">
         <el-icon><Delete /></el-icon> {{ $t('cache.clearAll') }}
       </el-button>
     </div>
@@ -29,7 +29,7 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="onClear(row as CacheInfo)">
+            <el-button link type="primary" size="small" :loading="removeLoading_onClear === row.name" @click="onClear(row as CacheInfo)">
               {{ $t('cache.clear') }}
             </el-button>
           </template>
@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Delete, Search } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -77,25 +77,37 @@ const onSizeChange = () => {
   current.value = 1
 }
 
+const removeLoading_onClear = ref<string | null>(null)
 async function onClear(row: CacheInfo) {
   try {
     await ElMessageBox.confirm(t('cache.clearConfirm', { name: row.name }), t('common.tip'), { type: 'warning' })
+  } catch {
+    return
+  }
+  removeLoading_onClear.value = row.name
+  try {
     await clearCache(row.name)
     ElMessage.success(t('cache.cleared'))
     forceSearch()
-  } catch {
-    /* cancelled */
+  } finally {
+    removeLoading_onClear.value = null
   }
 }
 
+const removeLoading_onClearAll = ref<string | null>(null)
 async function onClearAll() {
   try {
     await ElMessageBox.confirm(t('cache.clearAllConfirm'), t('common.tip'), { type: 'warning' })
+  } catch {
+    return
+  }
+  removeLoading_onClearAll.value = 'all'
+  try {
     await clearAllCaches()
     ElMessage.success(t('cache.allCleared'))
     forceSearch()
-  } catch {
-    /* cancelled */
+  } finally {
+    removeLoading_onClearAll.value = null
   }
 }
 

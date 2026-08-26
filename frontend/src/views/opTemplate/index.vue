@@ -21,7 +21,7 @@
           <template #default="{ row }">
             <el-button size="small" @click="openEdit(row as OpTemplate)">{{ $t('common.edit') }}</el-button>
             <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" type="primary" plain @click="openExecute(row as OpTemplate)">{{ $t('opTemplate.execute') }}</el-button>
-            <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" type="danger" plain @click="handleDelete(row as OpTemplate)">{{ $t('common.delete') }}</el-button>
+            <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" type="danger" plain :loading="removeLoading === row.id" @click="confirmRemove(row)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -35,8 +35,8 @@
     </div>
 
     <!-- 新建/编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="isEdit ? $t('opTemplate.edit') : $t('opTemplate.create')" width="600px">
-      <el-form :model="form" label-width="100px">
+    <el-dialog v-model="dialogVisible" :title="isEdit ? $t('opTemplate.edit') : $t('opTemplate.create')" width="var(--rx-dialog-md)" :close-on-click-modal="false">
+      <el-form :model="form" label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('opTemplate.name')" required>
           <el-input v-model="form.name" :placeholder="$t('opTemplate.namePlaceholder')" />
         </el-form-item>
@@ -60,8 +60,8 @@
     </el-dialog>
 
     <!-- 执行弹窗 -->
-    <el-dialog v-model="executeVisible" :title="$t('opTemplate.execute')" width="400px">
-      <el-form label-width="100px">
+    <el-dialog v-model="executeVisible" :title="$t('opTemplate.execute')" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
+      <el-form label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('scripts.selectServer')">
           <el-select v-model="executeServerId" :placeholder="$t('scripts.selectServer')" class="w-full">
             <el-option v-for="s in servers" :key="s.id" :label="s.name" :value="s.id" />
@@ -80,7 +80,8 @@
 import { onMounted, ref } from 'vue'
 import { Delete } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import AppPagination from '@/components/AppPagination.vue'
 import {
@@ -204,20 +205,11 @@ async function handleSave() {
   }
 }
 
-async function handleDelete(row: OpTemplate) {
-  try {
-    await ElMessageBox.confirm(t('opTemplate.deleteConfirm', { name: row.name }), t('common.confirm'), { type: 'warning' })
-  } catch {
-    return
-  }
-  try {
-    await deleteOpTemplate(row.id)
-    ElMessage.success(t('common.delete') + ' OK')
-    forceSearch()
-  } catch {
-    ElMessage.error(t('common.requestFailed'))
-  }
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: OpTemplate) => deleteOpTemplate(row.id),
+  onSuccess: forceSearch,
+  confirmMessage: 'opTemplate.deleteConfirm',
+})
 
 function openExecute(row: OpTemplate) {
   executeTemplateId.value = row.id

@@ -1,6 +1,6 @@
 <template>
-  <el-dialog v-model="visible" :title="title" width="480px" :close-on-click-modal="false">
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
+  <el-dialog v-model="visible" :title="title" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="var(--rx-form-label-width)">
       <el-form-item :label="$t('role.roleName')" prop="roleName">
         <el-input v-model="form.roleName" />
       </el-form-item>

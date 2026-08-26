@@ -1,7 +1,6 @@
 package com.rxas400adm.system.service;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.system.dto.DictItemDTO;
 import com.rxas400adm.system.dto.DictTypeDTO;
@@ -97,9 +96,8 @@ class DictServiceTest {
         verify(typeMapper).deleteById(1L);
     }
 
-    /** Mockito 的 Class 令牌无法表达泛型参数，Wrapper 泛型收窄统一收敛于此（全文件唯一 unchecked 抑制点） */
-    @SuppressWarnings("unchecked")
+    /** 类型安全占位符：利用 any() 的目标类型推断完成泛型收窄，无需强转与 @SuppressWarnings */
     private static <T> Wrapper<T> anyWrapper() {
-        return (Wrapper<T>) any(LambdaQueryWrapper.class);
+        return any();
     }
 }

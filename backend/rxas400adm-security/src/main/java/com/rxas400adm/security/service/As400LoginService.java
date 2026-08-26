@@ -155,14 +155,19 @@ public class As400LoginService implements IAs400LoginService {
                 new LambdaQueryWrapper<SysRole>().in(SysRole::getRoleCode, roleCodes));
         Map<String, Long> codeToId = roles.stream()
                 .collect(Collectors.toMap(SysRole::getRoleCode, SysRole::getId));
+        // T5：单条多值 INSERT 收窄「先删后插」窗口（无事务架构下的批量化收口）
+        List<SysUserRole> userRoles = new java.util.ArrayList<>();
         for (String code : roleCodes) {
             Long roleId = codeToId.get(code);
             if (roleId != null) {
                 SysUserRole ur = new SysUserRole();
                 ur.setUserId(userId);
                 ur.setRoleId(roleId);
-                userRoleMapper.insert(ur);
+                userRoles.add(ur);
             }
+        }
+        if (!userRoles.isEmpty()) {
+            userRoleMapper.insertBatch(userRoles);
         }
     }
 }

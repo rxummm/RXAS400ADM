@@ -6,7 +6,6 @@ import com.rxas400adm.common.constants.SecurityConstants;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.security.filter.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -31,21 +30,22 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    /** CORS 允许的来源白名单（逗号分隔，S4）：默认开发源 localhost:5173，生产用环境变量覆盖 */
-    @Value("${rxas400.security.cors-allowed-origins:http://localhost:5173}")
-    private String corsAllowedOrigins;
-
     /** 当前 profile 判定（统一收敛到 ProfileResolver）：Swagger 仅在 dev/mock/test 免登录 */
     private final ProfileResolver profileResolver;
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ObjectMapper objectMapper;
 
+    // R7：cors-allowed-origins（SecurityConfig 与 WebSocketConfig 同键）收敛为 CorsProperties 单点绑定
+    private final CorsProperties corsProperties;
+
     public SecurityConfig(ProfileResolver profileResolver,
-                          @Lazy JwtAuthenticationFilter jwtAuthenticationFilter, ObjectMapper objectMapper) {
+                          @Lazy JwtAuthenticationFilter jwtAuthenticationFilter, ObjectMapper objectMapper,
+                          CorsProperties corsProperties) {
         this.profileResolver = profileResolver;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.objectMapper = objectMapper;
+        this.corsProperties = corsProperties;
     }
 
     @Bean
@@ -98,7 +98,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         // S4：不再通配 "*"，收敛为配置化白名单（allowCredentials=true 时不允许 *）
-        List<String> origins = java.util.Arrays.stream(corsAllowedOrigins.split(","))
+        List<String> origins = java.util.Arrays.stream(corsProperties.getCorsAllowedOrigins().split(","))
                 .map(String::trim)
                 .filter(o -> !o.isBlank())
                 .toList();

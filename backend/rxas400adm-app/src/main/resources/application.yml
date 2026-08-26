@@ -2,8 +2,13 @@ spring:
   application:
     name: rxas400adm
   profiles:
-    # 默认演示模式：使用 MockAS400Client，无需真实 IBM i
+    # 默认演示模式（使用 MockAS400Client，无需真实 IBM i）
     active: mock
+  task:
+    # C9：调度线程池扩容（默认单线程）——慢采集/长同步不再拖垮黑名单清理、告警升级等定时任务
+    scheduling:
+      pool:
+        size: ${SCHEDULING_POOL_SIZE:3}
   web:
     # W2：无 Accept-Language 时的校验消息默认语言（前端会显式传 Accept-Language）
     locale: zh-CN
@@ -122,8 +127,8 @@ rxas400:
     upgrade:
       # 功能开关（默认关闭）
       enabled: ${RXAS400_ALERT_UPGRADE_ENABLED:false}
-      # 检查间隔（分钟）
-      check-interval-minutes: 5
+      # 检查间隔（毫秒，默认 300000 = 5 分钟；@Scheduled fixedDelayString 直接消费，杜绝单位换算错误）
+      check-interval-ms: 300000
       # 未处理多久后升级（分钟）
       upgrade-after-minutes: 30
       # 升级通知的角色
@@ -160,6 +165,12 @@ rxas400:
   ifs:
     # IFS 文档受管根目录（DocStorageService 使用）
     doc-root: ${RXAS400_IFS_DOC_ROOT:/QOpenSys/rxas400/document}
+    # S1：IFS 访问根目录白名单（逗号分隔，超出即 BAD_REQUEST；回收站位于其下无需单列）
+    allowed-roots: /QOpenSys/rxas400
+  doc:
+    # T3：IFS 发布补偿 sweep 间隔（毫秒）
+    ifs-resweep-ms: 1800000
+  # 【第六章·P1】cl-blacklist 两键已迁 rx_config（V57 种子），在「系统配置」页维护并实时生效——yml 不再声明
 
 logging:
   level:

@@ -4,7 +4,6 @@ import com.rxas400adm.system.dto.SysMenuDTO;
 import com.rxas400adm.system.entity.SysMenu;
 import com.rxas400adm.system.vo.MenuVO;
 import com.rxas400adm.system.vo.RequestableMenuVO;
-import com.rxas400adm.system.vo.TabVO;
 import com.rxas400adm.system.vo.UserMenuDataVO;
 
 import java.util.List;
@@ -25,8 +24,6 @@ public interface IMenuService {
     UserMenuDataVO userMenuData(String username);
 
     List<String> userMenuPerms(String username);
-
-    List<TabVO> userTabs(String username);
 
     SysMenu create(SysMenuDTO menu);
 

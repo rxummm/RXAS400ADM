@@ -1,6 +1,6 @@
 <template>
-  <el-dialog v-model="visible" :title="form.id ? $t('reports.scheduleEdit') : $t('reports.scheduleAdd')" width="560px">
-    <el-form :model="form" label-width="110px">
+  <el-dialog v-model="visible" :title="form.id ? $t('reports.scheduleEdit') : $t('reports.scheduleAdd')" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+    <el-form :model="form" label-width="var(--rx-form-label-width-wide)">
       <el-form-item :label="$t('reports.scheduleName')" required>
         <el-input v-model="form.name" />
       </el-form-item>

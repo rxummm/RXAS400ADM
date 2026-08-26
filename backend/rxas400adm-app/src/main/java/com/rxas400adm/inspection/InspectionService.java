@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 巡检报告（借鉴旧项目 inspectionReport）：对单台 AS400 做综合健康巡检，
@@ -36,6 +37,15 @@ public class InspectionService implements IInspectionService {
     private final IMetricService metricService;
     private final AlertEventMapper alertEventMapper;
     private final IReportService reportService;
+
+    /** P11：generate→export 连续调用时复用刚生成的报告（TTL 内），AS400 RPC 次数减半 */
+    private static final long REPORT_CACHE_TTL_MS = 60_000L;
+
+    /** P11：按 serverId 缓存最近一次生成的报告快照 */
+    private record CachedReport(Map<String, Object> report, long cachedAt) {
+    }
+
+    private final Map<Long, CachedReport> reportCache = new ConcurrentHashMap<>();
 
     /** 生成巡检报告 JSON（不落库，按需生成） */
     public Map<String, Object> generate(Long serverId) {
@@ -105,12 +115,18 @@ public class InspectionService implements IInspectionService {
         report.put("grade", grade((int) Math.max(0, Math.min(100, Math.round(score)))));
         report.put("checks", checks);
         report.put("issues", issues);
+        /* P11：缓存快照供 export 复用，避免导出时二次 generate 重复采集 */
+        reportCache.put(serverId, new CachedReport(report, System.currentTimeMillis()));
         return report;
     }
 
     /** 导出巡检报告（xlsx / pdf，复用报表引擎） */
     public byte[] export(String format, Long serverId) {
-        Map<String, Object> report = generate(serverId);
+        /* P11：优先复用 TTL 内已生成的报告（generate→export 连续操作不再二次打 AS400），缺失/过期才重新生成 */
+        CachedReport cached = reportCache.get(serverId);
+        Map<String, Object> report = cached != null
+                && System.currentTimeMillis() - cached.cachedAt() < REPORT_CACHE_TTL_MS
+                ? cached.report() : generate(serverId);
         String title = "巡检报告-" + report.get("serverName") + "-" + LocalDateTime.now().toLocalDate();
         List<Map<String, Object>> rows = new ArrayList<>();
         for (Object c : safeList(report.get("checks"))) {

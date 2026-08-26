@@ -59,7 +59,7 @@
             <el-button v-has-perm="'ALERT_MANAGE'" size="small" type="warning" plain @click="openEdit(row as AlertRule)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-button v-has-perm="'ALERT_MANAGE'" size="small" type="danger" plain @click="remove(row as AlertRule)">
+            <el-button v-has-perm="'ALERT_MANAGE'" size="small" type="danger" plain :loading="removeLoading === row.id" @click="confirmRemove(row)">
               {{ $t('common.delete') }}
             </el-button>
           </template>
@@ -69,8 +69,8 @@
       <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="forceSearch" @size-change="forceSearch" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px">
-      <el-form :model="form" label-width="110px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+      <el-form :model="form" label-width="var(--rx-form-label-width-wide)">
         <el-form-item :label="$t('alertRules.metric')" required>
           <el-select v-model="form.metricName" filterable allow-create default-first-option class="w-full">
             <el-option v-for="m in metricOptions" :key="m" :label="m" :value="m" />
@@ -133,7 +133,8 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'AlertRules' })
 import { onMounted, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { Plus, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useAs400ServerStore, type As400Server } from '@/stores/as400Server'
@@ -249,12 +250,11 @@ const toggle = async (row: AlertRule, v: boolean) => {
   await load()
 }
 
-const remove = async (row: AlertRule) => {
-  await ElMessageBox.confirm(t('alertRules.deleteConfirm'), t('common.confirm'), { type: 'warning' })
-  await deleteAlertRule(row.id!)
-  ElMessage.success(t('common.delete'))
-  await load()
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: AlertRule) => deleteAlertRule(row.id!),
+  onSuccess: load,
+  confirmMessage: 'alertRules.deleteConfirm',
+})
 
 onMounted(async () => {
   servers.value = await as400Store.fetchServers()

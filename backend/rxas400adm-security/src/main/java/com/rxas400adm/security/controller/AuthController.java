@@ -11,6 +11,7 @@ import com.rxas400adm.security.dto.ChangePasswordDTO;
 import com.rxas400adm.security.dto.LoginRequest;
 import com.rxas400adm.security.dto.LoginResponse;
 import com.rxas400adm.security.dto.RefreshTokenDTO;
+import com.rxas400adm.security.config.ProxyProperties;
 import com.rxas400adm.security.vo.LoginAttemptIpStatsVO;
 import com.rxas400adm.security.vo.LoginAttemptVO;
 import com.rxas400adm.security.vo.MenuDataResponseVO;
@@ -19,10 +20,12 @@ import com.rxas400adm.security.service.IAs400LoginService;
 import com.rxas400adm.security.service.IIpRuleService;
 import com.rxas400adm.security.service.ILoginAttemptService;
 import com.rxas400adm.security.service.IPermissionService;
+import com.rxas400adm.security.service.AuthService;
 import com.rxas400adm.security.service.ITokenBlacklistService;
 import com.rxas400adm.system.entity.SysUser;
 import com.rxas400adm.system.service.IAuditLogService;
 import com.rxas400adm.system.service.IMenuService;
+import com.rxas400adm.system.service.LoginAuditContext;
 import com.rxas400adm.system.service.SysUserService;
 import com.rxas400adm.system.vo.UserMenuDataVO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,11 +35,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -66,11 +70,10 @@ public class AuthController {
     private final IAuditLogService auditLogService;
     private final IMenuService menuService;
     private final ITokenBlacklistService tokenBlacklistService;
-    private final com.rxas400adm.security.service.AuthService authService;
+    private final AuthService authService;
 
-    /** 可信反向代理 IP 列表（逗号分隔，S3）；留空则完全忽略 X-Forwarded-For */
-    @Value("${rxas400.security.trusted-proxies:}")
-    private String trustedProxies;
+    // R7：trusted-proxies @Value 收敛为 ProxyProperties 单点绑定（与 RateLimitFilter 同键同源）
+    private final ProxyProperties proxyProperties;
 
     /**
      * 登出（P2-1 JWT 吊销）：将当前 token 的 jti 加入吊销名单，
@@ -80,8 +83,8 @@ public class AuthController {
     @PostMapping("/logout")
     @PreAuthorize("isAuthenticated()")
     @OperateLog(module = "认证", operation = "登出")
-    public ApiResponse<Void> logout(@org.springframework.web.bind.annotation.RequestHeader(
-            value = org.springframework.http.HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    public ApiResponse<Void> logout(@RequestHeader(
+            value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         if (StringUtils.hasText(authHeader) && authHeader.startsWith(SecurityConstants.TOKEN_PREFIX)) {
             String token = authHeader.substring(SecurityConstants.TOKEN_PREFIX.length());
             if (jwtUtil.isValid(token)) {
@@ -225,7 +228,7 @@ public class AuthController {
 
     private void auditLogin(String action, String username, String ip, String source,
                             Long serverId, String detail) {
-        auditLogService.auditLogin(new com.rxas400adm.system.service.LoginAuditContext(
+        auditLogService.auditLogin(new LoginAuditContext(
                 action, username, ip, source, serverId, detail));
     }
 
@@ -245,6 +248,7 @@ public class AuthController {
     }
 
     private boolean isTrustedProxy(String remoteAddr) {
+        String trustedProxies = proxyProperties.getTrustedProxies();
         if (remoteAddr == null || !StringUtils.hasText(trustedProxies)) {
             return false;
         }

@@ -28,6 +28,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { fetchJobDependency, type DependencyGraph } from '@/api/jobDependency'
 import { useECharts, type ECOption } from '@/composables/useECharts'
+import { cssVar } from '@/utils/cssVar'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 
 const { t } = useI18n()
@@ -72,7 +73,7 @@ const buildChartOption = (): ECOption => ({
         name: n.name,
         symbolSize: n.type === 'PGM' ? 40 : 28,
         category: n.type === 'PGM' ? 0 : 1,
-        itemStyle: { color: n.type === 'PGM' ? '#409eff' : '#67c23a' },
+        itemStyle: { color: n.type === 'PGM' ? cssVar('--el-color-primary') : cssVar('--el-color-success') },
       })),
       links: graph.links.map((l) => ({ source: l.source, target: l.target })),
     },

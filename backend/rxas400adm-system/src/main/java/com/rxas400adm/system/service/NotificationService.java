@@ -143,6 +143,8 @@ public class NotificationService implements INotificationService {
                     "time", LocalDateTime.now().toString()));
         } catch (Exception e) {
             // WebSocket 未初始化（如单测/启动早期）时忽略
+            // 【E3】推送失败不再完全静默：debug 级留痕（该场景属预期降级，不升级日志级别）
+            log.debug("WS 推送失败(username={}): {}", username, e.getMessage());
         }
     }
 }

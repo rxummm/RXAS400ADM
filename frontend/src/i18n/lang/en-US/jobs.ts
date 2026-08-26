@@ -23,6 +23,10 @@ export default {
     release: 'Release',
     holdSuccess: 'Hold command sent',
     releaseSuccess: 'Release command sent',
+    batchEnd: 'Batch End',
+    batchEndConfirm: 'Confirm to batch end {count} jobs?',
+    batchEndSuccess: 'Batch end command sent',
+    batchEndFailed: 'Batch end failed',
     log: 'Job Log',
     logDrawer: 'Job Log (DSPJOBLOG)',
     noLog: 'No log entries',
@@ -116,6 +120,10 @@ export default {
     allStatus: 'All Status',
     typeSchedule: 'Schedule',
     typeScript: 'Script',
+    totalExecutions: 'Total Executions',
+    successRate: 'Success Rate',
+    successCount: 'Success Count',
+    failedCount: 'Failed Count',
     empty: 'No execution records',
   },
   jobSla: {
@@ -150,9 +158,6 @@ export default {
   },
   source: {
     title: 'Source Code Browser (Source Library → File → Member)',
-    compile: 'Compile (CRTBNDRPG)',
     empty: 'Select a member on the left to view source code',
-    compileSuccess: 'Compilation successful',
-    compileFailed: 'Compilation failed',
   },
 }

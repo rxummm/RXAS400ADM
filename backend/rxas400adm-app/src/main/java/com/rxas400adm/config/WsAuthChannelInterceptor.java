@@ -1,13 +1,16 @@
 package com.rxas400adm.config;
 
+import com.rxas400adm.as400.entity.IbmiSystem;
+import com.rxas400adm.as400.mapper.IbmiSystemMapper;
 import com.rxas400adm.common.constants.SecurityConstants;
+import com.rxas400adm.security.config.JwtProperties;
+import com.rxas400adm.security.config.ProxyProperties;
 import com.rxas400adm.security.jwt.JwtUtil;
 import com.rxas400adm.security.service.IPermissionService;
 import com.rxas400adm.security.service.ITokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -35,21 +38,17 @@ import java.util.List;
  *   · /user/queue/**（个人通知）→ 已登录即可
  */
 @Slf4j
-@Configuration
+@Component
 @RequiredArgsConstructor
 public class WsAuthChannelInterceptor implements ChannelInterceptor {
 
     private final JwtUtil jwtUtil;
     private final IPermissionService permissionService;
     private final ITokenBlacklistService tokenBlacklistService;
-
-    /** P2-1：WS 链路是否启用 JWT 吊销名单检查（与 JwtAuthenticationFilter 一致，默认开启） */
-    @Value("${rxas400.jwt.blacklist-enabled:true}")
-    private boolean blacklistEnabled;
-
-    /** P2-5：与 JwtAuthenticationFilter 一致——DB 故障时是否回退 token 内嵌权限（默认 false=拒绝闭合） */
-    @Value("${rxas400.security.permission-fallback-on-error:false}")
-    private boolean permissionFallbackOnError;
+    private final IbmiSystemMapper systemMapper;
+    // R7：blacklist-enabled / permission-fallback-on-error 两处 @Value 收敛为 Properties 单点绑定
+    private final JwtProperties jwtProperties;
+    private final ProxyProperties proxyProperties;
 
     @Override
     public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
@@ -79,7 +78,7 @@ public class WsAuthChannelInterceptor implements ChannelInterceptor {
         }
         // N1：与 JwtAuthenticationFilter 一致——已吊销的 token（登出后）不再放行 WS 连接，
         // 否则旧 token 在有效期内仍可订阅 /topic/monitor/** 实时数据
-        if (blacklistEnabled && tokenBlacklistService.isBlacklisted(jwtUtil.getJti(token))) {
+        if (jwtProperties.isBlacklistEnabled() && tokenBlacklistService.isBlacklisted(jwtUtil.getJti(token))) {
             log.warn("[WS] CONNECT token 已吊销(jti={})，拒绝连接", jwtUtil.getJti(token));
             throw new AccessDeniedException("登录令牌已失效，请重新登录");
         }
@@ -90,7 +89,7 @@ public class WsAuthChannelInterceptor implements ChannelInterceptor {
         try {
             permissions = permissionService.loadPermissions(username);
         } catch (Exception e) {
-            if (permissionFallbackOnError) {
+            if (proxyProperties.isPermissionFallbackOnError()) {
                 permissions = jwtUtil.getPermissions(token);
             } else {
                 log.error("[WS] 加载用户权限失败(用户名={})，按无权限处理: {}", username, e.getMessage());
@@ -120,7 +119,22 @@ public class WsAuthChannelInterceptor implements ChannelInterceptor {
                     .anyMatch(a -> "MONITOR_VIEW".equals(a.getAuthority()));
             if (!hasMonitorView) {
                 log.warn("[WS] 用户 {} 无 MONITOR_VIEW，拒绝订阅 {}", authentication.getName(), destination);
-                throw new AccessDeniedException("无权限订阅实时监控数据");
+                throw new AccessDeniedException("无权限访问实时监控数据");
+            }
+            // B7：实例级校验——destination 尾部必须是存在且启用的服务器 ID，
+            // 防止任意 MONITOR_VIEW 用户订阅所有服务器（含未授权实例）的实时指标
+            String tail = destination.substring("/topic/monitor/".length());
+            Long instanceId;
+            try {
+                instanceId = Long.parseLong(tail);
+            } catch (NumberFormatException e) {
+                log.warn("[WS] 用户 {} 订阅目的地格式非法: {}", authentication.getName(), destination);
+                throw new AccessDeniedException("非法的监控订阅目的地");
+            }
+            IbmiSystem system = systemMapper.selectById(instanceId);
+            if (system == null || Boolean.FALSE.equals(system.getEnabled())) {
+                log.warn("[WS] 用户 {} 订阅的服务器不存在或已禁用: id={}", authentication.getName(), instanceId);
+                throw new AccessDeniedException("监控服务器不存在或已禁用");
             }
         } else if (destination.startsWith("/topic/")) {
             // 当前服务端仅向 /topic/monitor/** 发布；其余公开 topic 一律拒绝

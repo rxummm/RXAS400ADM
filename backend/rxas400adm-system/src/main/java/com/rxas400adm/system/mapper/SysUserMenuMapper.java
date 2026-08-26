@@ -5,6 +5,7 @@ import com.rxas400adm.system.entity.SysUserMenu;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -20,6 +21,9 @@ public interface SysUserMenuMapper extends BaseMapper<SysUserMenu> {
     /** 清空用户所有直接授权 */
     void deleteByUserId(@Param("userId") Long userId);
 
-    /** 移除用户指定菜单授权 */
-    void deleteByUserIdAndMenuId(@Param("userId") Long userId, @Param("menuId") Long menuId);
+    /** P6 批量插入用户-菜单直接授权（多值 INSERT，一次 DB 往返） */
+    int insertBatch(@Param("list") List<SysUserMenu> list);
+
+    /** P6 批量移除用户指定菜单授权（IN 条件一次删除，替代逐条 delete） */
+    int deleteByUserIdAndMenuIds(@Param("userId") Long userId, @Param("menuIds") Collection<Long> menuIds);
 }

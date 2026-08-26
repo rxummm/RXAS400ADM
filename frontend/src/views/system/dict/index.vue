@@ -30,7 +30,7 @@
             <el-table-column :label="$t('common.operation')" width="120" fixed="right">
               <template #default="{ row }">
                 <el-button link type="primary" size="small" @click.stop="openTypeDialog(row as DictType)">{{ $t('common.edit') }}</el-button>
-                <el-button link type="danger" size="small" @click.stop="removeType(row as DictType)">{{ $t('common.delete') }}</el-button>
+                <el-button link type="danger" size="small" :loading="removeLoading === row.id" @click.stop="confirmRemove(row)">{{ $t('common.delete') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -44,8 +44,8 @@
     </div>
 
     <!-- 类型弹窗 -->
-    <el-dialog v-model="typeDialog" :title="typeForm.id ? $t('common.edit') : $t('dict.addType')" width="460px">
-      <el-form :model="typeForm" label-width="80px">
+    <el-dialog v-model="typeDialog" :title="typeForm.id ? $t('common.edit') : $t('dict.addType')" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
+      <el-form :model="typeForm" label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('dict.code')" required>
           <el-input v-model="typeForm.code" :disabled="!!typeForm.id" placeholder="job_status" />
         </el-form-item>
@@ -72,7 +72,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import {
@@ -148,19 +149,17 @@ const saveType = async () => {
   }
 }
 
-const removeType = async (row: DictType) => {
-  try {
-    await ElMessageBox.confirm(t('dict.deleteTypeConfirm', { name: row.name }), t('common.tip'), { type: 'warning' })
-    if (row.id) await deleteDictType(row.id)
-    ElMessage.success(t('common.deleteSuccess'))
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: DictType) => deleteDictType(row.id!),
+  onSuccess: async (row: DictType) => {
     if (currentType.value?.id === row.id) {
       currentType.value = null
     }
     await loadTypes()
-  } catch {
-    /* cancelled */
-  }
-}
+  },
+  confirmMessage: 'dict.deleteTypeConfirm',
+  confirmTitle: 'common.tip',
+})
 
 
 

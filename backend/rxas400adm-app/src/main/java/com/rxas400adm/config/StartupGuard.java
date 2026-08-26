@@ -1,11 +1,11 @@
 package com.rxas400adm.config;
 
 import com.rxas400adm.common.config.ProfileResolver;
+import com.rxas400adm.security.config.JwtProperties;
 import com.rxas400adm.system.entity.SysConfig;
 import com.rxas400adm.system.mapper.SysConfigMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -27,9 +27,8 @@ public class StartupGuard {
 
     private final ProfileResolver profileResolver;
 
-    /** P3-6：实际生效的 JWT 密钥（含 yml 内置默认值兜底），非 mock 时与已知默认值比对拦截 */
-    @Value("${rxas400.jwt.secret:}")
-    private String jwtSecret;
+    // R7：rxas400.jwt.secret @Value 收敛为 JwtProperties 单点绑定
+    private final JwtProperties jwtProperties;
 
     /** 已知内置默认密钥（application.yml 兜底值）——生产用此值即视为未配置 */
     private static final String KNOWN_DEFAULT_SECRET = "RXAS400-Enterprise-IBM-i-Operation-Platform-Secret-2026";
@@ -49,7 +48,7 @@ public class StartupGuard {
         // P3-6：非 mock 模式校验 JWT 密钥——未设置环境变量（落入 yml 默认值）
         // 或显式配置了内置默认值字符串时都拒绝启动，防止使用可被猜出的签名密钥。
         if (!isMock && (System.getenv("RXAS400_JWT_SECRET") == null
-                || KNOWN_DEFAULT_SECRET.equals(jwtSecret))) {
+                || KNOWN_DEFAULT_SECRET.equals(jwtProperties.getSecret()))) {
             log.error("================================================");
             log.error("  JWT 密钥未配置或仍为内置默认值，存在安全风险！");
             log.error("  请设置环境变量 RXAS400_JWT_SECRET（>=32 字节随机值）");

@@ -1,8 +1,11 @@
 package com.rxas400adm.system.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.system.entity.Favorite;
 import com.rxas400adm.system.mapper.FavoriteMapper;
+import com.rxas400adm.system.vo.FavoriteToggleVO;
 import com.rxas400adm.system.vo.FavoriteVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,17 +38,18 @@ public class FavoriteService implements IFavoriteService {
     }
 
     /** 切换收藏状态（已收藏则取消，未收藏则添加），返回切换后状态 */
-    
-    public com.rxas400adm.system.vo.FavoriteToggleVO toggle(String username, String title, String path, String icon) {
+
+    public FavoriteToggleVO toggle(String username, String title, String path, String icon) {
         if (path == null || path.isBlank()) {
-            throw new IllegalArgumentException("收藏路径不能为空");
+            // 【E12】IllegalArgumentException 直抛会落兜底 500，参数非法应走受控 BusinessException(400)
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "收藏路径不能为空");
         }
         Favorite existing = favoriteMapper.selectOne(new LambdaQueryWrapper<Favorite>()
                 .eq(Favorite::getUsername, username)
                 .eq(Favorite::getPath, path));
         if (existing != null) {
             favoriteMapper.deleteById(existing.getId());
-            return new com.rxas400adm.system.vo.FavoriteToggleVO(false, existing.getId());
+            return new FavoriteToggleVO(false, existing.getId());
         }
         Favorite fav = new Favorite();
         fav.setUsername(username);
@@ -54,7 +58,7 @@ public class FavoriteService implements IFavoriteService {
         fav.setIcon(icon);
         fav.setCreatedTime(LocalDateTime.now());
         favoriteMapper.insert(fav);
-        return new com.rxas400adm.system.vo.FavoriteToggleVO(true, fav.getId());
+        return new FavoriteToggleVO(true, fav.getId());
     }
 
     

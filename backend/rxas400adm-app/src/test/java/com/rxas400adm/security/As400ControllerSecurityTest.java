@@ -8,6 +8,7 @@ import com.rxas400adm.security.config.SecurityConfig;
 import com.rxas400adm.security.filter.JwtAuthenticationFilter;
 import com.rxas400adm.security.jwt.JwtUtil;
 import com.rxas400adm.security.service.PermissionService;
+import com.rxas400adm.security.service.TokenBlacklistService;
 import com.rxas400adm.system.aspect.OperateLogAspect;
 import com.rxas400adm.system.entity.AuditLog;
 import com.rxas400adm.system.mapper.AuditLogMapper;
@@ -52,7 +53,7 @@ class As400ControllerSecurityTest {
     @MockBean
     private PermissionService permissionService;
     @MockBean
-    private com.rxas400adm.security.service.TokenBlacklistService tokenBlacklistService;
+    private TokenBlacklistService tokenBlacklistService;
     @MockBean
     private IIbmiSystemService systemService;
     @MockBean

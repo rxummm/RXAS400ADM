@@ -34,6 +34,17 @@ public class DocVersionService {
     }
 
     /**
+     * P12 版本正文只读懒加载：版本列表已瘦身不含 content，按版本 id 单点取回正文大字段。
+     */
+    public String versionContent(Long versionId) {
+        DocVersion ver = versionMapper.selectById(versionId);
+        if (ver == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "版本快照不存在");
+        }
+        return ver.getContent();
+    }
+
+    /**
      * 从指定版本快照恢复为当前编辑态。
      * 已发布则提升版本号并回到草稿重新走审批。
      */

@@ -18,6 +18,7 @@ import com.rxas400adm.system.mapper.SysUserRoleMapper;
 import com.rxas400adm.system.vo.UserVO;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -40,8 +41,13 @@ class SysUserServiceImplTest {
     private final SysUserRoleMapper userRoleMapper = mock(SysUserRoleMapper.class);
     private final SysRolePermissionMapper rolePermissionMapper = mock(SysRolePermissionMapper.class);
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
-    private final org.springframework.context.ApplicationEventPublisher eventPublisher =
-            mock(org.springframework.context.ApplicationEventPublisher.class);
+    private final ApplicationEventPublisher eventPublisher =
+            mock(ApplicationEventPublisher.class);
+
+    /** 类型安全占位符：利用 any() 的目标类型推断消除裸 Class 字面量的 unchecked 转换警告 */
+    private static <T> Wrapper<T> anyWrapper() {
+        return any();
+    }
 
     private SysUserServiceImpl service() {
         return new SysUserServiceImpl(userMapper, roleMapper, permissionMapper,
@@ -50,7 +56,7 @@ class SysUserServiceImplTest {
 
     @Test
     void create_shouldEncodePassword() {
-        when(userMapper.selectOne(any(Wrapper.class))).thenReturn(null);
+        when(userMapper.selectOne(anyWrapper())).thenReturn(null);
         SysUserServiceImpl service = service();
         UserDTO dto = new UserDTO();
         dto.setUsername("dev1");
@@ -69,7 +75,7 @@ class SysUserServiceImplTest {
     void createDuplicateUsername_shouldThrow() {
         SysUser existing = new SysUser();
         existing.setUsername("admin");
-        when(userMapper.selectOne(any(Wrapper.class))).thenReturn(existing);
+        when(userMapper.selectOne(anyWrapper())).thenReturn(existing);
 
         UserDTO dto = new UserDTO();
         dto.setUsername("admin");
@@ -81,12 +87,12 @@ class SysUserServiceImplTest {
         SysUserRole userRole = new SysUserRole();
         userRole.setUserId(1L);
         userRole.setRoleId(10L);
-        when(userRoleMapper.selectList(any(Wrapper.class))).thenReturn(List.of(userRole));
+        when(userRoleMapper.selectList(anyWrapper())).thenReturn(List.of(userRole));
 
         SysRolePermission rp = new SysRolePermission();
         rp.setRoleId(10L);
         rp.setPermissionId(100L);
-        when(rolePermissionMapper.selectList(any(Wrapper.class))).thenReturn(List.of(rp));
+        when(rolePermissionMapper.selectList(anyWrapper())).thenReturn(List.of(rp));
 
         SysPermission permission = new SysPermission();
         permission.setId(100L);
@@ -99,7 +105,7 @@ class SysUserServiceImplTest {
 
     @Test
     void listPermissions_withoutRoles_shouldBeEmpty() {
-        when(userRoleMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+        when(userRoleMapper.selectList(anyWrapper())).thenReturn(List.of());
         assertEquals(List.of(), service().listPermissions(1L));
     }
 
@@ -107,7 +113,7 @@ class SysUserServiceImplTest {
 
     @Test
     void create_withRoleIds_shouldBindRoles() {
-        when(userMapper.selectOne(any(Wrapper.class))).thenReturn(null);
+        when(userMapper.selectOne(anyWrapper())).thenReturn(null);
         SysRole role = new SysRole();
         role.setId(10L);
         role.setRoleCode("OPERATOR");
@@ -128,11 +134,11 @@ class SysUserServiceImplTest {
 
     @Test
     void create_withRoleCodes_shouldResolveAndBind() {
-        when(userMapper.selectOne(any(Wrapper.class))).thenReturn(null);
+        when(userMapper.selectOne(anyWrapper())).thenReturn(null);
         SysRole role = new SysRole();
         role.setId(10L);
         role.setRoleCode("OPERATOR");
-        when(roleMapper.selectList(any(Wrapper.class))).thenReturn(List.of(role));
+        when(roleMapper.selectList(anyWrapper())).thenReturn(List.of(role));
         when(roleMapper.selectById(10L)).thenReturn(role);
         when(roleMapper.selectBatchIds(List.of(10L))).thenReturn(List.of(role));
 
@@ -150,8 +156,8 @@ class SysUserServiceImplTest {
 
     @Test
     void create_withUnknownRoleCode_shouldThrow() {
-        when(userMapper.selectOne(any(Wrapper.class))).thenReturn(null);
-        when(roleMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+        when(userMapper.selectOne(anyWrapper())).thenReturn(null);
+        when(roleMapper.selectList(anyWrapper())).thenReturn(List.of());
 
         UserDTO dto = new UserDTO();
         dto.setUsername("x1");
@@ -212,7 +218,7 @@ class SysUserServiceImplTest {
         service().update(1L, dto);
 
         // 整体重建：先删旧关联，再批量插入新角色
-        verify(userRoleMapper).delete(any(Wrapper.class));
+        verify(userRoleMapper).delete(anyWrapper());
         ArgumentCaptor<List<SysUserRole>> captor = ArgumentCaptor.forClass(List.class);
         verify(userRoleMapper).insertBatch(captor.capture());
         assertEquals(10L, captor.getValue().get(0).getRoleId());

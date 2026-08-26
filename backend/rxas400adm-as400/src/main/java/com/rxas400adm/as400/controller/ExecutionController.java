@@ -2,6 +2,8 @@ package com.rxas400adm.as400.controller;
 
 import com.rxas400adm.as400.service.ExecutionService;
 import com.rxas400adm.as400.vo.ExecutionRecordVO;
+import com.rxas400adm.as400.vo.ExecutionStatsVO;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
@@ -56,10 +58,16 @@ public class ExecutionController {
         merged.sort((a, b) -> String.valueOf(b.get("runTime")).compareTo(String.valueOf(a.get("runTime"))));
 
         int total = merged.size();
-        int from = Math.min((page - 1) * pageSize, total);
-        int to = Math.min(from + pageSize, total);
-        List<ExecutionRecordVO> records = from >= to ? List.of()
-                : merged.subList(from, to).stream().map(ExecutionRecordVO::from).toList();
+        // B2：long 运算防 (page-1)*size int 溢出 → subList 负索引
+        int[] bounds = PageConstants.sliceBounds(page, pageSize, total);
+        List<ExecutionRecordVO> records = bounds[0] >= bounds[1] ? List.of()
+                : merged.subList(bounds[0], bounds[1]).stream().map(ExecutionRecordVO::from).toList();
         return ApiResponse.success(new PageResult<>(total, records));
+    }
+
+    @GetMapping("/stats")
+    @PreAuthorize("hasAuthority('EXECUTION_VIEW')")
+    public ApiResponse<ExecutionStatsVO> stats() {
+        return ApiResponse.success(executionService.getStats());
     }
 }

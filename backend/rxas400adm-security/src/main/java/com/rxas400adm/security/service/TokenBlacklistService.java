@@ -3,11 +3,11 @@ package com.rxas400adm.security.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.rxas400adm.security.config.JwtProperties;
 import com.rxas400adm.security.entity.TokenBlacklist;
 import com.rxas400adm.security.mapper.TokenBlacklistMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -28,13 +28,9 @@ public class TokenBlacklistService implements ITokenBlacklistService {
 
     private final TokenBlacklistMapper blacklistMapper;
 
-    /** N4：是否启用吊销名单检查（与 JwtAuthenticationFilter/WsAuthChannelInterceptor 共用配置） */
-    @Value("${rxas400.jwt.blacklist-enabled:true}")
-    private boolean blacklistEnabled;
-
-    /** N4：DB 查询失败时是否按"已吊销"兜底拒绝（默认 true=fail-closed，DB 抖动时不放行未知 token） */
-    @Value("${rxas400.jwt.blacklist-fail-closed:true}")
-    private boolean failClosed;
+    // R7：blacklist-enabled / blacklist-fail-closed 两处 @Value 收敛为 JwtProperties 单点绑定
+    // （N4：与 JwtAuthenticationFilter/WsAuthChannelInterceptor 共用配置）
+    private final JwtProperties jwtProperties;
 
     /** N4：查询结果本地缓存（30s），DB 打点频率从每请求降到每 30s/每 jti 一次 */
     private final Cache<String, Boolean> cache = Caffeine.newBuilder()
@@ -44,7 +40,7 @@ public class TokenBlacklistService implements ITokenBlacklistService {
 
     /** 判断 jti 是否已吊销 */
     public boolean isBlacklisted(String jti) {
-        if (!blacklistEnabled || jti == null || jti.isBlank()) {
+        if (!jwtProperties.isBlacklistEnabled() || jti == null || jti.isBlank()) {
             return false;
         }
         Boolean cached = cache.getIfPresent(jti);
@@ -57,8 +53,9 @@ public class TokenBlacklistService implements ITokenBlacklistService {
                     .eq(TokenBlacklist::getJti, jti)) > 0;
         } catch (Exception e) {
             // N4：DB 不可用/抖动——fail-closed 拒绝（宁可误拒不放行已吊销 token），避免空窗期
-            log.warn("[JWT] 吊销名单查询失败(jti={})，按{}处理: {}", jti, failClosed ? "已吊销拒绝" : "未吊销放行", e.getMessage());
-            return failClosed;
+            log.warn("[JWT] 吊销名单查询失败(jti={})，按{}处理: {}", jti,
+                    jwtProperties.isBlacklistFailClosed() ? "已吊销拒绝" : "未吊销放行", e.getMessage());
+            return jwtProperties.isBlacklistFailClosed();
         }
         cache.put(jti, blacklisted);
         return blacklisted;

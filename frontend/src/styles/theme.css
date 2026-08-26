@@ -44,6 +44,11 @@ html[data-theme='cyan'] {
   --color-danger: #f56c6c;
   --color-info: #909399;
 
+  /* ECharts / 图表专用颜色 */
+  --color-chart-purple: #722ed1;
+  --color-chart-cyan: #13c2c2;
+  --color-chart-orange: #fa8c16;
+
   --bg-page: #f0f2f5;
   --bg-container: #ffffff;
   --bg-hover: #f0f2f5;
@@ -89,6 +94,16 @@ html[data-theme='cyan'] {
   --z-tags-view: 1001;
   --z-context-menu: 3000;
   --z-teleport: 99999;
+
+  /* ---- 布局尺寸体系（弹窗宽度 / 表单标签宽度，统一管控，禁止散落硬编码） ----
+     使用方式：label-width="var(--rx-form-label-width)"
+              width="var(--rx-dialog-sm)" 等 */
+  --rx-form-label-width: 100px;
+  --rx-form-label-width-wide: 120px;
+  --rx-dialog-xs: 460px;
+  --rx-dialog-sm: 560px;
+  --rx-dialog-md: 640px;
+  --rx-dialog-lg: 760px;
 }
 
 /* ---- 语义变量：暗色（GitHub Dark 系） ---- */

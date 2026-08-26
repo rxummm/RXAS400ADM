@@ -3,11 +3,13 @@ package com.rxas400adm.common.notify;
 import com.rxas400adm.common.security.SsrfGuard;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Webhook 告警推送（2.1.6 增强）：POST JSON 到外部 URL，\n * 最多尝试 {@link #MAX_ATTEMPTS} 次（间隔 {@link #RETRY_DELAY}），失败记录日志。\n * URL 由调用方从 sys_config（alert.webhook.url）解析；空 URL 调用方直接跳过。\n */
@@ -20,17 +22,17 @@ public class WebhookNotifier {
     static final Duration TIMEOUT = Duration.ofSeconds(3);
 
     private final RestClient restClient = RestClient.builder()
-            .requestFactory(new org.springframework.http.client.SimpleClientHttpRequestFactory())
+            .requestFactory(new SimpleClientHttpRequestFactory())
             .build();
 
     /** L2：URL 安全校验器（默认 SSRF 守卫；构造器注入供测试绕开环回限制验证 HTTP 通路） */
-    private final java.util.function.Predicate<String> urlValidator;
+    private final Predicate<String> urlValidator;
 
     public WebhookNotifier() {
         this(SsrfGuard::isSafeUrl);
     }
 
-    WebhookNotifier(java.util.function.Predicate<String> urlValidator) {
+    WebhookNotifier(Predicate<String> urlValidator) {
         this.urlValidator = urlValidator;
     }
 

@@ -59,7 +59,7 @@
             </el-button>
             <el-button size="small" @click="showHistory(row as JobSchedule)">{{ $t('schedule.history') }}</el-button>
             <el-button v-has-perm="'SCHEDULE_MANAGE'" size="small" type="warning" plain @click="openEdit(row as JobSchedule)">{{ $t('common.edit') }}</el-button>
-            <el-button v-has-perm="'SCHEDULE_MANAGE'" size="small" type="danger" plain @click="remove(row as JobSchedule)">{{ $t('common.delete') }}</el-button>
+            <el-button v-has-perm="'SCHEDULE_MANAGE'" size="small" type="danger" plain :loading="removeLoading === row.id" @click="confirmRemove(row)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -67,8 +67,8 @@
       <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="var(--rx-form-label-width)">
         <el-form-item :label="$t('schedule.name')" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
@@ -125,7 +125,8 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'Schedules' })
 import { onMounted, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { Plus } from '@element-plus/icons-vue'
 import QueryBar from '@/components/QueryBar.vue'
 import { useI18n } from 'vue-i18n'
@@ -257,12 +258,11 @@ const run = async (row: JobSchedule) => {
   }
 }
 
-const remove = async (row: JobSchedule) => {
-  await ElMessageBox.confirm(t('schedule.deleteConfirm'), t('common.confirm'), { type: 'warning' })
-  await deleteSchedule(row.id)
-  ElMessage.success(t('common.delete'))
-  await load()
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: JobSchedule) => deleteSchedule(row.id),
+  onSuccess: load,
+  confirmMessage: 'schedule.deleteConfirm',
+})
 
 const showHistory = async (row: JobSchedule) => {
   historyJob.value = row

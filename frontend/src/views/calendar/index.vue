@@ -53,7 +53,7 @@
     </div>
 
     <!-- 某天事件列表 -->
-    <el-dialog v-model="dayDialogVisible" :title="selectedDayTitle" width="480px" :close-on-click-modal="false">
+    <el-dialog v-model="dayDialogVisible" :title="selectedDayTitle" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
       <div v-if="selectedDayEvents.length" class="day-event-list">
         <div v-for="evt in selectedDayEvents" :key="evt.id" class="day-event-item">
           <span class="event-color-bar" :style="{ background: evt.color || 'var(--color-primary)' }" />
@@ -70,7 +70,7 @@
             <el-button text size="small" @click="openEventDialog(evt, '')">
               <el-icon><Edit /></el-icon>
             </el-button>
-            <el-button text size="small" type="danger" @click="onDelete(evt.id)">
+            <el-button text size="small" type="danger" :loading="removeLoading === evt.id" @click="confirmRemove(evt)">
               <el-icon><Delete /></el-icon>
             </el-button>
           </div>
@@ -93,7 +93,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { ArrowLeft, ArrowRight, Delete, Edit, Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import {
   fetchMonthEvents,
   deleteEvent,
@@ -201,17 +201,12 @@ function openDayDialog(cell: Cell) {
   dayDialogVisible.value = true
 }
 
-async function onDelete(id?: number) {
-  if (!id) return
-  try {
-    await ElMessageBox.confirm(t('calendar.deleteConfirm'), t('common.tip'), { type: 'warning' })
-    await deleteEvent(id)
-    ElMessage.success(t('common.deleteSuccess'))
-    loadMonth()
-  } catch {
-    /* cancelled */
-  }
-}
+const { removeLoading, confirmRemove } = useConfirmDelete({
+  deleteApi: (row: { id: number }) => deleteEvent(row.id),
+  onSuccess: loadMonth,
+  confirmMessage: 'calendar.deleteConfirm',
+  confirmTitle: 'common.tip',
+})
 
 onMounted(loadMonth)
 </script>

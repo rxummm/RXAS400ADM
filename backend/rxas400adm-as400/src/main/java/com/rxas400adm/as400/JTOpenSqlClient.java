@@ -37,13 +37,20 @@ class JTOpenSqlClient implements SqlClient {
         return rows.isEmpty() ? Map.of() : rows.get(0);
     }
 
+    /**
+     * E1：不再「吞错返空集」——故障伪装成合法空数据会让采集器落 0 值指标、告警引擎基于假数据判断。
+     * 失败统一抛 BusinessException（连接类错误单独码），调用方（采集器/巡检）按需降级，
+     * 监控侧表现为该 tick 数据点缺失（gap），而非致命的假 0 值。
+     */
     @Override
     public List<Map<String, Object>> queryList(String sql) {
         try {
-            return executeQuery(sql);
-        } catch (SQLException | RuntimeException e) {
-            log.error("IBM i SQL 查询失败(host={})，返回空数据: {}", state.host, state.redact(e.getMessage()));
-            return List.of();
+            return executeQuery(sql, null);
+        } catch (SQLException e) {
+            throw toSqlBusinessException(e);
+        } catch (RuntimeException e) {
+            throw new BusinessException(ErrorCode.AS400_SQL_FAILED,
+                    "IBM i SQL 执行异常: " + state.redact(e.getMessage()));
         }
     }
 
@@ -53,40 +60,69 @@ class JTOpenSqlClient implements SqlClient {
             return queryList(sql);
         }
         try {
-            return executeQuery(sql, params);
-        } catch (SQLException | RuntimeException e) {
-            log.error("IBM i 参数化 SQL 查询失败(host={})，返回空数据: {}", state.host, state.redact(e.getMessage()));
-            return List.of();
-        }
-    }
-
-    @Override
-    public List<Map<String, Object>> queryListChecked(String sql, Object... params) {
-        try {
-            return executeQuery(sql, params);
+            return executeQuery(sql, null, params);
         } catch (SQLException e) {
-            String sqlState = e.getSQLState();
-            boolean connectionIssue = (sqlState != null && sqlState.startsWith("08"))
-                    || e instanceof SQLNonTransientConnectionException
-                    || e instanceof SQLTransientConnectionException
-                    || e instanceof SQLRecoverableException;
-            if (connectionIssue) {
-                throw new BusinessException(ErrorCode.AS400_CONNECTION_FAILED,
-                        "IBM i 连接失败: " + state.redact(e.getMessage()));
-            }
-            throw new BusinessException(ErrorCode.AS400_SQL_FAILED,
-                    "IBM i SQL 执行失败: " + state.redact(e.getMessage()));
+            throw toSqlBusinessException(e);
         } catch (RuntimeException e) {
             throw new BusinessException(ErrorCode.AS400_SQL_FAILED,
                     "IBM i SQL 执行异常: " + state.redact(e.getMessage()));
         }
     }
 
-    private List<Map<String, Object>> executeQuery(String sql, Object... params) throws SQLException {
-        try (Connection conn = state.dataSource().getConnection()) {
+    @Override
+    public List<Map<String, Object>> queryListChecked(String sql, Object... params) {
+        try {
+            return executeQuery(sql, null, params);
+        } catch (SQLException e) {
+            throw toSqlBusinessException(e);
+        } catch (RuntimeException e) {
+            throw new BusinessException(ErrorCode.AS400_SQL_FAILED,
+                    "IBM i SQL 执行异常: " + state.redact(e.getMessage()));
+        }
+    }
+
+    /** S7：服务端行数上限下推（JDBC setMaxRows）——大表查询不再全量拉回 JVM 内存后才截断 */
+    @Override
+    public List<Map<String, Object>> queryListCheckedBounded(String sql, int maxRows, Object... params) {
+        try {
+            return executeQuery(sql, maxRows <= 0 ? null : maxRows, params);
+        } catch (SQLException e) {
+            throw toSqlBusinessException(e);
+        } catch (RuntimeException e) {
+            throw new BusinessException(ErrorCode.AS400_SQL_FAILED,
+                    "IBM i SQL 执行异常: " + state.redact(e.getMessage()));
+        }
+    }
+
+    /** SQLException → BusinessException：连接类错误（SQLState 08xxx）单独映射，消息统一脱敏 */
+    private BusinessException toSqlBusinessException(SQLException e) {
+        String sqlState = e.getSQLState();
+        String msg = String.valueOf(e.getMessage());
+        boolean connectionIssue = (sqlState != null && sqlState.startsWith("08"))
+                || e instanceof SQLNonTransientConnectionException
+                || e instanceof SQLTransientConnectionException
+                || e instanceof SQLRecoverableException
+                // 终检 1b：invalidate/disconnect 关池后借出连接报 "has been closed"（SQLState=null），
+                // 归连接类错误而非普通 SQL 失败，避免前端误判为语法/权限问题
+                || (sqlState == null && msg.contains("closed"));
+        if (connectionIssue) {
+            return new BusinessException(ErrorCode.AS400_CONNECTION_FAILED,
+                    "IBM i 连接失败: " + state.redact(e.getMessage()));
+        }
+        return new BusinessException(ErrorCode.AS400_SQL_FAILED,
+                "IBM i SQL 执行失败: " + state.redact(e.getMessage()));
+    }
+
+    /** maxRows 非空时 JDBC 层截断（S7），避免大结果集整体进堆 */
+    private List<Map<String, Object>> executeQuery(String sql, Integer maxRows, Object... params) throws SQLException {
+        // P1：改用 Hikari 连接池取连接（原 dataSource().getConnection() 每次物理新建 TCP+signon）
+        try (Connection conn = state.pooledConnection()) {
             if (params == null || params.length == 0) {
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
+                    if (maxRows != null) {
+                        ps.setMaxRows(maxRows);
+                    }
                     try (ResultSet rs = ps.executeQuery()) {
                         return toRows(rs);
                     }
@@ -94,6 +130,9 @@ class JTOpenSqlClient implements SqlClient {
             }
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
+                if (maxRows != null) {
+                    ps.setMaxRows(maxRows);
+                }
                 for (int i = 0; i < params.length; i++) {
                     ps.setObject(i + 1, params[i]);
                 }

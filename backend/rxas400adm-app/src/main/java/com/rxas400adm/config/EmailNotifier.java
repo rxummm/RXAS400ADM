@@ -4,6 +4,7 @@ import com.rxas400adm.system.service.ISysConfigService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
@@ -65,9 +66,19 @@ public class EmailNotifier {
         String pass = sysConfigService.get("alert.email.pass", "");
         String from = sysConfigService.get("alert.email.from", user.isBlank() ? "rxas400adm@localhost" : user);
 
+        // 【E8】端口解析原在 try 块外，非数字配置会抛 NumberFormatException 落全局 500；
+        // 改为独立 try/catch，失败时按既有「优雅禁用」路径返回（不抛出、不阻塞告警链路）
+        int portNum;
+        try {
+            portNum = Integer.parseInt(port);
+        } catch (NumberFormatException nfe) {
+            log.error("SMTP 端口配置非法(rxas400.alert.email.port)={}，邮件通知禁用", port);
+            return;
+        }
+
         JavaMailSenderImpl sender = new JavaMailSenderImpl();
         sender.setHost(host);
-        sender.setPort(Integer.parseInt(port));
+        sender.setPort(portNum);
         sender.setUsername(user);
         sender.setPassword(pass);
         sender.setDefaultEncoding("UTF-8");
@@ -86,7 +97,7 @@ public class EmailNotifier {
             helper.setSubject(title);
             helper.setText(text, false);
             if (data != null && data.length > 0 && filename != null) {
-                helper.addAttachment(filename, new org.springframework.core.io.ByteArrayResource(data), contentType);
+                helper.addAttachment(filename, new ByteArrayResource(data), contentType);
             }
             sender.send(mime);
             log.info("[{}] 已发送至 {}（{}）", logTag, recipients, title);

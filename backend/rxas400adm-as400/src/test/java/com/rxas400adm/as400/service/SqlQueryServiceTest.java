@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,7 +46,7 @@ class SqlQueryServiceTest {
 
     @Test
     void execute_shouldReturnColumnsAndRows() {
-        when(client.queryListChecked(any(String.class))).thenReturn(List.of(
+        when(client.queryListCheckedBounded(any(String.class), anyInt())).thenReturn(List.of(
                 Map.of("JOB_NAME", "JOB1", "JOB_STATUS", "RUN")
         ));
         QueryResult result = service.execute("SELECT JOB_NAME, JOB_STATUS FROM TABLE(QSYS2.ACTIVE_JOB_INFO()) X");
@@ -74,7 +75,7 @@ class SqlQueryServiceTest {
 
     @Test
     void execute_readOnlyTableFunctions_shouldPass() {
-        when(client.queryListChecked(any(String.class))).thenReturn(List.of(Map.of("JOB_NAME", "JOB1")));
+        when(client.queryListCheckedBounded(any(String.class), anyInt())).thenReturn(List.of(Map.of("JOB_NAME", "JOB1")));
         QueryResult result = service.execute("SELECT JOB_NAME FROM TABLE(QSYS2.ACTIVE_JOB_INFO()) X");
         assertEquals(1, result.getRowsReturned());
         result = service.execute("SELECT * FROM TABLE(QSYS2.JOB_LOG_INFO('*ALL', '*ALL', '*ALL', '*ALL')) X");
@@ -87,7 +88,7 @@ class SqlQueryServiceTest {
         for (int i = 0; i < 300; i++) {
             many.add(Map.of("COL", "v" + i));
         }
-        when(client.queryListChecked(any(String.class))).thenReturn(many);
+        when(client.queryListCheckedBounded(any(String.class), anyInt())).thenReturn(many);
         QueryResult result = service.execute("SELECT COL FROM QSYS2.SOME_VIEW");
         assertEquals(300, result.getRowsReturned());
         assertTrue(result.getRows().size() <= 200);

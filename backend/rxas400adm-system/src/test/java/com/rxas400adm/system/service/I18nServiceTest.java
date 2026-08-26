@@ -31,6 +31,11 @@ class I18nServiceTest {
         service = new I18nService(i18nMapper);
     }
 
+    /** 类型安全占位符：利用 any() 的目标类型推断消除裸 Class 字面量的 unchecked 转换警告 */
+    private static LambdaQueryWrapper<I18nEntry> anyWrapper() {
+        return any();
+    }
+
     // ---------------- translations ----------------
 
     @Test
@@ -40,7 +45,7 @@ class I18nServiceTest {
         e1.setI18nKey("common.search");
         e1.setLang("zh-CN");
         e1.setText("搜索");
-        when(i18nMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(e1));
+        when(i18nMapper.selectList(anyWrapper())).thenReturn(List.of(e1));
 
         Map<String, String> result = service.translations("zh-CN");
         assertEquals("搜索", result.get("common.search"));
@@ -66,7 +71,7 @@ class I18nServiceTest {
         dto.setI18nKey("new.key");
         dto.setLang("en-US");
         dto.setText("New");
-        when(i18nMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(null);
+        when(i18nMapper.selectOne(anyWrapper())).thenReturn(null);
         when(i18nMapper.insert(any(I18nEntry.class))).thenReturn(1);
 
         var result = service.save(dto);
@@ -82,7 +87,7 @@ class I18nServiceTest {
         existing.setI18nKey("existing.key");
         existing.setLang("zh-CN");
         existing.setText("old");
-        when(i18nMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(existing);
+        when(i18nMapper.selectOne(anyWrapper())).thenReturn(existing);
         when(i18nMapper.update(any(), any())).thenReturn(1);
 
         I18nEntryDTO dto = new I18nEntryDTO();
@@ -101,7 +106,7 @@ class I18nServiceTest {
     @Test
     @DisplayName("update → 不存在则抛 NOT_FOUND")
     void update_notFound_shouldThrow() {
-        when(i18nMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(null);
+        when(i18nMapper.selectOne(anyWrapper())).thenReturn(null);
         I18nEntryDTO dto = new I18nEntryDTO();
         dto.setI18nKey("missing");
         dto.setLang("en-US");
@@ -115,7 +120,7 @@ class I18nServiceTest {
         existing.setI18nKey("k");
         existing.setLang("en");
         existing.setText("old");
-        when(i18nMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(existing);
+        when(i18nMapper.selectOne(anyWrapper())).thenReturn(existing);
         when(i18nMapper.update(any(), any())).thenReturn(1);
 
         I18nEntryDTO dto = new I18nEntryDTO();
@@ -131,8 +136,8 @@ class I18nServiceTest {
     @Test
     @DisplayName("delete → 按 lang+key 删除")
     void delete() {
-        when(i18nMapper.delete(any(LambdaQueryWrapper.class))).thenReturn(1);
+        when(i18nMapper.delete(anyWrapper())).thenReturn(1);
         service.delete("zh-CN", "key");
-        verify(i18nMapper).delete(any(LambdaQueryWrapper.class));
+        verify(i18nMapper).delete(anyWrapper());
     }
 }

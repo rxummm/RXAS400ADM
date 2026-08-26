@@ -37,6 +37,11 @@ class WebhookServiceTest {
         service = new WebhookService(webhookMapper, webhookLogMapper, webhookNotifier);
     }
 
+    /** 类型安全占位符：利用 any() 的目标类型推断消除裸 Class 字面量的 unchecked 转换警告 */
+    private static LambdaQueryWrapper<WebhookConfig> anyWrapper() {
+        return any();
+    }
+
     // ---------------- create ----------------
 
     @Test
@@ -54,7 +59,7 @@ class WebhookServiceTest {
         WebhookConfigDTO dto = new WebhookConfigDTO();
         dto.setName("hook1");
         dto.setUrl("https://example.com");
-        when(webhookMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(1L);
+        when(webhookMapper.selectCount(anyWrapper())).thenReturn(1L);
         BusinessException ex = assertThrows(BusinessException.class, () -> service.create(dto, "admin"));
         assertEquals(ErrorCode.BAD_REQUEST.getCode(), ex.getCode());
     }
@@ -67,7 +72,7 @@ class WebhookServiceTest {
         dto.setUrl("https://example.com");
         dto.setSecret("s3cret");
         dto.setEnabled(null);
-        when(webhookMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(0L);
+        when(webhookMapper.selectCount(anyWrapper())).thenReturn(0L);
         when(webhookMapper.insert(any(WebhookConfig.class))).thenAnswer(inv -> {
             inv.getArgument(0, WebhookConfig.class).setId(10L);
             return 1;
@@ -162,7 +167,7 @@ class WebhookServiceTest {
         c2.setId(2L);
         c2.setName("hook2");
         c2.setUrl("https://b.com");
-        when(webhookMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(c1, c2));
+        when(webhookMapper.selectList(anyWrapper())).thenReturn(List.of(c1, c2));
         when(webhookNotifier.pushDetailed("https://a.com", "t", "c"))
                 .thenReturn(new WebhookNotifier.PushResult(true, 1, null));
         when(webhookNotifier.pushDetailed("https://b.com", "t", "c"))
@@ -191,7 +196,7 @@ class WebhookServiceTest {
         WebhookConfig c = new WebhookConfig();
         c.setId(1L);
         c.setSecret("real-secret");
-        when(webhookMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(c));
+        when(webhookMapper.selectList(anyWrapper())).thenReturn(List.of(c));
 
         List<WebhookConfig> result = service.listAll();
         assertEquals("******", result.get(0).getSecret());
@@ -203,7 +208,7 @@ class WebhookServiceTest {
         WebhookConfig c = new WebhookConfig();
         c.setId(1L);
         c.setSecret(null);
-        when(webhookMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(c));
+        when(webhookMapper.selectList(anyWrapper())).thenReturn(List.of(c));
 
         List<WebhookConfig> result = service.listAll();
         assertNull(result.get(0).getSecret());

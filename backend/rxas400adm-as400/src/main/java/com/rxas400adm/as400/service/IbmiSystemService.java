@@ -8,15 +8,20 @@ import com.rxas400adm.as400.dto.IbmiSystemDTO;
 import com.rxas400adm.common.crypto.AesCryptoService;
 import com.rxas400adm.as400.entity.IbmiSystem;
 import com.rxas400adm.as400.mapper.IbmiSystemMapper;
+import com.rxas400adm.as400.vo.EnabledServerVO;
+import com.rxas400adm.as400.vo.IbmiSystemVO;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.security.DangerousClCommandValidator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class IbmiSystemService implements IIbmiSystemService {
@@ -24,6 +29,8 @@ public class IbmiSystemService implements IIbmiSystemService {
     private final IbmiSystemMapper systemMapper;
     private final AS400ClientProvider clientProvider;
     private final AesCryptoService aesCryptoService;
+    /** S4：高危 CL 动词黑名单校验（管理员通道执行兜底） */
+    private final DangerousClCommandValidator clValidator;
 
     public List<IbmiSystem> list() {
         return systemMapper.selectList(new LambdaQueryWrapper<IbmiSystem>()
@@ -32,19 +39,19 @@ public class IbmiSystemService implements IIbmiSystemService {
     }
 
     /** N2：普通用户可见的服务器列表（不含 username/passwordEncrypt 连接凭据） */
-    public List<com.rxas400adm.as400.vo.IbmiSystemVO> listVO() {
-        return list().stream().map(com.rxas400adm.as400.vo.IbmiSystemVO::from).toList();
+    public List<IbmiSystemVO> listVO() {
+        return list().stream().map(IbmiSystemVO::from).toList();
     }
 
     /** 启用的服务器列表（登录页下拉公开接口用，仅返回启用项）
      *  P1-5 加固：公开接口只返回最小视图（id/name/environment），不暴露 host/username/port。 */
-    public List<com.rxas400adm.as400.vo.EnabledServerVO> listEnabled() {
+    public List<EnabledServerVO> listEnabled() {
         return systemMapper.selectList(new LambdaQueryWrapper<IbmiSystem>()
                         .eq(IbmiSystem::getEnabled, true)
                         .orderByAsc(IbmiSystem::getSortOrder)
                         .orderByDesc(IbmiSystem::getCreatedTime))
                 .stream()
-                .map(s -> new com.rxas400adm.as400.vo.EnabledServerVO(s.getId(), s.getName(), s.getEnvironment()))
+                .map(s -> new EnabledServerVO(s.getId(), s.getName(), s.getEnvironment()))
                 .toList();
     }
 
@@ -152,6 +159,9 @@ public class IbmiSystemService implements IIbmiSystemService {
         if (!StringUtils.hasText(command)) {
             throw new BusinessException(ErrorCode.NAME_REQUIRED, "命令不能为空");
         }
+        // S4：该入口需 AS400_MANAGE 权限（管理员通道），仍执行黑名单兜底，通过后留审计日志注明通道
+        clValidator.assertAllowed(command);
+        log.info("[IBMi系统] 管理员通道执行 CL 命令: serverId={}, command={}", id, command);
         AS400Client client = clientProvider.forServer(id);
         return client.execute(command);
     }

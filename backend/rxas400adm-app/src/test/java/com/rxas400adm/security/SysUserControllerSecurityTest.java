@@ -6,6 +6,7 @@ import com.rxas400adm.security.config.SecurityConfig;
 import com.rxas400adm.security.filter.JwtAuthenticationFilter;
 import com.rxas400adm.security.jwt.JwtUtil;
 import com.rxas400adm.security.service.PermissionService;
+import com.rxas400adm.security.service.TokenBlacklistService;
 import com.rxas400adm.system.aspect.OperateLogAspect;
 import com.rxas400adm.system.controller.SysUserController;
 import com.rxas400adm.system.entity.AuditLog;
@@ -54,7 +55,7 @@ class SysUserControllerSecurityTest {
     @MockBean
     private ProfileResolver profileResolver;
     @MockBean
-    private com.rxas400adm.security.service.TokenBlacklistService tokenBlacklistService;
+    private TokenBlacklistService tokenBlacklistService;
     @MockBean
     private SysUserService userService;
     @MockBean

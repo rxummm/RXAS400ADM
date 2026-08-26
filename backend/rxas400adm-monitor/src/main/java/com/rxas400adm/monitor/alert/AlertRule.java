@@ -39,6 +39,10 @@ public class AlertRule {
     private String description;
 
     public boolean match(double value) {
+        /* B6：threshold 为包装类型，legacy NULL 行防拆箱 NPE 致告警静默失效 */
+        if (threshold == null) {
+            return false;
+        }
         if (Boolean.FALSE.equals(enabled)) {
             return false;
         }

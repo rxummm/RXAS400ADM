@@ -26,6 +26,11 @@
             <groupId>net.sf.jt400</groupId>
             <artifactId>jt400</artifactId>
         </dependency>
+        <!-- P1：JTOpen SqlClient JDBC 连接池化（版本由 spring-boot-starter-parent BOM 管理，与 app 实际一致） -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>

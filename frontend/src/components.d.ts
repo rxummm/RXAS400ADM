@@ -15,7 +15,6 @@ declare module 'vue' {
     AppPagination: typeof import('./components/AppPagination.vue')['default']
     ChangePasswordDialog: typeof import('./components/ChangePasswordDialog.vue')['default']
     CommandPalette: typeof import('./components/CommandPalette.vue')['default']
-    DangerConfirmDialog: typeof import('./components/common/DangerConfirmDialog.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAside: typeof import('element-plus/es')['ElAside']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']

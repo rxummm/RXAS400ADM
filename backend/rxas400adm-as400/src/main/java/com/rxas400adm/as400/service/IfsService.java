@@ -37,11 +37,6 @@ public class IfsService implements IIfsService {
         return clientProvider.current().writeIfsFileBytes(path, content);
     }
 
-    /** 读取 IFS 文件原始字节（下载） */
-    public byte[] readBytes(String path) {
-        return clientProvider.current().readIfsFileBytes(path);
-    }
-
     /** 打开 IFS 文件输入流（流式下载，P0-3）：失败返回 null，调用方负责关闭 */
     public InputStream readStream(String path) {
         return clientProvider.current().readIfsFileStream(path);

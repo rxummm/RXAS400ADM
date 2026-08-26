@@ -35,8 +35,14 @@ public class AuthService {
         if (!jwtUtil.isRefreshToken(refreshToken)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "token 类型错误，需要 refresh token");
         }
+        // C1：轮换前置黑名单检查——已消费（已轮换）的 refresh token 直接拒绝，
+        // 防止重放/并发复用在吊销旧 token 的同时仍各自签发新对
+        String jti = jwtUtil.getJti(refreshToken);
+        if (tokenBlacklistService.isBlacklisted(jti)) {
+            throw new BusinessException(ErrorCode.LOGIN_FAILED, "refresh token 已失效（已被轮换使用）");
+        }
         // 吊销旧 refresh token（rotation 防重放）
-        tokenBlacklistService.blacklist(jwtUtil.getJti(refreshToken), jwtUtil.getUsername(refreshToken),
+        tokenBlacklistService.blacklist(jti, jwtUtil.getUsername(refreshToken),
                 jwtUtil.getRemainingMs(refreshToken));
         String username = jwtUtil.getUsername(refreshToken);
         List<String> permissions = permissionService.loadPermissions(username);

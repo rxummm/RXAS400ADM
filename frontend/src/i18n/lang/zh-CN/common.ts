@@ -6,6 +6,10 @@
 export default {
   common: {
     refresh: '刷新',
+    autoRefresh: '自动刷新',
+    refreshInterval: '刷新间隔',
+    refreshSeconds: '{n}秒',
+    viewAll: '查看全部',
     noPermission: '无权限访问',
     requestFailed: '请求失败',
     networkError: '网络错误',
@@ -46,6 +50,7 @@ export default {
     export: '导出 CSV',
     addSuccess: '新增成功',
     updateSuccess: '更新成功',
+    confirmDelete: '确定要删除吗？此操作不可恢复。',
     deleteSuccess: '删除成功',
     loadFailed: '数据加载失败，请稍后重试',
     refreshDone: '已刷新',
@@ -170,8 +175,6 @@ export default {
     SYSTEM_SCHEDULER_LOCKED: '调度任务已被其他节点占用',
     REPORT_GENERATE_FAILED: '报表生成失败',
     SQL_READONLY_REQUIRED: '仅允许执行单条只读 SELECT 查询',
-    COMPILE_FAILED: '编译失败',
-    COMPILE_TARGET_REQUIRED: '请指定编译目标',
     SOURCE_NOT_FOUND: '源文件不存在',
     SOURCE_READ_FAILED: '源文件读取失败',
     FILE_PATH_INVALID: '非法文件路径',
@@ -182,7 +185,6 @@ export default {
     ROLE_CODE_EXISTS: '角色编码已存在',
     ROLE_ADMIN_PROTECTED: '内置 ADMIN 角色不可修改或删除',
     PASSWORD_POLICY_VIOLATION: '密码不符合安全策略',
-    COMPILE_UNSUPPORTED: '不支持的编译类型',
   },
   layout: {
     logoTitle: 'RXAS400',

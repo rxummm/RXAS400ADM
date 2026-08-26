@@ -1,81 +1,33 @@
-/**
- * 网络状态监控 composable
- *
- * 监听 navigator.onLine + online/offline 事件，网络断开时显示全局警告通知，
- * 恢复连接时自动关闭并显示恢复提示。
- *
- * @example
- *   useNetworkStatus()  // 挂载后自动监控，组件卸载自动清理
- */
-import { onMounted, onUnmounted, ref } from 'vue'
-import { ElNotification } from 'element-plus'
-import i18n from '@/i18n'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { ElMessage } from 'element-plus'
 
-let instanceCount = 0
-let notificationClose: (() => void) | null = null
+const isOnline = ref(navigator.onLine)
+const wasOffline = ref(false)
 
 export function useNetworkStatus() {
-  const isOnline = ref(navigator.onLine)
-
-  const showOfflineNotice = () => {
-    if (notificationClose) return // 已存在
-    notificationClose = ElNotification({
-      title: i18n.global.t('common.connection.offlineWarning'),
-      message: i18n.global.t('common.connection.offlineMessage'),
-      type: 'warning',
-      duration: 0, // 不自动关闭
-      position: 'top-right',
-      offset: 60,
-    }).close
-  }
-
-  const closeOfflineNotice = () => {
-    if (notificationClose) {
-      notificationClose()
-      notificationClose = null
+  const handleOnline = () => {
+    if (!isOnline.value) {
+      wasOffline.value = true
+      ElMessage.success('网络已恢复连接')
+      setTimeout(() => { wasOffline.value = false }, 3000)
     }
-    if (isOnline.value) {
-      ElNotification({
-        title: i18n.global.t('common.connection.onlineRecovery'),
-        message: i18n.global.t('common.connection.onlineMessage'),
-        type: 'success',
-        duration: 3000,
-        position: 'top-right',
-        offset: 60,
-      })
-    }
+    isOnline.value = true
   }
 
   const handleOffline = () => {
     isOnline.value = false
-    showOfflineNotice()
-  }
-
-  const handleOnline = () => {
-    isOnline.value = true
-    closeOfflineNotice()
+    ElMessage.error('网络连接已断开')
   }
 
   onMounted(() => {
-    instanceCount++
-    window.addEventListener('offline', handleOffline)
     window.addEventListener('online', handleOnline)
-    // 挂载时检查当前状态（防止刷新时已离线）
-    if (!navigator.onLine) {
-      showOfflineNotice()
-    }
+    window.addEventListener('offline', handleOffline)
   })
 
   onUnmounted(() => {
-    instanceCount--
-    window.removeEventListener('offline', handleOffline)
     window.removeEventListener('online', handleOnline)
-    // 最后一个实例卸载时清理通知
-    if (instanceCount <= 0) {
-      instanceCount = 0
-      closeOfflineNotice()
-    }
+    window.removeEventListener('offline', handleOffline)
   })
 
-  return { isOnline }
+  return { isOnline, wasOffline }
 }

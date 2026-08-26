@@ -1,6 +1,6 @@
 <template>
-  <el-dialog v-model="visible" :title="isEdit ? $t('common.edit') : $t('calendar.addEvent')" width="520px" :close-on-click-modal="false">
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
+  <el-dialog v-model="visible" :title="isEdit ? $t('common.edit') : $t('calendar.addEvent')" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="var(--rx-form-label-width)">
       <el-form-item :label="$t('calendar.title')" prop="title">
         <el-input v-model="form.title" maxlength="128" />
       </el-form-item>
@@ -88,7 +88,7 @@ const typeOptions = computed(() => [
   { value: 'other', label: t('calendar.typeOther') },
 ])
 
-const colorPalette = ['#1677ff', '#67c23a', '#e6a23c', '#f56c6c', '#9c27b0', '#00bcd4', '#909399']
+const colorPalette = ['var(--el-color-primary)', 'var(--color-success)', 'var(--color-warning)', 'var(--color-danger)', 'var(--color-chart-purple)', 'var(--color-chart-cyan)', 'var(--color-info)']
 
 const formRef = ref()
 const submitting = ref(false)

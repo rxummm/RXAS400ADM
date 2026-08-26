@@ -1,6 +1,6 @@
 package com.rxas400adm.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.rxas400adm.security.config.CorsProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -20,21 +20,21 @@ import java.util.Arrays;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    /** 与 SecurityConfig 的 CORS 白名单一致（逗号分隔，S4），生产用环境变量覆盖 */
-    @Value("${rxas400.security.cors-allowed-origins:http://localhost:5173}")
-    private String corsAllowedOrigins;
-
     private final WsAuthChannelInterceptor wsAuthChannelInterceptor;
 
-    public WebSocketConfig(WsAuthChannelInterceptor wsAuthChannelInterceptor) {
+    // R7：cors-allowed-origins（与 SecurityConfig 同键）收敛为 CorsProperties 单点绑定
+    private final CorsProperties corsProperties;
+
+    public WebSocketConfig(WsAuthChannelInterceptor wsAuthChannelInterceptor, CorsProperties corsProperties) {
         this.wsAuthChannelInterceptor = wsAuthChannelInterceptor;
+        this.corsProperties = corsProperties;
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
                 // S4：不再通配 "*"，收敛为与 CORS 一致的白名单
-                .setAllowedOrigins(Arrays.stream(corsAllowedOrigins.split(","))
+                .setAllowedOrigins(Arrays.stream(corsProperties.getCorsAllowedOrigins().split(","))
                         .map(String::trim)
                         .filter(o -> !o.isBlank())
                         .toArray(String[]::new));

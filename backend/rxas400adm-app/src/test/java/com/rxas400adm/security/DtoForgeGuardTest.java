@@ -7,6 +7,7 @@ import com.rxas400adm.as400.dto.IbmiSystemDTO;
 import com.rxas400adm.as400.entity.IbmiSystem;
 import com.rxas400adm.as400.service.IIbmiSystemService;
 import com.rxas400adm.report.IReportScheduleService;
+import com.rxas400adm.report.ReportSchedule;
 import com.rxas400adm.report.ReportScheduleController;
 import com.rxas400adm.report.dto.ReportScheduleDTO;
 import com.rxas400adm.system.controller.DocController;
@@ -22,6 +23,7 @@ import com.rxas400adm.system.service.IDocService;
 import com.rxas400adm.system.service.INoticeService;
 import com.rxas400adm.system.service.IRoleService;
 import org.junit.jupiter.api.Test;
+import com.rxas400adm.system.service.DocVersionService;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
@@ -130,7 +132,7 @@ class DtoForgeGuardTest {
     void reportScheduleCreate_forgedInternalFields_ignored_businessFieldsBound() throws Exception {
         IReportScheduleService service = mock(IReportScheduleService.class);
         when(service.create(any(ReportScheduleDTO.class), eq("anonymous")))
-                .thenReturn(new com.rxas400adm.report.ReportSchedule());
+                .thenReturn(new ReportSchedule());
 
         mockMvc(new ReportScheduleController(service))
                 .perform(post("/api/v1/report-schedules")
@@ -174,7 +176,7 @@ class DtoForgeGuardTest {
         IDocService service = mock(IDocService.class);
         when(service.createDoc(any(DocDTO.class), eq("anonymous"))).thenReturn(new Doc());
 
-        mockMvc(new DocController(service))
+        mockMvc(new DocController(service, mock(DocVersionService.class)))
                 .perform(post("/api/v1/docs")
                         .contentType("application/json")
                         .content("{\"id\":999,\"templateId\":1,\"title\":\"变更单\",\"content\":\"正文\","
@@ -195,7 +197,7 @@ class DtoForgeGuardTest {
         IDocService service = mock(IDocService.class);
         when(service.updateDoc(eq(7L), any(DocDTO.class), eq("anonymous"))).thenReturn(new Doc());
 
-        mockMvc(new DocController(service))
+        mockMvc(new DocController(service, mock(DocVersionService.class)))
                 .perform(put("/api/v1/docs/7")
                         .contentType("application/json")
                         .content("{\"templateId\":1,\"title\":\"v2\",\"content\":\"新内容\","

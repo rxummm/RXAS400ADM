@@ -1,6 +1,7 @@
 package com.rxas400adm.report;
 
 import lombok.extern.slf4j.Slf4j;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @SuppressWarnings("java:S6813")
+@DisallowConcurrentExecution
 public class ReportScheduleQuartzJob implements Job {
 
     @Autowired
@@ -33,7 +35,8 @@ public class ReportScheduleQuartzJob implements Job {
         try {
             service.execute(scheduleId);
         } catch (Exception e) {
-            log.error("[报表定时] Quartz 任务 {} 执行异常: {}", scheduleId, e.getMessage());
+            // 【E5-2】追加异常对象，保留完整堆栈（原仅拼 getMessage 丢堆栈）
+            log.error("[报表定时] Quartz 任务 {} 执行异常: {}", scheduleId, e.getMessage(), e);
         }
     }
 }

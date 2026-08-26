@@ -62,8 +62,8 @@
       <el-empty v-if="!loading && !visibleRows.length" :description="$t('common.noData')" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="`${$t('sysvals.modify')}：${form.name}`" width="420px">
-      <el-form :model="form" label-width="120px">
+    <el-dialog v-model="dialogVisible" :title="`${$t('sysvals.modify')}：${form.name}`" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
+      <el-form :model="form" label-width="var(--rx-form-label-width-wide)">
         <el-form-item :label="$t('sysvals.currentValue')">
           <el-input v-model="form.value" :placeholder="$t('sysvals.valuePlaceholder')" />
         </el-form-item>
@@ -179,7 +179,7 @@ const handleSave = async () => {
   saving.value = true
   try {
     await ElMessageBox.confirm(
-      `${t('sysvals.changeConfirm')} ${form.name} = ${form.value}？`,
+      t('sysvals.changeConfirm', { name: form.name, value: form.value }),
       t('common.warning'),
       { type: 'warning' },
     )
