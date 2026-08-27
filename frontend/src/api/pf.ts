@@ -24,3 +24,15 @@ export const pfColumns = (library: string, file: string): Promise<PfColumn[]> =>
 
 export const pfData = (library: string, file: string, limit = 20): Promise<Record<string, unknown>[]> =>
   request.get('/pf/data', { params: { library, file, limit } })
+
+/** PF 统计信息 */
+export interface PfStats {
+  recordCount: number
+  storageSize: number
+  indexCount: number
+  indexNames: string[]
+  memberCount: number
+}
+
+export const pfStats = (library: string, file: string): Promise<PfStats> =>
+  request.get('/pf/stats', { params: { library, file } })

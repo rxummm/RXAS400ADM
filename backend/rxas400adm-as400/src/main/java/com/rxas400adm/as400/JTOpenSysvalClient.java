@@ -2,7 +2,9 @@ package com.rxas400adm.as400;
 
 import com.rxas400adm.as400.model.SysvalRow;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import static com.rxas400adm.as400.JTOpenConnectionState.str;
 
 /**
@@ -35,6 +37,18 @@ class JTOpenSysvalClient implements SysvalClient {
         return commandClient.execute("CHGSYSVAL SYSVAL("
                 + JTOpenConnectionState.requireIdentifier(name, "系统值名")
                 + ") VALUE('" + value.trim().replace("'", "''") + "')");
+    }
+
+    @Override
+    public Map<String, CommandResult> batchChangeSystemValues(Map<String, String> updates) {
+        Map<String, CommandResult> results = new LinkedHashMap<>();
+        if (updates == null || updates.isEmpty()) {
+            return results;
+        }
+        for (Map.Entry<String, String> entry : updates.entrySet()) {
+            results.put(entry.getKey(), changeSystemValue(entry.getKey(), entry.getValue()));
+        }
+        return results;
     }
 
 }

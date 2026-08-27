@@ -3,6 +3,7 @@ package com.rxas400adm.monitor.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.monitor.alert.AlertRule;
 import com.rxas400adm.monitor.dto.AlertRuleDTO;
 import com.rxas400adm.monitor.mapper.AlertRuleMapper;
@@ -41,7 +42,7 @@ public class AlertRuleService {
     }
 
     public AlertRule update(Long id, AlertRuleDTO dto) {
-        require(id);
+        EntityUtil.require(id, "告警规则", ruleMapper::selectById);
         AlertRule rule = dto.toEntity();
         rule.setId(id);
         if (rule.getChannel() == null || rule.getChannel().isBlank()) {
@@ -52,22 +53,16 @@ public class AlertRuleService {
     }
 
     public void delete(Long id) {
-        require(id);
+        EntityUtil.require(id, "告警规则", ruleMapper::selectById);
         ruleMapper.deleteById(id);
     }
 
     public AlertRule toggle(Long id, Boolean enabled) {
-        AlertRule rule = require(id);
+        AlertRule rule = EntityUtil.require(id, "告警规则", ruleMapper::selectById);
         rule.setEnabled(enabled);
         ruleMapper.updateById(rule);
         return rule;
     }
 
-    public AlertRule require(Long id) {
-        AlertRule rule = ruleMapper.selectById(id);
-        if (rule == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "告警规则不存在");
-        }
-        return rule;
-    }
+
 }

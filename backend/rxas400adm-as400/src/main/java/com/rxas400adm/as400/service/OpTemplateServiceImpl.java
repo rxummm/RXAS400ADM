@@ -16,6 +16,7 @@ import com.rxas400adm.as400.vo.OpTemplateVO;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.security.DangerousClCommandValidator;
 import lombok.RequiredArgsConstructor;
@@ -70,7 +71,7 @@ public class OpTemplateServiceImpl implements IOpTemplateService {
     @Override
     public OpTemplateVO update(Long id, OpTemplateUpdateDTO dto, String username) {
         parseSteps(dto.getSteps());
-        OpTemplate template = require(id);
+        OpTemplate template = EntityUtil.require(id, "模板", opTemplateMapper::selectById);
         template.setName(dto.getName());
         template.setDescription(dto.getDescription());
         template.setSteps(dto.getSteps());
@@ -82,13 +83,13 @@ public class OpTemplateServiceImpl implements IOpTemplateService {
 
     @Override
     public void delete(Long id) {
-        require(id);
+        EntityUtil.require(id, "模板", opTemplateMapper::selectById);
         opTemplateMapper.deleteById(id);
     }
 
     @Override
     public void execute(Long id, Long serverId) {
-        OpTemplate template = require(id);
+        OpTemplate template = EntityUtil.require(id, "模板", opTemplateMapper::selectById);
         AS400Client client = clientProvider.forServer(serverId);
         List<Map<String, String>> steps = parseSteps(template.getSteps());
         /* B9：历史脏数据兜底，空步骤直接拒绝执行 */
@@ -111,13 +112,7 @@ public class OpTemplateServiceImpl implements IOpTemplateService {
         }
     }
 
-    private OpTemplate require(Long id) {
-        OpTemplate template = opTemplateMapper.selectById(id);
-        if (template == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "模板不存在: " + id);
-        }
-        return template;
-    }
+
 
     /** 解析并校验步骤 JSON；非法 JSON 直接拒绝（写入前拦截，避免脏数据落库后执行期才失败） */
     private List<Map<String, String>> parseSteps(String stepsJson) {

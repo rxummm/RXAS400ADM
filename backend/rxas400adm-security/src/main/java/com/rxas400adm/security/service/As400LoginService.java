@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -156,7 +157,7 @@ public class As400LoginService implements IAs400LoginService {
         Map<String, Long> codeToId = roles.stream()
                 .collect(Collectors.toMap(SysRole::getRoleCode, SysRole::getId));
         // T5：单条多值 INSERT 收窄「先删后插」窗口（无事务架构下的批量化收口）
-        List<SysUserRole> userRoles = new java.util.ArrayList<>();
+        List<SysUserRole> userRoles = new ArrayList<>();
         for (String code : roleCodes) {
             Long roleId = codeToId.get(code);
             if (roleId != null) {

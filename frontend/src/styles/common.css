@@ -640,3 +640,4 @@ html.high-contrast.dark .el-button--primary {
 }
 
 .flex-row-center { display: flex; align-items: center; }
+.font-bold { font-weight: 700; }

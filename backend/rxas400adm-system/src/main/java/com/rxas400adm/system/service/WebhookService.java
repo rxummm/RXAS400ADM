@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.common.notify.WebhookNotifier;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.security.SecretMasker;
@@ -84,7 +85,7 @@ public class WebhookService implements IWebhookService {
 
     
     public WebhookConfig update(Long id, WebhookConfigDTO dto) {
-        WebhookConfig config = require(id);
+        WebhookConfig config = EntityUtil.require(id, "Webhook", webhookMapper::selectById);
         if (StringUtils.hasText(dto.getName())) {
             config.setName(dto.getName().trim());
         }
@@ -106,13 +107,13 @@ public class WebhookService implements IWebhookService {
 
     
     public void delete(Long id) {
-        webhookMapper.deleteById(require(id).getId());
+        webhookMapper.deleteById(EntityUtil.require(id, "Webhook", webhookMapper::selectById).getId());
     }
 
     /** 切换启用/停用 */
     
     public WebhookConfig toggleEnabled(Long id, Integer enabled) {
-        WebhookConfig config = require(id);
+        WebhookConfig config = EntityUtil.require(id, "Webhook", webhookMapper::selectById);
         config.setEnabled(enabled);
         config.setUpdatedTime(LocalDateTime.now());
         webhookMapper.updateById(config);
@@ -129,7 +130,7 @@ public class WebhookService implements IWebhookService {
 
     /** 测试推送：对单个配置发送，不落发送日志（便于调试） */
     public boolean test(Long id, String title, String content) {
-        WebhookConfig config = require(id);
+        WebhookConfig config = EntityUtil.require(id, "Webhook", webhookMapper::selectById);
         return webhookNotifier.push(config.getUrl(), title, content);
     }
 
@@ -168,11 +169,5 @@ public class WebhookService implements IWebhookService {
                 .lt(WebhookLog::getCreatedTime, before));
     }
 
-    private WebhookConfig require(Long id) {
-        WebhookConfig config = webhookMapper.selectById(id);
-        if (config == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "Webhook 不存在: " + id);
-        }
-        return config;
-    }
+
 }

@@ -28,5 +28,5 @@ package com.rxas400adm.as400;
  */
 public interface AS400Client extends CommandClient, SqlClient, AuthClient, SourceClient,
         ObjectClient, IfsClient, JobClient, SubsystemClient, SysvalClient,
-        MessageFileClient, PfClient {
+        MessageFileClient, PfClient, DataAreaClient {
 }

@@ -7,8 +7,12 @@ import com.rxas400adm.as400.model.JobQueueRow;
 import com.rxas400adm.as400.model.JobSlaExecRow;
 import com.rxas400adm.as400.model.SpoolRow;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Mock JobClient 委托实现（作业队列 / SPOOL / SLA / 依赖图）。
@@ -51,6 +55,35 @@ class MockJobClient implements JobClient {
     }
 
     @Override
+    public InputStream spoolFileContent(String jobName, String jobUser, String jobNumber,
+                                        String spoolName, String outputQueue) {
+        // Mock: 返回仿真 SPOOL 文件内容
+        String content = String.format(
+                "===== SPOOL FILE: %s =====\n" +
+                "Job: %s/%s/%s\n" +
+                "Output Queue: %s\n" +
+                "Status: READY\n" +
+                "================================\n\n" +
+                "  RXAS400ADM SYSTEM REPORT\n" +
+                "  Generated: 2026-08-27\n" +
+                "\n" +
+                "  Line 1: System status is NORMAL\n" +
+                "  Line 2: All subsystems ACTIVE\n" +
+                "  Line 3: Disk usage 67%%\n" +
+                "  Line 4: CPU utilization 23%%\n" +
+                "\n" +
+                "  End of report.",
+                spoolName, jobName, jobUser, jobNumber, outputQueue);
+        return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Override
+    public CommandResult deleteSpoolFile(String jobName, String jobUser, String jobNumber,
+                                         String spoolName, String outputQueue) {
+        return CommandResult.ok("[Mock] SPOOL 文件已删除: " + spoolName);
+    }
+
+    @Override
     public List<JobSlaExecRow> jobSlaExecutions() {
         String[][] jobs = {
                 {"ORDNIGHT", "夜间订单批处理", "900"},
@@ -89,5 +122,24 @@ class MockJobClient implements JobClient {
             linkRows.add(new GraphLink(l[0], l[1]));
         }
         return new GraphData(nodeRows, linkRows);
+    }
+
+    @Override
+    public List<Map<String, Object>> historyLog(String jobName, String fromDate, String toDate) {
+        // Mock: 返回仿真历史日志
+        List<Map<String, Object>> rows = new ArrayList<>();
+        rows.add(MockState.row(
+                "JOB_NAME", "ORDNIGHT", "JOB_USER", "QSECOFR", "JOB_NUMBER", "129301",
+                "MESSAGE_ID", "CPF1124", "MESSAGE_TEXT", "Job started",
+                "MESSAGE_TIMESTAMP", "2026-08-27 06:00:00", "SEVERITY_NUMBER", 0L));
+        rows.add(MockState.row(
+                "JOB_NAME", "ORDNIGHT", "JOB_USER", "QSECOFR", "JOB_NUMBER", "129301",
+                "MESSAGE_ID", "CPF1125", "MESSAGE_TEXT", "Job ended normally",
+                "MESSAGE_TIMESTAMP", "2026-08-27 06:15:00", "SEVERITY_NUMBER", 0L));
+        rows.add(MockState.row(
+                "JOB_NAME", "DAILYBKUP", "JOB_USER", "QSECOFR", "JOB_NUMBER", "129302",
+                "MESSAGE_ID", "CPF3791", "MESSAGE_TEXT", "Save completed",
+                "MESSAGE_TIMESTAMP", "2026-08-27 02:00:00", "SEVERITY_NUMBER", 0L));
+        return rows;
     }
 }

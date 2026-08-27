@@ -7,6 +7,7 @@ import com.rxas400adm.common.constants.ExecutionStatus;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.config.EmailNotifier;
 import com.rxas400adm.report.dto.ReportScheduleDTO;
 import com.rxas400adm.report.mapper.ReportScheduleHistoryMapper;
@@ -72,7 +73,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
 
     
     public ReportSchedule update(Long id, ReportScheduleDTO dto) {
-        require(id);
+        EntityUtil.require(id, "报表定时任务", scheduleMapper::selectById);
         ReportSchedule schedule = toEntity(dto);
         applyDefaults(schedule);
         schedule.setId(id);
@@ -91,7 +92,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
 
     
     public void delete(Long id) {
-        require(id);
+        EntityUtil.require(id, "报表定时任务", scheduleMapper::selectById);
         // T4：先落禁用守卫写再注销——防止后续失败时重启复活已删除任务
         scheduleMapper.update(null, new LambdaUpdateWrapper<ReportSchedule>()
                 .eq(ReportSchedule::getId, id)
@@ -104,7 +105,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
 
     
     public ReportSchedule toggle(Long id, Boolean enabled) {
-        ReportSchedule schedule = require(id);
+        ReportSchedule schedule = EntityUtil.require(id, "报表定时任务", scheduleMapper::selectById);
         schedule.setEnabled(Boolean.TRUE.equals(enabled));
         schedule.setUpdatedTime(LocalDateTime.now());
         scheduleMapper.updateById(schedule);
@@ -131,7 +132,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
      */
 
     public ScheduleExecuteResultVO execute(Long id) {
-        ReportSchedule schedule = require(id);
+        ReportSchedule schedule = EntityUtil.require(id, "报表定时任务", scheduleMapper::selectById);
         long start = System.currentTimeMillis();
         String status = ExecutionStatus.SUCCESS;
         String message;
@@ -202,13 +203,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
         }
     }
 
-    private ReportSchedule require(Long id) {
-        ReportSchedule schedule = scheduleMapper.selectById(id);
-        if (schedule == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "报表定时任务不存在");
-        }
-        return schedule;
-    }
+
 
     /** DTO → 实体映射（仅业务字段；id/status/审计字段由服务端托管） */
     private ReportSchedule toEntity(ReportScheduleDTO dto) {

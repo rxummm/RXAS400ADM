@@ -10,6 +10,7 @@ import com.rxas400adm.as400.vo.JobLogVO;
 import com.rxas400adm.as400.vo.MsgwMessageVO;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,8 +21,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
@@ -125,6 +129,47 @@ public class JobController {
         return ApiResponse.success(jobService.spoolFiles(jobName, jobUser, jobNumber));
     }
 
+    /** SPOOL 文件内容下载（文本流） */
+    @GetMapping("/spool/content")
+    @PreAuthorize("hasAuthority('JOB_VIEW')")
+    public void spoolContent(@RequestParam String jobName,
+                              @RequestParam String jobUser,
+                              @RequestParam String jobNumber,
+                              @RequestParam String spoolName,
+                              @RequestParam(required = false) String outputQueue,
+                              HttpServletResponse response) throws Exception {
+        InputStream in = jobService.spoolFileContent(jobName, jobUser, jobNumber, spoolName, outputQueue);
+        if (in == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "SPOOL 文件未找到");
+            return;
+        }
+        response.setContentType("text/plain; charset=UTF-8");
+        response.setHeader("Content-Disposition",
+                "attachment; filename=" + spoolName.toUpperCase() + ".txt");
+        try (OutputStream out = response.getOutputStream()) {
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) != -1) {
+                out.write(buf, 0, n);
+            }
+        } finally {
+            in.close();
+        }
+    }
+
+    /** 删除 SPOOL 文件 */
+    @PostMapping("/spool/delete")
+    @PreAuthorize("hasAuthority('JOB_END')")
+    @OperateLog(module = "作业管理", operation = "删除 SPOOL 文件")
+    public ApiResponse<CommandResult> deleteSpool(@RequestParam String jobName,
+                                                   @RequestParam String jobUser,
+                                                   @RequestParam String jobNumber,
+                                                   @RequestParam String spoolName,
+                                                   @RequestParam(required = false) String outputQueue) {
+        return ApiResponse.success(jobService.deleteSpoolFile(
+                jobName, jobUser, jobNumber, spoolName, outputQueue));
+    }
+
     @GetMapping("/msgw/messages")
     @PreAuthorize("hasAuthority('JOB_VIEW')")
     public ApiResponse<List<MsgwMessageVO>> msgwMessages() {
@@ -139,5 +184,14 @@ public class JobController {
                                             @RequestParam String jobUser,
                                             @RequestParam String jobNumber) {
         return ApiResponse.success(jobService.replyMsg(jobName, jobUser, jobNumber));
+    }
+
+    @GetMapping("/history-log")
+    @PreAuthorize("hasAuthority('JOB_VIEW')")
+    public ApiResponse<List<Map<String, Object>>> historyLog(
+            @RequestParam(required = false) String jobName,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate) {
+        return ApiResponse.success(jobService.historyLog(jobName, fromDate, toDate));
     }
 }

@@ -23,6 +23,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -98,7 +99,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         // S4：不再通配 "*"，收敛为配置化白名单（allowCredentials=true 时不允许 *）
-        List<String> origins = java.util.Arrays.stream(corsProperties.getCorsAllowedOrigins().split(","))
+        List<String> origins = Arrays.stream(corsProperties.getCorsAllowedOrigins().split(","))
                 .map(String::trim)
                 .filter(o -> !o.isBlank())
                 .toList();

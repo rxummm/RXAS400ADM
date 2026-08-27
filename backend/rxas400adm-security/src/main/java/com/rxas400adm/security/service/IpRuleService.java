@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.security.dto.IpRuleCreateDTO;
 import com.rxas400adm.security.dto.IpRuleUpdateDTO;
@@ -147,7 +148,7 @@ public class IpRuleService implements IIpRuleService {
 
 
     public IpRule update(Long id, IpRuleUpdateDTO dto) {
-        IpRule rule = require(id);
+        IpRule rule = EntityUtil.require(id, "IP 规则", ipRuleMapper::selectById);
         if (StringUtils.hasText(dto.ip())) {
             rule.setIp(dto.ip().trim());
         }
@@ -167,14 +168,8 @@ public class IpRuleService implements IIpRuleService {
 
     
     public void delete(Long id) {
-        ipRuleMapper.deleteById(require(id).getId());
+        ipRuleMapper.deleteById(EntityUtil.require(id, "IP 规则", ipRuleMapper::selectById).getId());
     }
 
-    private IpRule require(Long id) {
-        IpRule rule = ipRuleMapper.selectById(id);
-        if (rule == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "IP 规则不存在: " + id);
-        }
-        return rule;
-    }
+
 }

@@ -16,6 +16,7 @@ import com.rxas400adm.as400.util.CronValidator;
 import com.rxas400adm.as400.vo.ScheduleExecuteResultVO;
 import com.rxas400adm.common.constants.ExecutionStatus;
 import com.rxas400adm.common.constants.PageConstants;
+import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.common.event.AlertRaisedEvent;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
@@ -80,7 +81,7 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
 
     
     public JobSchedule update(Long id, JobScheduleRequest request) {
-        JobSchedule schedule = require(id);
+        JobSchedule schedule = EntityUtil.require(id, "调度任务", scheduleMapper::selectById);
         apply(schedule, request);
         schedule.setUpdatedTime(LocalDateTime.now());
         scheduleMapper.updateById(schedule);
@@ -97,7 +98,7 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
 
     
     public void delete(Long id) {
-        require(id);
+        EntityUtil.require(id, "调度任务", scheduleMapper::selectById);
         // T4：先落禁用守卫写再注销——若后续步骤失败，重启时不会把已删除任务复活（僵尸调度）
         scheduleMapper.update(null, new LambdaUpdateWrapper<JobSchedule>()
                 .eq(JobSchedule::getId, id)
@@ -110,7 +111,7 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
 
     
     public JobSchedule toggle(Long id, Boolean enabled) {
-        JobSchedule schedule = require(id);
+        JobSchedule schedule = EntityUtil.require(id, "调度任务", scheduleMapper::selectById);
         schedule.setEnabled(Boolean.TRUE.equals(enabled));
         schedule.setUpdatedTime(LocalDateTime.now());
         scheduleMapper.updateById(schedule);
@@ -138,7 +139,7 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
      */
 
     public ScheduleExecuteResultVO execute(Long id) {
-        JobSchedule schedule = require(id);
+        JobSchedule schedule = EntityUtil.require(id, "调度任务", scheduleMapper::selectById);
         long start = System.currentTimeMillis();
         String status = ExecutionStatus.SUCCESS;
         String message;
@@ -226,13 +227,7 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
         }
     }
 
-    private JobSchedule require(Long id) {
-        JobSchedule schedule = scheduleMapper.selectById(id);
-        if (schedule == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "调度任务不存在");
-        }
-        return schedule;
-    }
+
 
     private void apply(JobSchedule schedule, JobScheduleRequest request) {
         // P2-13：保存时即校验 cron，避免无效表达式静默注册失败（任务 enabled 但永不触发）

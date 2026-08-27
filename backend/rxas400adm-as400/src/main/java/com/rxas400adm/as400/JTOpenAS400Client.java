@@ -20,6 +20,7 @@ public class JTOpenAS400Client extends AbstractDelegatingAs400Client {
     private final JTOpenSysvalClient sysvalClient;
     private final JTOpenMessageFileClient messageFileClient;
     private final JTOpenPfClient pfClient;
+    private final JTOpenDataAreaClient dataAreaClient;
     private final JTOpenSourceClient sourceClient;
 
     public JTOpenAS400Client(String host, String user, String password) {
@@ -34,6 +35,7 @@ public class JTOpenAS400Client extends AbstractDelegatingAs400Client {
         this.sysvalClient = new JTOpenSysvalClient(state);
         this.messageFileClient = new JTOpenMessageFileClient(state);
         this.pfClient = new JTOpenPfClient(state);
+        this.dataAreaClient = new JTOpenDataAreaClient(state);
         this.sourceClient = new JTOpenSourceClient(state);
     }
 
@@ -85,6 +87,11 @@ public class JTOpenAS400Client extends AbstractDelegatingAs400Client {
     @Override
     protected PfClient pfClient() {
         return pfClient;
+    }
+
+    @Override
+    protected DataAreaClient dataAreaClient() {
+        return dataAreaClient;
     }
 
     @Override

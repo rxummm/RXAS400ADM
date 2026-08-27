@@ -4,6 +4,19 @@
  */
 
 /**
+ * 格式化金额数字，null 显示 "—"
+ * @param v 数字（可为 null）
+ * @param fractionDigits 小数位数（默认 2，如价格/金额；传 0 用于销售总额等整数场景）
+ */
+export function formatMoney(v: number | null | undefined, fractionDigits = 2): string {
+  if (v == null) return '—'
+  return v.toLocaleString(undefined, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  })
+}
+
+/**
  * 格式化字节数为可读大小，如 2048 -> "2.0 KB"
  * @param bytes 字节数（可为 null/undefined/字符串数字）
  */

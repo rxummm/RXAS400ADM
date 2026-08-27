@@ -1,9 +1,12 @@
 package com.rxas400adm.as400;
 
+import com.rxas400adm.as400.model.UserProfileListRow;
 import com.rxas400adm.as400.model.UserProfileRow;
 
+import java.util.List;
+
 /**
- * Mock AuthClient 委托实现（认证仿真 / 用户 profile）。
+ * Mock AuthClient 委托实现（认证仿真 / 用户 profile / 用户列表 / 用户态切换）。
  */
 class MockAuthClient implements AuthClient {
 
@@ -31,5 +34,24 @@ class MockAuthClient implements AuthClient {
             default -> "GRPDEV";
         };
         return new UserProfileRow(upper, group, "*ENABLED");
+    }
+
+    @Override
+    public List<UserProfileListRow> listUserProfiles() {
+        return List.of(
+                new UserProfileListRow("QSECOFR", "*ENABLED", "GRPADM", "Security Officer", "2026-08-27"),
+                new UserProfileListRow("ADMIN", "*ENABLED", "GRPADM", "Administrator", "2026-08-27"),
+                new UserProfileListRow("DEVELOPER", "*ENABLED", "GRPDEV", "Developer", "2026-08-26"),
+                new UserProfileListRow("OPERATOR", "*ENABLED", "GRPOPR", "Operator", "2026-08-25"),
+                new UserProfileListRow("BATCH01", "*ENABLED", "GRPOPR", "Batch User", "2026-08-24")
+        );
+    }
+
+    @Override
+    public CommandResult switchUser(String targetUser) {
+        if (targetUser == null || targetUser.isBlank()) {
+            return CommandResult.fail("目标用户不能为空");
+        }
+        return CommandResult.ok("[Mock] 用户态已切换至: " + targetUser.trim().toUpperCase());
     }
 }

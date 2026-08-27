@@ -46,12 +46,14 @@ public class SysUserController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('USER_MANAGE')")
+    @OperateLog(module = "用户管理", operation = "新增用户")
     public ApiResponse<UserVO> create(@Valid @RequestBody UserDTO dto) {
         return ApiResponse.success(userService.create(dto));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('USER_MANAGE')")
+    @OperateLog(module = "用户管理", operation = "修改用户")
     public ApiResponse<UserVO> update(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO dto) {
         return ApiResponse.success(userService.update(id, dto));
     }

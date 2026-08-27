@@ -19,6 +19,7 @@ public class MockAS400Client extends AbstractDelegatingAs400Client {
     private final MockSysvalClient sysvalClient;
     private final MockMessageFileClient messageFileClient;
     private final MockPfClient pfClient;
+    private final MockDataAreaClient dataAreaClient;
     private final MockSourceClient sourceClient;
 
     public MockAS400Client() {
@@ -37,6 +38,7 @@ public class MockAS400Client extends AbstractDelegatingAs400Client {
         this.sysvalClient = new MockSysvalClient(state);
         this.messageFileClient = new MockMessageFileClient(state);
         this.pfClient = new MockPfClient(state);
+        this.dataAreaClient = new MockDataAreaClient(state);
         this.sourceClient = new MockSourceClient();
     }
 
@@ -88,6 +90,11 @@ public class MockAS400Client extends AbstractDelegatingAs400Client {
     @Override
     protected PfClient pfClient() {
         return pfClient;
+    }
+
+    @Override
+    protected DataAreaClient dataAreaClient() {
+        return dataAreaClient;
     }
 
     @Override

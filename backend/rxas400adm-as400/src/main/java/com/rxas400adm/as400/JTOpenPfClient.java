@@ -2,7 +2,9 @@ package com.rxas400adm.as400;
 
 import com.rxas400adm.as400.model.PfColumnRow;
 import com.rxas400adm.as400.model.PfRow;
+import com.rxas400adm.as400.model.PfStatsRow;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import static com.rxas400adm.as400.JTOpenConnectionState.str;
@@ -54,5 +56,68 @@ class JTOpenPfClient implements PfClient {
                 + " FETCH FIRST " + capped + " ROWS ONLY");
     }
 
+    @Override
+    public PfStatsRow pfStatistics(String library, String file) {
+        if (file == null || file.isBlank()) {
+            return new PfStatsRow(0, 0, 0, List.of(), 0);
+        }
+        String lib = library == null || library.isBlank() ? "QSYS" : library.trim().toUpperCase();
+        String tbl = file.trim().toUpperCase();
 
+        // 记录数
+        long recordCount = 0;
+        try {
+            var rows = sqlClient.queryList(
+                    "SELECT COUNT(*) AS CNT FROM " + lib + "." + tbl);
+            if (!rows.isEmpty() && rows.get(0).get("CNT") instanceof Number n) {
+                recordCount = n.longValue();
+            }
+        } catch (Exception ignored) {
+        }
+
+        // 存储大小（从 QSYS2.SYSTABLES 获取行数估算，精确值需 DSPFD）
+        long storageSize = 0;
+        try {
+            var rows = sqlClient.queryList(
+                    "SELECT DATA_SPACE_SIZE, NUMBER_MEMBERS FROM QSYS2.SYSTABLES"
+                            + " WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", lib, tbl);
+            if (!rows.isEmpty()) {
+                if (rows.get(0).get("DATA_SPACE_SIZE") instanceof Number n) {
+                    storageSize = n.longValue() * 1024; // KB → bytes
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        // 索引信息
+        List<String> indexNames = new ArrayList<>();
+        int indexCount = 0;
+        try {
+            var rows = sqlClient.queryList(
+                    "SELECT INDEX_NAME FROM QSYS2.SYSINDEXES"
+                            + " WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", lib, tbl);
+            indexCount = rows.size();
+            for (var row : rows) {
+                String name = str(row, "INDEX_NAME");
+                if (!name.isEmpty()) {
+                    indexNames.add(name);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        // 成员数
+        int memberCount = 1;
+        try {
+            var rows = sqlClient.queryList(
+                    "SELECT NUMBER_MEMBERS FROM QSYS2.SYSTABLES"
+                            + " WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", lib, tbl);
+            if (!rows.isEmpty() && rows.get(0).get("NUMBER_MEMBERS") instanceof Number n) {
+                memberCount = n.intValue();
+            }
+        } catch (Exception ignored) {
+        }
+
+        return new PfStatsRow(recordCount, storageSize, indexCount, indexNames, memberCount);
+    }
 }

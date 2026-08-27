@@ -1,6 +1,7 @@
 package com.rxas400adm.as400;
 
 import com.rxas400adm.as400.model.AuthorityRow;
+import com.rxas400adm.as400.model.DataAreaRow;
 import com.rxas400adm.as400.model.GraphData;
 import com.rxas400adm.as400.model.IfsEntry;
 import com.rxas400adm.as400.model.JobQueueRow;
@@ -16,11 +17,20 @@ import com.rxas400adm.as400.model.PfRow;
 import com.rxas400adm.as400.model.SpoolRow;
 import com.rxas400adm.as400.model.SubsystemRow;
 import com.rxas400adm.as400.model.SysvalRow;
+import com.rxas400adm.as400.model.UserProfileListRow;
 import com.rxas400adm.as400.model.UserProfileRow;
 
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+
+/**
+ * AS400Client 委托门面公共基类（中-15/19）：
+ * MockAS400Client 与 JTOpenAS400Client 原本各持一套子客户端字段并逐字复制约 45 个
+ * 一行委托方法；本基类以模板方法收编——子类只需提供各子接口实例（accessor）
+ * 与各自差异化的构造/连接语义。
+ * SourceClient 为渐进实现接口（default 静默空实现），由子类按需覆盖，不在本基类收编。
+ */
 
 /**
  * AS400Client 委托门面公共基类（中-15/19）：
@@ -50,6 +60,8 @@ public abstract class AbstractDelegatingAs400Client implements AS400Client {
     protected abstract MessageFileClient messageFileClient();
 
     protected abstract PfClient pfClient();
+
+    protected abstract DataAreaClient dataAreaClient();
 
     protected abstract SourceClient sourceClient();
 
@@ -113,6 +125,16 @@ public abstract class AbstractDelegatingAs400Client implements AS400Client {
     @Override
     public UserProfileRow userProfile(String username) {
         return authClient().userProfile(username);
+    }
+
+    @Override
+    public List<UserProfileListRow> listUserProfiles() {
+        return authClient().listUserProfiles();
+    }
+
+    @Override
+    public CommandResult switchUser(String targetUser) {
+        return authClient().switchUser(targetUser);
     }
 
     // ==================== ObjectClient ====================
@@ -207,6 +229,18 @@ public abstract class AbstractDelegatingAs400Client implements AS400Client {
     }
 
     @Override
+    public InputStream spoolFileContent(String jobName, String jobUser, String jobNumber,
+                                        String spoolName, String outputQueue) {
+        return jobClient().spoolFileContent(jobName, jobUser, jobNumber, spoolName, outputQueue);
+    }
+
+    @Override
+    public CommandResult deleteSpoolFile(String jobName, String jobUser, String jobNumber,
+                                         String spoolName, String outputQueue) {
+        return jobClient().deleteSpoolFile(jobName, jobUser, jobNumber, spoolName, outputQueue);
+    }
+
+    @Override
     public List<JobSlaExecRow> jobSlaExecutions() {
         return jobClient().jobSlaExecutions();
     }
@@ -243,6 +277,11 @@ public abstract class AbstractDelegatingAs400Client implements AS400Client {
     @Override
     public CommandResult changeSystemValue(String name, String value) {
         return sysvalClient().changeSystemValue(name, value);
+    }
+
+    @Override
+    public Map<String, CommandResult> batchChangeSystemValues(Map<String, String> updates) {
+        return sysvalClient().batchChangeSystemValues(updates);
     }
 
     // ==================== MessageFileClient ====================
@@ -287,6 +326,33 @@ public abstract class AbstractDelegatingAs400Client implements AS400Client {
     @Override
     public List<Map<String, Object>> pfData(String library, String file, int limit) {
         return pfClient().pfData(library, file, limit);
+    }
+
+    // ==================== DataAreaClient ====================
+
+    @Override
+    public List<DataAreaRow> listDataAreas(String library) {
+        return dataAreaClient().listDataAreas(library);
+    }
+
+    @Override
+    public DataAreaRow getDataArea(String library, String name) {
+        return dataAreaClient().getDataArea(library, name);
+    }
+
+    @Override
+    public CommandResult changeDataArea(String library, String name, String value) {
+        return dataAreaClient().changeDataArea(library, name, value);
+    }
+
+    @Override
+    public CommandResult createDataArea(String library, String name, int length, String value) {
+        return dataAreaClient().createDataArea(library, name, length, value);
+    }
+
+    @Override
+    public CommandResult deleteDataArea(String library, String name) {
+        return dataAreaClient().deleteDataArea(library, name);
     }
 
     // ==================== SourceClient ====================

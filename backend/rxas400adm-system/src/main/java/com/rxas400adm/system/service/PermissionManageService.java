@@ -224,7 +224,7 @@ public class PermissionManageService implements IPermissionManageService {
         // 角色绑定引用：rx_role_permission 全量很小，按 permission_id 分组计数
         Map<Long, Long> roleUsage = rolePermissionMapper.selectList(null).stream()
                 .collect(Collectors.groupingBy(
-                        com.rxas400adm.system.entity.SysRolePermission::getPermissionId,
+                        SysRolePermission::getPermissionId,
                         Collectors.counting()));
         return new UsageMap(menuUsage, roleUsage);
     }

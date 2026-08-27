@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -84,7 +85,7 @@ class SqlQueryServiceTest {
 
     @Test
     void execute_largeResult_shouldLimitRows() {
-        java.util.List<Map<String, Object>> many = new java.util.ArrayList<>();
+        List<Map<String, Object>> many = new ArrayList<>();
         for (int i = 0; i < 300; i++) {
             many.add(Map.of("COL", "v" + i));
         }

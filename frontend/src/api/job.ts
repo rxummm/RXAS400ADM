@@ -86,3 +86,26 @@ export const fetchJobQueues = (): Promise<JobQueueInfo[]> => request.get('/jobs/
 
 export const fetchSpoolFiles = (params: { jobName?: string; jobUser?: string; jobNumber?: string } = {}): Promise<SpoolFile[]> =>
   request.get('/jobs/spool', { params })
+
+/** 历史日志查询 */
+export const fetchHistoryLog = (params: {
+  jobName?: string; fromDate?: string; toDate?: string
+}): Promise<JobLogRow[]> =>
+  request.get('/jobs/history-log', { params })
+
+/** 下载 SPOOL 文件内容（返回 Blob） */
+export const downloadSpoolFile = (params: {
+  jobName: string; jobUser: string; jobNumber: string;
+  spoolName: string; outputQueue?: string
+}): Promise<Blob> =>
+  request.get('/jobs/spool/content', {
+    params,
+    responseType: 'blob',
+  })
+
+/** 删除 SPOOL 文件 */
+export const deleteSpoolFile = (params: {
+  jobName: string; jobUser: string; jobNumber: string;
+  spoolName: string; outputQueue?: string
+}): Promise<void> =>
+  request.post('/jobs/spool/delete', null, { params })

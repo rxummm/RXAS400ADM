@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +39,7 @@ class MetricServiceTest {
     private MetricService service;
 
     private Map<String, Object> row(String name, Object value) {
-        Map<String, Object> m = new java.util.HashMap<>();
+        Map<String, Object> m = new HashMap<>();
         m.put("metricName", name);
         m.put("metricValue", value);
         return m;

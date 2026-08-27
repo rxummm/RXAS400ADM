@@ -196,11 +196,28 @@ public class JobService implements IJobService {
         return clientProvider.current().listSpoolFiles(jobName, jobUser, jobNumber);
     }
 
+    /** SPOOL 文件内容读取（文本流） */
+    public java.io.InputStream spoolFileContent(String jobName, String jobUser, String jobNumber,
+                                                String spoolName, String outputQueue) {
+        return clientProvider.current().spoolFileContent(jobName, jobUser, jobNumber, spoolName, outputQueue);
+    }
+
+    /** 删除 SPOOL 文件（DLTSPLF） */
+    public CommandResult deleteSpoolFile(String jobName, String jobUser, String jobNumber,
+                                         String spoolName, String outputQueue) {
+        return clientProvider.current().deleteSpoolFile(jobName, jobUser, jobNumber, spoolName, outputQueue);
+    }
+
     /** 应答 MSGW 作业的等待消息（RPLMSG，发送默认应答以解除 MSGW 状态） */
     public CommandResult replyMsg(String jobName, String jobUser, String jobNumber) {
         requireJob(jobName, jobUser, jobNumber);
         AS400Client client = clientProvider.current();
         return client.execute("RPLMSG MSGQ(" + jobKey(jobName, jobUser, jobNumber) + ") MSGKEY(*NONE) REPLY('I')");
+    }
+
+    /** 历史日志查询（QSYS2.HISTORY_LOG_INFO） */
+    public List<Map<String, Object>> historyLog(String jobName, String fromDate, String toDate) {
+        return clientProvider.current().historyLog(jobName, fromDate, toDate);
     }
 
     private void requireJob(String jobName, String jobUser, String jobNumber) {

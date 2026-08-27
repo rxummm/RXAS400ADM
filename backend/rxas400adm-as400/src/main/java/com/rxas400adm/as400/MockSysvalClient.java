@@ -3,7 +3,9 @@ package com.rxas400adm.as400;
 import com.rxas400adm.as400.model.SysvalRow;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Mock SysvalClient 委托实现（系统值查询与修改）。
@@ -56,5 +58,17 @@ class MockSysvalClient implements SysvalClient {
         }
         state.sysvalValues.put(upper, value.trim());
         return CommandResult.ok("模拟修改系统值 " + upper + " = " + value.trim());
+    }
+
+    @Override
+    public Map<String, CommandResult> batchChangeSystemValues(Map<String, String> updates) {
+        Map<String, CommandResult> results = new LinkedHashMap<>();
+        if (updates == null || updates.isEmpty()) {
+            return results;
+        }
+        for (Map.Entry<String, String> entry : updates.entrySet()) {
+            results.put(entry.getKey(), changeSystemValue(entry.getKey(), entry.getValue()));
+        }
+        return results;
     }
 }

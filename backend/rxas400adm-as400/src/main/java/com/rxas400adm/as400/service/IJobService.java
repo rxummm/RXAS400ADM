@@ -5,6 +5,7 @@ import com.rxas400adm.as400.model.JobQueueRow;
 import com.rxas400adm.as400.model.SpoolRow;
 import com.rxas400adm.as400.vo.JobInfo;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -36,5 +37,16 @@ public interface IJobService {
 
     List<SpoolRow> spoolFiles(String jobName, String jobUser, String jobNumber);
 
+    /** SPOOL 文件内容读取（文本流） */
+    InputStream spoolFileContent(String jobName, String jobUser, String jobNumber,
+                                 String spoolName, String outputQueue);
+
+    /** 删除 SPOOL 文件（DLTSPLF） */
+    CommandResult deleteSpoolFile(String jobName, String jobUser, String jobNumber,
+                                  String spoolName, String outputQueue);
+
     CommandResult replyMsg(String jobName, String jobUser, String jobNumber);
+
+    /** 历史日志查询（QSYS2.HISTORY_LOG_INFO） */
+    List<Map<String, Object>> historyLog(String jobName, String fromDate, String toDate);
 }

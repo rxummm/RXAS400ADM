@@ -7,6 +7,7 @@ import data from './data'
 import assets from './assets'
 import system from './system'
 import docs from './docs'
+import bpcs from './bpcs'
 import opTemplate from './opTemplate'
 
 export default {
@@ -26,4 +27,5 @@ export default {
   ...system,
   ...docs,
   ...opTemplate,
+  ...bpcs,
 }

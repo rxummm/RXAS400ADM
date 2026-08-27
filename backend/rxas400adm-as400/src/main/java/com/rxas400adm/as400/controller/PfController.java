@@ -2,8 +2,10 @@ package com.rxas400adm.as400.controller;
 
 import com.rxas400adm.as400.model.PfColumnRow;
 import com.rxas400adm.as400.model.PfRow;
+import com.rxas400adm.as400.model.PfStatsRow;
 import com.rxas400adm.as400.service.IPfService;
 import com.rxas400adm.as400.vo.PfDataVO;
+import com.rxas400adm.as400.vo.PfStatsVO;
 import com.rxas400adm.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,5 +47,15 @@ public class PfController {
                                               @RequestParam(defaultValue = "20") int limit) {
         return ApiResponse.success(pfService.data(library, file, limit).stream()
                 .map(PfDataVO::from).toList());
+    }
+
+    @GetMapping("/stats")
+    @PreAuthorize("hasAuthority('PF_VIEW')")
+    public ApiResponse<PfStatsVO> stats(@RequestParam String library,
+                                          @RequestParam String file) {
+        PfStatsRow row = pfService.statistics(library, file);
+        return ApiResponse.success(new PfStatsVO(
+                row.recordCount(), row.storageSize(),
+                row.indexCount(), row.indexNames(), row.memberCount()));
     }
 }

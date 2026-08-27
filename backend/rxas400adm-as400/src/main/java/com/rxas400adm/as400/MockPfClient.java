@@ -2,6 +2,7 @@ package com.rxas400adm.as400;
 
 import com.rxas400adm.as400.model.PfColumnRow;
 import com.rxas400adm.as400.model.PfRow;
+import com.rxas400adm.as400.model.PfStatsRow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,5 +53,18 @@ class MockPfClient implements PfClient {
             }
         }
         return data;
+    }
+
+    @Override
+    public PfStatsRow pfStatistics(String library, String file) {
+        String f = file == null ? "" : file.toUpperCase();
+        // Mock: 返回仿真统计数据
+        return switch (f) {
+            case "CUSTMAST" -> new PfStatsRow(15234, 2048000L, 2, List.of("IX_CUSTNO", "IX_CUSTNAME"), 1);
+            case "ORDHDR" -> new PfStatsRow(8921, 1024000L, 1, List.of("IX_ORDNO"), 1);
+            case "ORDDTL" -> new PfStatsRow(34567, 4096000L, 2, List.of("IX_ORDNO_LN", "IX_ITEM"), 1);
+            case "INVMAST" -> new PfStatsRow(5678, 512000L, 1, List.of("IX_ITEM"), 1);
+            default -> new PfStatsRow(1000, 128000L, 0, List.of(), 1);
+        };
     }
 }

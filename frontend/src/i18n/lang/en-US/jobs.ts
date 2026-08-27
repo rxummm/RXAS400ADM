@@ -56,6 +56,8 @@ export default {
     spoolStatus: 'Status',
     spoolPages: 'Pages',
     spoolUserData: 'User Data',
+    spoolDeleteConfirm: 'Confirm to delete SPOOL file {name}? This action cannot be undone.',
+    spoolDeleted: 'SPOOL file deleted',
   },
   schedule: {
     title: 'Job Schedule Center (Timed CL / SQL)',

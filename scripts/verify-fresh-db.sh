@@ -40,13 +40,14 @@ V38_EXPECT_ROLE_MENUS=197
 V38_EXPECT_ROLE_CODES="ADMIN DEVELOPER OPERATOR VIEWER"
 
 # ---- V38 之后的结构增量（后续迁移新增结构时同步更新：全量结构 = V38 种子 + 增量）----
-# V47__add_flowcharts_menu.sql 新增「模块流程图」叶子菜单 1 条（menu_type=2）；V50 notifications +1（type=2）
-POST_V38_MENUS_BY_TYPE="2:2"
-# V56__remove_compile_feature.sql 下线编译功能：删 COMPILE_EXECUTE 权限(含 ADMIN 授权)、
-# source 页 compileExecute 按钮(menu_type=3)及其角色关联 → 负增量
-POST_V38_PERMS=-1
-POST_V38_ROLE_PERMS=-1
-POST_V38_ROLE_MENUS=-1
+# V47 flowcharts 叶子(type2)+1；V50 notifications 叶子(type2)+1；V58「AS400 业务」目录(type1)+1、叶子(type2)+1
+POST_V38_MENUS_BY_TYPE="1:1 2:3"
+# V58：BPCS_ORDER_VIEW 权限 +1（ADMIN 授权 +1）
+# V56：COMPILE_EXECUTE 权限 -1（ADMIN 授权 -1）；compileExecute 按钮(menu_type3)-1 及其 role_menu-1
+# → 权限/角色权限净 0；菜单净 type1+1/type2 +1(叶子)-1(按钮)=+1；role_menu 净 +2(目录+叶子)-1(按钮)=+1
+POST_V38_PERMS=0
+POST_V38_ROLE_PERMS=0
+POST_V38_ROLE_MENUS=1
 
 mysql=("mysql" "-u$MYSQL_USER" "-p$MYSQL_PWD" "-h$MYSQL_HOST" "-P$MYSQL_PORT" "--default-character-set=utf8mb4")
 

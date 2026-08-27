@@ -15,13 +15,18 @@
           <el-radio-button value="common">{{ $t('sysvals.common') }}</el-radio-button>
           <el-radio-button value="fav">{{ $t('sysvals.myFavs') }}</el-radio-button>
         </el-radio-group>
+        <el-button v-if="!batchMode" v-has-perm="'SYSVAL_EDIT'" size="small" @click="batchMode = true">{{ $t('sysvals.batchEdit') }}</el-button>
+        <template v-else>
+          <el-button size="small" @click="openBatchDialog">{{ $t('sysvals.batchEditConfirm') }} ({{ batchSelected.length }})</el-button>
+          <el-button size="small" @click="batchMode = false; batchSelected = []">{{ $t('common.cancel') }}</el-button>
+        </template>
         <span class="hint">{{ $t('sysvals.hint') }}</span>
       </template>
     </QueryBar>
 
     <div class="table-wrapper">
       <RxSkeleton type="table" :rows="8" :loading="loading">
-        <el-table :data="visibleRows" size="small" border>
+        <el-table v-if="!batchMode" :data="visibleRows" size="small" border>
         <el-table-column width="56" align="center">
           <template #default="{ row }">
             <el-tooltip :content="isFav(row.SYSTEM_VALUE_NAME) ? $t('sysvals.unfav') : $t('sysvals.fav')" placement="top">
@@ -58,9 +63,47 @@
           </template>
         </el-table-column>
       </el-table>
+
+        <el-table v-else :data="visibleRows" size="small" border @selection-change="onBatchSelect">
+          <el-table-column type="selection" width="40" />
+          <el-table-column prop="SYSTEM_VALUE_NAME" :label="$t('sysvals.name')" width="180">
+            <template #default="{ row }">
+              <b>{{ row.SYSTEM_VALUE_NAME }}</b>
+            </template>
+          </el-table-column>
+          <el-table-column prop="CURRENT_VALUE" :label="$t('sysvals.currentValue')" min-width="140">
+            <template #default="{ row }">
+              <el-tag size="small">{{ row.CURRENT_VALUE }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="VALUE_DESCRIPTION" :label="$t('sysvals.description')" min-width="260" show-overflow-tooltip />
+        </el-table>
+
       </RxSkeleton>
       <el-empty v-if="!loading && !visibleRows.length" :description="$t('common.noData')" />
     </div>
+
+    <el-dialog v-model="batchDialogVisible" :title="$t('sysvals.batchEditTitle')" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
+      <el-table :data="batchForm.items" size="small" border>
+        <el-table-column prop="name" :label="$t('sysvals.name')" width="180" />
+        <el-table-column prop="oldValue" :label="$t('sysvals.currentValue')" width="160">
+          <template #default="{ row }">
+            <el-tag size="small">{{ row.oldValue }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="newValue" :label="$t('sysvals.newValue')" min-width="160">
+          <template #default="{ row }">
+            <el-input v-model="row.newValue" size="small" :placeholder="$t('sysvals.valuePlaceholder')" />
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="batchDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="batchSaving" :disabled="!batchForm.items.length" @click="handleBatchSave">
+          {{ $t('common.save') }} ({{ batchForm.items.length }})
+        </el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog v-model="dialogVisible" :title="`${$t('sysvals.modify')}：${form.name}`" width="var(--rx-dialog-xs)" :close-on-click-modal="false">
       <el-form :model="form" label-width="var(--rx-form-label-width-wide)">
@@ -87,7 +130,7 @@ import { Edit, Star, StarFilled } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
-import { fetchSystemValues, updateSystemValue, type SystemValue } from '@/api/systemValues'
+import { fetchSystemValues, updateSystemValue, batchUpdateSystemValues, type SystemValue } from '@/api/systemValues'
 import QueryBar from '@/components/QueryBar.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 
@@ -107,6 +150,15 @@ const filterMode = ref<'all' | 'common' | 'fav'>('all')
 const dialogVisible = ref(false)
 const saving = ref(false)
 const form = reactive({ name: '', value: '' })
+
+// Batch edit state
+const batchMode = ref(false)
+const batchSelected = ref<SystemValue[]>([])
+const batchDialogVisible = ref(false)
+const batchSaving = ref(false)
+const batchForm = reactive({
+  items: [] as { name: string; oldValue: string; newValue: string }[],
+})
 
 /** 收藏：localStorage 按用户隔离（key: rxas400adm:sysval-favs:<username>） */
 const FAV_KEY = `rxas400adm:sysval-favs:${userStore.username || 'anonymous'}`
@@ -189,6 +241,49 @@ const handleSave = async () => {
     void fetchData({}, true)
   } finally {
     saving.value = false
+  }
+}
+
+const onBatchSelect = (rows: SystemValue[]) => {
+  batchSelected.value = rows
+}
+
+const openBatchDialog = () => {
+  if (!batchSelected.value.length) {
+    ElMessage.warning(t('sysvals.batchSelectFirst'))
+    return
+  }
+  batchForm.items = batchSelected.value.map((r) => ({
+    name: r.SYSTEM_VALUE_NAME,
+    oldValue: r.CURRENT_VALUE,
+    newValue: r.CURRENT_VALUE,
+  }))
+  batchDialogVisible.value = true
+}
+
+const handleBatchSave = async () => {
+  const changed = batchForm.items.filter((i) => i.newValue !== i.oldValue)
+  if (!changed.length) {
+    ElMessage.info(t('sysvals.batchNoChange'))
+    return
+  }
+  batchSaving.value = true
+  try {
+    await ElMessageBox.confirm(
+      t('sysvals.batchChangeConfirm', { count: changed.length }),
+      t('common.warning'),
+      { type: 'warning' },
+    )
+    const updates: Record<string, string> = {}
+    changed.forEach((i) => { updates[i.name] = i.newValue })
+    await batchUpdateSystemValues(updates)
+    ElMessage.success(t('sysvals.changed'))
+    batchDialogVisible.value = false
+    batchMode.value = false
+    batchSelected.value = []
+    void fetchData({}, true)
+  } finally {
+    batchSaving.value = false
   }
 }
 

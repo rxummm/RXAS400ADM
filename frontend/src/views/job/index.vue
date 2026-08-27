@@ -143,6 +143,22 @@
             </el-table-column>
             <el-table-column prop="NUMBER_OF_PAGES" :label="$t('jobs.spoolPages')" width="90" />
             <el-table-column prop="USER_DATA" :label="$t('jobs.spoolUserData')" width="100" />
+            <el-table-column :label="$t('common.operation')" width="160" fixed="right">
+              <template #default="{ row }">
+                <el-button size="small" @click="handleSpoolDownload(row as SpoolFile)">
+                  {{ $t('common.download') }}
+                </el-button>
+                <el-button
+                  v-has-perm="'JOB_END'"
+                  size="small"
+                  type="danger"
+                  plain
+                  @click="handleSpoolDelete(row as SpoolFile)"
+                >
+                  {{ $t('common.delete') }}
+                </el-button>
+              </template>
+            </el-table-column>
           </el-table>
           </RxSkeleton>
           <el-empty v-if="!spoolLoading && spoolTotal === 0" :description="$t('jobs.empty')" />
@@ -216,6 +232,8 @@ import {
   fetchMsgwJobs,
   fetchMsgwMessages,
   fetchSpoolFiles,
+  downloadSpoolFile,
+  deleteSpoolFile,
   holdJob,
   releaseJob,
   replyMsg,
@@ -355,6 +373,53 @@ const {
 const onSpoolsPageChange = () => {}
 const onSpoolsSizeChange = () => {
   spoolsCurrent.value = 1
+}
+
+/** 下载 SPOOL 文件 */
+const handleSpoolDownload = async (row: SpoolFile) => {
+  try {
+    const blob = await downloadSpoolFile({
+      jobName: row.JOB_NAME,
+      jobUser: row.JOB_USER,
+      jobNumber: row.JOB_NUMBER,
+      spoolName: row.SPOOLED_FILE_NAME,
+      outputQueue: row.OUTPUT_QUEUE,
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${row.SPOOLED_FILE_NAME}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch {
+    /* 错误已由拦截器提示 */
+  }
+}
+
+/** 删除 SPOOL 文件 */
+const handleSpoolDelete = async (row: SpoolFile) => {
+  try {
+    await ElMessageBox.confirm(
+      t('jobs.spoolDeleteConfirm', { name: row.SPOOLED_FILE_NAME }),
+      t('common.confirm'),
+      { type: 'warning' },
+    )
+  } catch {
+    return
+  }
+  try {
+    await deleteSpoolFile({
+      jobName: row.JOB_NAME,
+      jobUser: row.JOB_USER,
+      jobNumber: row.JOB_NUMBER,
+      spoolName: row.SPOOLED_FILE_NAME,
+      outputQueue: row.OUTPUT_QUEUE,
+    })
+    ElMessage.success(t('jobs.spoolDeleted'))
+    void handleSpoolRefresh()
+  } catch {
+    /* 错误已由拦截器提示 */
+  }
 }
 
 const logVisible = ref(false)

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.function.Predicate;
 
@@ -60,7 +61,7 @@ public class WebhookNotifier {
         Map<String, Object> payload = Map.of(
                 "title", title,
                 "message", message,
-                "timestamp", java.time.LocalDateTime.now().toString());
+                "timestamp", LocalDateTime.now().toString());
         String lastError = null;
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             try {

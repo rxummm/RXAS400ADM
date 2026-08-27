@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.RegionDTO;
 import com.rxas400adm.system.entity.Region;
@@ -102,7 +103,7 @@ public class RegionService implements IRegionService {
 
     
     public Region update(Long id, RegionDTO dto) {
-        Region region = require(id);
+        Region region = EntityUtil.require(id, "行政区划", regionMapper::selectById);
         if (StringUtils.hasText(dto.getCode())) {
             region.setCode(dto.getCode().trim());
         }
@@ -128,7 +129,7 @@ public class RegionService implements IRegionService {
 
     
     public void delete(Long id) {
-        Region region = require(id);
+        Region region = EntityUtil.require(id, "行政区划", regionMapper::selectById);
         Long children = regionMapper.selectCount(new LambdaQueryWrapper<Region>()
                 .eq(Region::getParentCode, region.getCode()));
         if (children > 0) {
@@ -137,11 +138,5 @@ public class RegionService implements IRegionService {
         regionMapper.deleteById(id);
     }
 
-    private Region require(Long id) {
-        Region region = regionMapper.selectById(id);
-        if (region == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "行政区划不存在: " + id);
-        }
-        return region;
-    }
+
 }

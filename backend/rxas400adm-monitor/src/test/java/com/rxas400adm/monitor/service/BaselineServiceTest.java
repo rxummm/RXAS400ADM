@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +60,7 @@ class BaselineServiceTest {
         MetricBaseline baseline = new MetricBaseline();
         baseline.setInstanceId(1L);
         baseline.setMetricName("CPU");
-        baseline.setBaselineDate(java.time.LocalDate.now());
+        baseline.setBaselineDate(LocalDate.now());
         baseline.setAvgValue(50.0);
         baseline.setMaxValue(60.0);
         baseline.setMinValue(40.0);

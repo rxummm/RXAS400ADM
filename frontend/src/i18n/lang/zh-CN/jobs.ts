@@ -56,6 +56,8 @@ export default {
     spoolStatus: '状态',
     spoolPages: '页数',
     spoolUserData: '用户数据',
+    spoolDeleteConfirm: '确认删除 SPOOL 文件 {name}？此操作不可恢复。',
+    spoolDeleted: 'SPOOL 文件已删除',
   },
   schedule: {
     title: '作业调度中心（定时执行 CL / SQL）',

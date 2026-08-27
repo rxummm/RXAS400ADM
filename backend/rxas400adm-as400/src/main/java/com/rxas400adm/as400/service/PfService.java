@@ -3,6 +3,7 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.model.PfColumnRow;
 import com.rxas400adm.as400.model.PfRow;
+import com.rxas400adm.as400.model.PfStatsRow;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -29,5 +30,9 @@ public class PfService implements IPfService {
 
     public List<Map<String, Object>> data(String library, String file, int limit) {
         return clientProvider.current().pfData(library, file, limit);
+    }
+
+    public PfStatsRow statistics(String library, String file) {
+        return clientProvider.current().pfStatistics(library, file);
     }
 }

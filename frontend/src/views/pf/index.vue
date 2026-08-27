@@ -13,6 +13,31 @@
         <span>{{ $t('pf.fileDetail', { file: file || '-' }) }}</span>
       </template>
       <template v-if="file">
+        <h4 class="section">{{ $t('pf.statistics') }}</h4>
+        <RxSkeleton type="table" :rows="1" :loading="statsLoading">
+          <div v-if="stats" class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-label">{{ $t('pf.recordCount') }}</span>
+              <span class="stat-value">{{ stats.recordCount.toLocaleString() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">{{ $t('pf.storageSize') }}</span>
+              <span class="stat-value">{{ formatSize(stats.storageSize) }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">{{ $t('pf.indexCount') }}</span>
+              <span class="stat-value">{{ stats.indexCount }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">{{ $t('pf.memberCount') }}</span>
+              <span class="stat-value">{{ stats.memberCount }}</span>
+            </div>
+          </div>
+          <div v-if="stats && stats.indexNames.length" class="stats-indices">
+            <span class="stat-label">{{ $t('pf.indexNames') }}:</span>
+            <el-tag v-for="idx in stats.indexNames" :key="idx" size="small" class="ml4">{{ idx }}</el-tag>
+          </div>
+        </RxSkeleton>
         <h4 class="section">{{ $t('pf.columns') }}</h4>
         <RxSkeleton type="table" :rows="5" :loading="colsLoading">
           <el-table :data="columns" size="small" border>
@@ -62,7 +87,7 @@
 defineOptions({ name: 'Pf' })
 import { onMounted, ref } from 'vue'
 import QueryBar from '@/components/QueryBar.vue'
-import { pfColumns, pfData, pfFiles, type PfColumn, type PfFile } from '@/api/pf'
+import { pfColumns, pfData, pfFiles, pfStats, type PfColumn, type PfFile, type PfStats } from '@/api/pf'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
@@ -73,6 +98,8 @@ const file = ref<string | null>(null)
 const columns = ref<PfColumn[]>([])
 const limit = ref(20)
 const colsLoading = ref(false)
+const stats = ref<PfStats | null>(null)
+const statsLoading = ref(false)
 
 const {
   pagedData,
@@ -117,14 +144,28 @@ const openFile = async (name: string) => {
   if (!name) return
   file.value = name
   colsLoading.value = true
+  statsLoading.value = true
   try {
-    columns.value = await pfColumns(library.value, name)
+    const [cols, st] = await Promise.all([
+      pfColumns(library.value, name),
+      pfStats(library.value, name).catch(() => null),
+    ])
+    columns.value = cols
+    stats.value = st
   } catch {
     columns.value = []
+    stats.value = null
   } finally {
     colsLoading.value = false
+    statsLoading.value = false
   }
   loadData()
+}
+
+const formatSize = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 onMounted(loadFiles)
@@ -143,5 +184,26 @@ onMounted(loadFiles)
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+.stats-grid {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 12px;
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+.stats-indices {
+  margin-bottom: 12px;
 }
 </style>

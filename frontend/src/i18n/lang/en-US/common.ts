@@ -5,6 +5,7 @@
  */
 export default {
   common: {
+    detail: 'Details',
     refresh: 'Refresh',
     autoRefresh: 'Auto Refresh',
     refreshInterval: 'Refresh Interval',
@@ -48,6 +49,7 @@ export default {
     batchDelete: 'Batch Delete',
     columns: 'Columns',
     export: 'Export CSV',
+    download: 'Download',
     addSuccess: 'Created Successfully',
     updateSuccess: 'Updated Successfully',
     confirmDelete: 'Are you sure you want to delete? This action cannot be undone.',

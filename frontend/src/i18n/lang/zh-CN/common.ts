@@ -5,6 +5,7 @@
  */
 export default {
   common: {
+    detail: '详情',
     refresh: '刷新',
     autoRefresh: '自动刷新',
     refreshInterval: '刷新间隔',
@@ -48,6 +49,7 @@ export default {
     batchDelete: '批量删除',
     columns: '列设置',
     export: '导出 CSV',
+    download: '下载',
     addSuccess: '新增成功',
     updateSuccess: '更新成功',
     confirmDelete: '确定要删除吗？此操作不可恢复。',

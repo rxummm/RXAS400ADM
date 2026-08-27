@@ -153,6 +153,12 @@ const router = createRouter({
           meta: { title: 'menu.sysvals', cached: true },
         },
         {
+          path: 'data-areas',
+          name: 'DataAreas',
+          component: () => import('@/views/data/dataAreas/index.vue'),
+          meta: { title: 'menu.dataAreas', cached: true },
+        },
+        {
           path: 'server-compare',
           name: 'ServerCompare',
           component: () => import('@/views/monitor/serverCompare/index.vue'),
@@ -183,6 +189,124 @@ const router = createRouter({
           meta: { title: 'menu.jobDependency', cached: true },
         },
         {
+          // 【第六章·P1】BPCS 客户订单时间轴（AS400 业务增强首期）
+          path: 'bpcs-order',
+          name: 'BpcsOrder',
+          component: () => import('@/views/bpcs/order/index.vue'),
+          meta: { title: 'menu.bpcsOrder', cached: true },
+        },
+        {
+          // 【P2】BPCS 客户档案（Master-Detail 分栏布局）
+          path: 'bpcs-customer',
+          name: 'BpcsCustomer',
+          component: () => import('@/views/bpcs/customer/index.vue'),
+          meta: { title: 'menu.bpcsCustomer', cached: true },
+        },
+        {
+          // 【P2】BPCS 库存可用量（汇总卡片 + 可展开表格）
+          path: 'bpcs-inventory',
+          name: 'BpcsInventory',
+          component: () => import('@/views/bpcs/inventory/index.vue'),
+          meta: { title: 'menu.bpcsInventory', cached: true },
+        },
+        {
+          // 【P2】BPCS 发运看板（四列 Kanban）
+          path: 'bpcs-shipping',
+          name: 'BpcsShipping',
+          component: () => import('@/views/bpcs/shipping/index.vue'),
+          meta: { title: 'menu.bpcsShipping', cached: true },
+        },
+        {
+          // 【P2】BPCS 发票轨迹（Timeline + Tab）
+          path: 'bpcs-invoice',
+          name: 'BpcsInvoice',
+          component: () => import('@/views/bpcs/invoice/index.vue'),
+          meta: { title: 'menu.bpcsInvoice', cached: true },
+        },
+        {
+          // 【P2】BPCS 销售趋势（ECharts 柱线混合）
+          path: 'bpcs-sales',
+          name: 'BpcsSales',
+          component: () => import('@/views/bpcs/sales/index.vue'),
+          meta: { title: 'menu.bpcsSales', cached: true },
+        },
+        {
+          // 【P2】BPCS 采购订单（标准搜索表格）
+          path: 'bpcs-purchase',
+          name: 'BpcsPurchase',
+          component: () => import('@/views/bpcs/purchase/index.vue'),
+          meta: { title: 'menu.bpcsPurchase', cached: true },
+        },
+        {
+          // 【P2】BPCS 物料主档（左侧列表 + 右侧多 Tab 详情）
+          path: 'bpcs-item',
+          name: 'BpcsItem',
+          component: () => import('@/views/bpcs/item/index.vue'),
+          meta: { title: 'menu.bpcsItem', cached: true },
+        },
+        {
+          // 供应链增强：订单列表搜索
+          path: 'bpcs-order-list',
+          name: 'BpcsOrderList',
+          component: () => import('@/views/bpcs/orderList/index.vue'),
+          meta: { title: 'menu.bpcsOrderList', cached: true },
+        },
+        {
+          // 供应链增强：库存预警
+          path: 'bpcs-inventory-alert',
+          name: 'BpcsInventoryAlert',
+          component: () => import('@/views/bpcs/inventoryAlert/index.vue'),
+          meta: { title: 'menu.bpcsInventoryAlert', cached: true },
+        },
+        {
+          path: 'bpcs-sales-analysis',
+          name: 'BpcsSalesAnalysis',
+          component: () => import('@/views/bpcs/salesAnalysis/index.vue'),
+          meta: { title: 'menu.bpcsSalesAnalysis', cached: true },
+        },
+        {
+          path: 'bpcs-inventory-history',
+          name: 'BpcsInventoryHistory',
+          component: () => import('@/views/bpcs/inventoryHistory/index.vue'),
+          meta: { title: 'menu.bpcsInventoryHistory', cached: true },
+        },
+        {
+          path: 'bpcs-purchase-receiving',
+          name: 'BpcsPurchaseReceiving',
+          component: () => import('@/views/bpcs/purchaseReceiving/index.vue'),
+          meta: { title: 'menu.bpcsPurchaseReceiving', cached: true },
+        },
+        {
+          path: 'bpcs-shipping-list',
+          name: 'BpcsShippingList',
+          component: () => import('@/views/bpcs/shippingList/index.vue'),
+          meta: { title: 'menu.bpcsShippingList', cached: true },
+        },
+        {
+          path: 'bpcs-abc-analysis',
+          name: 'BpcsAbcAnalysis',
+          component: () => import('@/views/bpcs/abcAnalysis/index.vue'),
+          meta: { title: 'menu.bpcsAbcAnalysis', cached: true },
+        },
+        {
+          path: 'bpcs-supplier-perf',
+          name: 'BpcsSupplierPerf',
+          component: () => import('@/views/bpcs/supplierPerf/index.vue'),
+          meta: { title: 'menu.bpcsSupplierPerf', cached: true },
+        },
+        {
+          path: 'bpcs-kpi',
+          name: 'BpcsKpi',
+          component: () => import('@/views/bpcs/kpi/index.vue'),
+          meta: { title: 'menu.bpcsKpi', cached: true },
+        },
+        {
+          path: 'bpcs-order-tracking',
+          name: 'BpcsOrderTracking',
+          component: () => import('@/views/bpcs/orderTracking/index.vue'),
+          meta: { title: 'menu.bpcsOrderTracking', cached: true },
+        },
+        {
           path: 'reports',
           name: 'Reports',
           component: () => import('@/views/report/index.vue'),
@@ -211,6 +335,12 @@ const router = createRouter({
           name: 'Users',
           component: () => import('@/views/system/Users.vue'),
           meta: { title: 'menu.users', cached: true },
+        },
+        {
+          path: 'user-profiles',
+          name: 'UserProfiles',
+          component: () => import('@/views/system/userProfiles/index.vue'),
+          meta: { title: 'menu.userProfiles', cached: true },
         },
         {
           path: 'roles',

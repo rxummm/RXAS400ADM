@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  【第六章·P1】BPCS 客户订单查询语句（AS400 通道专用）
+  - {lib}   ：BPCS 文件所在 Library，由 Service 层以 rx_config(bpcs.library) 注入，
+              且已通过 IDENTIFIER 白名单校验（标识符不可参数化，属受控拼接）
+  - ?       ：JDBC 参数占位符（CONO/ORNO 等用户输入全部参数化绑定）
+  - 执行通道：AS400Client.queryListCheckedBounded（只读校验 + setMaxRows 行数护栏）
+-->
+<statements>
+
+    <!-- 订单头：单条（FETCH FIRST 2 用于重复行防御） -->
+    <statement id="bpcs.order.header">
+        SELECT * FROM {lib}.ECH
+        WHERE CONO = ? AND ORNO = ?
+        FETCH FIRST 2 ROWS ONLY
+    </statement>
+
+    <!-- 订单行：按行号排序全量返回（单订单行数量级为几十；Service 层内存过滤 CONO/ORNO 双保险） -->
+    <statement id="bpcs.order.lines">
+        SELECT * FROM {lib}.ECL
+        WHERE CONO = ? AND ORNO = ?
+        ORDER BY ORLN
+    </statement>
+
+    <!-- 订单行计数 -->
+    <statement id="bpcs.order.lineCount">
+        SELECT COUNT(*) AS LINECNT
+        FROM {lib}.ECL
+        WHERE CONO = ? AND ORNO = ?
+    </statement>
+
+    <!-- ===== P2: 客户档案（RCM 主档 + EST 收货点） ===== -->
+    <statement id="bpcs.customer.search">
+        SELECT * FROM {lib}.RCM
+        WHERE CONO = ?
+          AND CUST LIKE ?
+          AND CUNAME LIKE ?
+        ORDER BY CUST
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== P2: 采购订单（HPH 头 + HPO 行） ===== -->
+    <statement id="bpcs.purchase.search">
+        SELECT * FROM {lib}.HPH
+        WHERE CONO = ?
+          AND PONO LIKE ?
+          AND VNAME LIKE ?
+        ORDER BY PODATE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== P2: 库存可用量（IIM 物料 + IWI 仓库库存） ===== -->
+    <statement id="bpcs.inventory.search">
+        SELECT * FROM {lib}.IWI
+        WHERE CONO = ?
+          AND ITEM LIKE ?
+          AND ITDSC LIKE ?
+        ORDER BY ITEM, WH
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== P2: 发运看板（LLH 载荷头） ===== -->
+    <statement id="bpcs.shipping.search">
+        SELECT * FROM {lib}.LLH
+        WHERE CONO = ?
+          AND LHNO LIKE ?
+        ORDER BY SHIPDTE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== P2: 销售趋势（月度聚合） ===== -->
+    <statement id="bpcs.sales.trend">
+        SELECT YM, SUM(REVENUE) AS REVENUE, SUM(ORDERS) AS ORDERS, SUM(LINES) AS LINES
+        FROM {lib}.SSH
+        WHERE CONO = ?
+          AND YM >= ?
+          AND YM <= ?
+        GROUP BY YM
+        ORDER BY YM
+        FETCH FIRST 24 ROWS ONLY
+    </statement>
+
+    <!-- ===== P2: 物料主档（IIM） ===== -->
+    <statement id="bpcs.item.search">
+        SELECT * FROM {lib}.IIM
+        WHERE ITEM LIKE ?
+          AND ITDSC LIKE ?
+        ORDER BY ITEM
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- 物料基础信息（单条） -->
+    <statement id="bpcs.item.basic">
+        SELECT * FROM {lib}.IIM
+        WHERE ITEM = ?
+        FETCH FIRST 1 ROWS ONLY
+    </statement>
+
+    <!-- 物料仓库库存 -->
+    <statement id="bpcs.item.warehouse">
+        SELECT * FROM {lib}.IWI
+        WHERE ITEM = ?
+        ORDER BY WH
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- 物料采购历史 -->
+    <statement id="bpcs.item.purchases">
+        SELECT * FROM {lib}.HPO
+        WHERE ITEM = ?
+        ORDER BY ODATE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- 物料销售历史 -->
+    <statement id="bpcs.item.sales">
+        SELECT * FROM {lib}.ECL
+        WHERE ITEM = ?
+        ORDER BY ORDTE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== 供应链增强：订单列表搜索 ===== -->
+    <statement id="bpcs.order.list">
+        SELECT CONO, ORNO, CUST, SHIP, HID, HSTAT,
+               CHSTS1, CHSTS2, CHSTS3, CHSTS4, CHSTS5,
+               ORDTE, REQDTE
+        FROM {lib}.ECH
+        WHERE CONO = ?
+          AND CUST LIKE ?
+          AND ORNO LIKE ?
+          AND ORDTE >= ?
+          AND ORDTE <= ?
+        ORDER BY ORDTE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== 供应链增强：库存预警（可用量 < 安全库存） ===== -->
+    <statement id="bpcs.inventory.alert">
+        SELECT ITEM, ITDSC, WH, UOM,
+               IOHB, IISSU, IRCT, IADJU,
+               (IOHB - IISSU + IRCT + IADJU) AS AVAILABLE,
+               ISFQ AS SAFETY_STOCK
+        FROM {lib}.IWI
+        WHERE CONO = ?
+          AND (IOHB - IISSU + IRCT + IADJU) < ISFQ
+        ORDER BY (IOHB - IISSU + IRCT + IADJU) ASC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== 供应链增强：客户销售分析（Top N 客户） ===== -->
+    <statement id="bpcs.sales.topCustomers">
+        SELECT ECH.CUST, RCM.CUNAME,
+               COUNT(DISTINCT ECH.ORNO) AS ORDER_COUNT,
+               SUM(ECL.QTORD * ECL.PRICE) AS TOTAL_AMOUNT
+        FROM {lib}.ECH
+        JOIN {lib}.ECL ON ECH.CONO = ECL.CONO AND ECH.ORNO = ECL.ORNO
+        LEFT JOIN {lib}.RCM ON ECH.CONO = RCM.CONO AND ECH.CUST = RCM.CUST
+        WHERE ECH.CONO = ?
+        GROUP BY ECH.CUST, RCM.CUNAME
+        ORDER BY TOTAL_AMOUNT DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== 供应链增强：物料销售分析（Top N 物料） ===== -->
+    <statement id="bpcs.sales.topItems">
+        SELECT ECL.ITEM, IIM.ITDSC,
+               SUM(ECL.QTORD) AS TOTAL_QTY,
+               SUM(ECL.QTORD * ECL.PRICE) AS TOTAL_AMOUNT
+        FROM {lib}.ECL
+        LEFT JOIN {lib}.IIM ON ECL.ITEM = IIM.ITEM
+        WHERE ECL.CONO = ?
+        GROUP BY ECL.ITEM, IIM.ITDSC
+        ORDER BY TOTAL_AMOUNT DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== Phase 2: 库存变动历史（ITL 表） ===== -->
+    <statement id="bpcs.inventory.history">
+        SELECT ITEM, WH, ITTYP, QTY, REFNO, TRNDTE, TRNTME,
+               USERID, DBNAM, SERNO
+        FROM {lib}.ITL
+        WHERE CONO = ?
+          AND ITEM LIKE ?
+          AND TRNDTE >= ?
+          AND TRNDTE <= ?
+        ORDER BY TRNDTE DESC, TRNTME DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== Phase 2: 采购收货管理（HPH 头 + HPO 行 + 收货记录） ===== -->
+    <statement id="bpcs.purchase.receiving">
+        SELECT HPH.PONO, HPH.VNAME, HPH.PODATE,
+               HPO.ITEM, HPO.ITDSC, HPO.QTYORD, HPO.QTYRCV,
+               (HPO.QTYORD - HPO.QTYRCV) AS QTYOPEN,
+               HPO.UPRICE, HPO.LREQDTE
+        FROM {lib}.HPH
+        JOIN {lib}.HPO ON HPH.CONO = HPO.CONO AND HPH.PONO = HPO.PONO
+        WHERE HPH.CONO = ?
+          AND HPH.PONO LIKE ?
+          AND HPH.VNAME LIKE ?
+          AND HPO.QTYRCV < HPO.QTYORD
+        ORDER BY HPH.PODATE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== Phase 2: 发运列表视图（LLH + ESL） ===== -->
+    <statement id="bpcs.shipping.list">
+        SELECT LHNO, LHSTAT, CARRIER, DEST, SHIPDTE, ORDNOS, LINECT, WEIGHT
+        FROM {lib}.LLH
+        WHERE CONO = ?
+          AND LHNO LIKE ?
+          AND CARRIER LIKE ?
+        ORDER BY SHIPDTE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== Phase 3: ABC 分析（按库存价值分类） ===== -->
+    <statement id="bpcs.inventory.abc">
+        SELECT ITEM, ITDSC, WH, UOM,
+               IOHB, ICOST,
+               (IOHB * ICOST) AS STOCK_VALUE
+        FROM {lib}.IWI
+        WHERE CONO = ?
+        ORDER BY STOCK_VALUE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== Phase 3: 供应商绩效（HPH 头 + HPO 行） ===== -->
+    <statement id="bpcs.supplier.performance">
+        SELECT VNAME,
+               COUNT(DISTINCT PONO) AS PO_COUNT,
+               SUM(CASE WHEN QTYRCV >= QTYORD THEN 1 ELSE 0 END) AS ON_TIME_COUNT,
+               AVG(UPRICE) AS AVG_PRICE
+        FROM {lib}.HPH
+        JOIN {lib}.HPO ON HPH.CONO = HPO.CONO AND HPH.PONO = HPO.PONO
+        WHERE HPH.CONO = ?
+        GROUP BY VNAME
+        ORDER BY PO_COUNT DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== Phase 4: 供应链 KPI 聚合 ===== -->
+    <statement id="bpcs.kpi.summary">
+        SELECT
+            (SELECT COUNT(*) FROM {lib}.ECH WHERE CONO = ?) AS TOTAL_ORDERS,
+            (SELECT COUNT(*) FROM {lib}.ECH WHERE CONO = ? AND HID = 'CZ') AS CLOSED_ORDERS,
+            (SELECT COUNT(*) FROM {lib}.IWI WHERE CONO = ?) AS TOTAL_ITEMS,
+            (SELECT SUM(IOHB * ICOST) FROM {lib}.IWI WHERE CONO = ?) AS INVENTORY_VALUE
+    </statement>
+
+    <!-- ===== Phase 4: 订单全链路追踪 ===== -->
+    <statement id="bpcs.order.tracking">
+        SELECT ECH.CONO, ECH.ORNO, ECH.CUST, RCM.CUNAME,
+               ECH.CHSTS1, ECH.CHSTS2, ECH.CHSTS3, ECH.CHSTS4, ECH.CHSTS5,
+               ECH.HID, ECL.ITEM, ECL.ITDSC, ECL.QTORD, ECL.QTYALC, ECL.QTSHP, ECL.QTINV,
+               ESH.SHIPDTE, ESH.SHSTAT
+        FROM {lib}.ECH
+        JOIN {lib}.ECL ON ECH.CONO = ECL.CONO AND ECH.ORNO = ECL.ORNO
+        LEFT JOIN {lib}.RCM ON ECH.CONO = RCM.CONO AND ECH.CUST = RCM.CUST
+        LEFT JOIN {lib}.ESH ON ECL.CONO = ESH.CONO AND ECL.ORNO = ESH.ORNO
+        WHERE ECH.CONO = ? AND ECH.ORNO = ?
+        ORDER BY ECL.ORLN
+    </statement>
+
+    <!-- ===== P2: 发票轨迹（在制 BBH/BBL + 历史 SIH/SIL） ===== -->
+    <statement id="bpcs.invoice.active">
+        SELECT * FROM {lib}.BBH
+        WHERE CONO = ?
+          AND ORNO LIKE ?
+        ORDER BY INVDATE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <statement id="bpcs.invoice.history">
+        SELECT * FROM {lib}.SIH
+        WHERE CONO = ?
+          AND ORNO LIKE ?
+        ORDER BY INVDATE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+</statements>

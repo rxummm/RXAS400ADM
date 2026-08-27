@@ -9,6 +9,7 @@ import com.rxas400adm.as400.CommandResult;
 import com.rxas400adm.as400.dto.CommandScriptRequest;
 import com.rxas400adm.as400.entity.CommandScript;
 import com.rxas400adm.common.constants.ExecutionStatus;
+import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.as400.mapper.CommandScriptMapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
@@ -90,7 +91,7 @@ public class CommandScriptService implements ICommandScriptService {
 
     
     public CommandScript update(Long id, CommandScriptRequest request) {
-        CommandScript script = require(id);
+        CommandScript script = EntityUtil.require(id, "命令脚本", scriptMapper::selectById);
         apply(script, request);
         script.setUpdatedTime(LocalDateTime.now());
         scriptMapper.updateById(script);
@@ -100,14 +101,14 @@ public class CommandScriptService implements ICommandScriptService {
 
     
     public void delete(Long id) {
-        require(id);
+        EntityUtil.require(id, "命令脚本", scriptMapper::selectById);
         scriptMapper.deleteById(id);
         tagsCache.invalidate("tags"); // P16b：写操作失效 tags 缓存
     }
 
     
     public CommandScript toggleFavorite(Long id, Boolean favorite) {
-        CommandScript script = require(id);
+        CommandScript script = EntityUtil.require(id, "命令脚本", scriptMapper::selectById);
         script.setFavorite(Boolean.TRUE.equals(favorite));
         script.setUpdatedTime(LocalDateTime.now());
         scriptMapper.updateById(script);
@@ -116,7 +117,7 @@ public class CommandScriptService implements ICommandScriptService {
 
     /** 对指定服务器执行脚本（记录执行次数/结果） */
     public CommandResult execute(Long id, Long serverId) {
-        CommandScript script = require(id);
+        CommandScript script = EntityUtil.require(id, "命令脚本", scriptMapper::selectById);
         if (serverId == null) {
             throw new BusinessException(ErrorCode.AS400_SERVER_REQUIRED, "请选择执行服务器");
         }
@@ -134,13 +135,7 @@ public class CommandScriptService implements ICommandScriptService {
         return result;
     }
 
-    private CommandScript require(Long id) {
-        CommandScript script = scriptMapper.selectById(id);
-        if (script == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "命令脚本不存在");
-        }
-        return script;
-    }
+
 
     private void apply(CommandScript script, CommandScriptRequest request) {
         script.setName(request.getName());

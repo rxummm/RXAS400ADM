@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.NoticeDTO;
 import com.rxas400adm.system.entity.Notice;
@@ -73,7 +74,7 @@ public class NoticeService implements INoticeService {
 
     
     public Notice update(Long id, NoticeDTO dto) {
-        Notice notice = require(id);
+        Notice notice = EntityUtil.require(id, "公告", noticeMapper::selectById);
         if (StringUtils.hasText(dto.getTitle())) {
             notice.setTitle(dto.getTitle());
         }
@@ -94,14 +95,6 @@ public class NoticeService implements INoticeService {
 
     
     public void delete(Long id) {
-        noticeMapper.deleteById(require(id).getId());
-    }
-
-    private Notice require(Long id) {
-        Notice notice = noticeMapper.selectById(id);
-        if (notice == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "公告不存在: " + id);
-        }
-        return notice;
+        noticeMapper.deleteById(EntityUtil.require(id, "公告", noticeMapper::selectById).getId());
     }
 }
