@@ -7,27 +7,27 @@
     <div v-if="kpi" class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-value">{{ kpi.totalOrders }}</div>
-        <div class="kpi-label">总订单数</div>
+        <div class="kpi-label">{{ $t('bpcs.kpi.totalOrders') }}</div>
       </div>
       <div class="kpi-card kpi-card--success">
         <div class="kpi-value">{{ kpi.closedOrders }}</div>
-        <div class="kpi-label">已完成订单</div>
+        <div class="kpi-label">{{ $t('bpcs.kpi.closedOrders') }}</div>
       </div>
       <div class="kpi-card kpi-card--primary">
         <div class="kpi-value">{{ kpi.completionRate.toFixed(1) }}%</div>
-        <div class="kpi-label">订单完成率</div>
+        <div class="kpi-label">{{ $t('bpcs.kpi.completionRate') }}</div>
       </div>
       <div class="kpi-card kpi-card--warning">
         <div class="kpi-value">{{ kpi.totalItems }}</div>
-        <div class="kpi-label">库存物料数</div>
+        <div class="kpi-label">{{ $t('bpcs.kpi.totalItems') }}</div>
       </div>
       <div class="kpi-card kpi-card--info">
         <div class="kpi-value">{{ fmtMoney(kpi.inventoryValue) }}</div>
-        <div class="kpi-label">库存总价值</div>
+        <div class="kpi-label">{{ $t('bpcs.kpi.inventoryValue') }}</div>
       </div>
       <div class="kpi-card kpi-card--success">
         <div class="kpi-value">{{ kpi.onTimeDeliveryRate.toFixed(1) }}%</div>
-        <div class="kpi-label">准时交货率</div>
+        <div class="kpi-label">{{ $t('bpcs.kpi.onTimeDeliveryRate') }}</div>
       </div>
     </div>
     <el-empty v-if="!loading && !kpi" :description="$t('common.noData')" />

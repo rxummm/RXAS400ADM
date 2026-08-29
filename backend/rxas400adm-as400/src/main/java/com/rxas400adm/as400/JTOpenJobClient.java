@@ -9,6 +9,7 @@ import com.rxas400adm.as400.model.SpoolRow;
 import com.ibm.as400.access.AS400;
 import com.ibm.as400.access.CommandCall;
 import com.ibm.as400.access.AS400Message;
+import com.ibm.as400.access.IFSFileInputStream;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
@@ -105,8 +106,8 @@ class JTOpenJobClient implements JobClient {
                 return null;
             }
             // 读取 IFS 文件内容
-            com.ibm.as400.access.IFSFileInputStream in =
-                    new com.ibm.as400.access.IFSFileInputStream(system, tempPath);
+            IFSFileInputStream in =
+                    new IFSFileInputStream(system, tempPath);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             byte[] buf = new byte[8192];
             int n;
@@ -116,7 +117,7 @@ class JTOpenJobClient implements JobClient {
             in.close();
             // 清理临时文件
             try {
-                new com.ibm.as400.access.CommandCall(system).run("DLTF FILE(" + tempPath + ")");
+                new CommandCall(system).run("DLTF FILE(" + tempPath + ")");
             } catch (Exception ignored) {
             }
             return new ByteArrayInputStream(baos.toByteArray());

@@ -95,6 +95,13 @@ html[data-theme='cyan'] {
   --z-context-menu: 3000;
   --z-teleport: 99999;
 
+  /* ---- 阴影体系（统一 box-shadow，禁止硬编码 rgba） ---- */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.12);
+
   /* ---- 布局尺寸体系（弹窗宽度 / 表单标签宽度，统一管控，禁止散落硬编码） ----
      使用方式：label-width="var(--rx-form-label-width)"
               width="var(--rx-dialog-sm)" 等 */
@@ -124,6 +131,12 @@ html.dark {
   --border-color: #30363d;
   --border-light: #21262d;
   --border-lighter: #161b22;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.35);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.4);
 
   --sidebar-bg: #0d1117;
   --sidebar-text: #8b949e;

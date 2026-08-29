@@ -5,6 +5,7 @@ import com.rxas400adm.as400.model.ObjectDetail;
 import com.rxas400adm.as400.model.ObjectRefRow;
 import com.rxas400adm.as400.model.ObjectRow;
 import com.rxas400adm.as400.service.IObjectService;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +39,8 @@ public class ObjectController {
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int current,
             @RequestParam(defaultValue = "20") int size) {
-        int page = Math.max(1, current);
-        int pageSize = Math.max(1, Math.min(size, 200));
+        int page = (int) PageConstants.clampNum(current);
+        int pageSize = (int) PageConstants.clampSize(size);
         return ApiResponse.success(objectService.searchObjects(library, type, keyword, page, pageSize));
     }
 

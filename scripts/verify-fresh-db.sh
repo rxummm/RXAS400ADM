@@ -147,7 +147,7 @@ check "rx_role 编码集合"      "$ROLE_CODES_ACTUAL" "$(echo "$V38_EXPECT_ROLE
 
 # 幂等性关键断言：菜单无 (parent_id,title,menu_type) 重复行（V38 靠 WHERE NOT EXISTS 防重复，
 # 若将来双源回归或种子改坏，这里立刻暴露）
-DUP_MENUS=$(mysql -u"$MYSQL_USER" -p"$MYSQL_PWD" -h"$MYSQL_HOST" -P"$MYSQL_PORT" -N --default-character-set=utf8mb4 \
+DUP_MENUS=$("${mysql[@]}" -N --default-character-set=utf8mb4 \
   -e "SELECT COUNT(*) FROM (SELECT parent_id, title, menu_type FROM \`$DB\`.rx_menu GROUP BY parent_id, title, menu_type HAVING COUNT(*) > 1) t;" 2>/dev/null || true)
 check "rx_menu 无重复行（幂等）" "${DUP_MENUS:-ERR}" "0"
 

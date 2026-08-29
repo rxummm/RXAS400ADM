@@ -43,6 +43,9 @@ export default {
     trendCpu: 'CPU',
     trendMemory: 'Memory',
     trendDisk: 'Disk',
+    jvmMemorySection: 'JVM Memory',
+    httpRequestsSection: 'HTTP Requests',
+    as400ServersSection: 'AS400 Servers',
   },
   alertRules: {
     title: 'Alert Rule Configuration',

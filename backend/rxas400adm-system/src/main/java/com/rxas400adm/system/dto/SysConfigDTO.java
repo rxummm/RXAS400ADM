@@ -1,5 +1,6 @@
 package com.rxas400adm.system.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
@@ -8,7 +9,9 @@ import lombok.Data;
 @Data
 public class SysConfigDTO {
 
+    @Schema(description = "配置值", example = "true")
     private String configValue;
 
+    @Schema(description = "配置描述", example = "系统开关")
     private String description;
 }

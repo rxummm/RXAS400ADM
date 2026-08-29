@@ -1,5 +1,6 @@
 package com.rxas400adm.system.service;
 
+import com.rxas400adm.system.vo.FavoriteToggleVO;
 import com.rxas400adm.system.vo.FavoriteVO;
 
 import java.util.List;
@@ -13,7 +14,7 @@ public interface IFavoriteService {
 
     boolean isFavorited(String username, String path);
 
-    com.rxas400adm.system.vo.FavoriteToggleVO toggle(String username, String title, String path, String icon);
+    FavoriteToggleVO toggle(String username, String title, String path, String icon);
 
     void remove(String username, String path);
 }

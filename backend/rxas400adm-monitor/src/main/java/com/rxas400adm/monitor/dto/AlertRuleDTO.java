@@ -1,6 +1,7 @@
 package com.rxas400adm.monitor.dto;
 
 import com.rxas400adm.monitor.alert.AlertRule;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -10,15 +11,15 @@ import jakarta.validation.constraints.NotNull;
  * id 仅取自路径，不可由请求体注入。
  */
 public record AlertRuleDTO(
-        @NotBlank(message = "{validation.notBlank}") String metricName,
-        @NotBlank(message = "{validation.notBlank}") String operator,
-        @NotNull(message = "{validation.notNull}") Double threshold,
-        Integer durationSeconds,
-        @NotBlank(message = "{validation.notBlank}") String level,
-        Boolean enabled,
-        String channel,
-        Long serverId,
-        String description) {
+        @NotBlank(message = "{validation.notBlank}") @Schema(description = "指标名称", example = "cpu_usage") String metricName,
+        @NotBlank(message = "{validation.notBlank}") @Schema(description = "比较运算符", example = ">") String operator,
+        @NotNull(message = "{validation.notNull}") @Schema(description = "阈值", example = "90.0") Double threshold,
+        @Schema(description = "持续秒数", example = "300") Integer durationSeconds,
+        @NotBlank(message = "{validation.notBlank}") @Schema(description = "告警级别", example = "CRITICAL") String level,
+        @Schema(description = "是否启用", example = "true") Boolean enabled,
+        @Schema(description = "通知渠道", example = "EMAIL") String channel,
+        @Schema(description = "服务器ID", example = "1") Long serverId,
+        @Schema(description = "描述", example = "CPU使用率超过90%") String description) {
 
     public AlertRule toEntity() {
         AlertRule rule = new AlertRule();

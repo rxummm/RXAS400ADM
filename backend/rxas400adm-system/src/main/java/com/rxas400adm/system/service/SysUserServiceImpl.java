@@ -110,7 +110,7 @@ public class SysUserServiceImpl implements SysUserService {
         }
         // 重置密码：dto.password 非空即覆盖（P2-3 统一强度校验）
         if (StringUtils.hasText(dto.getPassword())) {
-            com.rxas400adm.common.security.PasswordPolicy.validate(dto.getPassword());
+            PasswordPolicy.validate(dto.getPassword());
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
         user.setEmail(dto.getEmail());
@@ -159,7 +159,7 @@ public class SysUserServiceImpl implements SysUserService {
 
     @Override
     public void changePassword(String username, String oldPassword, String newPassword) {
-        com.rxas400adm.common.security.PasswordPolicy.validate(newPassword);
+        PasswordPolicy.validate(newPassword);
         SysUser user = getByUsername(username);
         if (user == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在");

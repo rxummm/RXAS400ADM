@@ -2,6 +2,7 @@ package com.rxas400adm.as400.service;
 
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.common.constants.As400Identifiers;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -92,7 +93,7 @@ public class BusinessService implements IBusinessService {
         }
 
         // B3：page 上限钳制——防 (page-1)*size 溢出为负拼出 OFFSET -20 ROWS（DB2 SQL 错误）
-        safePage = Math.min(safePage, 10_000);
+        safePage = Math.min(safePage, PageConstants.MAX_PAGE_NUM);
         long offset = (long) (safePage - 1) * safeSize;
         String dataSql = "SELECT * FROM " + lib + "." + tbl + where
                 + " ORDER BY 1 OFFSET " + offset + " ROWS FETCH NEXT " + safeSize + " ROWS ONLY";

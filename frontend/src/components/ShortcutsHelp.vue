@@ -10,7 +10,7 @@
         <template #default="{ row }">{{ row.description }}</template>
       </el-table-column>
     </el-table>
-    <div class="hint">{{ $t('layout.shortcutHint') }}</div>
+    <div class="shortcuts-hint">{{ $t('layout.shortcutHint') }}</div>
   </el-dialog>
 </template>
 
@@ -53,7 +53,7 @@ defineExpose({ open, close, visible })
   border: 1px solid var(--border-color);
   border-radius: 4px;
 }
-.hint {
+.shortcuts-hint {
   margin-top: 12px;
   font-size: 12px;
   color: var(--text-secondary);

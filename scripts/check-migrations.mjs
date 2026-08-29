@@ -38,11 +38,14 @@ const MANIFEST = {
   55: ['upgrade_notified', 'idx_alert_event_upgrade'],
 }
 
-// 已知历史遗留（⚠️ 新增重复不得进此清单）：V29/V30 同为 cleanup_deploy_and_scheduler_lock，
-// 内容几乎一致（CREATE TABLE IF NOT EXISTS + INSERT IGNORE），运行时幂等安全；
+// 已知历史遗留（⚠️ 新增重复不得进此清单）：
+// G3: V29/V30 内容几乎一致（CREATE TABLE IF NOT EXISTS + INSERT IGNORE），运行时幂等安全；
 // V30 已被既有库 Flyway 历史记录，不可删除，故静态放行该具体配对。
+// 注意：2026-08-29 §21.2.5 已将 V30 重命名为 V30__cleanup_deploy_and_add_scheduler_lock.sql
+//       （消除与 V29 的重复描述），白名单文件名必须同步，否则 has() 失配 → 误判违规。
+// 与 CODING_STANDARDS.md §4.6「表创建去重」矛盾，但属历史遗留例外。
 const ALLOW_TABLE_DUPES = new Map([
-  ['rx_scheduler_lock', new Set(['V29__cleanup_deploy_and_scheduler_lock.sql', 'V30__cleanup_deploy_and_scheduler_lock.sql'])],
+  ['rx_scheduler_lock', new Set(['V29__cleanup_deploy_and_scheduler_lock.sql', 'V30__cleanup_deploy_and_add_scheduler_lock.sql'])],
 ])
 
 const files = readdirSync(MIG_DIR).filter((f) => f.endsWith('.sql')).sort()
@@ -139,7 +142,8 @@ for (const f of files) {
 check('表/索引跨迁移对象不重复', !failed)
 
 // ---------------- 2) 空迁移 ----------------
-// 已知例外：V31 为注释型占位迁移（AES 加密说明，无 DDL，Flyway no-op，历史遗留不可删）
+// G1: V31 为注释型占位迁移（AES 加密说明，无 DDL，Flyway no-op，历史遗留不可删）
+// 与 CODING_STANDARDS.md §4.5「空迁移文件禁止」矛盾，但属历史遗留例外。
 const ALLOW_EMPTY = new Set([31])
 for (const f of files) {
   const v = Number(f.match(/^V(\d+)/)?.[1])

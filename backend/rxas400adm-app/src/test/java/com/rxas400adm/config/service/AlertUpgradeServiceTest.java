@@ -10,12 +10,15 @@ import com.rxas400adm.system.entity.Notification;
 import com.rxas400adm.system.entity.SysUser;
 import com.rxas400adm.system.mapper.SysUserMapper;
 import com.rxas400adm.system.service.INotificationService;
+import com.rxas400adm.system.service.SysConfigService;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,7 +51,7 @@ class AlertUpgradeServiceTest {
     private INotificationService notificationService;
     /** 【P3】notify-role 运行时来源 mock：get(key, default) 回传 default 等价未配置 rx_config */
     @Mock
-    private com.rxas400adm.system.service.SysConfigService sysConfigService;
+    private SysConfigService sysConfigService;
 
     /** 泛型捕获器：@Captor 注解处理嵌套泛型，避免 forClass 裸 Class 的 unchecked 警告 */
     @Captor
@@ -61,7 +64,7 @@ class AlertUpgradeServiceTest {
     private AlertUpgradeService service;
     private AlertUpgradeProperties props;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     static void initTableInfo() {
         // 纯 Mockito 环境无 MP 启动上下文：为断言 wrapper SQL 片段初始化 TableInfo 缓存
         MapperBuilderAssistant assistant =
@@ -76,9 +79,9 @@ class AlertUpgradeServiceTest {
         props.setUpgradeAfterMinutes(30);
         props.setNotifyRole("ADMIN");
         // P3：未配置 rx_config 时回传 yml 缺省（get 第二参）
-        org.mockito.Mockito.lenient()
-                .when(sysConfigService.get(org.mockito.ArgumentMatchers.anyString(),
-                        org.mockito.ArgumentMatchers.anyString()))
+        lenient()
+                .when(sysConfigService.get(ArgumentMatchers.anyString(),
+                        ArgumentMatchers.anyString()))
                 .thenAnswer(inv -> inv.getArgument(1));
         service = new AlertUpgradeService(alertEventMapper, sysUserMapper, notificationService, props,
                 sysConfigService);

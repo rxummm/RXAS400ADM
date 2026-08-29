@@ -24,6 +24,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -185,7 +186,7 @@ public class RoleService implements IRoleService {
         List<SysMenu> existing = menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
                 .select(SysMenu::getId)
                 .in(SysMenu::getId, ids));
-        java.util.Set<Long> existingIds = existing.stream().map(SysMenu::getId).collect(Collectors.toSet());
+        Set<Long> existingIds = existing.stream().map(SysMenu::getId).collect(Collectors.toSet());
         List<Long> invalid = ids.stream().filter(i -> !existingIds.contains(i)).toList();
         if (!invalid.isEmpty()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "菜单不存在: " + invalid);

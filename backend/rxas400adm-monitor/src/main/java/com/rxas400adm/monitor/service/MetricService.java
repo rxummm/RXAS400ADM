@@ -77,7 +77,7 @@ public class MetricService implements IMetricService {
         return metricMapper.selectList(new LambdaQueryWrapper<Metric>()
                 .eq(Metric::getInstanceId, instanceId)
                 .orderByDesc(Metric::getCollectTime)
-                .last(PageConstants.limitClause(Math.max(1, Math.min(limit, 500)))));
+                .last(PageConstants.limitClause(Math.max(1, Math.min(limit, PageConstants.MAX_LIMIT)))));
     }
 
     public void cleanBefore(LocalDateTime time) {

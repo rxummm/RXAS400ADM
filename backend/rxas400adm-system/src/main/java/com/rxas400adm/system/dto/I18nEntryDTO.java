@@ -1,5 +1,6 @@
 package com.rxas400adm.system.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -10,11 +11,14 @@ import lombok.Data;
 public class I18nEntryDTO {
 
     @NotBlank(message = "{validation.notBlank}")
+    @Schema(description = "国际化键", example = "menu.system")
     private String i18nKey;
 
     @NotBlank(message = "{validation.notBlank}")
+    @Schema(description = "语言", example = "zh-CN")
     private String lang;
 
     @NotBlank(message = "{validation.notBlank}")
+    @Schema(description = "翻译文本", example = "系统管理")
     private String text;
 }

@@ -3,6 +3,7 @@ package com.rxas400adm.as400.controller;
 import com.rxas400adm.as400.CommandResult;
 import com.rxas400adm.as400.dto.IbmiSystemDTO;
 import com.rxas400adm.as400.service.IIbmiSystemService;
+import com.rxas400adm.as400.vo.EnabledServerVO;
 import com.rxas400adm.as400.vo.IbmiSystemDetailVO;
 import com.rxas400adm.as400.vo.IbmiSystemVO;
 import com.rxas400adm.common.annotation.OperateLog;
@@ -50,7 +51,7 @@ public class As400Controller {
     /** 启用的服务器列表（登录页 AS400 模式下拉框，免登录公开，参照旧项目 list-enabled）。
      *  P1-5 加固：仅返回最小视图（id/name/environment），不暴露 host/username/port。 */
     @GetMapping("/servers/enabled")
-    public ApiResponse<List<com.rxas400adm.as400.vo.EnabledServerVO>> listEnabled() {
+    public ApiResponse<List<EnabledServerVO>> listEnabled() {
         return ApiResponse.success(systemService.listEnabled());
     }
 

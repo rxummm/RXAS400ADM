@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
+import com.rxas400adm.as400.model.UserProfileRow;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.security.dto.As400LoginRequest;
@@ -120,7 +121,7 @@ public class As400LoginService implements IAs400LoginService {
 
     /** 按用户在 IBM i 的组 profile 解析应分配的角色码（未命中映射 → 默认 VIEWER） */
     private List<String> resolveRoles(AS400Client client, String username) {
-        com.rxas400adm.as400.model.UserProfileRow profile = client.userProfile(username);
+        UserProfileRow profile = client.userProfile(username);
         String group = profile == null || profile.groupProfile() == null
                 ? "" : profile.groupProfile();
         Map<String, String> mapping = loadGroupRoleMapping();

@@ -134,8 +134,8 @@ public class ExecutionService {
                 || (message != null && String.valueOf(message).toLowerCase().contains(kw));
     }
 
-    /** L7：服务层收敛 limit 到 [1, 500]（原仅 Controller 钳制，防止未来调用方直传非法值） */
+    /** L7：服务层收敛 limit 到 [1, MAX_LIMIT]（原仅 Controller 钳制，防止未来调用方直传非法值） */
     private int clampLimit(int limit) {
-        return Math.max(1, Math.min(limit, 500));
+        return Math.max(1, Math.min(limit, PageConstants.MAX_LIMIT));
     }
 }

@@ -7,7 +7,6 @@ import com.rxas400adm.as400.CommandResult;
 import com.rxas400adm.as400.entity.IbmiSystem;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.config.vo.HealthReportVO;
-import com.rxas400adm.monitor.alert.AlertEvent;
 import com.rxas400adm.monitor.mapper.AlertEventMapper;
 import com.rxas400adm.as400.mapper.IbmiSystemMapper;
 import org.junit.jupiter.api.Test;
@@ -52,6 +51,7 @@ class HealthControllerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void report_shouldAggregateAllChecks() throws Exception {
         IbmiSystem system = new IbmiSystem();
         system.setId(1L);
@@ -79,6 +79,7 @@ class HealthControllerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void report_connectionFailure_shouldMarkFail() throws Exception {
         IbmiSystem system = new IbmiSystem();
         system.setId(2L);

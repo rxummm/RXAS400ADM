@@ -36,7 +36,7 @@
 <script setup lang="ts">
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'BpcsAbcAnalysis' })
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { fetchAbcAnalysis, type AbcItem } from '@/api/supplyChain'
 const cono = ref('001')
 const loading = ref(false)

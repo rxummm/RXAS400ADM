@@ -3,6 +3,7 @@ package com.rxas400adm.as400;
 import com.rxas400adm.as400.model.PfColumnRow;
 import com.rxas400adm.as400.model.PfRow;
 import com.rxas400adm.as400.model.PfStatsRow;
+import com.rxas400adm.common.constants.PageConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +52,7 @@ class JTOpenPfClient implements PfClient {
             return List.of();
         }
         String lib = library == null || library.isBlank() ? "QSYS" : JTOpenConnectionState.requireIdentifier(library, "库名");
-        int capped = Math.max(1, Math.min(limit, 200));
+        int capped = Math.max(1, Math.min(limit, PageConstants.MAX_PF_DATA_LIMIT));
         return sqlClient.queryList("SELECT * FROM " + lib + "." + JTOpenConnectionState.requireIdentifier(file, "文件/表名")
                 + " FETCH FIRST " + capped + " ROWS ONLY");
     }

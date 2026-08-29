@@ -57,7 +57,7 @@
         border
         row-key="item"
         :expand-row-keys="expandedKeys"
-        @expand-change="handleExpand as any"
+        @expand-change="handleExpand"
       >
         <el-table-column type="expand">
           <template #default="{ row }">
@@ -155,8 +155,10 @@ function search() {
     .finally(() => { loading.value = false })
 }
 
-function handleExpand(row: BpcsInventory, expanded: BpcsInventory[]) {
-  expandedKeys.value = expanded.map(r => r.item)
+function handleExpand(_row: BpcsInventory, expanded: BpcsInventory[] | boolean) {
+  if (Array.isArray(expanded)) {
+    expandedKeys.value = expanded.map(r => r.item)
+  }
 }
 </script>
 

@@ -43,6 +43,9 @@ export default {
     trendCpu: 'CPU',
     trendMemory: '内存',
     trendDisk: '磁盘',
+    jvmMemorySection: 'JVM 内存',
+    httpRequestsSection: 'HTTP 请求',
+    as400ServersSection: 'AS400 服务器',
   },
   alertRules: {
     title: '告警规则配置',

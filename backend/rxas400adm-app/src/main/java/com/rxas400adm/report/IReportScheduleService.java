@@ -1,6 +1,7 @@
 package com.rxas400adm.report;
 
 import com.rxas400adm.report.dto.ReportScheduleDTO;
+import com.rxas400adm.report.vo.ScheduleExecuteResultVO;
 
 import java.util.List;
 
@@ -16,9 +17,9 @@ public interface IReportScheduleService {
 
     ReportSchedule toggle(Long id, Boolean enabled);
 
-    com.rxas400adm.report.vo.ScheduleExecuteResultVO executeNow(Long id);
+    ScheduleExecuteResultVO executeNow(Long id);
 
-    com.rxas400adm.report.vo.ScheduleExecuteResultVO execute(Long id);
+    ScheduleExecuteResultVO execute(Long id);
 
     List<ReportScheduleHistoryVO> history(Long scheduleId);
 }

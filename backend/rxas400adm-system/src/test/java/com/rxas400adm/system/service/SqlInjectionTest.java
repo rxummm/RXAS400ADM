@@ -18,6 +18,7 @@ import com.rxas400adm.system.mapper.SysRoleMenuMapper;
 import com.rxas400adm.system.mapper.SysUserMenuMapper;
 import com.rxas400adm.system.mapper.SysUserRoleMapper;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -51,9 +52,9 @@ class SqlInjectionTest {
      * 纯 Mockito 环境无 MyBatis-Plus 启动上下文：
      * 为断言 getTargetSql() 涉及的实体初始化 TableInfo 缓存（既有修复，非本次 S1 引入）。
      */
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     static void initTableInfo() {
-        org.apache.ibatis.builder.MapperBuilderAssistant assistant =
+        MapperBuilderAssistant assistant =
                 new MapperBuilderAssistant(new MybatisConfiguration(), "");
         TableInfoHelper.initTableInfo(assistant, Region.class);
         TableInfoHelper.initTableInfo(assistant, SysUser.class);

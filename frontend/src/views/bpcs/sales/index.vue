@@ -73,7 +73,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import * as echarts from 'echarts'
+import * as echarts from '@/utils/echarts'
 import { getSalesTrend, type BpcsSalesTrend } from '@/api/bpcs'
 import { formatMoney } from '@/utils/format'
 import { cssVar } from '@/utils/cssVar'

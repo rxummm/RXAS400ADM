@@ -3,6 +3,7 @@ package com.rxas400adm.as400;
 import com.rxas400adm.as400.model.PfColumnRow;
 import com.rxas400adm.as400.model.PfRow;
 import com.rxas400adm.as400.model.PfStatsRow;
+import com.rxas400adm.common.constants.PageConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,7 @@ class MockPfClient implements PfClient {
     @Override
     public List<Map<String, Object>> pfData(String library, String file, int limit) {
         String f = file == null ? "" : file.toUpperCase();
-        int rows = Math.min(Math.max(limit, 1), 100);
+        int rows = (int) Math.min(Math.max(limit, 1), PageConstants.MAX_PAGE_SIZE);
         List<Map<String, Object>> data = new ArrayList<>();
         for (int i = 1; i <= rows; i++) {
             if (f.equals("CUSTMAST")) {

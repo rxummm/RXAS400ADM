@@ -1,5 +1,6 @@
 package com.rxas400adm.system.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -11,10 +12,12 @@ import lombok.Data;
 public class NoticeDTO {
 
     @NotBlank(message = "{validation.notBlank}")
+    @Schema(description = "公告标题", example = "系统维护通知")
     private String title;
 
+    @Schema(description = "公告内容", example = "系统将于今晚进行维护")
     private String content;
 
-    /** 1=发布（即时推送）/0=草稿 */
+    @Schema(description = "1=发布（即时推送）/0=草稿", example = "1")
     private Integer status;
 }

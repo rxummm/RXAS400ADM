@@ -1,5 +1,8 @@
 # AGENTS.md — RXAS400ADM（IBM i 运维管理平台）
 
+> **⚠️ 编码规范权威文档：[`CODING_STANDARDS.md`](CODING_STANDARDS.md)（176 条规则，17 章节）。**
+> **opencode 每次写代码前必须先读取该文件**（`Read CODING_STANDARDS.md`），本文档仅作架构补充。
+
 Spring Boot 3.3 (Java 17) 多模块 Maven + Vue 3 (TypeScript, Vite) 前后端分离项目。
 包名/工程名：`com.rxas400adm` / `rxas400adm-*`；数据库：MySQL 8，库名 `rxas400adm`。
 模块：`common / system / security / as400 / source / monitor / app`（deploy 已于 V30 下线、compile 已于 V56 下线移除，见 `backend/pom.xml`）。
@@ -80,7 +83,7 @@ mysql -uroot -proot -D rxas400adm -e "SOURCE script.sql"
 6. **Service 接口**：方法参数用 DTO，返回 `ApiResponse<T>` 或分页数据
 7. **ServiceImpl**：`@RequiredArgsConstructor` 构造器注入（`private final`），**禁止 `@Autowired` 字段注入**。⚠️ 唯一例外：Quartz Job 类（`ScheduleQuartzJob`/`ReportScheduleQuartzJob`）必须字段注入——SpringBeanJobFactory 反射实例化 Job 后仅 `autowireBean()`（支持字段/Setter，不支持构造器），构造器注入会导致运行时依赖永远 null、任务静默跳过（类 javadoc 已注明）
 8. **Controller**：`@RestController` + `@RequestMapping("/api/v1/xxx")`，`@PreAuthorize` 权限码
-9. **写操作**：`@Transactional` + `@OperateLog`（如无既有审计需先建对应权限码）
+9. **写操作**：`@OperateLog`（如无既有审计需先建对应权限码）。⚠️ 项目已取消全部 `@Transactional`（零容忍，含 `rollbackFor` 变体），详见 `CODING_STANDARDS.md` §2.1.8
 10. **前端 API 模块**：`frontend/src/api/xxx.ts`，统一从 `request.ts` 导出实例调用
 11. **Vue 页面**：`frontend/src/views/{module}/xxx.vue`，`<script setup lang="ts">`
 12. **i18n**：文案加到 `frontend/src/i18n/lang/zh-CN.ts` + `en-US.ts`（**禁止硬编码中文**）

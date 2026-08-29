@@ -26,8 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/v1/monitor")
 @RequiredArgsConstructor
-@io.swagger.v3.oas.annotations.tags.Tag(name = "监控中心", description = "指标查询 / 告警事件 / 容量分析 / 基线管理")
-@Tag(name = "监控中心")
+@Tag(name = "监控中心", description = "指标查询 / 告警事件 / 容量分析 / 基线管理")
 public class MonitorController {
 
     private final IMetricService metricService;

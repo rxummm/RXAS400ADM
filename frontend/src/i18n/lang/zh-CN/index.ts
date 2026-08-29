@@ -9,6 +9,8 @@ import system from './system'
 import docs from './docs'
 import bpcs from './bpcs'
 import opTemplate from './opTemplate'
+import sysDoc from './sysDoc'
+import network from './network'
 
 export default {
   // 2026-08-16 修复（模块拆分盲区）：$t() 引用一律按「文件内顶层命名空间」书写
@@ -28,4 +30,6 @@ export default {
   ...docs,
   ...opTemplate,
   ...bpcs,
+  ...sysDoc,
+  ...network,
 }

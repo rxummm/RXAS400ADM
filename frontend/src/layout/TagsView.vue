@@ -269,10 +269,10 @@ onUnmounted(() => {
   padding: 1px;
 }
 .tag-close:hover {
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--bg-hover);
 }
 .tag-item.active .tag-close:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: color-mix(in srgb, var(--text-primary) 25%, transparent);
 }
 </style>
 
@@ -288,7 +288,7 @@ onUnmounted(() => {
   background: var(--bg-container);
   border: 1px solid var(--border-light);
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-lg);
 }
 .tags-context-menu li {
   display: flex;

@@ -41,9 +41,9 @@ public class ExecutionController {
             @RequestParam(defaultValue = "1") int current,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "500") int limit) {
-        int page = Math.max(1, current);
-        int pageSize = Math.max(1, Math.min(size, 200));
-        int capped = Math.max(1, Math.min(limit, 500));
+        int page = (int) PageConstants.clampNum(current);
+        int pageSize = (int) PageConstants.clampSize(size);
+        int capped = Math.max(1, Math.min(limit, PageConstants.MAX_LIMIT));
 
         boolean schedulesOnly = "schedule".equalsIgnoreCase(type);
         boolean scriptsOnly = "script".equalsIgnoreCase(type);

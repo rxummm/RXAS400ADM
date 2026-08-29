@@ -78,7 +78,6 @@
           </el-table-column>
           <el-table-column prop="VALUE_DESCRIPTION" :label="$t('sysvals.description')" min-width="260" show-overflow-tooltip />
         </el-table>
-
       </RxSkeleton>
       <el-empty v-if="!loading && !visibleRows.length" :description="$t('common.noData')" />
     </div>
@@ -274,9 +273,8 @@ const handleBatchSave = async () => {
       t('common.warning'),
       { type: 'warning' },
     )
-    const updates: Record<string, string> = {}
-    changed.forEach((i) => { updates[i.name] = i.newValue })
-    await batchUpdateSystemValues(updates)
+    const entries = changed.map((i) => ({ name: i.name, value: i.newValue }))
+    await batchUpdateSystemValues(entries)
     ElMessage.success(t('sysvals.changed'))
     batchDialogVisible.value = false
     batchMode.value = false

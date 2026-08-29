@@ -271,6 +271,11 @@ export default {
       orderCount: '订单数',
       lineCount: '行数',
       shipToCity: '目的地',
+      statusPlanned: '计划中',
+      statusFirmed: '已确认',
+      statusReleased: '已放行',
+      statusDispatched: '已发运',
+      statusUnknown: '未知',
     },
 
     // ---- Phase 3: ABC 分析 ----
@@ -313,6 +318,12 @@ export default {
     // ---- Phase 4: 供应链 KPI ----
     kpi: {
       title: '供应链 KPI 仪表盘',
+      totalOrders: '总订单数',
+      closedOrders: '已完成订单',
+      completionRate: '订单完成率',
+      totalItems: '库存物料数',
+      inventoryValue: '库存总价值',
+      onTimeDeliveryRate: '准时交货率',
       otdTitle: '准时交货率（OTD）',
       otdHint: '按时发运的订单占总订单比例',
       turnoverTitle: '库存周转率',
@@ -332,6 +343,7 @@ export default {
       title: '订单全链路追踪',
       hint: '输入订单号查看从下单→库存分配→拣货→发运→签收的完整链路',
       orderNoPlaceholder: '输入订单号查询',
+      orderPrefix: '订单：',
       orderInfo: '订单信息',
       allocationInfo: '库存分配',
       pickInfo: '拣货信息',
@@ -342,10 +354,12 @@ export default {
       stepAllocate: '库存分配',
       stepPick: '拣货确认',
       stepShip: '发运',
+      stepInvoice: '开票',
       stepReceive: '签收',
       notStarted: '未开始',
       inProgress: '进行中',
       completed: '已完成',
+      closed: '已关闭',
     },
 
     poStatus: {

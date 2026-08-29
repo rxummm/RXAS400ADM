@@ -29,6 +29,7 @@ public class DashboardWidgetController {
     private final IDashboardWidgetService widgetService;
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<DashboardWidgetVO>> prefs() {
         return ApiResponse.success(widgetService.prefs(SecurityUtils.currentUsername()).stream().map(DashboardWidgetVO::from).toList());
     }

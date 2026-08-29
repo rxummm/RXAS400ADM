@@ -18,7 +18,7 @@ CREATE TABLE rx_i18n (
     PRIMARY KEY (i18n_key, lang)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='动态翻译表';
 
-INSERT INTO rx_i18n (i18n_key, lang, text) VALUES
+INSERT IGNORE INTO rx_i18n (i18n_key, lang, text) VALUES
 ('banner.welcome', 'zh-CN', '欢迎使用 RXAS400 运维平台'),
 ('banner.welcome', 'en-US', 'Welcome to RXAS400 Operation Platform'),
 ('banner.health', 'zh-CN', '平台运行健康'),

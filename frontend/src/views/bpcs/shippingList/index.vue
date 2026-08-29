@@ -32,7 +32,9 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'BpcsShippingList' })
 import { reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchShippingList, type ShippingLoad } from '@/api/supplyChain'
+const { t } = useI18n()
 const loading = ref(false)
 const rows = ref<ShippingLoad[]>([])
 const query = reactive({ cono: '001', lhno: '', carrier: '' })
@@ -43,8 +45,10 @@ function load() {
   if (query.carrier) p.carrier = query.carrier
   fetchShippingList(p).then(d => { rows.value = d }).finally(() => { loading.value = false })
 }
-const statusLabels = ['计划中', '已确认', '已放行', '已发运']
-const statusLabel = (s: number) => statusLabels[s] || '未知'
+const statusLabel = (s: number) => {
+  const keys = ['bpcs.shippingList.statusPlanned', 'bpcs.shippingList.statusFirmed', 'bpcs.shippingList.statusReleased', 'bpcs.shippingList.statusDispatched']
+  return t(keys[s] || 'bpcs.shippingList.statusUnknown')
+}
 const statusTypes: Array<'info' | 'primary' | 'warning' | 'success'> = ['info', 'primary', 'warning', 'success']
 const statusType = (s: number) => statusTypes[s] || 'info' as const
 </script>

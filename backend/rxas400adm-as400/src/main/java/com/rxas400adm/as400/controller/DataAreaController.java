@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -50,14 +51,14 @@ public class DataAreaController {
     @OperateLog(module = "数据区域", operation = "修改数据区域")
     public ApiResponse<CommandResult> update(@PathVariable String name,
                                               @RequestParam String library,
-                                              @RequestBody DataAreaUpdateDTO dto) {
+                                              @Valid @RequestBody DataAreaUpdateDTO dto) {
         return ApiResponse.success(clientProvider.current().changeDataArea(library, name, dto.getValue()));
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('SYSVAL_EDIT')")
     @OperateLog(module = "数据区域", operation = "创建数据区域")
-    public ApiResponse<CommandResult> create(@RequestBody DataAreaCreateDTO dto) {
+    public ApiResponse<CommandResult> create(@Valid @RequestBody DataAreaCreateDTO dto) {
         return ApiResponse.success(clientProvider.current().createDataArea(dto.getLibrary(), dto.getName(), dto.getLength(), dto.getValue()));
     }
 

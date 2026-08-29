@@ -1,5 +1,6 @@
 package com.rxas400adm.system.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -12,14 +13,19 @@ import lombok.Data;
 public class WebhookConfigDTO {
 
     @NotBlank(message = "{validation.notBlank}")
+    @Schema(description = "Webhook名称", example = "通知机器人")
     private String name;
 
     @NotBlank(message = "{validation.notBlank}")
+    @Schema(description = "Webhook URL", example = "https://hooks.example.com/webhook")
     private String url;
 
+    @Schema(description = "密钥（更新时为空则保留旧值）", example = "secret123")
     private String secret;
 
+    @Schema(description = "是否启用", example = "1")
     private Integer enabled;
 
+    @Schema(description = "描述", example = "用于发送通知")
     private String description;
 }

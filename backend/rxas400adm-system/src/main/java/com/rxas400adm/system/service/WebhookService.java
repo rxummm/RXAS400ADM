@@ -95,7 +95,7 @@ public class WebhookService implements IWebhookService {
             SsrfGuard.assertSafeUrl(config.getUrl());
         }
         // P2-6：secret 为空或提交掩码占位（前端未改动）→ 保留旧值；否则覆盖新值
-        if (StringUtils.hasText(dto.getSecret()) && !com.rxas400adm.common.security.SecretMasker.isMasked(dto.getSecret())) {
+        if (StringUtils.hasText(dto.getSecret()) && !SecretMasker.isMasked(dto.getSecret())) {
             config.setSecret(dto.getSecret().trim());
         }
         if (dto.getDescription() != null) config.setDescription(dto.getDescription());

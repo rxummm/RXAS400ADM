@@ -7,7 +7,7 @@ const router = useRouter()
 <template>
   <div class="page-container page-container--fit">
     <div class="table-wrapper">
-      <el-result icon="warning" :title="$t('common.notFound')" sub-title="404 - Page Not Found">
+      <el-result icon="warning" :title="$t('common.notFound')" :sub-title="$t('common.notFoundDesc')">
         <template #extra>
           <el-button type="primary" @click="router.push('/dashboard')">
             {{ $t('common.backToHome') }}

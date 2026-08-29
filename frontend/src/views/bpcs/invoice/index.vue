@@ -186,7 +186,7 @@ function statusTagType(status: string | null): 'success' | 'danger' | 'primary' 
   transition: box-shadow 0.2s;
 }
 .invoice-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 .invoice-header {
   display: flex;

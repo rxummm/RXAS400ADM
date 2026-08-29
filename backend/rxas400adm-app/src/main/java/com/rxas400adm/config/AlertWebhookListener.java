@@ -1,6 +1,8 @@
 package com.rxas400adm.config;
 
 import com.rxas400adm.common.event.AlertRaisedEvent;
+import com.rxas400adm.email.MailMessage;
+import com.rxas400adm.email.service.IEmailService;
 import com.rxas400adm.system.service.INotificationService;
 import com.rxas400adm.system.service.ISysConfigService;
 import com.rxas400adm.system.service.IWebhookService;
@@ -27,7 +29,7 @@ public class AlertWebhookListener {
 
     private final IWebhookService webhookService;
     private final INotificationService notificationService;
-    private final EmailNotifier emailNotifier;
+    private final IEmailService emailService;
     private final ISysConfigService sysConfigService;
     private final Executor alertNotifyPool;
 
@@ -56,7 +58,7 @@ public class AlertWebhookListener {
         }
         if (event.notifyEmail()) {
             try {
-                emailNotifier.sendAlert(title, content);
+                emailService.send(MailMessage.alert(title, content));
             } catch (Exception e) {
                 log.warn("[告警] 邮件通知失败: {}", e.getMessage());
             }

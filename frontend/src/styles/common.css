@@ -51,6 +51,7 @@ body,
 .ml8 { margin-left: 8px; }
 .mr6 { margin-right: 6px; }
 .gap16 { gap: 16px; }
+.gap8 { gap: 8px; }
 .flex { display: flex; }
 
 /* ---- 页面工具栏（筛选 + 操作按钮行） ---- */

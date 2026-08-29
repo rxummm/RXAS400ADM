@@ -10,20 +10,20 @@ import com.rxas400adm.report.IReportScheduleService;
 import com.rxas400adm.report.ReportSchedule;
 import com.rxas400adm.report.ReportScheduleController;
 import com.rxas400adm.report.dto.ReportScheduleDTO;
-import com.rxas400adm.system.controller.DocController;
+import com.rxas400adm.as400.controller.DocController;
 import com.rxas400adm.system.controller.NoticeController;
 import com.rxas400adm.system.controller.SysRoleController;
-import com.rxas400adm.system.dto.DocDTO;
+import com.rxas400adm.as400.dto.DocDTO;
 import com.rxas400adm.system.dto.NoticeDTO;
 import com.rxas400adm.system.dto.SysRoleDTO;
-import com.rxas400adm.system.entity.Doc;
+import com.rxas400adm.as400.entity.Doc;
 import com.rxas400adm.system.entity.Notice;
 import com.rxas400adm.system.entity.SysRole;
-import com.rxas400adm.system.service.IDocService;
+import com.rxas400adm.as400.service.DocService;
 import com.rxas400adm.system.service.INoticeService;
 import com.rxas400adm.system.service.IRoleService;
 import org.junit.jupiter.api.Test;
-import com.rxas400adm.system.service.DocVersionService;
+import com.rxas400adm.as400.service.DocVersionService;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
@@ -173,7 +173,7 @@ class DtoForgeGuardTest {
 
     @Test
     void docCreate_forgedInternalFields_ignored_businessFieldsBound() throws Exception {
-        IDocService service = mock(IDocService.class);
+        DocService service = mock(DocService.class);
         when(service.createDoc(any(DocDTO.class), eq("anonymous"))).thenReturn(new Doc());
 
         mockMvc(new DocController(service, mock(DocVersionService.class)))
@@ -194,7 +194,7 @@ class DtoForgeGuardTest {
 
     @Test
     void docUpdate_forgedInternalFields_ignored_businessFieldsBound() throws Exception {
-        IDocService service = mock(IDocService.class);
+        DocService service = mock(DocService.class);
         when(service.updateDoc(eq(7L), any(DocDTO.class), eq("anonymous"))).thenReturn(new Doc());
 
         mockMvc(new DocController(service, mock(DocVersionService.class)))

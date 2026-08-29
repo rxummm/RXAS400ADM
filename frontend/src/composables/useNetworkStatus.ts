@@ -1,14 +1,17 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 
 const isOnline = ref(navigator.onLine)
 const wasOffline = ref(false)
 
 export function useNetworkStatus() {
+  const { t } = useI18n()
+
   const handleOnline = () => {
     if (!isOnline.value) {
       wasOffline.value = true
-      ElMessage.success('网络已恢复连接')
+      ElMessage.success(t('network.restored'))
       setTimeout(() => { wasOffline.value = false }, 3000)
     }
     isOnline.value = true
@@ -16,7 +19,7 @@ export function useNetworkStatus() {
 
   const handleOffline = () => {
     isOnline.value = false
-    ElMessage.error('网络连接已断开')
+    ElMessage.error(t('network.disconnected'))
   }
 
   onMounted(() => {

@@ -64,7 +64,7 @@ public class SqlQueryService implements ISqlQueryService {
         return historyMapper.selectList(new LambdaQueryWrapper<SqlHistory>()
                 .eq(SqlHistory::getOperator, SecurityUtils.currentUsername())
                 .orderByDesc(SqlHistory::getCreatedTime)
-                .last(PageConstants.limitClause(Math.max(1, Math.min(limit, 200)))));
+                .last(PageConstants.limitClause(Math.max(1, Math.min(limit, PageConstants.MAX_PF_DATA_LIMIT)))));
     }
 
     private void saveHistory(String sql, int rows, long costMs) {

@@ -33,7 +33,7 @@
             class="kanban-card"
             @click="openDetail(load)"
           >
-            <div class="card-header">
+            <div class="kanban-card-header">
               <span class="card-title">{{ load.lhno }}</span>
               <el-tag size="small" :type="col.tagType">{{ load.lineCount }} {{ $t('bpcs.shipping.lines') }}</el-tag>
             </div>
@@ -210,9 +210,9 @@ function statusTagType(status: number): 'info' | 'primary' | 'warning' | 'succes
   transition: box-shadow 0.2s;
 }
 .kanban-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
 }
-.card-header {
+.kanban-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;

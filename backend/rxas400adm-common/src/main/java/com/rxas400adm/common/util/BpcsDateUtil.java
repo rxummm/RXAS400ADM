@@ -82,19 +82,4 @@ public final class BpcsDateUtil {
         }
     }
 
-    /** LocalDate → 8 位数字字符串 YYYYMMDD；null 返回 null */
-    public static String formatYYYYMMDD(LocalDate date) {
-        return date == null ? null : date.format(YYYYMMDD);
-    }
-
-    /** LocalDate → 7 位数字字符串 CYYMMDD；null 返回 null */
-    public static String formatCYYMMDD(LocalDate date) {
-        if (date == null) {
-            return null;
-        }
-        int year = date.getYear();
-        int century = (year - 1900) / 100;
-        int yy = year % 100;
-        return String.format("%d%02d%02d%02d", century, yy, date.getMonthValue(), date.getDayOfMonth());
-    }
 }

@@ -8,7 +8,8 @@ import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.util.EntityUtil;
-import com.rxas400adm.config.EmailNotifier;
+import com.rxas400adm.email.MailMessage;
+import com.rxas400adm.email.service.IEmailService;
 import com.rxas400adm.report.dto.ReportScheduleDTO;
 import com.rxas400adm.report.mapper.ReportScheduleHistoryMapper;
 import com.rxas400adm.report.mapper.ReportScheduleMapper;
@@ -46,7 +47,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
     private final ReportScheduleMapper scheduleMapper;
     private final ReportScheduleHistoryMapper historyMapper;
     private final IReportService reportService;
-    private final EmailNotifier emailNotifier;
+    private final IEmailService emailService;
     private final Scheduler scheduler;
 
     public List<ReportSchedule> list() {
@@ -153,7 +154,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
                         ? String.format("%.1f MB", fileBytes / 1024.0 / 1024.0)
                         : String.format("%.1f KB", fileBytes / 1024.0))
                     + "）。\n类型：" + schedule.getReportType() + "，格式：" + ext;
-            emailNotifier.sendAttachment(title, text, schedule.getRecipients(), filename, data);
+            emailService.send(MailMessage.report(title, text, schedule.getRecipients(), filename, data));
             message = "已生成并推送邮件附件（" + fileBytes + " 字节）";
         } catch (Exception e) {
             status = ExecutionStatus.FAILED;

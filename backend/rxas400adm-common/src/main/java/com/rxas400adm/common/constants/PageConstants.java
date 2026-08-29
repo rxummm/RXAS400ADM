@@ -17,6 +17,15 @@ public final class PageConstants {
     /** 每页条数上限（防超大查询拖垮数据库） */
     public static final long MAX_PAGE_SIZE = 100L;
 
+    /** 页码上限（防 (page-1)*size long 溢出 / DB2 OFFSET 负值） */
+    public static final int MAX_PAGE_NUM = 10_000;
+
+    /** 自定义 limit 参数钳制上限（AS400 查询行数限制等非标准分页场景） */
+    public static final int MAX_LIMIT = 500;
+
+    /** 物理文件记录预览上限（PfClient pfData 接口） */
+    public static final int MAX_PF_DATA_LIMIT = 200;
+
     /** 将分页参数夹到合法区间：[1, MAX_PAGE_SIZE] */
     public static long clampSize(long size) {
         return Math.max(1, Math.min(size, MAX_PAGE_SIZE));

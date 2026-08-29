@@ -1,5 +1,6 @@
 package com.rxas400adm.system.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.List;
@@ -11,15 +12,15 @@ import java.util.List;
 @Data
 public class PermissionRequestCreateDTO {
 
-    /** 权限码模式：直接申请某个权限码 */
+    @Schema(description = "权限码模式：直接申请某个权限码", example = "USER_EDIT")
     private String permissionCode;
 
-    /** 菜单树模式：菜单 ID 列表 */
+    @Schema(description = "菜单树模式：菜单ID列表", example = "[1, 2, 3]")
     private List<Long> menuIds;
 
-    /** 菜单树模式：菜单名称列表（用于展示） */
+    @Schema(description = "菜单树模式：菜单名称列表（用于展示）", example = "[\"用户管理\", \"角色管理\"]")
     private List<String> menuNames;
 
-    /** 申请原因 */
+    @Schema(description = "申请原因", example = "需要用户管理权限")
     private String reason;
 }

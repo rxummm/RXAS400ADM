@@ -110,7 +110,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private int intConfig(String key, int defaultValue) {
         try {
-            return Math.max(1, Integer.parseInt(sysConfigService.get(key, String.valueOf(defaultValue)).trim()));
+            String val = sysConfigService.get(key, String.valueOf(defaultValue));
+            return Math.max(1, Integer.parseInt((val != null ? val : String.valueOf(defaultValue)).trim()));
         } catch (NumberFormatException e) {
             log.warn("[限流] 配置 {} 非法整数，使用缺省 {}", key, defaultValue);
             return defaultValue;

@@ -3,6 +3,7 @@ package com.rxas400adm.config;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.config.vo.CacheInfoVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -24,14 +25,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/api/v1/caches")
+@RequiredArgsConstructor
 @Tag(name = "缓存管理")
 public class CacheController {
 
     private final ObjectProvider<CacheManager> cacheManagerProvider;
-
-    public CacheController(ObjectProvider<CacheManager> cacheManagerProvider) {
-        this.cacheManagerProvider = cacheManagerProvider;
-    }
 
     private CacheManager cacheManager() {
         return cacheManagerProvider.getIfAvailable();
@@ -48,7 +46,7 @@ public class CacheController {
         for (String name : cacheManager.getCacheNames()) {
             Cache cache = cacheManager.getCache(name);
             Long size = null;
-            if (cache != null && cache.getNativeCache() instanceof com.github.benmanes.caffeine.cache.Cache<?, ?> caffeine) {
+            if (cache != null && cache.getNativeCache() instanceof com.github.benmanes.caffeine.cache.Cache<?, ?> caffeine) { // FQN required: name conflict with org.springframework.cache.Cache
                 size = (long) caffeine.estimatedSize();
             }
             result.add(new CacheInfoVO(name, size));

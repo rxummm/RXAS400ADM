@@ -51,13 +51,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.rxas400adm.security.vo.TokenRefreshVO;
+import com.rxas400adm.security.vo.ProfileVO;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@io.swagger.v3.oas.annotations.tags.Tag(name = "认证授权", description = "登录 / 登出 / Token 刷新 / 动态菜单 / 密码修改")
-@Tag(name = "认证授权")
+@Tag(name = "认证授权", description = "登录 / 登出 / Token 刷新 / 动态菜单 / 密码修改")
 public class AuthController {
 
     private final SysUserService userService;
@@ -197,13 +198,14 @@ public class AuthController {
      * Refresh token 本身不可刷新（rotation），旧 refresh token 加入黑名单。
      */
     @PostMapping("/refresh")
-    public ApiResponse<com.rxas400adm.security.vo.TokenRefreshVO> refresh(@Valid @RequestBody RefreshTokenDTO dto,
+    public ApiResponse<TokenRefreshVO> refresh(@Valid @RequestBody RefreshTokenDTO dto,
                                                     HttpServletRequest httpRequest) {
         return ApiResponse.success(authService.refreshToken(dto.getRefreshToken()));
     }
 
     @GetMapping("/profile")
-    public ApiResponse<com.rxas400adm.security.vo.ProfileVO> profile() {
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<ProfileVO> profile() {
         return ApiResponse.success(authService.getProfile(SecurityUtils.currentUsername()));
     }
 
@@ -217,6 +219,7 @@ public class AuthController {
      * title 为 i18n key（如 "dashboard"），前端通过 $t('menu.' + title) 渲染。
      */
     @GetMapping("/menu")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<MenuDataResponseVO> menu() {
         String username = SecurityUtils.currentUsername();
         UserMenuDataVO menuData = menuService.userMenuData(username);

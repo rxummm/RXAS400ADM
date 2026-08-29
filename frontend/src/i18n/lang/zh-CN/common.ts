@@ -41,6 +41,7 @@ export default {
     hide: '隐藏',
     close: '关闭',
     notFound: '页面不存在',
+    notFoundDesc: '404 - 页面不存在',
     backToHome: '返回首页',
     enable: '启用',
     disable: '停用',
@@ -59,6 +60,9 @@ export default {
     localFilterEmpty: '未找到本地数据，可点击【查询】深度检索',
     index: '序号',
     actions: '操作',
+    add: '添加',
+    createdTime: '创建时间',
+    description: '描述',
   },
   table: {
     densityCompact: '紧凑',

@@ -1,5 +1,6 @@
 package com.rxas400adm.system.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
@@ -12,19 +13,20 @@ import java.util.List;
 @Data
 public class UserUpdateDTO {
 
-    /** 非空则重置密码 */
+    @Schema(description = "密码（非空则重置）", example = "newpass1234")
     private String password;
 
     @Email(message = "{validation.email}")
+    @Schema(description = "邮箱", example = "user@example.com")
     private String email;
 
-    /** ACTIVE / DISABLED（启用/禁用） */
     @Pattern(regexp = "ACTIVE|DISABLED", message = "{validation.pattern.status}")
+    @Schema(description = "状态：ACTIVE / DISABLED", example = "ACTIVE")
     private String status;
 
-    /** 角色 ID 列表（非 null 时整体重建角色分配，优先） */
+    @Schema(description = "角色ID列表（非null时整体重建，优先）", example = "[1, 2]")
     private List<Long> roleIds;
 
-    /** 角色代码列表（回退：roleIds 为空但本字段非空时按 code 重建） */
+    @Schema(description = "角色代码列表（回退：roleIds为空时按code重建）", example = "[\"ADMIN\"]")
     private List<String> roleCodes;
 }

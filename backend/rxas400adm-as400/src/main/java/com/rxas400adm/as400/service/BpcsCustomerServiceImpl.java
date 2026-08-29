@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -61,13 +60,6 @@ public class BpcsCustomerServiceImpl implements IBpcsCustomerService {
         return search(q).getRecords().stream().findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND,
                         "客户不存在: " + cono + "/" + cust));
-    }
-
-    private BpcsCustomerQueryDTO buildDetailQuery(String cono, String cust) {
-        BpcsCustomerQueryDTO q = new BpcsCustomerQueryDTO();
-        q.setCono(cono);
-        q.setCust(cust);
-        return q;
     }
 
     private PageResult<BpcsCustomerVO> mockSearch(BpcsCustomerQueryDTO query) {

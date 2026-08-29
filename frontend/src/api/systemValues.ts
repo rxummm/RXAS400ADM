@@ -16,5 +16,5 @@ export const updateSystemValue = (name: string, value: string) =>
   request.put(`/system-values/${name}`, { value })
 
 /** 批量修改系统值 */
-export const batchUpdateSystemValues = (updates: Record<string, string>): Promise<Record<string, { success: boolean; message: string }>> =>
-  request.post('/system-values/batch', updates)
+export const batchUpdateSystemValues = (entries: Array<{ name: string; value: string }>): Promise<Record<string, { success: boolean; message: string }>> =>
+  request.post('/system-values/batch', { entries })

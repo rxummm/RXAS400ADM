@@ -82,7 +82,8 @@ public class LoginAttemptService implements ILoginAttemptService {
 
     private int intConfig(String key, int defaultValue) {
         try {
-            return Math.max(1, Integer.parseInt(sysConfigService.get(key, String.valueOf(defaultValue)).trim()));
+            String val = sysConfigService.get(key, String.valueOf(defaultValue));
+            return Math.max(1, Integer.parseInt((val != null ? val : String.valueOf(defaultValue)).trim()));
         } catch (NumberFormatException e) {
             log.warn("[登录安全] 配置 {} 非法整数，使用缺省 {}", key, defaultValue);
             return defaultValue;
@@ -92,7 +93,8 @@ public class LoginAttemptService implements ILoginAttemptService {
     /** 【P2】lock-minutes 为 long 型阈值（对齐 Properties） */
     private long longConfig(String key, long defaultValue) {
         try {
-            return Math.max(1, Long.parseLong(sysConfigService.get(key, String.valueOf(defaultValue)).trim()));
+            String val = sysConfigService.get(key, String.valueOf(defaultValue));
+            return Math.max(1, Long.parseLong((val != null ? val : String.valueOf(defaultValue)).trim()));
         } catch (NumberFormatException e) {
             log.warn("[登录安全] 配置 {} 非法数值，使用缺省 {}", key, defaultValue);
             return defaultValue;

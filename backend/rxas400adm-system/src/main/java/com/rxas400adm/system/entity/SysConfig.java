@@ -1,5 +1,6 @@
 package com.rxas400adm.system.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -12,7 +13,7 @@ import lombok.Data;
 @TableName("rx_config")
 public class SysConfig {
 
-    @TableId
+    @TableId(type = IdType.INPUT)  // configKey 为 String 类型，手动赋值
     private String configKey;
 
     private String configValue;

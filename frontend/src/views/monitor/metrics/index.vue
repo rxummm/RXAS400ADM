@@ -37,19 +37,19 @@
 
     <!-- JVM 内存图表 -->
     <div class="table-wrapper">
-      <h3 class="section">JVM Memory</h3>
+      <h3 class="section">{{ $t('monitor.jvmMemorySection') }}</h3>
       <div ref="jvmMemoryChart" class="chart-container"></div>
     </div>
 
     <!-- HTTP 请求图表 -->
     <div class="table-wrapper">
-      <h3 class="section">HTTP Requests</h3>
+      <h3 class="section">{{ $t('monitor.httpRequestsSection') }}</h3>
       <div ref="httpChart" class="chart-container"></div>
     </div>
 
     <!-- AS400 服务器指标 -->
     <div class="table-wrapper" v-if="as400Metrics.length">
-      <h3 class="section">AS400 Servers</h3>
+      <h3 class="section">{{ $t('monitor.as400ServersSection') }}</h3>
       <el-table :data="as400Metrics" size="small" border>
         <el-table-column prop="name" :label="$t('monitor.serverName')" />
         <el-table-column prop="value" :label="$t('monitor.value')" />

@@ -73,7 +73,13 @@ public enum ErrorCode {
     ROLE_ADMIN_PROTECTED(110003, "内置 ADMIN 角色不可修改或删除"),
 
     // ---------- 密码 (120000+) ----------
-    PASSWORD_POLICY_VIOLATION(120001, "密码不符合安全策略");
+    PASSWORD_POLICY_VIOLATION(120001, "密码不符合安全策略"),
+
+    // ---------- 邮件 (130000+) ----------
+    EMAIL_SMTP_NOT_CONFIGURED(130001, "未配置 SMTP 服务器"),
+    EMAIL_SEND_FAILED(130002, "邮件发送失败"),
+    EMAIL_GROUP_NOT_FOUND(130003, "收件人分组不存在"),
+    EMAIL_RECIPIENT_EXISTS(130004, "该邮箱已在分组中");
 
     private final int code;
     private final String message;

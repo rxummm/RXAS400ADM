@@ -269,6 +269,11 @@ export default {
       orderCount: 'Orders',
       lineCount: 'Lines',
       shipToCity: 'Destination',
+      statusPlanned: 'Planned',
+      statusFirmed: 'Firmed',
+      statusReleased: 'Released',
+      statusDispatched: 'Dispatched',
+      statusUnknown: 'Unknown',
     },
 
     // ---- Phase 3: ABC Analysis ----
@@ -311,6 +316,12 @@ export default {
     // ---- Phase 4: Supply Chain KPI ----
     kpi: {
       title: 'Supply Chain KPI Dashboard',
+      totalOrders: 'Total Orders',
+      closedOrders: 'Completed Orders',
+      completionRate: 'Completion Rate',
+      totalItems: 'Inventory Items',
+      inventoryValue: 'Inventory Value',
+      onTimeDeliveryRate: 'On-Time Delivery Rate',
       otdTitle: 'On-Time Delivery (OTD)',
       otdHint: 'Ratio of orders shipped on time',
       turnoverTitle: 'Inventory Turnover',
@@ -330,6 +341,7 @@ export default {
       title: 'Order Full-Chain Tracking',
       hint: 'Enter order number to track order → allocation → pick → ship → receipt',
       orderNoPlaceholder: 'Enter order number to track',
+      orderPrefix: 'Order: ',
       orderInfo: 'Order Info',
       allocationInfo: 'Inventory Allocation',
       pickInfo: 'Picking Info',
@@ -340,10 +352,12 @@ export default {
       stepAllocate: 'Allocated',
       stepPick: 'Pick Confirmed',
       stepShip: 'Shipped',
+      stepInvoice: 'Invoiced',
       stepReceive: 'Received',
       notStarted: 'Not Started',
       inProgress: 'In Progress',
       completed: 'Completed',
+      closed: 'Closed',
     },
 
     poStatus: {

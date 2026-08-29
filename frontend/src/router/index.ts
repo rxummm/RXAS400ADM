@@ -397,6 +397,12 @@ const router = createRouter({
           meta: { title: 'menu.webhooks', cached: true },
         },
         {
+          path: 'sys-docs',
+          name: 'SysDocs',
+          component: () => import('@/views/sysDocs/index.vue'),
+          meta: { title: 'menu.sysDocs', cached: true },
+        },
+        {
           path: 'system/permission-request',
           name: 'PermissionRequest',
           component: () => import('@/views/system/permissionRequest/index.vue'),
@@ -434,6 +440,30 @@ const router = createRouter({
           component: () => import('@/views/system/params/index.vue'),
           // P2-24：cacheName 与组件 defineOptions.name('Params') 对齐
           meta: { title: 'menu.params', cached: true, cacheName: 'Params' },
+        },
+        {
+          path: 'system/email-config',
+          name: 'EmailConfig',
+          component: () => import('@/views/system/emailConfig/index.vue'),
+          meta: { title: 'menu.emailConfig', cached: true },
+        },
+        {
+          path: 'system/email-groups',
+          name: 'EmailGroups',
+          component: () => import('@/views/system/emailGroups/index.vue'),
+          meta: { title: 'menu.emailGroups', cached: true },
+        },
+        {
+          path: 'system/email-log',
+          name: 'EmailLog',
+          component: () => import('@/views/system/emailLog/index.vue'),
+          meta: { title: 'menu.emailLog', cached: true },
+        },
+        {
+          path: 'mail/compose',
+          name: 'Compose',
+          component: () => import('@/views/mail/compose.vue'),
+          meta: { title: 'menu.compose', cached: true },
         },
         {
           path: 'region',

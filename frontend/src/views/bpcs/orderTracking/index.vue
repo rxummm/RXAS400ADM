@@ -9,7 +9,7 @@
       <el-card shadow="never" class="mb16">
         <template #header>
           <div class="flex-row-center">
-            <span>订单：{{ tracking.cono }}-{{ tracking.orno }}</span>
+            <span>{{ $t('bpcs.orderTracking.orderPrefix') }}{{ tracking.cono }}-{{ tracking.orno }}</span>
             <el-tag size="small" type="info" class="ml8">{{ tracking.statusLabel }}</el-tag>
             <span class="ml8 text-muted">{{ tracking.custNo }} {{ tracking.custName || '' }}</span>
           </div>
@@ -34,11 +34,11 @@
         </el-table>
       </el-card>
       <el-timeline class="mt16">
-        <el-timeline-item type="primary" :hollow="true">订单录入</el-timeline-item>
-        <el-timeline-item :type="stageReached(0) ? 'success' : 'info'" :hollow="!stageReached(0)">库存分配</el-timeline-item>
-        <el-timeline-item :type="stageReached(1) ? 'success' : 'info'" :hollow="!stageReached(1)">拣货确认</el-timeline-item>
-        <el-timeline-item :type="stageReached(2) ? 'success' : 'info'" :hollow="!stageReached(2)">发运</el-timeline-item>
-        <el-timeline-item :type="stageReached(3) ? 'success' : 'info'" :hollow="!stageReached(3)">开票</el-timeline-item>
+        <el-timeline-item type="primary" :hollow="true">{{ $t('bpcs.orderTracking.stepOrder') }}</el-timeline-item>
+        <el-timeline-item :type="stageReached(0) ? 'success' : 'info'" :hollow="!stageReached(0)">{{ $t('bpcs.orderTracking.stepAllocate') }}</el-timeline-item>
+        <el-timeline-item :type="stageReached(1) ? 'success' : 'info'" :hollow="!stageReached(1)">{{ $t('bpcs.orderTracking.stepPick') }}</el-timeline-item>
+        <el-timeline-item :type="stageReached(2) ? 'success' : 'info'" :hollow="!stageReached(2)">{{ $t('bpcs.orderTracking.stepShip') }}</el-timeline-item>
+        <el-timeline-item :type="stageReached(3) ? 'success' : 'info'" :hollow="!stageReached(3)">{{ $t('bpcs.orderTracking.stepInvoice') }}</el-timeline-item>
       </el-timeline>
     </div>
     <el-empty v-if="!loading && searched && !tracking" :description="$t('common.noData')" />
@@ -65,6 +65,6 @@ function stageReached(idx: number) {
   if (!tracking.value) return false
   const line = tracking.value.lines[0]
   if (!line) return false
-  return [line.qtyAllocated > 0, line.qtyShipped > 0, line.qtyInvoiced > 0, tracking.value.statusLabel === '已关闭'][idx]
+  return [line.qtyAllocated > 0, line.qtyShipped > 0, line.qtyInvoiced > 0, tracking.value.statusLabel === 'Closed'][idx]
 }
 </script>

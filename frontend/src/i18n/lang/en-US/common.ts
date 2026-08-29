@@ -41,6 +41,7 @@ export default {
     hide: 'Hide',
     close: 'Close',
     notFound: 'Page not found',
+    notFoundDesc: '404 - Page Not Found',
     backToHome: 'Back to Home',
     enable: 'Enable',
     disable: 'Disable',
@@ -59,6 +60,9 @@ export default {
     localFilterEmpty: 'No local data found, click [Search] for deep retrieval',
     index: 'No.',
     actions: 'Actions',
+    add: 'Add',
+    createdTime: 'Created Time',
+    description: 'Description',
   },
   table: {
     densityCompact: 'Compact',

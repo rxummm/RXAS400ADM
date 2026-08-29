@@ -2,7 +2,6 @@ package com.rxas400adm.as400.service;
 
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
-import com.rxas400adm.as400.MockBpcsData;
 import com.rxas400adm.as400.dto.BpcsOrderQueryDTO;
 import com.rxas400adm.as400.service.BpcsOrderServiceImpl;
 import com.rxas400adm.as400.sql.SqlStatementRegistry;
@@ -17,10 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 

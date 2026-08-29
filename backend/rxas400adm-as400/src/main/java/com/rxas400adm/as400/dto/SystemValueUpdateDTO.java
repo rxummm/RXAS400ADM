@@ -1,5 +1,6 @@
 package com.rxas400adm.as400.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -9,5 +10,6 @@ import lombok.Data;
 @Data
 public class SystemValueUpdateDTO {
     @NotBlank(message = "系统值不能为空")
+    @Schema(description = "系统值", example = "2025-01-01")
     private String value;
 }

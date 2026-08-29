@@ -3,6 +3,7 @@ package com.rxas400adm.as400.controller;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.CommandResult;
+import com.rxas400adm.as400.dto.SystemValueBatchUpdateDTO;
 import com.rxas400adm.as400.dto.SystemValueUpdateDTO;
 import com.rxas400adm.as400.model.SysvalRow;
 import com.rxas400adm.common.annotation.OperateLog;
@@ -72,7 +73,11 @@ public class SystemValueController {
     @PreAuthorize("hasAuthority('SYSVAL_EDIT')")
     @OperateLog(module = "系统值", operation = "批量修改系统值")
     public ApiResponse<Map<String, CommandResult>> batchUpdate(
-            @RequestBody Map<String, String> updates) {
+            @Valid @RequestBody SystemValueBatchUpdateDTO dto) {
+        Map<String, String> updates = new java.util.LinkedHashMap<>();
+        for (SystemValueBatchUpdateDTO.SystemValueEntryDTO entry : dto.getEntries()) {
+            updates.put(entry.getName(), entry.getValue());
+        }
         return ApiResponse.success(clientProvider.current().batchChangeSystemValues(updates));
     }
 }
