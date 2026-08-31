@@ -78,6 +78,34 @@ body,
 .text-danger {
   color: var(--color-danger);
 }
+.text-success {
+  color: var(--color-success, #67c23a);
+}
+.text-warning {
+  color: var(--color-warning, #e6a23c);
+}
+
+/* ---- 间距 ---- */
+.p16 { padding: 16px; }
+
+/* ---- 拖拽上传区域 ---- */
+.import-drop {
+  border: 2px dashed var(--el-border-color);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.import-drop:hover {
+  border-color: var(--color-primary, #409eff);
+}
+
+/* ---- 搜索栏子元素 ---- */
+.search-bar__input {
+  width: 200px;
+}
 
 /* ---- 表格统计数字（如“共 N 条”） ---- */
 .count {
