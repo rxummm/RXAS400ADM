@@ -12,6 +12,13 @@
       <el-button type="primary" :loading="loading" @click="search">
         {{ $t('common.search') }}
       </el-button>
+      <ExportDropdown
+        :data="loads"
+        :columns="exportColumns"
+        :title="$t('bpcs.menu.shipping')"
+        :export-url="BPCS_EXPORT.shipping"
+        :query-params="{ lhno }"
+      />
       <span class="hint">{{ $t('bpcs.shipping.hint') }}</span>
     </div>
 
@@ -106,8 +113,13 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { searchLoads, type BpcsLoad } from '@/api/bpcs'
+import { useI18n } from 'vue-i18n'
+import { searchLoads, type BpcsLoad, BPCS_EXPORT } from '@/api/bpcs'
 import AppPagination from '@/components/AppPagination.vue'
+import ExportDropdown from '@/components/ExportDropdown.vue'
+import type { ExportColumn } from '@/components/ExportButton.vue'
+
+const { t } = useI18n()
 
 defineOptions({ name: 'BpcsShipping' })
 
@@ -119,6 +131,16 @@ const current = ref(1)
 const size = ref(20)
 const detailVisible = ref(false)
 const detailLoad = ref<BpcsLoad | null>(null)
+
+const exportColumns = computed<ExportColumn[]>(() => [
+  { key: 'cono', label: t('bpcs.label.cono') },
+  { key: 'lhno', label: t('bpcs.shipping.lhno') },
+  { key: 'statusKey', label: t('bpcs.shipping.status') },
+  { key: 'carrier', label: t('bpcs.shipping.carrier') },
+  { key: 'destination', label: t('bpcs.label.shipTo') },
+  { key: 'shipDate', label: t('bpcs.shipping.shipDate') },
+  { key: 'weight', label: t('bpcs.shipping.weight') },
+])
 
 interface KanbanColumn {
   status: number

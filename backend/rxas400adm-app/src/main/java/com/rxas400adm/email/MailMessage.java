@@ -10,7 +10,8 @@ public record MailMessage(
         String priority,
         String filename,
         byte[] data,
-        String channel
+        String channel,
+        String sender
 ) {
 
     public static final String CHANNEL_ALERT = "ALERT";
@@ -19,15 +20,15 @@ public record MailMessage(
     public static final String PRIORITY_NORMAL = "NORMAL";
 
     public static MailMessage alert(String subject, String text) {
-        return new MailMessage(subject, text, null, PRIORITY_NORMAL, null, null, CHANNEL_ALERT);
+        return new MailMessage(subject, text, null, PRIORITY_NORMAL, null, null, CHANNEL_ALERT, null);
     }
 
     public static MailMessage report(String subject, String text, String recipients,
                                      String filename, byte[] data) {
-        return new MailMessage(subject, text, recipients, PRIORITY_NORMAL, filename, data, CHANNEL_REPORT);
+        return new MailMessage(subject, text, recipients, PRIORITY_NORMAL, filename, data, CHANNEL_REPORT, null);
     }
 
     public static MailMessage manual(String subject, String text, String recipients, String priority) {
-        return new MailMessage(subject, text, recipients, priority, null, null, CHANNEL_MANUAL);
+        return new MailMessage(subject, text, recipients, priority, null, null, CHANNEL_MANUAL, null);
     }
 }

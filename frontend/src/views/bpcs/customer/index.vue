@@ -13,6 +13,13 @@
           <el-button type="primary" size="small" @click="search">
             {{ $t('common.search') }}
           </el-button>
+          <ExportDropdown
+            :data="customers"
+            :columns="exportColumns"
+            :title="$t('bpcs.menu.customers')"
+            :export-url="BPCS_EXPORT.customers"
+            :query-params="{ name: keyword }"
+          />
         </div>
         <div class="customer-list" v-loading="loading">
           <div
@@ -89,8 +96,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { searchCustomers, type BpcsCustomer } from '@/api/bpcs'
+import { searchCustomers, type BpcsCustomer, BPCS_EXPORT } from '@/api/bpcs'
 import AppPagination from '@/components/AppPagination.vue'
+import ExportDropdown from '@/components/ExportDropdown.vue'
+import type { ExportColumn } from '@/components/ExportButton.vue'
 
 defineOptions({ name: 'BpcsCustomer' })
 
@@ -98,6 +107,19 @@ const keyword = ref('')
 const loading = ref(false)
 const customers = ref<BpcsCustomer[]>([])
 const total = ref(0)
+
+const exportColumns: ExportColumn[] = [
+  { key: 'cono', label: '公司' },
+  { key: 'cust', label: '客户号' },
+  { key: 'name', label: '客户名称' },
+  { key: 'address1', label: '地址' },
+  { key: 'city', label: '城市' },
+  { key: 'state', label: '州' },
+  { key: 'zip', label: '邮编' },
+  { key: 'phone', label: '电话' },
+  { key: 'contact', label: '联系人' },
+  { key: 'creditLimit', label: '信用额度' },
+]
 const current = ref(1)
 const size = ref(20)
 const selectedCust = ref<BpcsCustomer | null>(null)

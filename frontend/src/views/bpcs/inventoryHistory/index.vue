@@ -6,6 +6,13 @@
       <el-input v-model="query.fromDate" class="w-130" :placeholder="$t('bpcs.inventoryHistory.fromDate')" clearable @keyup.enter="load" />
       <el-input v-model="query.toDate" class="w-130" :placeholder="$t('bpcs.inventoryHistory.toDate')" clearable @keyup.enter="load" />
       <el-button type="primary" :loading="loading" @click="load">{{ $t('common.search') }}</el-button>
+      <ExportDropdown
+        :data="rows"
+        :columns="exportColumns"
+        :title="$t('bpcs.menu.inventoryHistory')"
+        :export-url="BPCS_EXPORT.supplyChain('history')"
+        :query-params="query"
+      />
     </div>
     <div class="table-wrapper">
       <el-table :data="rows" v-loading="loading" size="small" border>
@@ -33,9 +40,20 @@
 defineOptions({ name: 'BpcsInventoryHistory' })
 import { reactive, ref } from 'vue'
 import { fetchInventoryHistory, type InventoryHistory } from '@/api/supplyChain'
+import { BPCS_EXPORT } from '@/api/bpcs'
+import ExportDropdown from '@/components/ExportDropdown.vue'
+import type { ExportColumn } from '@/components/ExportButton.vue'
 const loading = ref(false)
 const rows = ref<InventoryHistory[]>([])
 const query = reactive({ cono: '001', item: '', fromDate: '', toDate: '' })
+const exportColumns: ExportColumn[] = [
+  { key: 'item', label: '物料号' },
+  { key: 'warehouse', label: '仓库' },
+  { key: 'type', label: '事务类型' },
+  { key: 'quantity', label: '数量' },
+  { key: 'referenceNo', label: '参考号' },
+  { key: 'date', label: '日期' },
+]
 function load() {
   loading.value = true
   const p: Record<string, string | number> = { cono: query.cono || '001', limit: 200 }

@@ -112,7 +112,7 @@ echo "== R3: 返回禁直接返 Entity（优先 VO） =="
 # 合法返回类型白名单：基础类型 + 非 VO 后缀的值类型。
 # *VO 后缀类型（VO 契约）自动合法、免登记——新增 VO 无需维护白名单（2026-08-16 加固，
 # 此前 13 个新 VO 漏配 R3_OK_TYPES 导致门禁误报，见 gates.test.ts R3 回归用例）。
-R3_OK_TYPES="Void String Boolean Integer Long List Map PageResult LoginResponse QueryResult CommandResult GraphData SysvalRow JobInfo ObjectDetail byte InputStream"
+R3_OK_TYPES="Void String Boolean Integer Long BigDecimal List Map PageResult LoginResponse QueryResult CommandResult GraphData SysvalRow JobInfo ObjectDetail byte InputStream UserProfileCreateResult BpcsRcmxImportResult BpcsWabpImportResult"
 hits="$(grep -rn 'ApiResponse<' --include='*Controller.java' . | grep -v '/target/')"
 if [ -n "$hits" ]; then
   legacy=0

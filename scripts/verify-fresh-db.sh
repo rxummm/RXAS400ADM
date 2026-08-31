@@ -41,13 +41,13 @@ V38_EXPECT_ROLE_CODES="ADMIN DEVELOPER OPERATOR VIEWER"
 
 # ---- V38 之后的结构增量（后续迁移新增结构时同步更新：全量结构 = V38 种子 + 增量）----
 # V47 flowcharts 叶子(type2)+1；V50 notifications 叶子(type2)+1；V58「AS400 业务」目录(type1)+1、叶子(type2)+1
-POST_V38_MENUS_BY_TYPE="1:1 2:3"
+POST_V38_MENUS_BY_TYPE="1:1 2:4"
 # V58：BPCS_ORDER_VIEW 权限 +1（ADMIN 授权 +1）
 # V56：COMPILE_EXECUTE 权限 -1（ADMIN 授权 -1）；compileExecute 按钮(menu_type3)-1 及其 role_menu-1
 # → 权限/角色权限净 0；菜单净 type1+1/type2 +1(叶子)-1(按钮)=+1；role_menu 净 +2(目录+叶子)-1(按钮)=+1
 POST_V38_PERMS=0
 POST_V38_ROLE_PERMS=0
-POST_V38_ROLE_MENUS=1
+POST_V38_ROLE_MENUS=2
 
 mysql=("mysql" "-u$MYSQL_USER" "-p$MYSQL_PWD" "-h$MYSQL_HOST" "-P$MYSQL_PORT" "--default-character-set=utf8mb4")
 
@@ -70,6 +70,7 @@ log "创建全新库 $DB ..."
 "${mysql[@]}" -e "DROP DATABASE IF EXISTS \`$DB\`; CREATE DATABASE \`$DB\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 log "启动应用（mock profile）执行全部迁移 ..."
+RXAS400_JWT_SECRET="$(openssl rand -hex 32 2>/dev/null || dd if=/dev/urandom bs=32 count=1 2>/dev/null | od -An -tx1 | tr -d ' \n')" \
 java -jar "$JAR" \
   --server.port="$APP_PORT" \
   --spring.datasource.url="jdbc:mysql://$MYSQL_HOST:$MYSQL_PORT/$DB?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai" \

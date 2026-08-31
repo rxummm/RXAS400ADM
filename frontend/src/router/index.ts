@@ -306,11 +306,238 @@ const router = createRouter({
           component: () => import('@/views/bpcs/orderTracking/index.vue'),
           meta: { title: 'menu.bpcsOrderTracking', cached: true },
         },
+        // ===== ㊲ ABC/XYZ 矩阵 =====
+        {
+          path: 'bpcs-abc-xyz',
+          name: 'BpcsAbcXyz',
+          component: () => import('@/views/bpcs/abcXyz/index.vue'),
+          meta: { title: 'menu.bpcsAbcXyz', cached: true },
+        },
+        // ===== ⑳ 客户 360° 视图 =====
+        {
+          path: 'bpcs-customer-overview',
+          name: 'BpcsCustomerOverview',
+          component: () => import('@/views/bpcs/customerOverview/index.vue'),
+          meta: { title: 'menu.bpcsCustomerOverview', cached: true },
+        },
+        // ===== ㉙ 循环盘点 =====
+        {
+          path: 'bpcs-cycle-count',
+          name: 'BpcsCycleCount',
+          component: () => import('@/views/bpcs/cycleCount/index.vue'),
+          meta: { title: 'menu.bpcsCycleCount', cached: true },
+        },
+        // ===== ⑩⑬ 订单分析（履行率+OTD） =====
+        {
+          path: 'bpcs-order-analytics',
+          name: 'BpcsOrderAnalytics',
+          component: () => import('@/views/bpcs/orderAnalytics/index.vue'),
+          meta: { title: 'menu.bpcsOrderAnalytics', cached: true },
+        },
+        // ===== ⑰ 订单详情增强 =====
+        {
+          path: 'bpcs-order-detail',
+          name: 'BpcsOrderDetail',
+          component: () => import('@/views/bpcs/orderDetail/index.vue'),
+          meta: { title: 'menu.bpcsOrderDetail', cached: true },
+        },
+        // ===== ⑥ 预测补货看板 =====
+        {
+          path: 'bpcs-forecast',
+          name: 'BpcsForecast',
+          component: () => import('@/views/bpcs/forecast/index.vue'),
+          meta: { title: 'menu.bpcsForecast', cached: true },
+        },
+        // ===== Batch 2: 核心能力建设 =====
+        {
+          path: 'bpcs-anomaly',
+          name: 'BpcsAnomaly',
+          component: () => import('@/views/bpcs/anomaly/index.vue'),
+          meta: { title: 'menu.bpcsAnomaly', cached: true },
+        },
+        {
+          path: 'bpcs-bom',
+          name: 'BpcsBom',
+          component: () => import('@/views/bpcs/bom/index.vue'),
+          meta: { title: 'menu.bpcsBom', cached: true },
+        },
+        {
+          path: 'bpcs-shipment-mgmt',
+          name: 'BpcsShipmentMgmt',
+          component: () => import('@/views/bpcs/shipmentMgmt/index.vue'),
+          meta: { title: 'menu.bpcsShipmentMgmt', cached: true },
+        },
+        {
+          path: 'bpcs-rcmx',
+          name: 'BpcsRcmx',
+          component: () => import('@/views/bpcs/rcmx/index.vue'),
+          meta: { title: 'menu.bpcsRcmx', cached: true },
+        },
+        // ===== Batch 3: 深度优化 =====
+        {
+          path: 'bpcs-wabp',
+          name: 'BpcsWabp',
+          component: () => import('@/views/bpcs/wabp/index.vue'),
+          meta: { title: 'menu.bpcsWabp', cached: true },
+        },
+        {
+          path: 'bpcs-location-inv',
+          name: 'BpcsLocationInv',
+          component: () => import('@/views/bpcs/locationInv/index.vue'),
+          meta: { title: 'menu.bpcsLocationInv', cached: true },
+        },
+        {
+          path: 'bpcs-replenishment',
+          name: 'BpcsReplenishment',
+          component: () => import('@/views/bpcs/replenishment/index.vue'),
+          meta: { title: 'menu.bpcsReplenishment', cached: true },
+        },
+        {
+          path: 'bpcs-alert-engine',
+          name: 'BpcsAlertEngine',
+          component: () => import('@/views/bpcs/alertEngine/index.vue'),
+          meta: { title: 'menu.bpcsAlertEngine', cached: true },
+        },
+        {
+          path: 'bpcs-stock-value',
+          name: 'BpcsStockValue',
+          component: () => import('@/views/bpcs/stockValue/index.vue'),
+          meta: { title: 'menu.bpcsStockValue', cached: true },
+        },
+        // ===== Batch 4: 扩展功能 =====
+        {
+          path: 'bpcs-supplier-score',
+          name: 'BpcsSupplierScore',
+          component: () => import('@/views/bpcs/supplierScore/index.vue'),
+          meta: { title: 'menu.bpcsSupplierScore', cached: true },
+        },
+        {
+          path: 'bpcs-po-lifecycle',
+          name: 'BpcsPoLifecycle',
+          component: () => import('@/views/bpcs/poLifecycle/index.vue'),
+          meta: { title: 'menu.bpcsPoLifecycle', cached: true },
+        },
+        {
+          path: 'bpcs-credit-hold',
+          name: 'BpcsCreditHold',
+          component: () => import('@/views/bpcs/creditHold/index.vue'),
+          meta: { title: 'menu.bpcsCreditHold', cached: true },
+        },
+        {
+          path: 'bpcs-kanban',
+          name: 'BpcsKanban',
+          component: () => import('@/views/bpcs/kanban/index.vue'),
+          meta: { title: 'menu.bpcsKanban', cached: true },
+        },
+        {
+          path: 'bpcs-transport-dashboard',
+          name: 'BpcsTransportDashboard',
+          component: () => import('@/views/bpcs/transportDashboard/index.vue'),
+          meta: { title: 'menu.bpcsTransportDashboard', cached: true },
+        },
+        // ===== Batch 5: 长期规划 =====
+        {
+          path: 'bpcs-order-template',
+          name: 'BpcsOrderTemplate',
+          component: () => import('@/views/bpcs/orderTemplate/index.vue'),
+          meta: { title: 'menu.bpcsOrderTemplate', cached: true },
+        },
+        {
+          path: 'bpcs-order-copy',
+          name: 'BpcsOrderCopy',
+          component: () => import('@/views/bpcs/orderCopy/index.vue'),
+          meta: { title: 'menu.bpcsOrderCopy', cached: true },
+        },
+        {
+          path: 'bpcs-order-change',
+          name: 'BpcsOrderChange',
+          component: () => import('@/views/bpcs/orderChange/index.vue'),
+          meta: { title: 'menu.bpcsOrderChange', cached: true },
+        },
+        {
+          path: 'bpcs-order-report',
+          name: 'BpcsOrderReport',
+          component: () => import('@/views/bpcs/orderReport/index.vue'),
+          meta: { title: 'menu.bpcsOrderReport', cached: true },
+        },
+        {
+          path: 'bpcs-rma',
+          name: 'BpcsRma',
+          component: () => import('@/views/bpcs/rma/index.vue'),
+          meta: { title: 'menu.bpcsRma', cached: true },
+        },
+        {
+          path: 'bpcs-order-schedule',
+          name: 'BpcsOrderSchedule',
+          component: () => import('@/views/bpcs/orderSchedule/index.vue'),
+          meta: { title: 'menu.bpcsOrderSchedule', cached: true },
+        },
+        // ===== Batch 6: 运费核算 / 库存模拟 / 订单协同 =====
+        {
+          path: 'bpcs-freight-cost',
+          name: 'BpcsFreightCost',
+          component: () => import('@/views/bpcs/freightCost/index.vue'),
+          meta: { title: 'menu.bpcsFreightCost', cached: true },
+        },
+        {
+          path: 'bpcs-inventory-sim',
+          name: 'BpcsInventorySim',
+          component: () => import('@/views/bpcs/inventorySim/index.vue'),
+          meta: { title: 'menu.bpcsInventorySim', cached: true },
+        },
+        {
+          path: 'bpcs-order-collab',
+          name: 'BpcsOrderCollab',
+          component: () => import('@/views/bpcs/orderCollab/index.vue'),
+          meta: { title: 'menu.bpcsOrderCollab', cached: true },
+        },
+        {
+          path: 'bpcs-wh-replenish',
+          name: 'BpcsWhReplenish',
+          component: () => import('@/views/bpcs/warehouseReplenish/index.vue'),
+          meta: { title: 'menu.bpcsWhReplenish', cached: true },
+        },
+        {
+          path: 'bpcs/wms/overview',
+          name: 'WmsOverview',
+          component: () => import('@/views/bpcs/wms/overview/index.vue'),
+          meta: { title: 'menu.wmsOverview', cached: true },
+        },
+        {
+          path: 'bpcs/wms/binInventory',
+          name: 'WmsBinInventory',
+          component: () => import('@/views/bpcs/wms/binInventory/index.vue'),
+          meta: { title: 'menu.wmsBinInventory', cached: true },
+        },
+        {
+          path: 'bpcs/wms/pickPath',
+          name: 'WmsPickPath',
+          component: () => import('@/views/bpcs/wms/pickPath/index.vue'),
+          meta: { title: 'menu.wmsPickPath', cached: true },
+        },
+        {
+          path: 'bpcs/wms/batchTracking',
+          name: 'WmsBatchTracking',
+          component: () => import('@/views/bpcs/wms/batchTracking/index.vue'),
+          meta: { title: 'menu.wmsBatchTracking', cached: true },
+        },
+        {
+          path: 'bpcs/wms/movementHistory',
+          name: 'WmsMovementHistory',
+          component: () => import('@/views/bpcs/wms/movementHistory/index.vue'),
+          meta: { title: 'menu.wmsMovementHistory', cached: true },
+        },
         {
           path: 'reports',
           name: 'Reports',
           component: () => import('@/views/report/index.vue'),
           meta: { title: 'menu.reports', cached: true },
+        },
+        {
+          path: 'report/builder',
+          name: 'ReportBuilder',
+          component: () => import('@/views/report/ReportBuilder.vue'),
+          meta: { title: 'menu.reportBuilder', cached: true },
         },
         {
           path: 'docs',
@@ -341,6 +568,12 @@ const router = createRouter({
           name: 'UserProfiles',
           component: () => import('@/views/system/userProfiles/index.vue'),
           meta: { title: 'menu.userProfiles', cached: true },
+        },
+        {
+          path: 'as400/user-profiles',
+          name: 'UserProfileManagement',
+          component: () => import('@/views/as400/userProfiles/index.vue'),
+          meta: { title: 'menu.userProfileManagement', cached: true },
         },
         {
           path: 'roles',

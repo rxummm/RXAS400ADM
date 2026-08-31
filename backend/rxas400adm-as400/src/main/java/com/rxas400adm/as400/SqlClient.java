@@ -42,4 +42,30 @@ public interface SqlClient {
     default List<Map<String, Object>> queryListCheckedBounded(String sql, int maxRows, Object... params) {
         return queryListChecked(sql, params);
     }
+
+    /**
+     * 执行单行查询并在结果为空时抛异常（用于 get 类操作）。
+     */
+    default Map<String, Object> querySingleChecked(String sql, Object... params) {
+        List<Map<String, Object>> rows = queryList(sql, params);
+        if (rows.isEmpty()) {
+            throw new IllegalStateException("查询结果为空: " + sql);
+        }
+        return rows.get(0);
+    }
+
+    /**
+     * 执行标量查询返回 Long（用于 COUNT(*) 等聚合）。
+     */
+    default Long queryForObject(String sql, Class<Long> type, Object... params) {
+        List<Map<String, Object>> rows = queryList(sql, params);
+        if (rows.isEmpty()) return 0L;
+        Object val = rows.get(0).values().iterator().next();
+        return val != null ? ((Number) val).longValue() : 0L;
+    }
+
+    /**
+     * 执行 UPDATE/INSERT/DELETE 语句，返回影响行数。
+     */
+    int executeUpdate(String sql, Object... params);
 }

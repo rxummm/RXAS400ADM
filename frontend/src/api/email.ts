@@ -68,7 +68,15 @@ export const listEmailLogs = (params?: {
 }) => request.get<PageResult<EmailLog>>('/email/logs', { params })
 export const getEmailLog = (id: number) => request.get<EmailLog>(`/email/logs/${id}`)
 
+// --- Senders ---
+export const listSenders = () => request.get<string[]>('/email/send/senders')
+
 // --- Send ---
-export const sendEmail = (data: {
-  subject: string; text: string; recipients: string; priority?: string
-}) => request.post<void>('/email/send', data)
+export const sendEmail = (data: FormData | {
+  subject: string; text: string; recipients: string; priority?: string; sender?: string
+}) => {
+  const isFormData = data instanceof FormData
+  return request.post<void>('/email/send', data, {
+    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+  })
+}

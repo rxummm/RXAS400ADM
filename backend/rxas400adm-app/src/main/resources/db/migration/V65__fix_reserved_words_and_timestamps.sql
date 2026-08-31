@@ -153,16 +153,15 @@ SET @sql = IF(@has_updated_at > 0,
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 7. 为 rx_job_schedule_history 表补全 created_time 默认值
-SET @col_created = (
+-- 7. 为 rx_job_schedule_history 表补全 created_time 默认值（仅当列存在时）
+SET @col_hist_exists = (
   SELECT COUNT(*) FROM information_schema.COLUMNS
   WHERE TABLE_SCHEMA = DATABASE()
     AND TABLE_NAME = 'rx_job_schedule_history'
     AND COLUMN_NAME = 'created_time'
-    AND COLUMN_DEFAULT IS NOT NULL
 );
-SET @sql = IF(@col_created = 0,
+SET @sql = IF(@col_hist_exists > 0,
   'ALTER TABLE `rx_job_schedule_history` MODIFY COLUMN `created_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT "创建时间"',
-  'SELECT "rx_job_schedule_history.created_time already has default" AS info'
+  'SELECT "rx_job_schedule_history.created_time column does not exist, skipping" AS info'
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

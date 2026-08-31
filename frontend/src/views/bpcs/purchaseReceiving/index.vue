@@ -5,6 +5,13 @@
       <el-input v-model="query.pono" class="w-150" :placeholder="$t('bpcs.purchase.pono')" clearable @keyup.enter="load" />
       <el-input v-model="query.vendor" class="w-150" :placeholder="$t('bpcs.purchase.vendor')" clearable @keyup.enter="load" />
       <el-button type="primary" :loading="loading" @click="load">{{ $t('common.search') }}</el-button>
+      <ExportDropdown
+        :data="rows"
+        :columns="exportColumns"
+        :title="$t('bpcs.menu.purchaseReceiving')"
+        :export-url="BPCS_EXPORT.supplyChain('receiving')"
+        :query-params="query"
+      />
     </div>
     <div class="table-wrapper">
       <el-table :data="rows" v-loading="loading" size="small" border>
@@ -33,9 +40,22 @@
 defineOptions({ name: 'BpcsPurchaseReceiving' })
 import { reactive, ref } from 'vue'
 import { fetchPurchaseReceiving, type PurchaseReceiving } from '@/api/supplyChain'
+import { BPCS_EXPORT } from '@/api/bpcs'
+import ExportDropdown from '@/components/ExportDropdown.vue'
+import type { ExportColumn } from '@/components/ExportButton.vue'
 const loading = ref(false)
 const rows = ref<PurchaseReceiving[]>([])
 const query = reactive({ cono: '001', pono: '', vendor: '' })
+const exportColumns: ExportColumn[] = [
+  { key: 'pono', label: '采购单号' },
+  { key: 'vendorName', label: '供应商' },
+  { key: 'orderDate', label: '订单日期' },
+  { key: 'item', label: '物料号' },
+  { key: 'itemDesc', label: '物料描述' },
+  { key: 'qtyOrdered', label: '已订购' },
+  { key: 'qtyReceived', label: '已收货' },
+  { key: 'qtyOpen', label: '未结量' },
+]
 function load() {
   loading.value = true
   const p: Record<string, string | number> = { cono: query.cono || '001', limit: 200 }

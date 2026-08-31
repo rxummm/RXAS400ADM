@@ -1,0 +1,23 @@
+export default {
+  compose: {
+    title: 'Compose Mail',
+    sender: 'Sender',
+    senderHint: 'Sender email address (leave empty for system default)',
+    selectSender: 'Select Sender',
+    recipients: 'Recipients',
+    recipientsHint: 'Enter email addresses, separated by comma/semicolon/space',
+    fromGroup: 'Add from Group',
+    subject: 'Subject',
+    body: 'Body',
+    attachments: 'Attachments',
+    addAttachment: 'Add Attachment',
+    attachmentHint: 'Supports PDF/Word/Excel/Images/Text, max 10MB per file, up to 5 files',
+    attachmentLimit: 'Maximum 5 attachments allowed',
+    priority: 'Priority',
+    normal: 'Normal',
+    high: 'High',
+    low: 'Low',
+    send: 'Send',
+    sendSuccess: 'Email sent successfully',
+  },
+}

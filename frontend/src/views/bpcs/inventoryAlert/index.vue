@@ -5,6 +5,14 @@
       <el-button type="warning" :loading="loading" @click="load">
         {{ $t('common.search') }}
       </el-button>
+      <ExportDropdown
+        :data="alerts"
+        :columns="exportColumns"
+        :title="$t('bpcs.menu.inventoryAlert')"
+        :export-url="BPCS_EXPORT.supplyChain('alerts')"
+        :query-params="{ cono }"
+      />
+      <el-tag v-if="wsConnected" type="success" size="small" effect="dark" class="ml8">WS</el-tag>
       <span class="hint">{{ $t('bpcs.inventoryAlert.hint') }}</span>
     </div>
 
@@ -55,14 +63,56 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'BpcsInventoryAlert' })
 
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { ElNotification } from 'element-plus'
 import { fetchInventoryAlerts, type InventoryAlert } from '@/api/supplyChain'
+import { BPCS_EXPORT } from '@/api/bpcs'
+import ExportDropdown from '@/components/ExportDropdown.vue'
+import type { ExportColumn } from '@/components/ExportButton.vue'
+import { useStompClient } from '@/composables/useStompClient'
 
+const { t } = useI18n()
 const cono = ref('001')
 const loading = ref(false)
 const alerts = ref<InventoryAlert[]>([])
+const wsConnected = ref(false)
+
+const exportColumns: ExportColumn[] = [
+  { key: 'item', label: '物料号' },
+  { key: 'description', label: '描述' },
+  { key: 'warehouse', label: '仓库' },
+  { key: 'uom', label: '单位' },
+  { key: 'onHand', label: '在手量' },
+  { key: 'allocated', label: '已分配' },
+  { key: 'available', label: '可用量' },
+  { key: 'safetyStock', label: '安全库存' },
+  { key: 'deficit', label: '缺口' },
+]
 
 const totalDeficit = computed(() => alerts.value.reduce((s, a) => s + a.deficit, 0))
+
+const { connect } = useStompClient()
+
+onMounted(() => {
+  connect((client) => {
+    wsConnected.value = true
+    client.subscribe('/topic/bpcs/inventory-alert', (msg) => {
+      try {
+        const data = JSON.parse(msg.body) as Array<InventoryAlert & { serverName?: string; timestamp?: string }>
+        if (Array.isArray(data) && data.length > 0) {
+          alerts.value = data
+          ElNotification({
+            title: t('bpcs.inventoryAlert.title'),
+            message: t('bpcs.inventoryAlert.wsAlert', { count: data.length }),
+            type: 'warning',
+            duration: 5000,
+          })
+        }
+      } catch { /* ignore parse errors */ }
+    })
+  }, () => { wsConnected.value = false })
+})
 
 function load() {
   loading.value = true

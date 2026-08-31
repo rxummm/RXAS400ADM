@@ -115,6 +115,21 @@ public abstract class AbstractDelegatingAs400Client implements AS400Client {
         return sqlClient().queryListCheckedBounded(sql, maxRows, params);
     }
 
+    @Override
+    public Map<String, Object> querySingleChecked(String sql, Object... params) {
+        return sqlClient().querySingleChecked(sql, params);
+    }
+
+    @Override
+    public Long queryForObject(String sql, Class<Long> type, Object... params) {
+        return sqlClient().queryForObject(sql, type, params);
+    }
+
+    @Override
+    public int executeUpdate(String sql, Object... params) {
+        return sqlClient().executeUpdate(sql, params);
+    }
+
     // ==================== AuthClient ====================
 
     @Override

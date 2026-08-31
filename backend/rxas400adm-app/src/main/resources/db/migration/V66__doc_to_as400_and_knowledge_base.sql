@@ -23,9 +23,9 @@ SELECT (SELECT id FROM rx_menu WHERE title = 'sysDocs' AND menu_type = 2 LIMIT 1
 WHERE NOT EXISTS (SELECT 1 FROM rx_menu WHERE title = 'sysDocManage' AND menu_type = 3);
 
 -- 5. 新增权限码
-INSERT IGNORE INTO rx_permission (code, description, module) VALUES
-  ('SYS_DOC_VIEW', 'SYS_DOC_VIEW', 'SYSTEM'),
-  ('SYS_DOC_MANAGE', 'SYS_DOC_MANAGE', 'SYSTEM');
+INSERT IGNORE INTO rx_permission (permission_code, permission_name, module) VALUES
+  ('SYS_DOC_VIEW', '知识库查看', 'SYSTEM'),
+  ('SYS_DOC_MANAGE', '知识库管理', 'SYSTEM');
 
 -- 6. ADMIN：全部权限（已通过 SELECT r.id, p.id 授予，无需额外操作）
 

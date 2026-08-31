@@ -24,4 +24,7 @@ public class EmailSendDTO {
 
     @Schema(description = "优先级：HIGH / NORMAL / LOW", example = "NORMAL")
     private String priority;
+
+    @Schema(description = "发件人地址（可选，为空则使用系统默认配置）", example = "admin@company.com")
+    private String sender;
 }

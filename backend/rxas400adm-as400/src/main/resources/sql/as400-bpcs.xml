@@ -74,7 +74,7 @@
         FROM {lib}.SSH
         WHERE CONO = ?
           AND YM >= ?
-          AND YM <= ?
+          AND YM &lt;= ?
         GROUP BY YM
         ORDER BY YM
         FETCH FIRST 24 ROWS ONLY
@@ -130,7 +130,7 @@
           AND CUST LIKE ?
           AND ORNO LIKE ?
           AND ORDTE >= ?
-          AND ORDTE <= ?
+          AND ORDTE &lt;= ?
         ORDER BY ORDTE DESC
         FETCH FIRST ? ROWS ONLY
     </statement>
@@ -143,7 +143,7 @@
                ISFQ AS SAFETY_STOCK
         FROM {lib}.IWI
         WHERE CONO = ?
-          AND (IOHB - IISSU + IRCT + IADJU) < ISFQ
+          AND (IOHB - IISSU + IRCT + IADJU) &lt; ISFQ
         ORDER BY (IOHB - IISSU + IRCT + IADJU) ASC
         FETCH FIRST ? ROWS ONLY
     </statement>
@@ -183,7 +183,7 @@
         WHERE CONO = ?
           AND ITEM LIKE ?
           AND TRNDTE >= ?
-          AND TRNDTE <= ?
+          AND TRNDTE &lt;= ?
         ORDER BY TRNDTE DESC, TRNTME DESC
         FETCH FIRST ? ROWS ONLY
     </statement>
@@ -199,7 +199,7 @@
         WHERE HPH.CONO = ?
           AND HPH.PONO LIKE ?
           AND HPH.VNAME LIKE ?
-          AND HPO.QTYRCV < HPO.QTYORD
+          AND HPO.QTYRCV &lt; HPO.QTYORD
         ORDER BY HPH.PODATE DESC
         FETCH FIRST ? ROWS ONLY
     </statement>
@@ -277,6 +277,689 @@
         WHERE CONO = ?
           AND ORNO LIKE ?
         ORDER BY INVDATE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== WMS: 仓库管理 ===== -->
+
+    <!-- 仓库主档 -->
+    <statement id="bpcs.wms.warehouse">
+        SELECT * FROM {lib}.WHS
+        WHERE CONO = ?
+          AND WHSE LIKE ?
+          AND WHNAME LIKE ?
+        ORDER BY WHSE
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- 库位主档 -->
+    <statement id="bpcs.wms.bin">
+        SELECT * FROM {lib}.BIN
+        WHERE CONO = ?
+          AND WHSE = ?
+          AND BINNO LIKE ?
+        ORDER BY WHSE, BINNO
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- 库位库存 -->
+    <statement id="bpcs.wms.binInventory">
+        SELECT BIN.WHSE, BIN.BINNO, BIN.BINTYPE, BIN.STATUS, BIN.CAPACITY,
+               IBL.ITEM, IIM.ITDSC, IBL.QTY, IBL.LOTNO
+        FROM {lib}.BIN
+        LEFT JOIN {lib}.IBL ON BIN.CONO = IBL.CONO AND BIN.WHSE = IBL.WHSE AND BIN.BINNO = IBL.BINNO
+        LEFT JOIN {lib}.IIM ON IBL.ITEM = IIM.ITEM
+        WHERE BIN.CONO = ?
+          AND BIN.WHSE = ?
+        ORDER BY BIN.BINNO
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- 库存移动记录 -->
+    <statement id="bpcs.wms.movement">
+        SELECT * FROM {lib}.ITH
+        WHERE CONO = ?
+          AND WHSE LIKE ?
+          AND ITEM LIKE ?
+        ORDER BY TRNDATE DESC, TRNTIME DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- 批次追踪 -->
+    <statement id="bpcs.wms.batch">
+        SELECT IBL.WHSE, IBL.BINNO, IBL.ITEM, IIM.ITDSC, IBL.QTY, IBL.LOTNO,
+               ITL.TRNDATE, ITL.ITTYP, ITL.QTY AS TRNQTY, ITL.REFNO
+        FROM {lib}.IBL
+        LEFT JOIN {lib}.IIM ON IBL.ITEM = IIM.ITEM
+        LEFT JOIN {lib}.ITL ON IBL.CONO = ITL.CONO AND IBL.ITEM = ITL.ITEM AND IBL.WHSE = ITL.WHSE
+        WHERE IBL.CONO = ?
+          AND IBL.LOTNO LIKE ?
+        ORDER BY ITL.TRNDATE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- 仓库汇总（库位占用率） -->
+    <statement id="bpcs.wms.summary">
+        SELECT BIN.WHSE, WH.WHNAME,
+               COUNT(*) AS TOTAL_BINS,
+               SUM(CASE WHEN BIN.STATUS = 'O' THEN 1 ELSE 0 END) AS OCCUPIED,
+               SUM(CASE WHEN BIN.STATUS = 'F' THEN 1 ELSE 0 END) AS FREE,
+               SUM(BIN.CAPACITY) AS TOTAL_CAPACITY
+        FROM {lib}.BIN
+        LEFT JOIN {lib}.WHS ON BIN.CONO = WHS.CONO AND BIN.WHSE = WHS.WHSE
+        WHERE BIN.CONO = ?
+        GROUP BY BIN.WHSE, WH.WHNAME
+        ORDER BY BIN.WHSE
+    </statement>
+
+    <!-- ===== ⑩ 履行率与 Backorder ===== -->
+
+    <!-- 行级履行率统计：按公司码聚合订单行的订购/发运数量 -->
+    <statement id="bpcs.order.fulfillmentStats">
+        SELECT
+            COUNT(*) AS TOTAL_LINES,
+            SUM(CASE WHEN COALESCE(QTSHP, 0) >= COALESCE(QTORD, 0) AND COALESCE(QTORD, 0) > 0 THEN 1 ELSE 0 END) AS FILLED_LINES,
+            SUM(COALESCE(QTORD, 0)) AS TOTAL_ORDERED,
+            SUM(COALESCE(QTSHP, 0)) AS TOTAL_SHIPPED,
+            SUM(CASE WHEN COALESCE(QTSHP, 0) &lt; COALESCE(QTORD, 0) AND COALESCE(QTORD, 0) > 0 THEN 1 ELSE 0 END) AS BACKORDER_LINES,
+            SUM(CASE WHEN COALESCE(QTSHP, 0) &lt; COALESCE(QTORD, 0) THEN COALESCE(QTORD, 0) - COALESCE(QTSHP, 0) ELSE 0 END) AS BACKORDER_QTY
+        FROM {lib}.ECL
+        WHERE CONO = ?
+    </statement>
+
+    <!-- Backorder 行明细：未完全发运的订单行 -->
+    <statement id="bpcs.order.backorderLines">
+        SELECT ECL.CONO, ECL.ORNO, ECL.ORLN, ECL.ITEM, ECL.ITDSC,
+               ECL.QTORD, ECL.QTSHP, ECL.QTYALC,
+               (COALESCE(ECL.QTORD, 0) - COALESCE(ECL.QTSHP, 0)) AS QTYOPEN,
+               ECH.CUST, ECH.REQDTE, ECH.HSTAT
+        FROM {lib}.ECL
+        JOIN {lib}.ECH ON ECH.CONO = ECL.CONO AND ECH.ORNO = ECL.ORNO
+        WHERE ECL.CONO = ?
+          AND COALESCE(ECL.QTSHP, 0) &lt; COALESCE(ECL.QTORD, 0)
+          AND COALESCE(ECL.QTORD, 0) > 0
+        ORDER BY ECL.ORNO, ECL.ORLN
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- Backorder 按物料聚合：哪些物料经常缺货 -->
+    <statement id="bpcs.order.backorderByItem">
+        SELECT ECL.ITEM, ECL.ITDSC,
+               COUNT(*) AS BO_COUNT,
+               SUM(COALESCE(ECL.QTORD, 0) - COALESCE(ECL.QTSHP, 0)) AS TOTAL_BO_QTY
+        FROM {lib}.ECL
+        WHERE ECL.CONO = ?
+          AND COALESCE(ECL.QTSHP, 0) &lt; COALESCE(ECL.QTORD, 0)
+          AND COALESCE(ECL.QTORD, 0) > 0
+        GROUP BY ECL.ITEM, ECL.ITDSC
+        ORDER BY TOTAL_BO_QTY DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ⑬ 交期绩效 OTD ===== -->
+
+    <!-- OTD 统计：按公司码聚合订单的准时/提前/延迟交付 -->
+    <statement id="bpcs.order.otdStats">
+        SELECT
+            COUNT(*) AS TOTAL_DELIVERED,
+            SUM(CASE WHEN ESH.SHIPDTE &lt;= ECH.REQDTE THEN 1 ELSE 0 END) AS ON_TIME,
+            SUM(CASE WHEN ESH.SHIPDTE &lt; ECH.REQDTE THEN 1 ELSE 0 END) AS EARLY,
+            SUM(CASE WHEN ESH.SHIPDTE > ECH.REQDTE THEN 1 ELSE 0 END) AS LATE,
+            AVG(CASE WHEN ESH.SHIPDTE > ECH.REQDTE THEN ESH.SHIPDTE - ECH.REQDTE ELSE 0 END) AS AVG_LATE_DAYS
+        FROM {lib}.ECH
+        JOIN {lib}.ESH ON ECH.CONO = ESH.CONO AND ECH.ORNO = ESH.ORNO
+        WHERE ECH.CONO = ?
+          AND ESH.SHIPDTE IS NOT NULL
+          AND ECH.REQDTE IS NOT NULL
+    </statement>
+
+    <!-- OTD 按客户聚合 -->
+    <statement id="bpcs.order.otdByCustomer">
+        SELECT ECH.CUST, RCM.CUNAME,
+               COUNT(*) AS TOTAL,
+               SUM(CASE WHEN ESH.SHIPDTE &lt;= ECH.REQDTE THEN 1 ELSE 0 END) AS ON_TIME,
+               ROUND(SUM(CASE WHEN ESH.SHIPDTE &lt;= ECH.REQDTE THEN 1.0 ELSE 0 END) / COUNT(*) * 100, 1) AS OTD_PCT
+        FROM {lib}.ECH
+        JOIN {lib}.ESH ON ECH.CONO = ESH.CONO AND ECH.ORNO = ESH.ORNO
+        LEFT JOIN {lib}.RCM ON ECH.CONO = RCM.CONO AND ECH.CUST = RCM.CUST
+        WHERE ECH.CONO = ?
+          AND ESH.SHIPDTE IS NOT NULL
+          AND ECH.REQDTE IS NOT NULL
+        GROUP BY ECH.CUST, RCM.CUNAME
+        ORDER BY OTD_PCT
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- OTD 延迟原因分布 -->
+    <statement id="bpcs.order.otdDelayReasons">
+        SELECT
+            CASE
+                WHEN ECL.QTYALC &lt; ECL.QTORD THEN 'INSUFFICIENT_STOCK'
+                WHEN ESH.SHIPDTE > ECH.REQDTE THEN 'SHIPPING_DELAY'
+                ELSE 'OTHER'
+            END AS DELAY_REASON,
+            COUNT(*) AS COUNT
+        FROM {lib}.ECH
+        JOIN {lib}.ESH ON ECH.CONO = ESH.CONO AND ECH.ORNO = ESH.ORNO
+        JOIN {lib}.ECL ON ECH.CONO = ECL.CONO AND ECH.ORNO = ECL.ORNO
+        WHERE ECH.CONO = ?
+          AND ESH.SHIPDTE > ECH.REQDTE
+        GROUP BY
+            CASE
+                WHEN ECL.QTYALC &lt; ECL.QTORD THEN 'INSUFFICIENT_STOCK'
+                WHEN ESH.SHIPDTE > ECH.REQDTE THEN 'SHIPPING_DELAY'
+                ELSE 'OTHER'
+            END
+    </statement>
+
+    <!-- ===== ㊿ 库存多级一致性核对 ===== -->
+
+    <!-- IPI 汇总：Pallet 级库存 -->
+    <statement id="bpcs.inv.ipiSum">
+        SELECT SUM(QTY) AS TOTAL_QTY, COUNT(*) AS PALLET_COUNT
+        FROM {lib}.IPI
+        WHERE CONO = ? AND ITEM = ?
+    </statement>
+
+    <!-- ILI 汇总：库位级库存 -->
+    <statement id="bpcs.inv.iliSum">
+        SELECT SUM(QTY_ON_HAND) AS TOTAL_QTY, COUNT(*) AS LOCATION_COUNT
+        FROM {lib}.ILI
+        WHERE CONO = ? AND ITEM = ?
+    </statement>
+
+    <!-- IWM 查询：仓库级库存 -->
+    <statement id="bpcs.inv.iwmGet">
+        SELECT PHY_STOCK_QTY AS TOTAL_QTY, 1 AS RECORD_COUNT
+        FROM {lib}.IWM
+        WHERE CONO = ? AND ITEM = ?
+    </statement>
+
+    <!-- IPI 明细 -->
+    <statement id="bpcs.inv.ipiDetail">
+        SELECT PALLET, QTY, LOCATION
+        FROM {lib}.IPI
+        WHERE CONO = ? AND ITEM = ?
+        ORDER BY PALLET
+    </statement>
+
+    <!-- ILI 明细 -->
+    <statement id="bpcs.inv.iliDetail">
+        SELECT LOCATION, QTY_ON_HAND, PALLET
+        FROM {lib}.ILI
+        WHERE CONO = ? AND ITEM = ?
+        ORDER BY LOCATION
+    </statement>
+
+    <!-- ===== ㉛ 呆滞物料分析 ===== -->
+
+    <!-- 呆滞物料：基于 ITL 最后交易日期判断 -->
+    <statement id="bpcs.inv.slowMoving">
+        SELECT IWI.ITEM, IIM.ITDSC, IWI.WH, IWI.QTYOH,
+               IIM.UNIT, IIM.UNITCOST,
+               (COALESCE(IWI.QTYOH, 0) * COALESCE(IIM.UNITCOST, 0)) AS STOCK_VALUE,
+               MAX(ITL.TRNDTE) AS LAST_TXN_DATE,
+               DAYS(CURRENT_DATE) - DAYS(TO_DATE(MAX(ITL.TRNDTE), 'YYYYMMDD')) AS IDLE_DAYS
+        FROM {lib}.IWI
+        LEFT JOIN {lib}.IIM ON IWI.ITEM = IIM.ITEM
+        LEFT JOIN {lib}.ITL ON IWI.CONO = ITL.CONO AND IWI.ITEM = ITL.ITEM
+        WHERE IWI.CONO = ?
+          AND COALESCE(IWI.QTYOH, 0) > 0
+        GROUP BY IWI.ITEM, IIM.ITDSC, IWI.WH, IWI.QTYOH, IIM.UNIT, IIM.UNITCOST
+        HAVING MAX(ITL.TRNDTE) IS NULL
+            OR MAX(ITL.TRNDTE) &lt; ?
+        ORDER BY STOCK_VALUE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- 呆滞物料按呆滞天数分桶统计 -->
+    <statement id="bpcs.inv.slowMovingBuckets">
+        SELECT
+            CASE
+                WHEN MAX(ITL.TRNDTE) IS NULL THEN 'NEVER_USED'
+                WHEN DAYS(CURRENT_DATE) - DAYS(TO_DATE(MAX(ITL.TRNDTE), 'YYYYMMDD')) > 365 THEN 'OVER_12M'
+                WHEN DAYS(CURRENT_DATE) - DAYS(TO_DATE(MAX(ITL.TRNDTE), 'YYYYMMDD')) > 180 THEN '6M_12M'
+                WHEN DAYS(CURRENT_DATE) - DAYS(TO_DATE(MAX(ITL.TRNDTE), 'YYYYMMDD')) > 90 THEN '3M_6M'
+                ELSE 'UNDER_3M'
+            END AS IDLE_BUCKET,
+            COUNT(*) AS ITEM_COUNT,
+            SUM(COALESCE(IWI.QTYOH, 0) * COALESCE(IIM.UNITCOST, 0)) AS TOTAL_VALUE
+        FROM {lib}.IWI
+        LEFT JOIN {lib}.IIM ON IWI.ITEM = IIM.ITEM
+        LEFT JOIN {lib}.ITL ON IWI.CONO = ITL.CONO AND IWI.ITEM = ITL.ITEM
+        WHERE IWI.CONO = ?
+          AND COALESCE(IWI.QTYOH, 0) > 0
+        GROUP BY
+            CASE
+                WHEN MAX(ITL.TRNDTE) IS NULL THEN 'NEVER_USED'
+                WHEN DAYS(CURRENT_DATE) - DAYS(TO_DATE(MAX(ITL.TRNDTE), 'YYYYMMDD')) > 365 THEN 'OVER_12M'
+                WHEN DAYS(CURRENT_DATE) - DAYS(TO_DATE(MAX(ITL.TRNDTE), 'YYYYMMDD')) > 180 THEN '6M_12M'
+                WHEN DAYS(CURRENT_DATE) - DAYS(TO_DATE(MAX(ITL.TRNDTE), 'YYYYMMDD')) > 90 THEN '3M_6M'
+                ELSE 'UNDER_3M'
+            END
+        ORDER BY TOTAL_VALUE DESC
+    </statement>
+
+    <!-- ===== ⑰ 订单详情增强（ECL+ESH+EIN 多表 JOIN） ===== -->
+
+    <!-- 订单行增强详情：关联发运和发票信息 -->
+    <statement id="bpcs.order.lineDetail">
+        SELECT ECL.CONO, ECL.ORNO, ECL.ORLN, ECL.ITEM, ECL.ITDSC,
+               ECL.QTORD, ECL.QTYALC, ECL.QTSHP, ECL.QTINV,
+               ECL.PRICE, ECL.PRICE * COALESCE(ECL.QTSHP, 0) AS SHIP_AMOUNT,
+               ECH.CUST, ECH.REQDTE, ECH.ORDTE,
+               ESH.SHIPDTE, ESH.SHSTAT, ESH.LHNO,
+               EIN.INVNO, EIN.INVDTE, EIN.INVAMT
+        FROM {lib}.ECL
+        JOIN {lib}.ECH ON ECH.CONO = ECL.CONO AND ECH.ORNO = ECL.ORNO
+        LEFT JOIN {lib}.ESH ON ESH.CONO = ECL.CONO AND ESH.ORNO = ECL.ORNO AND ESH.ORLN = ECL.ORLN
+        LEFT JOIN {lib}.EIN ON EIN.CONO = ECL.CONO AND EIN.ORNO = ECL.ORNO
+        WHERE ECL.CONO = ? AND ECL.ORNO = ?
+        ORDER BY ECL.ORLN
+    </statement>
+
+    <!-- 订单历史事件时间线 -->
+    <statement id="bpcs.order.timeline">
+        SELECT 'CREATED' AS EVENT_TYPE, ECH.ORDTE AS EVENT_DATE,
+               'Order Created' AS EVENT_DESC
+        FROM {lib}.ECH
+        WHERE ECH.CONO = ? AND ECH.ORNO = ?
+        UNION ALL
+        SELECT 'SHIPPED' AS EVENT_TYPE, ESH.SHIPDTE AS EVENT_DATE,
+               'Shipped via ' || COALESCE(ESH.LHNO, 'N/A') AS EVENT_DESC
+        FROM {lib}.ESH
+        WHERE ESH.CONO = ? AND ESH.ORNO = ? AND ESH.SHIPDTE IS NOT NULL
+        UNION ALL
+        SELECT 'INVOICED' AS EVENT_TYPE, EIN.INVDTE AS EVENT_DATE,
+               'Invoiced: ' || COALESCE(EIN.INVNO, 'N/A') AS EVENT_DESC
+        FROM {lib}.EIN
+        WHERE EIN.CONO = ? AND EIN.ORNO = ? AND EIN.INVDTE IS NOT NULL
+        ORDER BY EVENT_DATE
+    </statement>
+
+    <!-- ===== ⑳ 客户 360° 视图（RCM+ECH+EIN 多表 JOIN） ===== -->
+
+    <!-- 客户 360° 概览：基础信息 + 订单统计 + 发票统计 -->
+    <statement id="bpcs.customer.overview">
+        SELECT RCM.CONO, RCM.CUST, RCM.CUNAME, RCM.ADDR1, RCM.CITY, RCM.STATE,
+               RCM.ZIPCD, RCM.PHONE, RCM.CONTACT, RCM.CREDLM, RCM.TERMS,
+               RCM.TAXCODE, RCM.SLSREP,
+               (SELECT COUNT(*) FROM {lib}.ECH WHERE ECH.CONO = RCM.CONO AND ECH.CUST = RCM.CUST) AS TOTAL_ORDERS,
+               (SELECT COUNT(*) FROM {lib}.ECH WHERE ECH.CONO = RCM.CONO AND ECH.CUST = RCM.CUST AND ECH.HSTAT NOT IN ('8','9')) AS OPEN_ORDERS,
+               (SELECT SUM(ECL.QTORD * ECL.PRICE) FROM {lib}.ECL
+                JOIN {lib}.ECH ON ECH.CONO = ECL.CONO AND ECH.ORNO = ECL.ORNO
+                WHERE ECH.CONO = RCM.CONO AND ECH.CUST = RCM.CUST) AS TOTAL_REVENUE
+        FROM {lib}.RCM
+        WHERE RCM.CONO = ? AND RCM.CUST = ?
+        FETCH FIRST 1 ROWS ONLY
+    </statement>
+
+    <!-- 客户最近订单列表 -->
+    <statement id="bpcs.customer.recentOrders">
+        SELECT ECH.ORNO, ECH.ORDTE, ECH.REQDTE, ECH.HSTAT,
+               (SELECT COUNT(*) FROM {lib}.ECL WHERE ECL.CONO = ECH.CONO AND ECL.ORNO = ECH.ORNO) AS LINE_COUNT,
+               (SELECT SUM(ECL.QTORD * ECL.PRICE) FROM {lib}.ECL WHERE ECL.CONO = ECH.CONO AND ECL.ORNO = ECH.ORNO) AS ORDER_TOTAL
+        FROM {lib}.ECH
+        WHERE ECH.CONO = ? AND ECH.CUST = ?
+        ORDER BY ECH.ORDTE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- 客户逾期发票 -->
+    <statement id="bpcs.customer.overdueInvoices">
+        SELECT EIN.INVNO, EIN.INVDTE, EIN.INVAMT, EIN.ORNO
+        FROM {lib}.EIN
+        WHERE EIN.CONO = ? AND EIN.CUST = ?
+          AND EIN.INVDTE &lt; ?
+        ORDER BY EIN.INVDTE
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ㊲ ABC/XYZ 矩阵分析 ===== -->
+
+    <!-- ABC 分类：按库存价值排序 -->
+    <statement id="bpcs.inv.abcAnalysis">
+        SELECT IWI.ITEM, IIM.ITDSC,
+               SUM(COALESCE(IWI.QTYOH, 0)) AS TOTAL_QTY,
+               SUM(COALESCE(IWI.QTYOH, 0) * COALESCE(IIM.UNITCOST, 0)) AS STOCK_VALUE
+        FROM {lib}.IWI
+        LEFT JOIN {lib}.IIM ON IWI.ITEM = IIM.ITEM
+        WHERE IWI.CONO = ?
+        GROUP BY IWI.ITEM, IIM.ITDSC
+        HAVING SUM(COALESCE(IWI.QTYOH, 0) * COALESCE(IIM.UNITCOST, 0)) > 0
+        ORDER BY STOCK_VALUE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- XYZ 分类：基于需求变异系数（CV） -->
+    <statement id="bpcs.inv.xyzAnalysis">
+        SELECT ITEM, ITDSC,
+               AVG(QTY) AS AVG_DEMAND,
+               STDDEV(QTY) AS STD_DEMAND,
+               CASE
+                   WHEN AVG(QTY) = 0 THEN 0
+                   ELSE STDDEV(QTY) / AVG(QTY)
+               END AS CV
+        FROM (
+            SELECT ITL.ITEM, IIM.ITDSC, SUM(ITL.TRNQTY) AS QTY
+            FROM {lib}.ITL
+            LEFT JOIN {lib}.IIM ON ITL.ITEM = IIM.ITEM
+            WHERE ITL.CONO = ?
+              AND ITL.TRNDTE >= ?
+            GROUP BY ITL.ITEM, IIM.ITDSC, ITL.TRNDTE
+        ) SUB
+        GROUP BY ITEM, ITDSC
+        HAVING AVG(QTY) > 0
+        ORDER BY CV
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ⑨ 异常检测引擎 ===== -->
+    <statement id="bpcs.order.anomalies">
+        SELECT ECH.CONO, ECH.ORNO, ECH.CUST, RCM.CUNAME, ECH.ORDTE, ECH.REQDTE, ECH.HSTAT,
+               CASE WHEN ECH.HID = 'CZ' THEN 'CLOSED'
+                    WHEN ECH.HID = 'CH' AND ECH.HSTAT = '0' THEN 'HOLD'
+                    ELSE 'ACTIVE' END AS STATUS,
+               (SELECT COUNT(*) FROM {lib}.ECL WHERE ECL.CONO = ECH.CONO AND ECL.ORNO = ECH.ORNO
+                AND COALESCE(ECL.QTORD, 0) > COALESCE(ECL.QTSHP, 0)) AS BACKORDER_LINES
+        FROM {lib}.ECH
+        LEFT JOIN {lib}.RCM ON ECH.CONO = RCM.CONO AND ECH.CUST = RCM.CUST
+        WHERE ECH.CONO = ?
+          AND ECH.HID IN ('CH', 'CZ')
+          AND ECH.HSTAT NOT IN ('8', '9')
+        ORDER BY ECH.ORDTE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ① BOM 查询展开 ===== -->
+    <statement id="bpcs.bom.parents">
+        SELECT PARENT, COMPONENT, QTY, UOM, EFFECTIVE, EXPIRED
+        FROM {lib}.BOM
+        WHERE CONO = ? AND COMPONENT = ?
+        ORDER BY PARENT
+    </statement>
+    <statement id="bpcs.bom.children">
+        SELECT PARENT, COMPONENT, QTY, UOM, EFFECTIVE, EXPIRED
+        FROM {lib}.BOM
+        WHERE CONO = ? AND PARENT = ?
+        ORDER BY COMPONENT
+    </statement>
+    <statement id="bpcs.bom.detail">
+        SELECT BOM.PARENT, BOM.COMPONENT, BOM.QTY, BOM.UOM, IIM.ITDSC,
+               IWI.QTYOH, IWI.QTYALC, (COALESCE(IWI.QTYOH,0) - COALESCE(IWI.QTYALC,0)) AS QTYAVL
+        FROM {lib}.BOM
+        LEFT JOIN {lib}.IIM ON BOM.COMPONENT = IIM.ITEM
+        LEFT JOIN {lib}.IWI ON BOM.CONO = IWI.CONO AND BOM.COMPONENT = IWI.ITEM
+        WHERE BOM.CONO = ? AND BOM.PARENT = ?
+        ORDER BY BOM.COMPONENT
+    </statement>
+
+    <!-- ===== ㊳ 运单管理 ===== -->
+    <statement id="bpcs.shipment.list">
+        SELECT LHNO, CARRIER, DEST, SHIPDTE, LINECT, WEIGHT, ORDNOS
+        FROM {lib}.LLH
+        WHERE CONO = ?
+        ORDER BY SHIPDTE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ㊽ WABP 配置 ===== -->
+    <statement id="bpcs.wabp.list">
+        SELECT * FROM {lib}.WABP
+        WHERE CONO = ?
+        ORDER BY WH, DAY_OF_WEEK
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+    <statement id="bpcs.wabp.get">
+        SELECT * FROM {lib}.WABP
+        WHERE CONO = ? AND WH = ? AND DAY_OF_WEEK = ?
+    </statement>
+    <statement id="bpcs.wabp.insert">
+        INSERT INTO {lib}.WABP (CONO, WH, DAY_OF_WEEK, TIME, SHPHOLD, CRHOLD, PRHOLD, ACTIVE, MAINT_USER, MAINT_DATE, MAINT_TIME)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    </statement>
+    <statement id="bpcs.wabp.update">
+        UPDATE {lib}.WABP
+        SET TIME = ?, SHPHOLD = ?, CRHOLD = ?, PRHOLD = ?, ACTIVE = ?, MAINT_USER = ?, MAINT_DATE = ?, MAINT_TIME = ?
+        WHERE CONO = ? AND WH = ? AND DAY_OF_WEEK = ?
+    </statement>
+    <statement id="bpcs.wabp.delete">
+        DELETE FROM {lib}.WABP
+        WHERE CONO = ? AND WH = ? AND DAY_OF_WEEK = ?
+    </statement>
+
+    <!-- ===== ㊾ RCMX CSR 分配 ===== -->
+    <statement id="bpcs.rcmx.list">
+        SELECT RCMX.CUST, RCMX.RESPCSR, RCMX.ACTIVE, RCM.CUNAME
+        FROM {lib}.RCMX
+        LEFT JOIN {lib}.RCM ON RCMX.CONO = RCM.CONO AND RCMX.CUST = RCM.CUST
+        WHERE RCMX.CONO = ?
+        ORDER BY RCMX.CUST
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+    <statement id="bpcs.rcmx.get">
+        SELECT RCMX.CUST, RCMX.RESPCSR, RCMX.ACTIVE, RCMX.MAINT_USER, RCMX.MAINT_DATE, RCMX.MAINT_TIME, RCM.CUNAME
+        FROM {lib}.RCMX
+        LEFT JOIN {lib}.RCM ON RCMX.CONO = RCM.CONO AND RCMX.CUST = RCM.CUST
+        WHERE RCMX.CONO = ? AND RCMX.CUST = ?
+    </statement>
+    <statement id="bpcs.rcmx.insert">
+        INSERT INTO {lib}.RCMX (CONO, CUST, RESPCSR, ACTIVE, MAINT_USER, MAINT_DATE, MAINT_TIME)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    </statement>
+    <statement id="bpcs.rcmx.update">
+        UPDATE {lib}.RCMX
+        SET RESPCSR = ?, ACTIVE = ?, MAINT_USER = ?, MAINT_DATE = ?, MAINT_TIME = ?
+        WHERE CONO = ? AND CUST = ?
+    </statement>
+    <statement id="bpcs.rcmx.delete">
+        DELETE FROM {lib}.RCMX
+        WHERE CONO = ? AND CUST = ?
+    </statement>
+    <statement id="bpcs.rcmx.checkUnique">
+        SELECT COUNT(*) FROM {lib}.RCMX
+        WHERE CONO = ? AND CUST = ? AND ACTIVE = 'Y'
+    </statement>
+    <statement id="bpcs.rcmx.csrOptions">
+        SELECT EMPID, NAME FROM {lib}.ECSR
+        WHERE CONO = ?
+        ORDER BY EMPID
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+    <statement id="bpcs.rcmx.custOptions">
+        SELECT CUST, CUNAME FROM {lib}.RCM
+        WHERE CONO = ? AND (CUST LIKE ? OR CUNAME LIKE ?)
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ㉗ 库位可视化 ===== -->
+    <statement id="bpcs.wms.locationInventory">
+        SELECT WHSE, BINLOC, ITEM, IIM.ITDSC, QTYOH, STATUS
+        FROM {lib}.ILI
+        LEFT JOIN {lib}.IIM ON ILI.ITEM = IIM.ITEM
+        WHERE ILI.CONO = ?
+        ORDER BY WHSE, BINLOC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ② 智能补货建议 ===== -->
+    <statement id="bpcs.inv.replenishment">
+        SELECT IWI.ITEM, IIM.ITDSC, IWI.WH, IWI.QTYOH, IIM.SAFETY,
+               (COALESCE(IIM.SAFETY,0) - COALESCE(IWI.QTYOH,0)) AS SHORTAGE,
+               (SELECT AVG(TRNQTY) FROM {lib}.ITL WHERE ITL.ITEM = IWI.ITEM AND ITL.CONO = IWI.CONO) AS AVG_DEMAND
+        FROM {lib}.IWI
+        LEFT JOIN {lib}.IIM ON IWI.ITEM = IIM.ITEM
+        WHERE IWI.CONO = ?
+          AND COALESCE(IWI.QTYOH, 0) &lt; COALESCE(IIM.SAFETY, 0)
+        ORDER BY SHORTAGE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ㉜ 预警规则 ===== -->
+    <statement id="bpcs.inv.alertRules">
+        SELECT * FROM {lib}.IWI
+        WHERE CONO = ?
+          AND (
+            (COALESCE(QTYOH, 0) &lt; COALESCE(SAFETY, 0) AND SAFETY > 0)
+            OR (COALESCE(QTYOH, 0) > COALESCE(MAXSTK, 0) AND MAXSTK > 0)
+          )
+        ORDER BY ITEM
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ㉚ 库存价值核算 ===== -->
+    <statement id="bpcs.inv.valueReport">
+        SELECT IWI.ITEM, IIM.ITDSC, IWI.WH, IWI.QTYOH, IIM.UNITCOST,
+               (COALESCE(IWI.QTYOH, 0) * COALESCE(IIM.UNITCOST, 0)) AS STOCK_VALUE
+        FROM {lib}.IWI
+        LEFT JOIN {lib}.IIM ON IWI.ITEM = IIM.ITEM
+        WHERE IWI.CONO = ?
+          AND COALESCE(IWI.QTYOH, 0) > 0
+        ORDER BY STOCK_VALUE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ④ 供应商评分 ===== -->
+    <statement id="bpcs.purchase.supplierPerf">
+        SELECT HPO.VENDOR, HPO.VNAME,
+               COUNT(*) AS TOTAL_PO,
+               SUM(CASE WHEN HPO.QTYRCV >= HPO.QTYORD THEN 1 ELSE 0 END) AS ON_TIME,
+               ROUND(SUM(CASE WHEN HPO.QTYRCV >= HPO.QTYORD THEN 1.0 ELSE 0 END) / COUNT(*) * 100, 1) AS SCORE
+        FROM {lib}.HPO
+        WHERE HPO.CONO = ?
+        GROUP BY HPO.VENDOR, HPO.VNAME
+        ORDER BY SCORE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ⑤ PO 全生命周期 ===== -->
+    <statement id="bpcs.po.lifecycle">
+        SELECT HPH.CONO, HPH.PONO, HPH.VENDOR, HPH.VNAME, HPH.POORD, HPH.POREC,
+               HPH.HPSTAT, HPH.HPHOLD, HPH.HPPURG,
+               CASE WHEN HPH.HPSTAT = 'C' THEN 'CLOSED'
+                    WHEN HPH.HPHOLD = 'Y' THEN 'HOLD'
+                    ELSE 'ACTIVE' END AS STATUS,
+               (SELECT COUNT(*) FROM {lib}.POL WHERE POL.CONO = HPH.CONO AND POL.PONO = HPH.PONO) AS LINE_COUNT
+        FROM {lib}.HPH
+        WHERE HPH.CONO = ?
+        ORDER BY HPH.POORD DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ⑪ 信用 Hold 管理 ===== -->
+    <statement id="bpcs.order.creditHold">
+        SELECT ECH.CONO, ECH.ORNO, ECH.CUST, RCM.CUNAME, ECH.ORDTE, ECH.REQDTE, ECH.HID, ECH.HSTAT,
+               ECH.CRHOLD, ECH.SHPHOLD, ECH.PRHOLD
+        FROM {lib}.ECH
+        LEFT JOIN {lib}.RCM ON ECH.CONO = RCM.CONO AND ECH.CUST = RCM.CUST
+        WHERE ECH.CONO = ?
+          AND (ECH.CRHOLD = 'Y' OR ECH.SHPHOLD = 'Y' OR ECH.PRHOLD = 'Y')
+        ORDER BY ECH.ORDTE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ⑯ 订单看板 ===== -->
+    <statement id="bpcs.order.kanban">
+        SELECT ECH.CONO, ECH.ORNO, ECH.CUST, RCM.CUNAME, ECH.ORDTE, ECH.REQDTE, ECH.HID, ECH.HSTAT,
+               CASE WHEN ECH.HID = 'CZ' THEN 'CLOSED'
+                    WHEN ECH.HID = 'CH' AND ECH.HSTAT = '0' THEN 'HOLD'
+                    ELSE 'ACTIVE' END AS STATUS,
+               (SELECT COUNT(*) FROM {lib}.ECL WHERE ECL.CONO = ECH.CONO AND ECL.ORNO = ECH.ORNO
+                AND COALESCE(ECL.QTSHP, 0) = 0 AND COALESCE(ECL.QTORD, 0) > 0) AS PENDING_LINES,
+               (SELECT COUNT(*) FROM {lib}.ECL WHERE ECL.CONO = ECH.CONO AND ECL.ORNO = ECH.ORNO
+                AND COALESCE(ECL.QTSHP, 0) > 0 AND COALESCE(ECL.QTORD, 0) > COALESCE(ECL.QTSHP, 0)) AS PARTIAL_LINES,
+               (SELECT COUNT(*) FROM {lib}.ECL WHERE ECL.CONO = ECH.CONO AND ECL.ORNO = ECH.ORNO
+                AND COALESCE(ECL.QTSHP, 0) >= COALESCE(ECL.QTORD, 0) AND COALESCE(ECL.QTORD, 0) > 0) AS SHIPPED_LINES
+        FROM {lib}.ECH
+        LEFT JOIN {lib}.RCM ON ECH.CONO = RCM.CONO AND ECH.CUST = RCM.CUST
+        WHERE ECH.CONO = ?
+          AND ECH.HID IN ('CH', 'CZ')
+        ORDER BY ECH.ORDTE DESC
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ㊷ 多仓库联合补货 ===== -->
+
+    <!-- 多仓库库存汇总：按物料聚合各仓库库存 -->
+    <statement id="bpcs.whReplenish.list">
+        SELECT IWI.ITEM, IIM.ITDSC, IWI.WH,
+               IWI.QTYOH, IWI.QTYALC, IIM.SAFETY,
+               (COALESCE(IWI.QTYOH,0) - COALESCE(IWI.QTYALC,0)) AS QTYAVL,
+               (SELECT SUM(POQTY - POQTYRCV) FROM {lib}.HPO
+                WHERE HPO.ITEM = IWI.ITEM AND HPO.CONO = IWI.CONO
+                  AND COALESCE(POQTY,0) > COALESCE(POQTYRCV,0)) AS QTYONORD,
+               MAX(ITL.TRNDTE) AS LAST_TXN_DATE
+        FROM {lib}.IWI
+        LEFT JOIN {lib}.IIM ON IWI.CONO = IIM.CONO AND IWI.ITEM = IIM.ITEM
+        LEFT JOIN {lib}.ITL ON IWI.CONO = ITL.CONO AND IWI.ITEM = ITL.ITEM
+        WHERE IWI.CONO = ?
+          AND IWI.ITEM LIKE ?
+          AND IIM.ITDSC LIKE ?
+        GROUP BY IWI.ITEM, IIM.ITDSC, IWI.WH, IWI.QTYOH, IWI.QTYALC, IIM.SAFETY
+        ORDER BY IWI.ITEM, IWI.WH
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- 物料级汇总：总库存、安全库存、平均日消耗 -->
+    <statement id="bpcs.whReplenish.summary">
+        SELECT IWI.ITEM, IIM.ITDSC,
+               SUM(COALESCE(IWI.QTYOH,0)) AS TOTAL_QTY,
+               SUM(COALESCE(IWI.QTYALC,0)) AS TOTAL_ALC,
+               MAX(COALESCE(IIM.SAFETY,0)) AS SAFETY,
+               (SELECT AVG(TRNQTY) FROM {lib}.ITL
+                WHERE ITL.ITEM = IWI.ITEM AND ITL.CONO = IWI.CONO
+                  AND ITL.TRNDTE >= ?) AS AVG_DEMAND
+        FROM {lib}.IWI
+        LEFT JOIN {lib}.IIM ON IWI.CONO = IIM.CONO AND IWI.ITEM = IIM.ITEM
+        WHERE IWI.CONO = ?
+          AND IWI.ITEM LIKE ?
+          AND IIM.ITDSC LIKE ?
+        GROUP BY IWI.ITEM, IIM.ITDSC
+        HAVING SUM(COALESCE(IWI.QTYOH,0)) > 0
+        ORDER BY IWI.ITEM
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- ===== ⑥ 预测补货看板 ===== -->
+
+    <!-- 月度需求聚合：按月统计 ITL 出库数量 -->
+    <statement id="bpcs.forecast.monthlyDemand">
+        SELECT SUBSTRING(TRNDTE, 1, 6) AS YM, SUM(TRNQTY) AS TOTAL_QTY
+        FROM {lib}.ITL
+        WHERE CONO = ? AND ITEM = ?
+          AND TRNQTY > 0
+        GROUP BY SUBSTRING(TRNDTE, 1, 6)
+        ORDER BY YM
+        FETCH FIRST 24 ROWS ONLY
+    </statement>
+
+    <!-- 库存水平：当前在手量 + 安全库存 -->
+    <statement id="bpcs.forecast.stockLevel">
+        SELECT SUBSTRING(TRNDTE, 1, 6) AS YM, QTYOH, SAFETY
+        FROM {lib}.IWI
+        LEFT JOIN {lib}.IIM ON IWI.CONO = IIM.CONO AND IWI.ITEM = IIM.ITEM
+        WHERE IWI.CONO = ? AND IWI.ITEM = ?
+        FETCH FIRST 12 ROWS ONLY
+    </statement>
+
+    <!-- 补货建议：低于安全库存的物料 -->
+    <statement id="bpcs.forecast.replenishSuggestion">
+        SELECT IWI.ITEM,
+               IWI.QTYOH,
+               (COALESCE(IIM.SAFETY, 0) * 2 - COALESCE(IWI.QTYOH, 0)) AS SUGGESTED_QTY
+        FROM {lib}.IWI
+        LEFT JOIN {lib}.IIM ON IWI.CONO = IIM.CONO AND IWI.ITEM = IIM.ITEM
+        WHERE IWI.CONO = ?
+        ORDER BY IWI.ITEM
+        FETCH FIRST ? ROWS ONLY
+    </statement>
+
+    <!-- 物料选项列表 -->
+    <statement id="bpcs.forecast.itemOptions">
+        SELECT ITEM, ITDSC
+        FROM {lib}.IIM
+        WHERE ITEM IN (SELECT DISTINCT ITEM FROM {lib}.ITL WHERE CONO = ?)
+        ORDER BY ITEM
         FETCH FIRST ? ROWS ONLY
     </statement>
 

@@ -62,7 +62,9 @@ public class EmailService implements IEmailService {
 
         String user = getConfig("user", "");
         String pass = getConfig("pass", "");
-        String from = getConfig("from", user.isBlank() ? "rxas400adm@localhost" : user);
+        String from = (message.sender() != null && !message.sender().isBlank())
+                ? message.sender()
+                : getConfig("from", user.isBlank() ? "rxas400adm@localhost" : user);
 
         JavaMailSenderImpl sender = new JavaMailSenderImpl();
         sender.setHost(host);
@@ -119,7 +121,7 @@ public class EmailService implements IEmailService {
         MailMessage testMsg = new MailMessage(
                 "RXAS400 邮件测试",
                 "这是一封测试邮件，如果您收到此邮件说明 SMTP 配置正确。",
-                to, MailMessage.PRIORITY_NORMAL, null, null, MailMessage.CHANNEL_MANUAL
+                to, MailMessage.PRIORITY_NORMAL, null, null, MailMessage.CHANNEL_MANUAL, null
         );
         send(testMsg);
     }

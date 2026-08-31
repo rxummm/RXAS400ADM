@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -74,7 +75,7 @@ public class SystemValueController {
     @OperateLog(module = "系统值", operation = "批量修改系统值")
     public ApiResponse<Map<String, CommandResult>> batchUpdate(
             @Valid @RequestBody SystemValueBatchUpdateDTO dto) {
-        Map<String, String> updates = new java.util.LinkedHashMap<>();
+        Map<String, String> updates = new LinkedHashMap<>();
         for (SystemValueBatchUpdateDTO.SystemValueEntryDTO entry : dto.getEntries()) {
             updates.put(entry.getName(), entry.getValue());
         }

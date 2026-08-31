@@ -291,3 +291,700 @@ export const searchItems = (params: { cono?: string; item?: string; desc?: strin
 
 export const getItemDetail = (item: string) =>
   request.get<BpcsItem>(`/bpcs/items/${encodeURIComponent(item)}`)
+
+// ===== BPCS 导出端点（Excel / PDF；CSV 由前端 ExportDropdown 生成） =====
+
+export const BPCS_EXPORT = {
+  orders: '/bpcs/export/orders',
+  customers: '/bpcs/export/customers',
+  inventory: '/bpcs/export/inventory',
+  shipping: '/bpcs/export/shipping',
+  invoices: '/bpcs/export/invoices',
+  sales: '/bpcs/export/sales',
+  purchases: '/bpcs/export/purchases',
+  items: '/bpcs/export/items',
+  supplyChain: (type: string) => `/bpcs/export/supply-chain/${type}`,
+} as const
+
+// ===== ⑩ 履行率与 Backorder =====
+
+/** 行级履行率统计 */
+export interface FulfillmentStats {
+  totalLines: number
+  filledLines: number
+  lineFillRate: number
+  totalOrdered: number
+  totalShipped: number
+  qtyFillRate: number
+  backorderLines: number
+  backorderQty: number
+}
+
+/** Backorder 行明细 */
+export interface BackorderLine {
+  cono: string
+  orno: string
+  orln: string
+  item: string
+  itemDesc: string
+  qtyOrdered: number
+  qtyShipped: number
+  qtyAllocated: number
+  qtyOpen: number
+  customerNo: string
+  reqDate: string
+  headerStatus: string
+}
+
+/** Backorder 按物料聚合 */
+export interface BackorderByItem {
+  item: string
+  itemDesc: string
+  backorderCount: number
+  totalBackorderQty: number
+}
+
+export const getFulfillmentStats = (cono = '001') =>
+  request.get<FulfillmentStats>('/bpcs/orders/analytics/fulfillment', { params: { cono } })
+
+export const getBackorderLines = (params: { cono?: string; itemFilter?: string; size?: number }) =>
+  request.get<BackorderLine[]>('/bpcs/orders/analytics/backorder', { params })
+
+export const getBackorderByItem = (cono = '001', limit = 20) =>
+  request.get<BackorderByItem[]>('/bpcs/orders/analytics/backorder/by-item', { params: { cono, limit } })
+
+// ===== ⑬ 交期绩效 OTD =====
+
+/** OTD 统计 */
+export interface OtdStats {
+  totalDelivered: number
+  onTime: number
+  early: number
+  late: number
+  onTimeRate: number
+  avgLateDays: number
+}
+
+/** OTD 按客户聚合 */
+export interface OtdByCustomer {
+  customerNo: string
+  customerName: string
+  totalOrders: number
+  onTimeOrders: number
+  otdRate: number
+}
+
+export const getOtdStats = (cono = '001') =>
+  request.get<OtdStats>('/bpcs/orders/analytics/otd', { params: { cono } })
+
+export const getOtdByCustomer = (cono = '001', limit = 20) =>
+  request.get<OtdByCustomer[]>('/bpcs/orders/analytics/otd/by-customer', { params: { cono, limit } })
+
+// ===== ㊿ 库存多级一致性 =====
+
+/** 库存层级明细 */
+export interface LevelDetail {
+  identifier: string
+  quantity: number
+  extraInfo: string
+}
+
+/** 库存层级汇总 */
+export interface LevelSummary {
+  levelName: string
+  totalQuantity: number
+  detailCount: number
+  matched: boolean
+  details: LevelDetail[]
+}
+
+/** 一致性核对结果 */
+export interface ConsistencyResult {
+  item: string
+  palletLevel: LevelSummary
+  locationLevel: LevelSummary
+  warehouseLevel: LevelSummary
+  consistent: boolean
+  discrepancyNote: string
+}
+
+export const checkInventoryConsistency = (cono: string, item: string) =>
+  request.get<ConsistencyResult>('/bpcs/inventory/analytics/consistency', { params: { cono, item } })
+
+// ===== ㉛ 呆滞物料 =====
+
+/** 呆滞物料 */
+export interface SlowMovingItem {
+  item: string
+  itemDesc: string
+  warehouse: string
+  qtyOnHand: number
+  unit: string
+  unitCost: number
+  stockValue: number
+  lastTxnDate: string
+  idleDays: number
+  idleLevel: string
+}
+
+export const getSlowMovingItems = (params: { cono?: string; cutoffDate: string; limit?: number }) =>
+  request.get<SlowMovingItem[]>('/bpcs/inventory/analytics/slow-moving', { params })
+
+// ===== ⑰ 订单详情增强 =====
+
+/** 订单行增强详情 */
+export interface OrderLineDetail {
+  cono: string
+  orno: string
+  orln: string
+  item: string
+  itemDesc: string
+  qtyOrdered: number
+  qtyAllocated: number
+  qtyShipped: number
+  qtyInvoiced: number
+  price: number
+  shipAmount: number
+  customerNo: string
+  reqDate: string
+  orderDate: string
+  shipDate: string
+  shipStatus: string
+  loadNo: string
+  invoiceNo: string
+  invoiceDate: string
+  invoiceAmount: number
+  statusLabel: string
+}
+
+/** 订单时间线事件 */
+export interface OrderTimelineEvent {
+  eventType: string
+  eventDate: string
+  eventDesc: string
+}
+
+export const getOrderLineDetails = (cono: string, orno: string) =>
+  request.get<OrderLineDetail[]>('/bpcs/orders/detail/lines', { params: { cono, orno } })
+
+export const getOrderTimeline = (cono: string, orno: string) =>
+  request.get<OrderTimelineEvent[]>('/bpcs/orders/detail/timeline', { params: { cono, orno } })
+
+// ===== ⑳ 客户 360° 视图 =====
+
+/** 最近订单 */
+export interface CustomerRecentOrder {
+  orderNo: string
+  orderDate: string
+  reqDate: string
+  headerStatus: string
+  lineCount: number
+  orderTotal: number
+}
+
+/** 逾期发票 */
+export interface CustomerOverdueInvoice {
+  invoiceNo: string
+  invoiceDate: string
+  invoiceAmount: number
+  orderNo: string
+}
+
+/** 客户 360° 概览 */
+export interface CustomerOverview {
+  cono: string
+  cust: string
+  customerName: string
+  address: string
+  city: string
+  state: string
+  zip: string
+  phone: string
+  contact: string
+  creditLimit: number
+  termsCode: string
+  taxCode: string
+  salesRep: string
+  totalOrders: number
+  openOrders: number
+  totalRevenue: number
+  recentOrders: CustomerRecentOrder[]
+  overdueInvoices: CustomerOverdueInvoice[]
+}
+
+export const getCustomerOverview = (params: { cono?: string; cust: string; orderLimit?: number; invoiceLimit?: number }) =>
+  request.get<CustomerOverview>('/bpcs/customers/overview', { params })
+
+// ===== ㊲ ABC/XYZ 矩阵 =====
+
+/** ABC/XYZ 矩阵项 */
+export interface AbcXyzItem {
+  item: string
+  itemDesc: string
+  totalQty: number
+  stockValue: number
+  abcClass: string
+  avgDemand: number
+  cv: number
+  xyzClass: string
+  matrixCell: string
+}
+
+export const getAbcXyzMatrix = (params: { cono?: string; fromDate?: string; limit?: number }) =>
+  request.get<AbcXyzItem[]>('/bpcs/inventory/abc-xyz', { params })
+
+// ===== ㉙ 循环盘点 =====
+
+/** 盘点计划 */
+export interface CycleCountPlan {
+  id: number
+  planNo: string
+  item: string
+  itemDesc: string
+  warehouse: string
+  plannedDate: string
+  status: string
+  abcClass: string
+  operator: string
+  createdBy: string
+  createdTime: string
+}
+
+/** 盘点结果 */
+export interface CycleCountResult {
+  id: number
+  planNo: string
+  item: string
+  warehouse: string
+  systemQty: number
+  countedQty: number
+  difference: number
+  differenceValue: number
+  reason: string
+  countedBy: string
+  countTime: string
+}
+
+export const createCycleCountPlan = (data: { item: string; itemDesc?: string; warehouse: string; plannedDate: string; abcClass?: string }) =>
+  request.post<CycleCountPlan>('/bpcs/cycle-count/plans', data)
+
+export const listCycleCountPlans = (params: { status?: string; limit?: number }) =>
+  request.get<CycleCountPlan[]>('/bpcs/cycle-count/plans', { params })
+
+export const recordCycleCountResult = (data: { planId: number; countedQty: number; reason?: string }, systemQty: number) =>
+  request.post<CycleCountResult>('/bpcs/cycle-count/results', data, { params: { systemQty } })
+
+export const listCycleCountResults = (planId: number) =>
+  request.get<CycleCountResult[]>('/bpcs/cycle-count/results', { params: { planId } })
+
+// ===== Batch 2-5 剩余功能 =====
+
+/** ⑨ 异常检测 */
+export interface OrderAnomaly {
+  cono: string
+  orno: string
+  cust: string
+  custName: string
+  orderDate: string
+  reqDate: string
+  status: string
+  backorderLines: number
+}
+export const detectAnomalies = (cono = '001', limit = 50) =>
+  request.get<OrderAnomaly[]>('/bpcs/anomaly/detect', { params: { cono, limit } })
+
+/** ① BOM 展开 */
+export interface BomLine {
+  parent: string
+  component: string
+  description: string
+  qty: number
+  uom: string
+  effective: string
+  expired: string
+  onHandQty: number
+  allocQty: number
+  availQty: number
+}
+export const findBomParents = (cono = '001', component: string) =>
+  request.get<BomLine[]>('/bpcs/bom/parents', { params: { cono, component } })
+export const expandBomChildren = (cono = '001', parent: string) =>
+  request.get<BomLine[]>('/bpcs/bom/children', { params: { cono, parent } })
+
+/** ㊳ 运单管理 */
+export interface ShipmentVO {
+  loadNo: string
+  carrier: string
+  destination: string
+  shipDate: string
+  lineCount: number
+  weight: number
+  orderNos: string
+}
+export const listShipments = (cono = '001', limit = 50) =>
+  request.get<ShipmentVO[]>('/bpcs/shipment/list', { params: { cono, limit } })
+export const exportShipmentPdf = (cono: string, waybillNo: string, params: Record<string, any>) =>
+  request.post<Blob>('/bpcs/shipment/pdf', params, { params: { waybillNo, cono }, responseType: 'blob' })
+
+/** ㊾ RCMX CSR 分配 */
+export interface RcmxAssignment {
+  cust: string
+  custName: string
+  csrId: string
+  csrName: string
+  active: string
+  maintUser: string
+  maintDate: string
+}
+export interface CsrOption { empId: string; name: string }
+export interface CustOption { cust: string; custName: string }
+export const listRcmx = (cono = '001', custLike?: string, csrLike?: string, limit = 50) =>
+  request.get<RcmxAssignment[]>('/bpcs/rcmx/list', { params: { cono, custLike, csrLike, limit } })
+export const searchCsrOptions = (cono = '001', keyword?: string) =>
+  request.get<CsrOption[]>('/bpcs/rcmx/csrOptions', { params: { cono, keyword } })
+export const searchCustOptions = (cono = '001', keyword?: string) =>
+  request.get<CustOption[]>('/bpcs/rcmx/customers', { params: { cono, keyword } })
+export const getRcmx = (cono: string, cust: string) =>
+  request.get<RcmxAssignment>(`/bpcs/rcmx/get`, { params: { cono, cust } })
+export const createRcmx = (cono: string, data: { cust: string; csrId: string; active: string; maintUser: string }) =>
+  request.post<null>('/bpcs/rcmx/create', data, { params: { cono } })
+export const updateRcmx = (cono: string, cust: string, data: { cust: string; csrId: string; active: string; maintUser: string }) =>
+  request.put<null>('/bpcs/rcmx/update', data, { params: { cono, cust } })
+export const deleteRcmx = (cono: string, cust: string) =>
+  request.delete<null>('/bpcs/rcmx/delete', { params: { cono, cust } })
+export const importRcmx = (cono: string, file: File) => {
+  const form = new FormData()
+  form.append('file', file)
+  return request.post<{ successCount: number; failureCount: number; errors: string[] }>('/bpcs/rcmx/import', form, { params: { cono }, headers: { 'Content-Type': 'multipart/form-data' } })
+}
+export const exportRcmx = (cono = '001') =>
+  request.get<RcmxAssignment[]>('/bpcs/rcmx/export', { params: { cono } })
+
+/** ㊽ WABP 配置 */
+export interface WabpConfig {
+  wh: string
+  dayOfWeek: number
+  time: string
+  shipHold: string
+  crHold: string
+  prHold: string
+  active: string
+  maintUser: string
+  maintDate: string
+}
+export const listWabp = (cono = '001', limit = 50) =>
+  request.get<WabpConfig[]>('/bpcs/wabp/list', { params: { cono, limit } })
+export const getWabp = (cono: string, wh: string, dayOfWeek: number) =>
+  request.get<WabpConfig>(`/bpcs/wabp/get`, { params: { cono, wh, dayOfWeek } })
+export const createWabp = (cono: string, data: {
+  wh: string; dayOfWeek: number; time: string; shipHold: string; crHold: string; prHold: string; active: string; maintUser: string
+}) => request.post<null>('/bpcs/wabp/create', data, { params: { cono } })
+export const updateWabp = (cono: string, wh: string, dayOfWeek: number, data: {
+  wh: string; dayOfWeek: number; time: string; shipHold: string; crHold: string; prHold: string; active: string; maintUser: string
+}) => request.put<null>('/bpcs/wabp/update', data, { params: { cono, wh, dayOfWeek } })
+export const deleteWabp = (cono: string, wh: string, dayOfWeek: number) =>
+  request.delete<null>('/bpcs/wabp/delete', { params: { cono, wh, dayOfWeek } })
+export const importWabp = (cono: string, file: File) => {
+  const form = new FormData()
+  form.append('file', file)
+  return request.post<{ successCount: number; failureCount: number; errors: string[] }>('/bpcs/wabp/import', form, { params: { cono }, headers: { 'Content-Type': 'multipart/form-data' } })
+}
+export const exportWabp = (cono = '001') =>
+  request.get<WabpConfig[]>('/bpcs/wabp/export', { params: { cono } })
+
+/** ㉗ 库位可视化 */
+export interface LocationInventory {
+  warehouse: string
+  binLocation: string
+  item: string
+  description: string
+  qtyOnHand: number
+  status: string
+}
+export const listLocations = (cono = '001', limit = 100) =>
+  request.get<LocationInventory[]>('/bpcs/location/list', { params: { cono, limit } })
+
+/** ② 智能补货 */
+export interface ReplenishmentVO {
+  item: string
+  description: string
+  wh: string
+  qtyOnHand: number
+  safetyStock: number
+  shortage: number
+  avgDemand: number
+}
+export const listReplenishment = (cono = '001', limit = 50) =>
+  request.get<ReplenishmentVO[]>('/bpcs/replenishment/list', { params: { cono, limit } })
+
+/** ㉜ 预警规则 */
+export interface AlertRuleVO {
+  item: string
+  description: string
+  wh: string
+  qtyOnHand: number
+  safetyStock: number
+  maxStock: number
+  alertType: string
+}
+export const listAlertRules = (cono = '001', limit = 50) =>
+  request.get<AlertRuleVO[]>('/bpcs/alert/rules', { params: { cono, limit } })
+
+/** ㉚ 库存价值 */
+export interface StockValueVO {
+  item: string
+  description: string
+  wh: string
+  qtyOnHand: number
+  unitCost: number
+  stockValue: number
+}
+export const listStockValue = (cono = '001', limit = 50) =>
+  request.get<StockValueVO[]>('/bpcs/stockValue/report', { params: { cono, limit } })
+
+/** ④ 供应商评分 */
+export interface SupplierScoreVO {
+  vendor: string
+  vendorName: string
+  totalPo: number
+  onTime: number
+  score: number
+}
+export const listSupplierScores = (cono = '001', limit = 50) =>
+  request.get<SupplierScoreVO[]>('/bpcs/supplierScore/list', { params: { cono, limit } })
+
+/** ⑤ PO 生命周期 */
+export interface PoLifecycleVO {
+  cono: string
+  poNo: string
+  vendor: string
+  vendorName: string
+  orderDate: string
+  receivedDate: string
+  status: string
+  onHold: boolean
+  lineCount: number
+}
+export const listPoLifecycle = (cono = '001', limit = 50) =>
+  request.get<PoLifecycleVO[]>('/bpcs/po/lifecycle', { params: { cono, limit } })
+
+/** ⑪ 信用 Hold */
+export interface CreditHoldVO {
+  cono: string
+  orno: string
+  cust: string
+  custName: string
+  orderDate: string
+  reqDate: string
+  hid: string
+  hstat: string
+  crHold: string
+  shipHold: string
+  prHold: string
+}
+export const listCreditHolds = (cono = '001', limit = 50) =>
+  request.get<CreditHoldVO[]>('/bpcs/creditHold/list', { params: { cono, limit } })
+
+/** ⑯ 订单看板 */
+export interface KanbanVO {
+  cono: string
+  orno: string
+  cust: string
+  custName: string
+  orderDate: string
+  reqDate: string
+  status: string
+  pendingLines: number
+  partialLines: number
+  shippedLines: number
+}
+export const listKanbanOrders = (cono = '001', limit = 50) =>
+  request.get<KanbanVO[]>('/bpcs/kanban/orders', { params: { cono, limit } })
+
+// ==================== ㊵ 运费核算与成本分析 ====================
+export interface FreightCostRuleVO {
+  id: number
+  ruleName: string
+  carrier: string
+  costType: string
+  basePrice: number
+  unitPrice: number
+  minPrice: number
+  maxPrice: number
+  enabled: boolean
+  description: string
+}
+export interface FreightCostRecordVO {
+  id: number
+  orderNo: string
+  carrier: string
+  weight: number
+  volume: number
+  pieceCount: number
+  estimatedCost: number
+  actualCost: number
+  costDiff: number
+  shipDate: string
+}
+export interface FreightCostTrendVO {
+  month: string
+  totalCost: number
+  avgCost: number
+  recordCount: number
+  carrier: string
+}
+export const listFreightRules = () =>
+  request.get<FreightCostRuleVO[]>('/bpcs/freight-cost/rules')
+export const createFreightRule = (data: Partial<FreightCostRuleVO>) =>
+  request.post<FreightCostRuleVO>('/bpcs/freight-cost/rules', data)
+export const updateFreightRule = (id: number, data: Partial<FreightCostRuleVO>) =>
+  request.put<FreightCostRuleVO>(`/bpcs/freight-cost/rules/${id}`, data)
+export const deleteFreightRule = (id: number) =>
+  request.delete(`/bpcs/freight-cost/rules/${id}`)
+export const toggleFreightRule = (id: number, enabled: boolean) =>
+  request.put<FreightCostRuleVO>(`/bpcs/freight-cost/rules/${id}/toggle`, null, { params: { enabled } })
+export const calculateFreight = (carrier: string, costType: string, quantity: number) =>
+  request.get<number>('/bpcs/freight-cost/calculate', { params: { carrier, costType, quantity } })
+export const listFreightRecords = (params: Record<string, string | number>) =>
+  request.get<{ records: FreightCostRecordVO[]; total: number }>('/bpcs/freight-cost/records', { params })
+export const createFreightRecord = (data: Partial<FreightCostRecordVO>) =>
+  request.post<FreightCostRecordVO>('/bpcs/freight-cost/records', data)
+export const deleteFreightRecord = (id: number) =>
+  request.delete(`/bpcs/freight-cost/records/${id}`)
+export const getFreightTrend = (params: Record<string, string | number>) =>
+  request.get<FreightCostTrendVO[]>('/bpcs/freight-cost/analysis/trend', { params })
+export const getCarrierCostShare = () =>
+  request.get<Record<string, number>>('/bpcs/freight-cost/analysis/carrier-share')
+
+// ==================== ㉟ 库存模拟 ====================
+export interface InventorySimulationVO {
+  id: number
+  simName: string
+  itemNo: string
+  warehouse: string
+  currentStock: number
+  demandChange: number
+  leadTimeDays: number
+  safetyStock: number
+  reorderPoint: number
+  resultStockoutDays: number
+  resultReorderCount: number
+  resultAvgStock: number
+  resultServiceLevel: number
+  status: string
+}
+export const listSimulations = (params: Record<string, string | number>) =>
+  request.get<{ records: InventorySimulationVO[]; total: number }>('/bpcs/inventory-simulation', { params })
+export const createSimulation = (data: Partial<InventorySimulationVO>) =>
+  request.post<InventorySimulationVO>('/bpcs/inventory-simulation', data)
+export const runSimulation = (id: number) =>
+  request.post<InventorySimulationVO>(`/bpcs/inventory-simulation/${id}/run`)
+export const deleteSimulation = (id: number) =>
+  request.delete(`/bpcs/inventory-simulation/${id}`)
+
+// ==================== ㉕ 订单协同 ====================
+export interface OrderCollaborationVO {
+  id: number
+  orderNo: string
+  customerCode: string
+  customerName: string
+  status: string
+  priority: string
+  assignedTo: string
+  dueDate: string
+  notes: string
+  unreadNotifications: number
+}
+export interface CollaborationNotificationVO {
+  id: number
+  collaborationId: number
+  sender: string
+  recipient: string
+  message: string
+  channel: string
+  isRead: boolean
+  createdTime: string
+}
+export const listCollaborations = (params: Record<string, string | number>) =>
+  request.get<{ records: OrderCollaborationVO[]; total: number }>('/bpcs/order-collaboration', { params })
+export const createCollaboration = (data: Partial<OrderCollaborationVO>) =>
+  request.post<OrderCollaborationVO>('/bpcs/order-collaboration', data)
+export const updateCollabStatus = (id: number, status: string) =>
+  request.put<OrderCollaborationVO>(`/bpcs/order-collaboration/${id}/status`, null, { params: { status } })
+export const assignCollab = (id: number, assignedTo: string) =>
+  request.put<OrderCollaborationVO>(`/bpcs/order-collaboration/${id}/assign`, null, { params: { assignedTo } })
+export const deleteCollaboration = (id: number) =>
+  request.delete(`/bpcs/order-collaboration/${id}`)
+export const sendCollabNotification = (data: Partial<CollaborationNotificationVO>) =>
+  request.post<CollaborationNotificationVO>('/bpcs/order-collaboration/notifications', data)
+export const listCollabNotifications = (collabId: number) =>
+  request.get<CollaborationNotificationVO[]>(`/bpcs/order-collaboration/${collabId}/notifications`)
+export const listMyNotifications = (recipient: string) =>
+  request.get<CollaborationNotificationVO[]>('/bpcs/order-collaboration/my-notifications', { params: { recipient } })
+export const markNotificationRead = (notifId: number) =>
+  request.put(`/bpcs/order-collaboration/notifications/${notifId}/read`)
+export const getUnreadCount = (recipient: string) =>
+  request.get<number>('/bpcs/order-collaboration/notifications/unread-count', { params: { recipient } })
+
+// ===== ㊷ 多仓库联合补货 =====
+
+export interface WarehouseStock {
+  wh: string
+  qtyOnHand: number | null
+  qtyAllocated: number | null
+  qtyAvailable: number | null
+  qtyOnOrder: number | null
+  lastTxnDate: string | null
+  pct: number | null
+}
+
+export interface WarehouseReplenishItem {
+  item: string
+  itdsc: string | null
+  totalQty: number | null
+  safetyStock: number | null
+  shortage: number | null
+  avgDailyDemand: number | null
+  suggestQty: number | null
+  warehouses: WarehouseStock[]
+}
+
+export const searchWarehouseReplenish = (params: {
+  cono?: string; item?: string; itdsc?: string; belowSafetyOnly?: boolean; current?: number; size?: number
+}) =>
+  request.get<PageResult<WarehouseReplenishItem>>('/bpcs/warehouse-replenish', { params })
+
+// ==================== ⑥ 预测补货看板 ====================
+export interface ForecastMonthlyDemand {
+  ym: string
+  actual: number
+  forecast: number
+  upperBound: number
+  lowerBound: number
+}
+export interface ForecastStockLevel {
+  ym: string
+  onHand: number
+  safetyStock: number
+}
+export interface ForecastReplenishSuggestion {
+  item: string
+  currentStock: number
+  suggestedOrder: number
+}
+export interface ForecastMetrics {
+  mape: number
+  bias: number
+  gmAbc: number
+  gmXyz: number
+}
+export interface ForecastResult {
+  monthlyDemand: ForecastMonthlyDemand[]
+  stockLevels: ForecastStockLevel[]
+  replenishSuggestions: ForecastReplenishSuggestion[]
+  metrics: ForecastMetrics
+}
+export const getForecast = (params: { cono?: string; item?: string; months?: number }) =>
+  request.get<ForecastResult>('/bpcs/forecast', { params })
+export const getForecastItemOptions = (params: { cono?: string; limit?: number }) =>
+  request.get<{ value: string; label: string }[]>('/bpcs/forecast/items', { params })

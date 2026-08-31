@@ -71,34 +71,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import * as echarts from '@/utils/echarts'
+import { useECharts, type ECOption } from '@/composables/useECharts'
 import { getSalesTrend, type BpcsSalesTrend } from '@/api/bpcs'
 import { formatMoney } from '@/utils/format'
 import { cssVar } from '@/utils/cssVar'
 
 defineOptions({ name: 'BpcsSales' })
 
+const { t } = useI18n()
 const fromYm = ref('')
 const toYm = ref('')
 const loading = ref(false)
 const trend = ref<BpcsSalesTrend | null>(null)
-const chartRef = ref<HTMLElement | null>(null)
-let chartInstance: echarts.ECharts | null = null
+const chartRef = ref<HTMLDivElement>()
 
-const onResize = () => chartInstance?.resize()
+const salesChart = useECharts(chartRef, (): ECOption => ({
+  tooltip: { trigger: 'axis' },
+  legend: { data: [t('bpcs.sales.revenue'), t('bpcs.sales.orderCount')], top: 4 },
+  grid: { left: 60, right: 60, bottom: 30, top: 50 },
+  xAxis: { type: 'category', data: [] },
+  yAxis: [
+    { type: 'value', name: t('bpcs.sales.revenue'), position: 'left' },
+    { type: 'value', name: t('bpcs.sales.orderCount'), position: 'right' },
+  ],
+  series: [
+    {
+      name: t('bpcs.sales.revenue'),
+      type: 'bar',
+      data: [],
+      itemStyle: { color: cssVar('--el-color-primary') },
+      barMaxWidth: 40,
+    },
+    {
+      name: t('bpcs.sales.orderCount'),
+      type: 'line',
+      yAxisIndex: 1,
+      data: [],
+      smooth: true,
+      itemStyle: { color: cssVar('--el-color-success') },
+    },
+  ],
+}))
 
-onMounted(() => {
-  window.addEventListener('resize', onResize)
-  load()
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', onResize)
-  chartInstance?.dispose()
-  chartInstance = null
-})
+onMounted(load)
 
 function load() {
   loading.value = true
@@ -114,45 +131,20 @@ function load() {
 }
 
 function renderChart(data: BpcsSalesTrend) {
-  if (!chartRef.value) return
-  if (!chartInstance) {
-    chartInstance = echarts.init(chartRef.value)
-  }
   const labels = data.months.map(m => m.ym)
   const revenues = data.months.map(m => m.revenue ?? 0)
   const orders = data.months.map(m => m.orderCount)
 
-  chartInstance.setOption({
-    tooltip: { trigger: 'axis' },
-    legend: { data: [t('bpcs.sales.revenue'), t('bpcs.sales.orderCount')], top: 4 },
-    grid: { left: 60, right: 60, bottom: 30, top: 50 },
-    xAxis: { type: 'category', data: labels },
-    yAxis: [
-      { type: 'value', name: t('bpcs.sales.revenue'), position: 'left' },
-      { type: 'value', name: t('bpcs.sales.orderCount'), position: 'right' },
-    ],
+  salesChart.setOption({
+    xAxis: { data: labels },
     series: [
-      {
-        name: t('bpcs.sales.revenue'),
-        type: 'bar',
-        data: revenues,
-        itemStyle: { color: cssVar('--el-color-primary') },
-        barMaxWidth: 40,
-      },
-      {
-        name: t('bpcs.sales.orderCount'),
-        type: 'line',
-        yAxisIndex: 1,
-        data: orders,
-        smooth: true,
-        itemStyle: { color: cssVar('--el-color-success') },
-      },
+      { data: revenues },
+      { data: orders },
     ],
   })
 }
 
 const fmtMoney = (v: number | null | undefined) => formatMoney(v, 0)
-const { t } = useI18n()
 </script>
 
 <style scoped>

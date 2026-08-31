@@ -7,6 +7,13 @@
       <el-input v-model="query.fromDate" class="w-130" :placeholder="$t('bpcs.orderList.fromDate')" clearable @keyup.enter="search" />
       <el-input v-model="query.toDate" class="w-130" :placeholder="$t('bpcs.orderList.toDate')" clearable @keyup.enter="search" />
       <el-button type="primary" :loading="loading" @click="search">{{ $t('common.search') }}</el-button>
+      <ExportDropdown
+        :data="orders"
+        :columns="exportColumns"
+        :title="$t('bpcs.menu.orderList')"
+        :export-url="BPCS_EXPORT.supplyChain('orders')"
+        :query-params="query"
+      />
     </div>
 
     <div class="table-wrapper">
@@ -41,11 +48,25 @@ defineOptions({ name: 'BpcsOrderList' })
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { searchOrders, type OrderListItem } from '@/api/supplyChain'
+import { BPCS_EXPORT } from '@/api/bpcs'
+import ExportDropdown from '@/components/ExportDropdown.vue'
+import type { ExportColumn } from '@/components/ExportButton.vue'
 
 const router = useRouter()
 const loading = ref(false)
 const orders = ref<OrderListItem[]>([])
 const query = reactive({ cono: '001', orno: '', cust: '', fromDate: '', toDate: '' })
+
+const exportColumns: ExportColumn[] = [
+  { key: 'cono', label: '公司' },
+  { key: 'orno', label: '订单号' },
+  { key: 'custNo', label: '客户号' },
+  { key: 'custName', label: '客户名称' },
+  { key: 'orderDate', label: '订单日期' },
+  { key: 'reqDate', label: '要求日期' },
+  { key: 'lineCount', label: '行数' },
+  { key: 'statusLabel', label: '状态' },
+]
 
 function search() {
   loading.value = true

@@ -1,0 +1,23 @@
+export default {
+  compose: {
+    title: '写邮件',
+    sender: '发件人',
+    senderHint: '发件人邮箱地址（为空则使用系统默认）',
+    selectSender: '选择发件人',
+    recipients: '收件人',
+    recipientsHint: '输入邮箱地址，多个用逗号/分号/空格分隔',
+    fromGroup: '从分组添加',
+    subject: '主题',
+    body: '正文',
+    attachments: '附件',
+    addAttachment: '添加附件',
+    attachmentHint: '支持 PDF/Word/Excel/图片/文本，单个文件不超过 10MB，最多 5 个',
+    attachmentLimit: '最多上传 5 个附件',
+    priority: '优先级',
+    normal: '普通',
+    high: '紧急',
+    low: '低优先级',
+    send: '发送',
+    sendSuccess: '邮件已发送',
+  },
+}

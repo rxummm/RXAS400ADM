@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -22,7 +23,7 @@ class MockState {
     final String serverName;
 
     final ConcurrentMap<String, byte[]> mockIfsFiles = new ConcurrentHashMap<>();
-    final java.util.Set<String> mockIfsDirs = ConcurrentHashMap.newKeySet();
+    final Set<String> mockIfsDirs = ConcurrentHashMap.newKeySet();
 
     final ConcurrentMap<String, String> subsystemStatus = new ConcurrentHashMap<>(Map.of(
             "QSYS", "ACTIVE", "QINTER", "ACTIVE", "QBATCH", "ACTIVE",

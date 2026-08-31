@@ -16,6 +16,7 @@ package com.rxas400adm.as400;
  *   <li>{@link SysvalClient}  —— 系统值</li>
  *   <li>{@link MessageFileClient} —— 消息文件（*MSGF）</li>
  *   <li>{@link PfClient}      —— PF 物理文件</li>
+ *   <li>{@link DataAreaClient} —— Data Area 读写</li>
  * </ul>
  *
  * 业务代码不直接操作 JT400，只依赖本接口；
@@ -25,6 +26,8 @@ package com.rxas400adm.as400;
  * <p>M2：子接口中尚未接入真实实现的查询一律用 {@code default} 方法优雅降级
  * （返回空集合/空字符串，如 {@link SourceClient}），实现类只覆写已接入的部分，
  * 新增方法时无需同时改动两个实现类。
+ *
+ * @see AS400ClientProvider
  */
 public interface AS400Client extends CommandClient, SqlClient, AuthClient, SourceClient,
         ObjectClient, IfsClient, JobClient, SubsystemClient, SysvalClient,

@@ -229,6 +229,7 @@ import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import RxSkeleton from '@/components/RxSkeleton.vue'
+import OrderTimeline from './OrderTimeline.vue'
 import {
   getOrderHeader,
   getOrderLines,

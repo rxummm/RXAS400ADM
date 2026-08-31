@@ -26,6 +26,13 @@
       <el-button type="primary" :loading="loading" @click="search">
         {{ $t('common.search') }}
       </el-button>
+      <ExportDropdown
+        :data="items"
+        :columns="exportColumns"
+        :title="$t('bpcs.menu.inventory')"
+        :export-url="BPCS_EXPORT.inventory"
+        :query-params="query"
+      />
     </div>
 
     <!-- ── 汇总卡片 ──────────────────────────────────── -->
@@ -120,8 +127,13 @@
 
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
-import { searchInventory, type BpcsInventory } from '@/api/bpcs'
+import { useI18n } from 'vue-i18n'
+import { searchInventory, type BpcsInventory, BPCS_EXPORT } from '@/api/bpcs'
 import AppPagination from '@/components/AppPagination.vue'
+import ExportDropdown from '@/components/ExportDropdown.vue'
+import type { ExportColumn } from '@/components/ExportButton.vue'
+
+const { t } = useI18n()
 
 defineOptions({ name: 'BpcsInventory' })
 
@@ -133,6 +145,17 @@ const total = ref(0)
 const current = ref(1)
 const size = ref(20)
 const expandedKeys = ref<string[]>([])
+
+const exportColumns = computed<ExportColumn[]>(() => [
+  { key: 'item', label: t('bpcs.label.item') },
+  { key: 'description', label: t('bpcs.line.itemDesc') },
+  { key: 'uom', label: t('bpcs.inventory.uom') },
+  { key: 'totalOnHand', label: t('bpcs.inventory.totalOnHand') },
+  { key: 'totalAllocated', label: t('bpcs.inventory.totalAllocated') },
+  { key: 'totalOnOrder', label: t('bpcs.inventory.totalOnOrder') },
+  { key: 'totalAvailable', label: t('bpcs.inventory.totalAvailable') },
+  { key: 'unitCost', label: t('bpcs.inventory.unitCost') },
+])
 
 const totalOnHand = computed(() => items.value.reduce((s, i) => s + i.totalOnHand, 0))
 const totalAllocated = computed(() => items.value.reduce((s, i) => s + i.totalAllocated, 0))

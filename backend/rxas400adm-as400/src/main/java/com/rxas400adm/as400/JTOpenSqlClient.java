@@ -94,6 +94,43 @@ class JTOpenSqlClient implements SqlClient {
         }
     }
 
+    @Override
+    public Map<String, Object> querySingleChecked(String sql, Object... params) {
+        List<Map<String, Object>> rows = queryList(sql, params);
+        if (rows.isEmpty()) {
+            throw new IllegalStateException("查询结果为空: " + sql);
+        }
+        return rows.get(0);
+    }
+
+    @Override
+    public Long queryForObject(String sql, Class<Long> type, Object... params) {
+        List<Map<String, Object>> rows = queryList(sql, params);
+        if (rows.isEmpty()) return 0L;
+        Object val = rows.get(0).values().iterator().next();
+        return val != null ? ((Number) val).longValue() : 0L;
+    }
+
+    @Override
+    public int executeUpdate(String sql, Object... params) {
+        try (Connection conn = state.pooledConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
+                if (params != null) {
+                    for (int i = 0; i < params.length; i++) {
+                        ps.setObject(i + 1, params[i]);
+                    }
+                }
+                return ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw toSqlBusinessException(e);
+        } catch (RuntimeException e) {
+            throw new BusinessException(ErrorCode.AS400_SQL_FAILED,
+                    "IBM i SQL 执行异常: " + state.redact(e.getMessage()));
+        }
+    }
+
     /** SQLException → BusinessException：连接类错误（SQLState 08xxx）单独映射，消息统一脱敏 */
     private BusinessException toSqlBusinessException(SQLException e) {
         String sqlState = e.getSQLState();

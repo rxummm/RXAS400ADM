@@ -3,7 +3,6 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.dto.BpcsOrderQueryDTO;
-import com.rxas400adm.as400.service.BpcsOrderServiceImpl;
 import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.as400.vo.BpcsOrderHeaderVO;
 import com.rxas400adm.as400.vo.BpcsOrderLineVO;
@@ -19,7 +18,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
 
 /**
  * 【第六章·P1】BPCS 订单时间轴服务测试：

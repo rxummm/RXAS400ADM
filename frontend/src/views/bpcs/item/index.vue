@@ -12,6 +12,13 @@
       <el-button type="primary" :loading="loading" @click="search">
         {{ $t('common.search') }}
       </el-button>
+      <ExportDropdown
+        :data="items"
+        :columns="exportColumns"
+        :title="$t('bpcs.menu.items')"
+        :export-url="BPCS_EXPORT.items"
+        :query-params="{ item: keyword }"
+      />
     </div>
 
     <div class="item-layout">
@@ -146,8 +153,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { searchItems, getItemDetail, type BpcsItem } from '@/api/bpcs'
+import { searchItems, getItemDetail, type BpcsItem, BPCS_EXPORT } from '@/api/bpcs'
 import AppPagination from '@/components/AppPagination.vue'
+import ExportDropdown from '@/components/ExportDropdown.vue'
+import type { ExportColumn } from '@/components/ExportButton.vue'
 
 defineOptions({ name: 'BpcsItem' })
 
@@ -160,6 +169,18 @@ const size = ref(20)
 const selectedItem = ref<BpcsItem | null>(null)
 const detail = ref<BpcsItem | null>(null)
 const activeTab = ref('inventory')
+
+const exportColumns: ExportColumn[] = [
+  { key: 'item', label: '物料号' },
+  { key: 'description', label: '描述' },
+  { key: 'uom', label: '单位' },
+  { key: 'category', label: '分类' },
+  { key: 'unitCost', label: '单位成本' },
+  { key: 'listPrice', label: '列表价' },
+  { key: 'totalOnHand', label: '在手量' },
+  { key: 'totalAllocated', label: '已分配' },
+  { key: 'totalAvailable', label: '可用量' },
+]
 
 function search() {
   loading.value = true

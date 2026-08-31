@@ -118,6 +118,13 @@
           </el-table>
           </RxSkeleton>
         </el-tab-pane>
+        <el-tab-pane :label="$t('reports.builder.list')" name="builder">
+          <div style="padding:16px">
+            <el-button type="primary" @click="$router.push('/report/builder')">
+              {{ $t('reports.builder.list') }}
+            </el-button>
+          </div>
+        </el-tab-pane>
       </el-tabs>
     </div>
 

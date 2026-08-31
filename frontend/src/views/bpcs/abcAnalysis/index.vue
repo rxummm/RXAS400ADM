@@ -3,6 +3,13 @@
     <div class="search-bar">
       <el-input v-model="cono" class="w-100" :placeholder="$t('bpcs.label.cono')" clearable @keyup.enter="load" />
       <el-button type="primary" :loading="loading" @click="load">{{ $t('common.search') }}</el-button>
+      <ExportDropdown
+        :data="items"
+        :columns="exportColumns"
+        :title="$t('bpcs.menu.abcAnalysis')"
+        :export-url="BPCS_EXPORT.supplyChain('abc')"
+        :query-params="{ cono }"
+      />
     </div>
     <div v-if="items.length" class="summary-cards mb16">
       <div class="summary-card summary-card--a"><div class="summary-value">{{ classCount('A') }}</div><div class="summary-label">{{ $t('bpcs.abcAnalysis.classA') }}</div></div>
@@ -38,9 +45,21 @@
 defineOptions({ name: 'BpcsAbcAnalysis' })
 import { ref } from 'vue'
 import { fetchAbcAnalysis, type AbcItem } from '@/api/supplyChain'
+import { BPCS_EXPORT } from '@/api/bpcs'
+import ExportDropdown from '@/components/ExportDropdown.vue'
+import type { ExportColumn } from '@/components/ExportButton.vue'
 const cono = ref('001')
 const loading = ref(false)
 const items = ref<AbcItem[]>([])
+const exportColumns: ExportColumn[] = [
+  { key: 'item', label: '物料号' },
+  { key: 'description', label: '描述' },
+  { key: 'warehouse', label: '仓库' },
+  { key: 'quantity', label: '数量' },
+  { key: 'unitCost', label: '单位成本' },
+  { key: 'stockValue', label: '库存价值' },
+  { key: 'abcClass', label: '分类' },
+]
 const classCount = (c: string) => items.value.filter(i => i.abcClass === c).length
 function load() {
   loading.value = true

@@ -1,5 +1,7 @@
 package com.rxas400adm.as400;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -13,6 +15,7 @@ import java.util.regex.Pattern;
  * queryList 的关键字路由收敛为 {@link LinkedHashMap} 路由表（中-4），保持原 if 链的
  * contains 匹配顺序语义；兜底仍是业务表 SELECT 模拟。
  */
+@Slf4j
 class MockSqlClient implements SqlClient {
 
     /** 关键字 → 行生成函数；遍历顺序即匹配优先级 */
@@ -322,5 +325,28 @@ class MockSqlClient implements SqlClient {
         return List.of(
                 MockState.row("ASP_NAME", "SYSBAS", "TOTAL_SPACE", 1048576.0, "USED_SPACE", fluctuate(78.0, 4.0) / 100 * 1048576.0),
                 MockState.row("ASP_NAME", "ASP01", "TOTAL_SPACE", 524288.0, "USED_SPACE", fluctuate(52.0, 5.0) / 100 * 524288.0));
+    }
+
+    @Override
+    public Map<String, Object> querySingleChecked(String sql, Object... params) {
+        List<Map<String, Object>> rows = queryList(sql, params);
+        if (rows.isEmpty()) {
+            throw new IllegalStateException("查询结果为空: " + sql);
+        }
+        return rows.get(0);
+    }
+
+    @Override
+    public Long queryForObject(String sql, Class<Long> type, Object... params) {
+        List<Map<String, Object>> rows = queryList(sql, params);
+        if (rows.isEmpty()) return 0L;
+        Object val = rows.get(0).values().iterator().next();
+        return val != null ? ((Number) val).longValue() : 0L;
+    }
+
+    @Override
+    public int executeUpdate(String sql, Object... params) {
+        log.info("[MOCK] executeUpdate: {}", sql);
+        return 1;
     }
 }

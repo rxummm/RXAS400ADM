@@ -23,4 +23,8 @@ public final class PermissionConstants {
     public static final String BPCS_ITEM_VIEW = "BPCS_ITEM_VIEW";
     public static final String DATA_AREA_VIEW = "DATA_AREA_VIEW";
     public static final String DATA_AREA_EDIT = "DATA_AREA_EDIT";
+    public static final String USER_PROFILE_VIEW = "USER_PROFILE_VIEW";
+    public static final String USER_PROFILE_CREATE = "USER_PROFILE_CREATE";
+    public static final String USER_PROFILE_UPDATE = "USER_PROFILE_UPDATE";
+    public static final String USER_PROFILE_DELETE = "USER_PROFILE_DELETE";
 }

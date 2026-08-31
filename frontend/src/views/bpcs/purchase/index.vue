@@ -19,6 +19,13 @@
       <el-button type="primary" :loading="loading" @click="search">
         {{ $t('common.search') }}
       </el-button>
+      <ExportDropdown
+        :data="orders"
+        :columns="exportColumns"
+        :title="$t('bpcs.menu.purchases')"
+        :export-url="BPCS_EXPORT.purchases"
+        :query-params="query"
+      />
     </div>
 
     <!-- ── 表格 ─────────────────────────────────────────── -->
@@ -110,10 +117,15 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import { searchPurchases, type BpcsPurchaseOrder } from '@/api/bpcs'
+import { reactive, ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { searchPurchases, type BpcsPurchaseOrder, BPCS_EXPORT } from '@/api/bpcs'
 import AppPagination from '@/components/AppPagination.vue'
+import ExportDropdown from '@/components/ExportDropdown.vue'
+import type { ExportColumn } from '@/components/ExportButton.vue'
 import { formatMoney } from '@/utils/format'
+
+const { t } = useI18n()
 
 defineOptions({ name: 'BpcsPurchase' })
 
@@ -126,6 +138,17 @@ const current = ref(1)
 const size = ref(20)
 const detailVisible = ref(false)
 const detailOrder = ref<BpcsPurchaseOrder | null>(null)
+
+const exportColumns = computed<ExportColumn[]>(() => [
+  { key: 'cono', label: t('bpcs.label.cono') },
+  { key: 'pono', label: t('bpcs.purchase.pono') },
+  { key: 'vendorName', label: t('bpcs.purchase.vendor') },
+  { key: 'orderDate', label: t('bpcs.purchase.orderDate') },
+  { key: 'reqDate', label: t('bpcs.label.reqDate') },
+  { key: 'totalAmount', label: t('bpcs.purchase.totalAmount') },
+  { key: 'lineCount', label: t('bpcs.purchase.lineCount') },
+  { key: 'statusKey', label: t('bpcs.purchase.status') },
+])
 
 function search() {
   loading.value = true

@@ -343,4 +343,38 @@ public final class MockBpcsData {
                 MockState.row("ITEM", "GHI-3005", "ORNO", "345678", "CNAME", "浙江力源液压科技",
                         "ODATE", 20250718, "QTY", 200, "UPRICE", 46.80));
     }
+
+    // ---- ㊷ 多仓库联合补货 ----
+
+    /** 多仓库库存分布演示数据 */
+    public static List<Map<String, Object>> warehouseReplenishData() {
+        return List.of(
+                MockState.row("ITEM", "ABC-1234", "ITDSC", "液压泵总成", "WH", "WH1",
+                        "QTYOH", 120, "QTYALC", 30, "QTYAVL", 90, "QTYONORD", 0,
+                        "SAFETY", 100, "AVG_DEMAND", 5.2, "LAST_TXN_DATE", 20250815),
+                MockState.row("ITEM", "ABC-1234", "ITDSC", "液压泵总成", "WH", "WH2",
+                        "QTYOH", 45, "QTYALC", 10, "QTYAVL", 35, "QTYONORD", 200,
+                        "SAFETY", 100, "AVG_DEMAND", 5.2, "LAST_TXN_DATE", 20250810),
+                MockState.row("ITEM", "ABC-1234", "ITDSC", "液压泵总成", "WH", "WH3",
+                        "QTYOH", 80, "QTYALC", 20, "QTYAVL", 60, "QTYONORD", 0,
+                        "SAFETY", 100, "AVG_DEMAND", 5.2, "LAST_TXN_DATE", 20250820),
+                MockState.row("ITEM", "DEF-2001", "ITDSC", "伺服电机 2kW", "WH", "WH1",
+                        "QTYOH", 8, "QTYALC", 5, "QTYAVL", 3, "QTYONORD", 10,
+                        "SAFETY", 15, "AVG_DEMAND", 1.1, "LAST_TXN_DATE", 20250818),
+                MockState.row("ITEM", "DEF-2001", "ITDSC", "伺服电机 2kW", "WH", "WH2",
+                        "QTYOH", 3, "QTYALC", 0, "QTYAVL", 3, "QTYONORD", 0,
+                        "SAFETY", 15, "AVG_DEMAND", 1.1, "LAST_TXN_DATE", 20250805),
+                MockState.row("ITEM", "GHI-3005", "ITDSC", "精密齿轮", "WH", "WH1",
+                        "QTYOH", 500, "QTYALC", 100, "QTYAVL", 400, "QTYONORD", 0,
+                        "SAFETY", 200, "AVG_DEMAND", 15.0, "LAST_TXN_DATE", 20250822),
+                MockState.row("ITEM", "GHI-3005", "ITDSC", "精密齿轮", "WH", "WH2",
+                        "QTYOH", 350, "QTYALC", 50, "QTYAVL", 300, "QTYONORD", 0,
+                        "SAFETY", 200, "AVG_DEMAND", 15.0, "LAST_TXN_DATE", 20250819),
+                MockState.row("ITEM", "BEA-5001", "ITDSC", "深沟球轴承 6205", "WH", "WH1",
+                        "QTYOH", 20, "QTYALC", 15, "QTYAVL", 5, "QTYONORD", 500,
+                        "SAFETY", 50, "AVG_DEMAND", 8.0, "LAST_TXN_DATE", 20250821),
+                MockState.row("ITEM", "BEA-5001", "ITDSC", "深沟球轴承 6205", "WH", "WH3",
+                        "QTYOH", 10, "QTYALC", 5, "QTYAVL", 5, "QTYONORD", 0,
+                        "SAFETY", 50, "AVG_DEMAND", 8.0, "LAST_TXN_DATE", 20250812));
+    }
 }

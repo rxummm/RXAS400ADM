@@ -20,6 +20,7 @@ public class IbmiSystem {
     @TableId(type = IdType.AUTO)
     private Long id;
 
+    @TableField("system_name")
     private String name;
 
     private String host;
