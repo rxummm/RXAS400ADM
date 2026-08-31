@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.lang.management.ManagementFactory;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -245,7 +247,7 @@ public class CollectorScheduler {
     }
 
     private String nodeId() {
-        String pid = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
+        String pid = ManagementFactory.getRuntimeMXBean().getName();
         return pid + "-" + UUID.randomUUID().toString().substring(0, 4);
     }
 }

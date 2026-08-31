@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -131,7 +132,7 @@ public class MenuService implements IMenuService {
     private Map<Long, String> buildParentTitleMap(List<SysMenu> tabs) {
         List<Long> parentIds = tabs.stream()
                 .map(SysMenu::getParentId)
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .distinct()
                 .toList();
         if (parentIds.isEmpty()) {
