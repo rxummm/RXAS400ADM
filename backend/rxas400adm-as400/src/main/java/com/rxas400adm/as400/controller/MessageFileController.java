@@ -91,6 +91,6 @@ public class MessageFileController {
         private String id;
         private String text;
         private String secondLevel;
-        private int severity;
+        private Integer severity;
     }
 }

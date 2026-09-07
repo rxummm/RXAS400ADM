@@ -47,9 +47,13 @@ class I18nServiceTest {
         e1.setText("搜索");
         when(i18nMapper.selectList(anyWrapper())).thenReturn(List.of(e1));
 
-        Map<String, String> result = service.translations("zh-CN");
-        assertEquals("搜索", result.get("common.search"));
-        assertEquals(1, result.size());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> result = service.translations("zh-CN", null);
+        // translations() 返回嵌套 Map，common.search 位于 {common: {search: "搜索"}}
+        assertNotNull(result.get("common"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> common = (Map<String, Object>) result.get("common");
+        assertEquals("搜索", common.get("search"));
     }
 
     // ---------------- save (upsert) ----------------

@@ -91,7 +91,7 @@ public class CommandScriptService implements ICommandScriptService {
 
     
     public CommandScript update(Long id, CommandScriptRequest request) {
-        CommandScript script = EntityUtil.require(id, "命令脚本", scriptMapper::selectById);
+        CommandScript script = EntityUtil.require(id, "Command Script", scriptMapper::selectById);
         apply(script, request);
         script.setUpdatedTime(LocalDateTime.now());
         scriptMapper.updateById(script);
@@ -101,14 +101,14 @@ public class CommandScriptService implements ICommandScriptService {
 
     
     public void delete(Long id) {
-        EntityUtil.require(id, "命令脚本", scriptMapper::selectById);
+        EntityUtil.require(id, "Command Script", scriptMapper::selectById);
         scriptMapper.deleteById(id);
         tagsCache.invalidate("tags"); // P16b：写操作失效 tags 缓存
     }
 
     
     public CommandScript toggleFavorite(Long id, Boolean favorite) {
-        CommandScript script = EntityUtil.require(id, "命令脚本", scriptMapper::selectById);
+        CommandScript script = EntityUtil.require(id, "Command Script", scriptMapper::selectById);
         script.setFavorite(Boolean.TRUE.equals(favorite));
         script.setUpdatedTime(LocalDateTime.now());
         scriptMapper.updateById(script);
@@ -117,9 +117,9 @@ public class CommandScriptService implements ICommandScriptService {
 
     /** 对指定服务器执行脚本（记录执行次数/结果） */
     public CommandResult execute(Long id, Long serverId) {
-        CommandScript script = EntityUtil.require(id, "命令脚本", scriptMapper::selectById);
+        CommandScript script = EntityUtil.require(id, "Command Script", scriptMapper::selectById);
         if (serverId == null) {
-            throw new BusinessException(ErrorCode.AS400_SERVER_REQUIRED, "请选择执行服务器");
+            throw new BusinessException(ErrorCode.AS400_SERVER_REQUIRED, "Please select a server to execute");
         }
         // S4：执行前高危动词兜底（创建侧无黑名单校验，此处防历史脏数据/直改库绕过）
         clValidator.assertAllowed(script.getCommand());

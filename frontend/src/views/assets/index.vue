@@ -84,16 +84,12 @@
         </el-form-item>
         <el-form-item :label="$t('assets.environment')">
           <el-select v-model="form.environment" class="w-full">
-            <el-option label="PROD" value="PROD" />
-            <el-option label="TEST" value="TEST" />
-            <el-option label="DEV" value="DEV" />
-            <el-option label="DR" value="DR" />
+            <el-option v-for="d in envItems" :key="d.itemKey" :label="d.itemValue" :value="d.itemKey" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('assets.level')">
           <el-select v-model="form.criticalLevel" class="w-full">
-            <el-option label="CRITICAL" value="CRITICAL" />
-            <el-option label="NORMAL" value="NORMAL" />
+            <el-option v-for="d in levelItems" :key="d.itemKey" :label="d.itemValue" :value="d.itemKey" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('assets.region')">
@@ -160,6 +156,7 @@ defineOptions({ name: 'Assets' })
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useConfirmDelete } from '@/composables/useConfirmDelete'
+import { useDict } from '@/composables/useDict'
 import { Plus, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useAs400ServerStore } from '@/stores/as400Server'
@@ -181,6 +178,9 @@ const { t } = useI18n()
 const as400Store = useAs400ServerStore()
 const testingId = ref(0)
 
+const { items: envItems, getTagType } = useDict('ENVIRONMENT')
+const { items: levelItems } = useDict('CRITICAL_LEVEL')
+
 const {
   tableData,
   keyword,
@@ -201,12 +201,7 @@ const {
   showRefresh: false,
 })
 
-const envType = (env: string) => {
-  if (env === 'PROD') return 'danger'
-  if (env === 'TEST') return 'warning'
-  if (env === 'DR') return 'info'
-  return 'success'
-}
+const envType = (env: string) => getTagType(env)
 
 const load = () => forceSearch()
 

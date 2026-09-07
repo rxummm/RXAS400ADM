@@ -15,5 +15,5 @@ public class DataAreaVO {
     private String name;
     private String value;
     private String type;
-    private int length;
+    private Integer length;
 }

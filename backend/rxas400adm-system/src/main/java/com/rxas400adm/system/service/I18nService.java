@@ -15,10 +15,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * 翻译管理服务（rx_i18n_entry）。i18nMapper 全部收敛于此（R1 分层清零）。
+ * 翻译管理服务（rx_i18n）。i18nMapper 全部收敛于此。
  */
 @Service
 @RequiredArgsConstructor
@@ -27,18 +28,28 @@ public class I18nService implements II18nService {
     private final I18nMapper i18nMapper;
 
     @Override
-    public Map<String, String> translations(String lang) {
-        Map<String, String> result = new LinkedHashMap<>();
-        i18nMapper.selectList(new LambdaQueryWrapper<I18nEntry>().eq(I18nEntry::getLang, lang))
-                .forEach(e -> result.put(e.getI18nKey(), e.getText()));
-        return result;
+    public Map<String, Object> translations(String lang, String module) {
+        LambdaQueryWrapper<I18nEntry> wrapper = new LambdaQueryWrapper<I18nEntry>()
+                .eq(I18nEntry::getLang, lang);
+        if (StringUtils.hasText(module)) {
+            wrapper.eq(I18nEntry::getModule, module.trim());
+        }
+        List<I18nEntry> entries = i18nMapper.selectList(wrapper);
+        Map<String, Object> nested = new LinkedHashMap<>();
+        for (I18nEntry entry : entries) {
+            putNested(nested, entry.getI18nKey(), entry.getText());
+        }
+        return nested;
     }
 
     @Override
-    public PageResult<I18nEntryVO> entries(int current, int size, String lang, String keyword) {
+    public PageResult<I18nEntryVO> entries(int current, int size, String lang, String keyword, String module) {
         LambdaQueryWrapper<I18nEntry> wrapper = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(lang)) {
             wrapper.eq(I18nEntry::getLang, lang.trim());
+        }
+        if (StringUtils.hasText(module)) {
+            wrapper.eq(I18nEntry::getModule, module.trim());
         }
         if (StringUtils.hasText(keyword)) {
             String kw = keyword.trim();
@@ -54,13 +65,14 @@ public class I18nService implements II18nService {
     @Override
     public I18nEntryVO save(I18nEntryDTO dto) {
         if (!StringUtils.hasText(dto.getI18nKey()) || !StringUtils.hasText(dto.getLang())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "i18n key 与语言必填");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "i18n key and lang are required");
         }
         dto.setI18nKey(dto.getI18nKey().trim());
         dto.setLang(dto.getLang().trim());
         I18nEntry existing = find(dto.getI18nKey(), dto.getLang());
         if (existing != null) {
             existing.setText(dto.getText());
+            existing.setModule(dto.getModule());
             i18nMapper.update(existing, new LambdaQueryWrapper<I18nEntry>()
                     .eq(I18nEntry::getI18nKey, dto.getI18nKey())
                     .eq(I18nEntry::getLang, dto.getLang()));
@@ -70,6 +82,7 @@ public class I18nService implements II18nService {
         entry.setI18nKey(dto.getI18nKey());
         entry.setLang(dto.getLang());
         entry.setText(dto.getText());
+        entry.setModule(dto.getModule());
         i18nMapper.insert(entry);
         return I18nEntryVO.from(entry);
     }
@@ -78,9 +91,12 @@ public class I18nService implements II18nService {
     public I18nEntryVO update(I18nEntryDTO dto) {
         I18nEntry existing = find(dto.getI18nKey(), dto.getLang());
         if (existing == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "翻译记录不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Translation record not found");
         }
         existing.setText(dto.getText());
+        if (StringUtils.hasText(dto.getModule())) {
+            existing.setModule(dto.getModule());
+        }
         i18nMapper.update(existing, new LambdaQueryWrapper<I18nEntry>()
                 .eq(I18nEntry::getI18nKey, existing.getI18nKey())
                 .eq(I18nEntry::getLang, existing.getLang()));
@@ -98,5 +114,23 @@ public class I18nService implements II18nService {
         return i18nMapper.selectOne(new LambdaQueryWrapper<I18nEntry>()
                 .eq(I18nEntry::getI18nKey, key)
                 .eq(I18nEntry::getLang, lang));
+    }
+
+    /** 平铺 key → 嵌套 Map（如 "bpcs.label.cono" → {bpcs: {label: {cono: ...}}}） */
+    @SuppressWarnings("unchecked")
+    private void putNested(Map<String, Object> root, String key, String value) {
+        String[] parts = key.split("\\.");
+        Map<String, Object> current = root;
+        for (int i = 0; i < parts.length - 1; i++) {
+            Object next = current.get(parts[i]);
+            if (next instanceof Map) {
+                current = (Map<String, Object>) next;
+            } else {
+                Map<String, Object> newMap = new LinkedHashMap<>();
+                current.put(parts[i], newMap);
+                current = newMap;
+            }
+        }
+        current.put(parts[parts.length - 1], value);
     }
 }

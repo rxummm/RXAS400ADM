@@ -5,11 +5,14 @@ import com.rxas400adm.as400.service.IOrderTemplateService;
 import com.rxas400adm.as400.vo.OrderTemplateVO;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.annotation.OperateLog;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+
 
 /**
  * 订单模板 Controller（CRUD）。
@@ -17,6 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bpcs/orderTemplate")
 @RequiredArgsConstructor
+@Tag(name = "BPCS Order Template", description = "Order template management")
 public class OrderTemplateController {
 
     private final IOrderTemplateService service;
@@ -35,21 +39,21 @@ public class OrderTemplateController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "BPCS", operation = "创建订单模板")
-    public ApiResponse<OrderTemplateVO> create(@RequestBody OrderTemplateDTO dto) {
+    @OperateLog(module = "BPCS", operation = "Create order template")
+    public ApiResponse<OrderTemplateVO> create(@Valid @RequestBody OrderTemplateDTO dto) {
         return ApiResponse.success(OrderTemplateVO.from(service.create(dto)));
     }
 
     @PutMapping
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "BPCS", operation = "更新订单模板")
-    public ApiResponse<OrderTemplateVO> update(@RequestBody OrderTemplateDTO dto) {
+    @OperateLog(module = "BPCS", operation = "Update order template")
+    public ApiResponse<OrderTemplateVO> update(@Valid @RequestBody OrderTemplateDTO dto) {
         return ApiResponse.success(OrderTemplateVO.from(service.update(dto)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "BPCS", operation = "删除订单模板")
+    @OperateLog(module = "BPCS", operation = "Delete order template")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ApiResponse.success(null);
@@ -57,7 +61,7 @@ public class OrderTemplateController {
 
     @PostMapping("/{id}/use")
     @PreAuthorize("hasAuthority('BPCS_VIEW')")
-    @OperateLog(module = "BPCS", operation = "使用订单模板")
+    @OperateLog(module = "BPCS", operation = "Use order template")
     public ApiResponse<OrderTemplateVO> use(@PathVariable Long id) {
         return ApiResponse.success(OrderTemplateVO.from(service.useTemplate(id)));
     }

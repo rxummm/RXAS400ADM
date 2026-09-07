@@ -1,24 +1,44 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-input v-model="sourceOrder" class="w-120" :placeholder="$t('bpcs.orderCopy.sourceOrder')" />
-      <el-button type="primary" @click="load" class="ml8">{{ $t('common.search') }}</el-button>
+      <el-input v-model="sourceOrder" clearable :placeholder="$t('bpcs.orderCopy.sourceOrder')" @keyup.enter="handleCopy" />
+      <el-button type="primary" @click="handleCopy">{{ $t('bpcs.orderCopy.copy') }}</el-button>
     </div>
-    <div class="table-wrapper">
-      <el-table :data="rows" v-loading="loading" size="small" border>
-        <el-table-column prop="orno" :label="$t('bpcs.common.orderNo')" width="140" />
-        <el-table-column prop="cust" :label="$t('bpcs.common.customerCode')" width="100" />
-        <el-table-column prop="status" :label="$t('bpcs.common.status')" width="90" />
-      </el-table>
+    <div class="table-wrapper" v-if="result">
+      <el-alert :title="$t('bpcs.orderCopy.success')" type="success" show-icon :closable="false" class="mb16">
+        <template #default>
+          <span>{{ $t('bpcs.orderCopy.newOrderNo') }}: <strong>{{ result }}</strong></span>
+        </template>
+      </el-alert>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsOrderCopy' })
 
+import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { ElMessage } from 'element-plus'
+import { copyOrder } from '@/api/bpcs'
+
+const { t } = useI18n()
 const sourceOrder = ref('')
-const loading = ref(false)
-const rows = ref<{ orno: string; cust: string; status: string }[]>([])
-const load = () => { rows.value = [] }
+const result = ref<string | null>(null)
+
+const handleCopy = async () => {
+  if (!sourceOrder.value) {
+    ElMessage.warning(t('common.validation.notBlank'))
+    return
+  }
+  try {
+    const res = await copyOrder({ cono: '001', sourceOrno: sourceOrder.value })
+    result.value = res
+    ElMessage.success(t('common.operationSuccess'))
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    ElMessage.error(msg)
+  }
+}
 </script>

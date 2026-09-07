@@ -90,6 +90,7 @@ export default defineConfig({
         text: '系统流程图',
         items: [
           { text: '📐 架构总览', link: '/flowcharts/' },
+          { text: '📦 后端模块结构', link: '/flowcharts/15-module-structure' },
           { text: '请求拦截器链', link: '/flowcharts/09-interceptors' },
           { text: '数据表与权限码总览', link: '/flowcharts/10-tables' },
           { text: '定时任务与后台采集', link: '/flowcharts/08-scheduler' },

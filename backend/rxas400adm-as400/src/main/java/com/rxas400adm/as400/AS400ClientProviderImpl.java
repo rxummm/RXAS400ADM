@@ -60,7 +60,7 @@ public class AS400ClientProviderImpl implements AS400ClientProvider {
     public AS400Client forServer(Long serverId) {
         IbmiSystem system = loadSystem(serverId);
         if (Boolean.FALSE.equals(system.getEnabled())) {
-            throw new BusinessException(ErrorCode.AS400_SERVER_DISABLED, "服务器已禁用: " + system.getName());
+            throw new BusinessException(ErrorCode.AS400_SERVER_DISABLED, "Server is disabled: " + system.getName());
         }
         // mock 与生产都按服务器缓存：保证客户端内状态（如子系统启停、计数器）跨请求一致
         return clientCache.computeIfAbsent(serverId, id -> {
@@ -102,7 +102,7 @@ public class AS400ClientProviderImpl implements AS400ClientProvider {
                     .last(PageConstants.limitClause(1)));
         }
         if (system == null) {
-            throw new BusinessException(ErrorCode.AS400_SERVER_NOT_FOUND, "未配置可用的 AS400 服务器");
+            throw new BusinessException(ErrorCode.AS400_SERVER_NOT_FOUND, "No available AS400 server configured");
         }
         return forServer(system.getId());
     }
@@ -114,7 +114,7 @@ public class AS400ClientProviderImpl implements AS400ClientProvider {
         }
         system = systemMapper.selectById(serverId);
         if (system == null) {
-            throw new BusinessException(ErrorCode.AS400_SERVER_NOT_FOUND, "服务器不存在: " + serverId);
+            throw new BusinessException(ErrorCode.AS400_SERVER_NOT_FOUND, "Server not found: " + serverId);
         }
         systemCache.put(serverId, system);
         return system;

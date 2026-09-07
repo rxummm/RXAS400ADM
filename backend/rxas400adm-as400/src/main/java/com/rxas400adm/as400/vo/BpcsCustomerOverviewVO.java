@@ -26,9 +26,9 @@ public record BpcsCustomerOverviewVO(
         /** 销售员 */
         String salesRep,
         /** 历史总订单数 */
-        int totalOrders,
+        Integer totalOrders,
         /** 当前未结订单数 */
-        int openOrders,
+        Integer openOrders,
         /** 历史总收入 */
         BigDecimal totalRevenue,
         /** 最近订单列表 */
@@ -42,7 +42,7 @@ public record BpcsCustomerOverviewVO(
             String orderDate,
             String reqDate,
             String headerStatus,
-            int lineCount,
+            Integer lineCount,
             BigDecimal orderTotal
     ) {}
 

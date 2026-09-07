@@ -141,11 +141,12 @@ class PermissionRequestServiceTest {
     void approve_permissionCode_grantsNewBinding() {
         PermissionRequest req = pendingRequest(1L, "JOB_VIEW", null, null);
         when(requestMapper.selectById(1L)).thenReturn(req);
-        when(permissionMapper.selectOne(any())).thenReturn(null);
-        when(permissionMapper.insert(any(SysPermission.class))).thenAnswer(inv -> {
-            inv.getArgument(0, SysPermission.class).setId(100L);
-            return 1;
-        });
+        when(requestMapper.update(any(), any())).thenReturn(1);
+        // SYS-004: permission 必须已存在
+        SysPermission existingPerm = new SysPermission();
+        existingPerm.setId(100L);
+        existingPerm.setPermissionCode("JOB_VIEW");
+        when(permissionMapper.selectOne(any())).thenReturn(existingPerm);
         when(roleMapper.selectOne(any())).thenReturn(null);
         when(roleMapper.insert(any(SysRole.class))).thenAnswer(inv -> {
             inv.getArgument(0, SysRole.class).setId(200L);
@@ -173,6 +174,7 @@ class PermissionRequestServiceTest {
     void approve_permissionCode_idempotent() {
         PermissionRequest req = pendingRequest(1L, "JOB_VIEW", null, null);
         when(requestMapper.selectById(1L)).thenReturn(req);
+        when(requestMapper.update(any(), any())).thenReturn(1);
         SysPermission existing = new SysPermission();
         existing.setId(100L);
         when(permissionMapper.selectOne(any())).thenReturn(existing);
@@ -201,6 +203,7 @@ class PermissionRequestServiceTest {
     void approve_menuMode_completesDescendantButtonsAndSkipsExisting() {
         PermissionRequest req = pendingRequest(2L, null, "[1]", "[\"系统管理\"]");
         when(requestMapper.selectById(2L)).thenReturn(req);
+        when(requestMapper.update(any(), any())).thenReturn(1);
 
         SysUser alice = new SysUser();
         alice.setId(7L);
@@ -232,6 +235,7 @@ class PermissionRequestServiceTest {
     void approve_menuMode_unknownUserStillApproves() {
         PermissionRequest req = pendingRequest(3L, null, "[1]", null);
         when(requestMapper.selectById(3L)).thenReturn(req);
+        when(requestMapper.update(any(), any())).thenReturn(1);
         when(userMapper.selectOne(any())).thenReturn(null);
 
         service.approve(3L, "admin", null);

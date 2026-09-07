@@ -152,7 +152,7 @@ interface KanbanColumn {
 
 const kanbanColumns = computed<KanbanColumn[]>(() => {
   const cols: KanbanColumn[] = [
-    { status: 0, titleKey: 'bpcs.loadStatus.planned', color: '#909399', tagType: 'info', items: [] },
+    { status: 0, titleKey: 'bpcs.loadStatus.planned', color: 'var(--el-color-info)', tagType: 'info', items: [] },
     { status: 1, titleKey: 'bpcs.loadStatus.firmed', color: 'var(--color-primary)', tagType: 'primary', items: [] },
     { status: 2, titleKey: 'bpcs.loadStatus.released', color: 'var(--el-color-warning)', tagType: 'warning', items: [] },
     { status: 3, titleKey: 'bpcs.loadStatus.dispatched', color: 'var(--color-success)', tagType: 'success', items: [] },

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/bpcs/warehouse-replenish")
 @RequiredArgsConstructor
-@Tag(name = "BPCS多仓库联合补货")
+@Tag(name = "BPCS Warehouse Replenish")
 public class BpcsWarehouseReplenishController {
 
     private final IBpcsWarehouseReplenishService replenishService;

@@ -9,12 +9,12 @@ import lombok.Data;
 @Data
 public class JobParam {
 
-    @NotBlank(message = "作业名不能为空")
+    @NotBlank(message = "job name is required")
     private String jobName;
 
-    @NotBlank(message = "作业用户不能为空")
+    @NotBlank(message = "job user is required")
     private String jobUser;
 
-    @NotBlank(message = "作业编号不能为空")
+    @NotBlank(message = "job number is required")
     private String jobNumber;
 }

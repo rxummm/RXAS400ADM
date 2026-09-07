@@ -87,12 +87,15 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'Inspection' })
 import { computed, onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { Document, Download, Refresh } from '@element-plus/icons-vue'
 import { useAs400ServerStore } from '@/stores/as400Server'
 import { useFlash } from '@/composables/useFlash'
 import { exportInspection, fetchInspection, type InspectionReport } from '@/api/monitor'
 
 const as400Store = useAs400ServerStore()
+const { t } = useI18n()
 
 const servers = computed(() => as400Store.serverList)
 const serverId = ref<number>(0)
@@ -128,11 +131,15 @@ const exportPdf = async (pdf: boolean) => {
 }
 
 onMounted(async () => {
-  if (!servers.value.length) {
-    await as400Store.fetchServers()
-  }
-  if (servers.value.length) {
-    serverId.value = as400Store.currentServerId || servers.value[0].id
+  try {
+    if (!servers.value.length) {
+      await as400Store.fetchServers()
+    }
+    if (servers.value.length) {
+      serverId.value = as400Store.currentServerId || servers.value[0].id
+    }
+  } catch (e: unknown) {
+    ElMessage.error((e instanceof Error ? e.message : null) || t('common.loadFailed'))
   }
 })
 </script>

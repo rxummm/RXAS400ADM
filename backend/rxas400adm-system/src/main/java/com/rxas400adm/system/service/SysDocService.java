@@ -54,7 +54,7 @@ public class SysDocService implements ISysDocService {
     public SysDocVO detail(Long id) {
         SysDoc doc = sysDocMapper.selectById(id);
         if (doc == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "文档不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Document not found");
         }
         return SysDocVO.from(doc);
     }
@@ -79,7 +79,7 @@ public class SysDocService implements ISysDocService {
     public SysDocVO update(Long id, SysDocDTO dto, String operator) {
         SysDoc doc = sysDocMapper.selectById(id);
         if (doc == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "文档不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Document not found");
         }
         doc.setTitle(dto.getTitle().trim());
         if (dto.getContent() != null) {
@@ -104,7 +104,7 @@ public class SysDocService implements ISysDocService {
     public void delete(Long id) {
         SysDoc doc = sysDocMapper.selectById(id);
         if (doc == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "文档不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Document not found");
         }
         sysDocMapper.deleteById(id);
     }

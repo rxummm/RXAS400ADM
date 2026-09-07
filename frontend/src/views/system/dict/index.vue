@@ -86,7 +86,7 @@ import {
 import RxSkeleton from '@/components/RxSkeleton.vue'
 import DictItemList from './DictItemList.vue'
 
-defineOptions({ name: 'DictManage' })
+defineOptions({ name: 'SysDict' })
 
 const { t } = useI18n()
 

@@ -36,6 +36,7 @@ public class NoticeController {
 
     /** 已发布公告（通知中心/首页展示，登录即可读） */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<NoticeVO>> published() {
         return ApiResponse.success(noticeService.published().stream().map(NoticeVO::from).toList());
     }

@@ -37,7 +37,7 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'BpcsKpi' })
 import { ref } from 'vue'
-import { fetchSupplyChainKpi, type SupplyChainKpi } from '@/api/supplyChain'
+import { getSupplyChainKpi, type SupplyChainKpi } from '@/api/bpcs'
 import { formatMoney } from '@/utils/format'
 const cono = ref('001')
 const loading = ref(false)
@@ -45,7 +45,7 @@ const kpi = ref<SupplyChainKpi | null>(null)
 const fmtMoney = (v: number) => formatMoney(v, 0)
 function load() {
   loading.value = true
-  fetchSupplyChainKpi({ cono: cono.value || '001' }).then(d => { kpi.value = d }).finally(() => { loading.value = false })
+  getSupplyChainKpi({ cono: cono.value || '001' }).then(d => { kpi.value = d }).finally(() => { loading.value = false })
 }
 load()
 </script>

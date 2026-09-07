@@ -30,6 +30,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsCreditHold' })
+
 import { ref, onMounted } from 'vue'
 import { listCreditHolds, type CreditHoldVO } from '@/api/bpcs'
 
@@ -39,7 +42,7 @@ const rows = ref<CreditHoldVO[]>([])
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listCreditHolds() as unknown as CreditHoldVO[]
+    rows.value = await listCreditHolds()
   } finally {
     loading.value = false
   }

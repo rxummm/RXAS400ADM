@@ -6,8 +6,10 @@ import com.rxas400adm.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+
 
 /**
  * ② 智能补货建议 Controller。
@@ -15,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bpcs/replenishment")
 @RequiredArgsConstructor
+@Tag(name = "BPCS Replenishment", description = "Replenishment planning and scheduling")
 public class BpcsReplenishmentController {
 
     private final IBpcsReplenishmentService service;

@@ -64,6 +64,7 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'ServerCompare' })
 import { computed, nextTick, onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useAs400ServerStore } from '@/stores/as400Server'
@@ -139,8 +140,12 @@ const compare = async () => {
 }
 
 onMounted(async () => {
-  if (!servers.value.length) {
-    await as400Store.fetchServers()
+  try {
+    if (!servers.value.length) {
+      await as400Store.fetchServers()
+    }
+  } catch (e: unknown) {
+    ElMessage.error((e instanceof Error ? e.message : null) || t('common.loadFailed'))
   }
 })
 </script>

@@ -1,6 +1,7 @@
 package com.rxas400adm.common.crypto;
 
 import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Cipher;
@@ -91,7 +92,7 @@ public final class AesCryptoService {
         } catch (Exception e) {
             // 【E11】log-and-rethrow 去重：异常带 cause 抛出后由全局处理器统一记录，这里降为 debug，避免双份 error 堆栈
             log.debug("AES 加密失败: {}", e.getMessage());
-            throw new RuntimeException("AES 加密失败", e);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "AES 加密失败");
         }
     }
 
@@ -177,7 +178,7 @@ public final class AesCryptoService {
             spec.clearPassword();
             return new SecretKeySpec(key, "AES");
         } catch (Exception e) {
-            throw new RuntimeException("AES 密钥派生失败（PBKDF2）", e);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "AES 密钥派生失败（PBKDF2）");
         }
     }
 
@@ -188,12 +189,12 @@ public final class AesCryptoService {
             byte[] hash = sha256.digest(rawKey.getBytes(StandardCharsets.UTF_8));
             return new SecretKeySpec(hash, "AES");
         } catch (Exception e) {
-            throw new RuntimeException("AES 密钥派生失败", e);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "AES 密钥派生失败");
         }
     }
 
     private static BusinessException decryptionFailed() {
-        return new BusinessException(
+        return new BusinessException(ErrorCode.INTERNAL_ERROR,
                 "AS400 连接密码解密失败：请检查 RXAS400_CRYPTO_KEY 是否与加密时一致");
     }
 }

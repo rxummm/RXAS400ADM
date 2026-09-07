@@ -7,6 +7,44 @@ const tokenExpiryStore = useStorage(STORAGE_KEYS.TOKEN_EXPIRY)
 
 let refreshTimer: ReturnType<typeof setTimeout> | null = null
 
+/**
+ * P3：跨 Tab Token 同步。Tab A 刷新 Token 后通过 BroadcastChannel 通知其他 Tab
+ * 重新读取 localStorage 中的最新 Token，避免旧 Token 导致 401 循环。
+ */
+const TOKEN_CHANNEL = 'rxas400-token-sync'
+let tokenChannel: BroadcastChannel | null = null
+
+function getChannel(): BroadcastChannel | null {
+  if (typeof BroadcastChannel === 'undefined') return null
+  if (!tokenChannel) {
+    tokenChannel = new BroadcastChannel(TOKEN_CHANNEL)
+    tokenChannel.onmessage = (ev) => {
+      if (ev.data === 'token-updated') {
+        // 其他 Tab 刷新了 Token，重新读取本地 storage 同步 Pinia 状态
+        syncTokenFromStorage()
+      }
+    }
+  }
+  return tokenChannel
+}
+
+function syncTokenFromStorage() {
+  const newToken = tokenStore.get()
+  const newRefresh = refreshTokenStore.get()
+  const newExpiry = tokenExpiryStore.get()
+  // 通知 Pinia store 更新（延迟导入避免循环依赖）
+  import('@/stores/user').then(({ useUserStore }) => {
+    const userStore = useUserStore()
+    if (newToken) userStore.$patch({ token: newToken })
+    // 重新调度刷新定时器
+    scheduleRefresh()
+  })
+}
+
+function broadcastTokenUpdate() {
+  getChannel()?.postMessage('token-updated')
+}
+
 function getExpiryMs(): number | null {
   const raw = tokenExpiryStore.get()
   if (!raw) return null
@@ -45,6 +83,7 @@ async function doRefresh() {
     if (res.expireMs) {
       tokenExpiryStore.set(String(res.expireMs))
     }
+    broadcastTokenUpdate()
     scheduleRefresh()
   } catch {
     // Refresh failed — will be caught by 401 interceptor on next request
@@ -64,4 +103,6 @@ export function startTokenRefreshTimer() {
 
 export function stopTokenRefreshTimer() {
   clearRefreshTimer()
+  tokenChannel?.close()
+  tokenChannel = null
 }

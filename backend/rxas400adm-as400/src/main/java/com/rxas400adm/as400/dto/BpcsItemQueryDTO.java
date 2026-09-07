@@ -8,13 +8,13 @@ import jakarta.validation.constraints.Size;
  */
 public class BpcsItemQueryDTO {
 
-    @Size(max = 3, message = "公司码最长 3 位")
+    @Size(max = 3, message = "max length is 3")
     private String cono;
 
-    @Size(max = 15, message = "物料号最长 15 位")
+    @Size(max = 15, message = "max length is 15")
     private String item;
 
-    @Size(max = 30, message = "物料描述最长 30 位")
+    @Size(max = 30, message = "max length is 30")
     private String desc;
 
     private int current = 1;

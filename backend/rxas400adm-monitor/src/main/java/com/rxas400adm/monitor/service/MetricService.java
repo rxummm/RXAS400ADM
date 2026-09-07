@@ -3,6 +3,7 @@ package com.rxas400adm.monitor.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.monitor.domain.Metric;
 import com.rxas400adm.monitor.mapper.MetricMapper;
@@ -21,8 +22,16 @@ import java.util.Map;
 @Slf4j
 public class MetricService implements IMetricService {
 
-    private static final String ACTIVE_JOB_SQL =
+    private static final String ACTIVE_JOB_SQL_FALLBACK =
             "SELECT JOB_NAME FROM TABLE(QSYS2.ACTIVE_JOB_INFO()) X";
+
+    private String getActiveJobSql() {
+        try {
+            return SqlStatementRegistry.of("monitor.active.job.count");
+        } catch (IllegalStateException e) {
+            return ACTIVE_JOB_SQL_FALLBACK;
+        }
+    }
 
     private final MetricMapper metricMapper;
     private final MetricPublisher publisher;
@@ -63,7 +72,7 @@ public class MetricService implements IMetricService {
         result.put("lckw", latestMap.getOrDefault("LCKW", 0.0));
         try {
             AS400Client client = clientProvider.forServer(instanceId);
-            result.put("jobs", client.queryList(ACTIVE_JOB_SQL).size());
+            result.put("jobs", client.queryList(getActiveJobSql()).size());
         } catch (Exception e) {
             // B1：原实现静默记 0，会导致基线/告警基于假数据；改为记错误日志，保留 0 仅作占位
             log.error("采集活跃作业数失败 instanceId={}", instanceId, e);

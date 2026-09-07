@@ -60,8 +60,10 @@ public interface SqlClient {
     default Long queryForObject(String sql, Class<Long> type, Object... params) {
         List<Map<String, Object>> rows = queryList(sql, params);
         if (rows.isEmpty()) return 0L;
-        Object val = rows.get(0).values().iterator().next();
-        return val != null ? ((Number) val).longValue() : 0L;
+        Map<String, Object> firstRow = rows.get(0);
+        if (firstRow.isEmpty()) return 0L;
+        Object val = firstRow.values().iterator().next();
+        return val instanceof Number n ? n.longValue() : 0L;
     }
 
     /**

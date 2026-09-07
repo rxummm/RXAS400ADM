@@ -9,15 +9,15 @@ import lombok.Data;
 @Data
 public class ReportDefinitionDTO {
 
-    @NotBlank(message = "报表名称不能为空")
+    @NotBlank(message = "report name is required")
     private String name;
 
-    @NotBlank(message = "数据源不能为空")
+    @NotBlank(message = "data source is required")
     private String dataSource;
 
     private String title;
 
-    @NotBlank(message = "选中列不能为空")
+    @NotBlank(message = "selected columns are required")
     private String columnsJson;
 
     private String filtersJson;

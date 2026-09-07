@@ -24,10 +24,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Download, Document, DataLine, Printer } from '@element-plus/icons-vue'
 import blobClient, { triggerBlobDownload } from '@/api/blobClient'
 import type { ExportColumn } from '@/components/ExportButton.vue'
+
+const { t } = useI18n()
 
 /**
  * 通用导出下拉组件：CSV（前端生成）/ Excel / PDF（后端生成）。
@@ -51,11 +54,15 @@ const props = defineProps<{
 const loading = ref(false)
 
 async function handleCommand(format: string) {
-  if (format === 'csv') {
-    exportCsv()
-    return
+  try {
+    if (format === 'csv') {
+      exportCsv()
+      return
+    }
+    await exportServer(format)
+  } catch {
+    ElMessage.error(t('common.requestFailed'))
   }
-  await exportServer(format)
 }
 
 function exportCsv() {
@@ -81,7 +88,7 @@ function exportCsv() {
 
 async function exportServer(format: string) {
   if (!props.exportUrl) {
-    ElMessage.warning('当前模块暂不支持 Excel/PDF 导出')
+    ElMessage.warning(t('common.exportNotSupported'))
     return
   }
   loading.value = true

@@ -19,7 +19,7 @@ public class OpTemplate {
     private String description;
     private String steps;
     private String createdBy;
-    private LocalDateTime createdAt;
+    private LocalDateTime createdTime;
     private String updatedBy;
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedTime;
 }

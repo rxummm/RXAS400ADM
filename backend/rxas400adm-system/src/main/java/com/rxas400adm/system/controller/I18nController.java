@@ -23,36 +23,39 @@ import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
- * 翻译管理（rx_i18n_entry）：运行时翻译包（登录即可读）+ 管理端 CRUD（I18N_MANAGE）。
- * R1 分层清零：i18nMapper 已全部下沉至 II18nService（原「Controller 直查 Mapper 唯一例外」废除）。
+ * 翻译管理（rx_i18n）：运行时翻译包（登录即可读）+ 管理端 CRUD（I18N_MANAGE）。
  */
 @RestController
 @RequestMapping("/api/v1/i18n")
 @RequiredArgsConstructor
-@Tag(name = "国际化")
+@Tag(name = "I18n")
 public class I18nController {
 
     private final II18nService i18nService;
 
     @GetMapping
-    public ApiResponse<Map<String, String>> translations(@RequestParam(defaultValue = "zh-CN") String lang) {
-        return ApiResponse.success(i18nService.translations(lang));
+    public ApiResponse<Map<String, Object>> translations(
+            @RequestParam(defaultValue = "zh-CN") String lang,
+            @RequestParam(required = false) String module) {
+        return ApiResponse.success(i18nService.translations(lang, module));
     }
 
-    /** 管理端分页查询（语言 / 关键字过滤） */
+    /** 管理端分页查询（语言 / 关键字 / 模块过滤） */
     @GetMapping("/entries")
     @PreAuthorize("hasAuthority('I18N_MANAGE')")
-    public ApiResponse<PageResult<I18nEntryVO>> entries(@RequestParam(defaultValue = "1") int current,
-                                                      @RequestParam(defaultValue = "20") int size,
-                                                      @RequestParam(required = false) String lang,
-                                                      @RequestParam(required = false) String keyword) {
-        return ApiResponse.success(i18nService.entries(current, size, lang, keyword));
+    public ApiResponse<PageResult<I18nEntryVO>> entries(
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String lang,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String module) {
+        return ApiResponse.success(i18nService.entries(current, size, lang, keyword, module));
     }
 
     /** 新增/覆盖一条翻译 */
     @PostMapping("/entry")
     @PreAuthorize("hasAuthority('I18N_MANAGE')")
-    @OperateLog(module = "翻译管理", operation = "新增翻译")
+    @OperateLog(module = "I18n", operation = "Create translation")
     public ApiResponse<I18nEntryVO> save(@Valid @RequestBody I18nEntryDTO dto) {
         return ApiResponse.success(i18nService.save(dto));
     }
@@ -60,7 +63,7 @@ public class I18nController {
     /** 修改文案 */
     @PutMapping("/entry")
     @PreAuthorize("hasAuthority('I18N_MANAGE')")
-    @OperateLog(module = "翻译管理", operation = "修改翻译")
+    @OperateLog(module = "I18n", operation = "Update translation")
     public ApiResponse<I18nEntryVO> update(@Valid @RequestBody I18nEntryDTO dto) {
         return ApiResponse.success(i18nService.update(dto));
     }
@@ -68,7 +71,7 @@ public class I18nController {
     /** 删除一条翻译 */
     @DeleteMapping("/entry/{lang}/{key}")
     @PreAuthorize("hasAuthority('I18N_MANAGE')")
-    @OperateLog(module = "翻译管理", operation = "删除翻译")
+    @OperateLog(module = "I18n", operation = "Delete translation")
     public ApiResponse<Void> delete(@PathVariable String lang, @PathVariable String key) {
         i18nService.delete(lang, key);
         return ApiResponse.success(null);

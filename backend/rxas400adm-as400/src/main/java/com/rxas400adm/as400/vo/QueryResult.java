@@ -17,7 +17,7 @@ public class QueryResult {
 
     private List<Map<String, Object>> rows;
 
-    private int rowsReturned;
+    private Integer rowsReturned;
 
-    private long costMs;
+    private Long costMs;
 }

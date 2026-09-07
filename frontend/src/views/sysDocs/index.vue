@@ -85,6 +85,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'SysDocs' })
+
 import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
@@ -193,13 +196,17 @@ async function handleSubmit() {
 }
 
 async function handleDelete(row: SysDocItem) {
-  await ElMessageBox.confirm(t('sysDoc.deleteConfirm', { title: row.title }), t('common.warning'), {
-    type: 'warning',
-    confirmButtonText: t('common.confirm'),
-    cancelButtonText: t('common.cancel'),
-  })
-  await deleteSysDoc(row.id)
-  ElMessage.success(t('common.deleted'))
-  load()
+  try {
+    await ElMessageBox.confirm(t('sysDoc.deleteConfirm', { title: row.title }), t('common.warning'), {
+      type: 'warning',
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
+    })
+    await deleteSysDoc(row.id)
+    ElMessage.success(t('common.deleted'))
+    load()
+  } catch {
+    ElMessage.error(t('common.requestFailed'))
+  }
 }
 </script>

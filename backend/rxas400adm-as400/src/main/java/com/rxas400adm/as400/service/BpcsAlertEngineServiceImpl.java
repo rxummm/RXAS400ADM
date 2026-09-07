@@ -37,9 +37,9 @@ public class BpcsAlertEngineServiceImpl implements IBpcsAlertEngineService {
         List<Map<String, Object>> rows = clientProvider.current().queryListCheckedBounded(sql, limit, cono, limit);
         List<BpcsAlertRuleVO> result = new ArrayList<>();
         for (Map<String, Object> row : rows) {
-            int qtyOnHand = BpcsRowUtil.intOrNull(row, "QTYOH");
-            int safety = BpcsRowUtil.intOrNull(row, "SAFETY");
-            int maxStk = BpcsRowUtil.intOrNull(row, "MAXSTK");
+            int qtyOnHand = BpcsRowUtil.intVal(row, "QTYOH");
+            int safety = BpcsRowUtil.intVal(row, "SAFETY");
+            int maxStk = BpcsRowUtil.intVal(row, "MAXSTK");
             String alertType = qtyOnHand < safety ? "LOW_STOCK" : "OVER_STOCK";
             result.add(new BpcsAlertRuleVO(
                     pickStr(row, "ITEM"),

@@ -117,8 +117,8 @@ class AuthControllerSecurityTest {
 
         ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
         verify(auditLogMapper).insert(captor.capture());
-        assertEquals("登录安全", captor.getValue().getModule());
-        assertEquals("手动解锁账号", captor.getValue().getAction());
+        assertEquals("Login Security", captor.getValue().getModule());
+        assertEquals("Manual unlock account", captor.getValue().getAction());
         assertEquals("admin", captor.getValue().getUserName());
     }
 

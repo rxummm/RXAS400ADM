@@ -123,10 +123,10 @@ const refreshCurrent = () => {
   ElMessage.success(t('layout.refreshDone'))
 }
 
-const toggleLocale = () => {
+const toggleLocale = async () => {
   const next = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
+  await loadDynamicI18n(next)
   setLocale(next)
-  loadDynamicI18n(next)
 }
 
 const toggleFullscreen = () => {
@@ -184,7 +184,6 @@ const { getRegisteredShortcuts } = useShortcuts([
 ])
 
 onMounted(() => {
-  loadDynamicI18n(locale.value)
   if (userStore.isLoggedIn && userStore.menus.length === 0) {
     void userStore.fetchMenus()
   }

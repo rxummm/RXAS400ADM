@@ -26,7 +26,7 @@ public record BpcsInvoiceVO(
         /** 税额 */
         BigDecimal taxAmount,
         /** 行数 */
-        int lineCount,
+        Integer lineCount,
         /** 明细行 */
         List<InvoiceLineVO> lines
 ) {

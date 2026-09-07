@@ -9,7 +9,6 @@ import com.rxas400adm.security.service.PermissionService;
 import com.rxas400adm.security.service.TokenBlacklistService;
 import com.rxas400adm.system.aspect.OperateLogAspect;
 import com.rxas400adm.system.controller.NoticeController;
-import com.rxas400adm.system.entity.AuditLog;
 import com.rxas400adm.system.mapper.AuditLogMapper;
 import com.rxas400adm.system.service.INoticeService;
 import org.junit.jupiter.api.DisplayName;

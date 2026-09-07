@@ -48,10 +48,10 @@ public class JobSlaService implements IJobSlaService {
         sla.setDeviationPercent(dto.getDeviationPercent());
         sla.setEnabled(dto.getEnabled());
         if (sla.getJobName() == null || sla.getJobName().isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "作业名不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Job name is required");
         }
         if (sla.getExpectedDurationSec() == null || sla.getExpectedDurationSec() <= 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "预期耗时必须大于 0");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Expected duration must be greater than 0");
         }
         sla.setId(null);
         sla.setEnabled(sla.getEnabled() == null || sla.getEnabled());
@@ -66,7 +66,7 @@ public class JobSlaService implements IJobSlaService {
     public JobSla update(Long id, JobSlaDTO sla) {
         JobSla existing = slaMapper.selectById(id);
         if (existing == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "SLA 规则不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "SLA rule not found");
         }
         if (sla.getJobName() != null) {
             existing.setJobName(sla.getJobName());
@@ -91,7 +91,7 @@ public class JobSlaService implements IJobSlaService {
     @CacheEvict(cacheNames = CACHE, allEntries = true)
     public void delete(Long id) {
         if (slaMapper.selectById(id) == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "SLA 规则不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "SLA rule not found");
         }
         slaMapper.deleteById(id);
     }

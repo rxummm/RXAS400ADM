@@ -5,11 +5,15 @@ import com.rxas400adm.as400.service.IOrderScheduleService;
 import com.rxas400adm.as400.vo.OrderScheduleVO;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.util.SecurityUtils;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+
 
 /**
  * 订单排程视图 Controller（CRUD）。
@@ -17,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bpcs/orderSchedule")
 @RequiredArgsConstructor
+@Tag(name = "BPCS Order Schedule", description = "Order schedule management")
 public class OrderScheduleController {
 
     private final IOrderScheduleService service;
@@ -37,21 +42,21 @@ public class OrderScheduleController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "BPCS", operation = "创建订单排程")
-    public ApiResponse<OrderScheduleVO> create(@RequestBody OrderScheduleDTO dto) {
-        return ApiResponse.success(OrderScheduleVO.from(service.create(dto, "admin")));
+    @OperateLog(module = "BPCS", operation = "Create order schedule")
+    public ApiResponse<OrderScheduleVO> create(@Valid @RequestBody OrderScheduleDTO dto) {
+        return ApiResponse.success(OrderScheduleVO.from(service.create(dto, SecurityUtils.currentUsername())));
     }
 
     @PutMapping
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "BPCS", operation = "更新订单排程")
-    public ApiResponse<OrderScheduleVO> update(@RequestBody OrderScheduleDTO dto) {
+    @OperateLog(module = "BPCS", operation = "Update order schedule")
+    public ApiResponse<OrderScheduleVO> update(@Valid @RequestBody OrderScheduleDTO dto) {
         return ApiResponse.success(OrderScheduleVO.from(service.update(dto)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "BPCS", operation = "删除订单排程")
+    @OperateLog(module = "BPCS", operation = "Delete order schedule")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ApiResponse.success(null);

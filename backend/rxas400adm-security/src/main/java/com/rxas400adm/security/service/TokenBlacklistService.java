@@ -3,6 +3,8 @@ package com.rxas400adm.security.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.security.config.JwtProperties;
 import com.rxas400adm.security.entity.TokenBlacklist;
 import com.rxas400adm.security.mapper.TokenBlacklistMapper;
@@ -61,6 +63,34 @@ public class TokenBlacklistService implements ITokenBlacklistService {
         return blacklisted;
     }
 
+    /**
+     * 原子消费 refresh token（rotation 防竞态）：INSERT 成功 → 返回 true（允许签发新 token）；
+     * DuplicateKey → 返回 false（已被并发消费，必须拒绝）。
+     * 解决 CR-001：check→blacklist 之间的 TOCTOU 竞态窗口。
+     */
+    public boolean consumeRefreshToken(String jti, String username, long ttlMs) {
+        if (jti == null || jti.isBlank() || ttlMs <= 0) {
+            return false;
+        }
+        try {
+            TokenBlacklist row = new TokenBlacklist();
+            row.setJti(jti);
+            row.setUsername(username == null ? "" : username);
+            row.setExpireTime(LocalDateTime.now().plusNanos(TimeUnit.MILLISECONDS.toNanos(ttlMs)));
+            row.setCreatedTime(LocalDateTime.now());
+            blacklistMapper.insert(row);
+            cache.put(jti, true);
+            return true;
+        } catch (DuplicateKeyException e) {
+            // 已被并发消费，拒绝
+            cache.put(jti, true);
+            return false;
+        } catch (Exception e) {
+            log.error("[JWT] 吊销登记失败(jti={})，token 仍有效: {}", jti, e.getMessage(), e);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Token blacklisting failed: " + e.getMessage());
+        }
+    }
+
     /** 登记吊销；ttlMs<=0 或 jti 为空忽略；并发重复插入走唯一索引静默跳过 */
     public void blacklist(String jti, String username, long ttlMs) {
         if (jti == null || jti.isBlank() || ttlMs <= 0) {
@@ -78,7 +108,8 @@ public class TokenBlacklistService implements ITokenBlacklistService {
             // 已吊销，忽略
             cache.put(jti, true);
         } catch (Exception e) {
-            log.warn("[JWT] 吊销登记失败(jti={}): {}", jti, e.getMessage());
+            log.error("[JWT] 吊销登记失败(jti={})，token 仍有效: {}", jti, e.getMessage(), e);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Token blacklisting failed: " + e.getMessage());
         }
     }
 

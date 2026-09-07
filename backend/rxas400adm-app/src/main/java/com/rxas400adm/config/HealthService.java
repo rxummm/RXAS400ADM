@@ -136,7 +136,7 @@ public class HealthService {
         } catch (Exception e) {
             connect = "FAIL";
             // 【E15】detail 不透传原始异常信息（可能含主机/端口等内部细节），只暴露异常类名
-            detail = "探测失败: " + e.getClass().getSimpleName();
+            detail = "Probe failed: " + e.getClass().getSimpleName();
             // 【E15】完整异常进 warn 日志，便于排查
             log.warn("[健康] 服务器 {} 探测失败", system.getName(), e);
         }

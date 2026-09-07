@@ -2,6 +2,7 @@ package com.rxas400adm.monitor.collector;
 
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.monitor.domain.Metric;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,7 @@ public class MsgwCollector implements MetricCollector {
     public Metric collect(Long instanceId) {
         AS400Client client = clientProvider.forServer(instanceId);
         int count = client.queryList(
-                "SELECT JOB_NAME FROM TABLE(QSYS2.ACTIVE_JOB_INFO()) X WHERE JOB_STATUS = 'MSGW'").size();
+                SqlStatementRegistry.of("monitor.msgw.count")).size();
         return Metric.builder()
                 .instanceId(instanceId)
                 .metricType("JOB")

@@ -9,7 +9,7 @@
       @reset="resetSearch"
     >
       <el-select v-model="filters.status" :placeholder="$t('docs.status')" clearable class="w-140" @change="handleRefresh">
-        <el-option v-for="(label, value) in statusMap" :key="value" :label="label" :value="value" />
+        <el-option v-for="d in statusItems" :key="d.itemKey" :label="d.itemValue" :value="d.itemKey" />
       </el-select>
       <template #right>
         <div class="flex-1" />
@@ -38,7 +38,7 @@
           <el-table-column prop="version" :label="$t('docs.version')" width="80" align="center" />
           <el-table-column :label="$t('docs.status')" width="110">
             <template #default="{ row }">
-              <el-tag size="small" :type="statusType(row.status)">{{ statusMap[row.status] || row.status }}</el-tag>
+              <el-tag size="small" :type="getTagType(row.status)">{{ getLabel(row.status) }}</el-tag>
             </template>
           </el-table-column>
         </template>
@@ -116,7 +116,7 @@
       <el-descriptions :column="1" border size="small">
         <el-descriptions-item :label="$t('docs.docType')">{{ $t(docTypeKey(detailRow?.docType)) }}</el-descriptions-item>
         <el-descriptions-item :label="$t('docs.version')">v{{ detailRow?.version }}</el-descriptions-item>
-        <el-descriptions-item :label="$t('docs.status')">{{ statusMap[detailRow?.status || ''] || detailRow?.status }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('docs.status')">{{ getLabel(detailRow?.status || '') || detailRow?.status }}</el-descriptions-item>
         <el-descriptions-item :label="$t('docs.author')">{{ detailRow?.createdBy }}</el-descriptions-item>
         <el-descriptions-item :label="$t('docs.updated')">{{ detailRow?.updatedTime }}</el-descriptions-item>
         <el-descriptions-item :label="$t('docs.approver')">{{ detailRow?.approvedBy || '-' }}</el-descriptions-item>
@@ -153,6 +153,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { Plus, Upload } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import { useDict } from '@/composables/useDict'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import {
   approveDoc, createDoc, deleteDoc, docFile, listDocs, listTemplates, purgeDoc, rejectDoc, restoreDoc,
@@ -174,18 +175,12 @@ const MarkdownEditor = defineAsyncComponent(() => import('./MarkdownEditor.vue')
 defineOptions({ name: 'Docs' })
 
 const { t } = useI18n()
-// 低-19：computed 惰性求值，切语言后 keep-alive 页文案随响应式更新（原 setup 期一次性快照）
-const statusMap = computed<Record<string, string>>(() => ({
-  DRAFT: t('docs.stDraft'),
-  PENDING: t('docs.stPending'),
-  PUBLISHED: t('docs.stPublished'),
-  REJECTED: t('docs.stRejected'),
-}))
-const statusType = (s: string): 'info' | 'warning' | 'success' | 'danger' =>
-  ({ DRAFT: 'info', PENDING: 'warning', PUBLISHED: 'success', REJECTED: 'danger' } as Record<string, 'info' | 'warning' | 'success' | 'danger'>)[s] || 'info'
+
+const { items: statusItems, getTagType, getLabel } = useDict('DOC_STATUS')
+const { items: docTypeItems } = useDict('DOC_TYPE')
 
 /** 文档可选类型 + i18n key（docTypeMarkdown / docTypeText / ...） */
-const allTypes: DocType[] = ['MARKDOWN', 'TEXT', 'HTML', 'PDF', 'IMAGE']
+const allTypes = computed(() => docTypeItems.value.map(d => d.itemKey as DocType))
 const textTypes = ['MARKDOWN', 'TEXT', 'HTML']
 const docTypeKey = (docType?: DocType) =>
   `docs.docType${(docType || 'MARKDOWN').charAt(0) + (docType || 'MARKDOWN').slice(1).toLowerCase()}`

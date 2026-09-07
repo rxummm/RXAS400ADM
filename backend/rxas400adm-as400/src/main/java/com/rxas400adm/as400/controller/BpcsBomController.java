@@ -6,8 +6,10 @@ import com.rxas400adm.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+
 
 /**
  * ① BOM 查询展开 Controller。
@@ -15,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bpcs/bom")
 @RequiredArgsConstructor
+@Tag(name = "BPCS BOM", description = "Bill of materials management")
 public class BpcsBomController {
 
     private final IBpcsBomService service;

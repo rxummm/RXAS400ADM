@@ -188,8 +188,12 @@ const loadTags = async () => {
 }
 
 const toggleFav = async (row: CommandScript) => {
-  await toggleScriptFavorite(row.id, !row.favorite)
-  await fetchData({}, true)
+  try {
+    await toggleScriptFavorite(row.id, !row.favorite)
+    await fetchData({}, true)
+  } catch {
+    ElMessage.error(t('common.requestFailed'))
+  }
 }
 
 const run = async (row: CommandScript) => {
@@ -224,8 +228,12 @@ const { removeLoading, confirmRemove } = useConfirmDelete({
 })
 
 onMounted(async () => {
-  servers.value = await as400Store.fetchServers()
-  loadTags()
+  try {
+    servers.value = await as400Store.fetchServers()
+    loadTags()
+  } catch (e: unknown) {
+    ElMessage.error((e instanceof Error ? e.message : null) || t('common.loadFailed'))
+  }
 })
 </script>
 

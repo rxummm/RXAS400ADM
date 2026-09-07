@@ -14,17 +14,17 @@ record ReportSpec(String title, List<String> headers) {
     }
 
     static ReportSpec metrics(Long instanceId, int days) {
-        return new ReportSpec("IBM i 指标报表（instance=" + instanceId + " 近" + days + "天）",
+        return new ReportSpec("IBM i Metrics Report (instance=" + instanceId + ", last " + days + " days)",
                 List.of("date", "metric", "avg", "max", "min", "samples"));
     }
 
     static ReportSpec executions() {
-        return new ReportSpec("执行记录报表",
+        return new ReportSpec("Execution History Report",
                 List.of("time", "source", "name", "type", "user", "server", "status", "message", "costMs"));
     }
 
     static ReportSpec capacity(Long instanceId) {
-        return new ReportSpec("磁盘容量趋势报表（instance=" + instanceId + "）",
+        return new ReportSpec("Disk Capacity Trend Report (instance=" + instanceId + ")",
                 List.of("kind", "date", "avg", "max"));
     }
 }

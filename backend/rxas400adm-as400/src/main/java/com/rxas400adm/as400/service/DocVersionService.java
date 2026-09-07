@@ -39,7 +39,7 @@ public class DocVersionService {
     public String versionContent(Long versionId) {
         DocVersion ver = versionMapper.selectById(versionId);
         if (ver == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "版本快照不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Version snapshot not found");
         }
         return ver.getContent();
     }
@@ -51,16 +51,16 @@ public class DocVersionService {
     public void rollback(Long id, Integer version, String operator) {
         Doc doc = docMapper.selectById(id);
         if (doc == null || (doc.getDeleted() != null && doc.getDeleted() == 1)) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "文档不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Document not found");
         }
         DocVersion snapshot = versionMapper.selectOne(new LambdaQueryWrapper<DocVersion>()
                 .eq(DocVersion::getDocId, id)
                 .eq(DocVersion::getVersion, version));
         if (snapshot == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "版本快照不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Version snapshot not found");
         }
         if (DocService.STATUS_PENDING.equals(doc.getStatus())) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "文档审批中不可回滚，请先驳回或等待结果");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Cannot rollback while document is under review; reject or wait for approval");
         }
         doc.setTitle(snapshot.getTitle());
         doc.setContent(snapshot.getContent());

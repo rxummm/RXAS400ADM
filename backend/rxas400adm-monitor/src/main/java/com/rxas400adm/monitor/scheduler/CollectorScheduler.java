@@ -233,8 +233,8 @@ public class CollectorScheduler {
             }
             return acquired;
         } catch (Exception e) {
-            log.warn("[采集锁] 抢锁检查失败，按单节点模式继续: {}", e.getMessage());
-            return true;
+            log.error("[采集锁] 抢锁检查失败，本次跳过采集: {}", e.getMessage(), e);
+            return false;
         }
     }
 

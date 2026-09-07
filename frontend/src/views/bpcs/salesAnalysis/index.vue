@@ -56,18 +56,18 @@
 defineOptions({ name: 'BpcsSalesAnalysis' })
 
 import { ref } from 'vue'
-import { fetchSalesAnalysis, type SalesAnalysis } from '@/api/supplyChain'
+import { getSalesTopN, type SalesTopN } from '@/api/bpcs'
 import { formatMoney } from '@/utils/format'
 
 const cono = ref('001')
 const topN = ref(10)
 const loading = ref(false)
-const analysis = ref<SalesAnalysis | null>(null)
+const analysis = ref<SalesTopN | null>(null)
 const activeTab = ref('customers')
 
 function load() {
   loading.value = true
-  fetchSalesAnalysis({ cono: cono.value || '001', topN: topN.value })
+  getSalesTopN({ cono: cono.value || '001', topN: topN.value })
     .then(data => { analysis.value = data })
     .finally(() => { loading.value = false })
 }

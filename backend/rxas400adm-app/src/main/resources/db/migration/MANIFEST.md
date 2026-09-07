@@ -5,7 +5,7 @@
 
 ---
 
-## 表（44 张）
+## 表（70 张）
 
 | 表名 | 创建迁移 | 说明 |
 |------|---------|------|
@@ -22,7 +22,6 @@
 | `rx_source_member` | V1 | 源码成员 |
 | `rx_compile_record` | V1 | 编译记录 |
 | `rx_metric` | V1 | 监控指标 |
-| `rx_job_history` | V1 | 作业历史 |
 | `rx_alert_rule` | V1 | 告警规则 |
 | `rx_alert_event` | V1 | 告警事件 |
 | `rx_config` | V1 | 系统配置 |
@@ -32,11 +31,11 @@
 | `rx_login_attempt` | V4 | 登录尝试 |
 | `rx_command_script` | V5 | 命令脚本 |
 | `rx_metric_baseline` | V6 | 指标基线 |
-| `rx_i18n` | V6 | 国际化 |
+| `rx_i18n` | V6 | 国际化（V81: +module/updated_time/updated_by; V89: renamed updated_at→updated_time） |
 | `rx_doc_template` | V7 | 文档模板 |
 | `rx_doc` | V7 | 文档 |
 | `rx_doc_version` | V7 | 文档版本 |
-| `rx_menu` | V8 | 菜单 |
+| `rx_menu` | V8 | 菜单（V84: +cached/cache_name） |
 | `rx_region` | V10 | 区域 |
 | `rx_calendar_event` | V10 | 日历事件 |
 | `rx_role_menu` | V11 | 角色-菜单关联 |
@@ -59,16 +58,38 @@
 | `rx_dist_lock` | V43 | 分布式锁 |
 | `rx_op_template` | V54 | 操作模板（V65: `created_at` → `created_time`） |
 | `rx_sys_doc` | V66 | 知识库文档（纯 DB） |
+| `rx_email_config` | V67 | 邮件服务配置（SMTP） |
+| `rx_email_recipient_group` | V67 | 邮件收件人分组 |
+| `rx_email_recipient` | V67 | 邮件分组成员 |
+| `rx_email_log` | V67 | 邮件发送日志 |
+| `rx_report_definition` | V68 | 报表定义（拖拽构建器） |
+| `rx_as400_user_profile_log` | V70 | AS400 用户档案变更日志 |
+| `rx_cycle_count_plan` | V71 | 循环盘点计划 |
+| `rx_cycle_count_result` | V71 | 循环盘点结果 |
+| `rx_shipment` | V72 | 运单主表 |
+| `rx_shipment_event` | V72 | 运单事件追踪 |
+| `rx_carrier` | V72 | 承运商 |
+| `rx_order_template` | V73 | 订单模板 |
+| `rx_order_copy_log` | V73 | 订单复制日志 |
+| `rx_order_change` | V73 | 订单变更记录 |
+| `rx_rma` | V73 | 退货 RMA |
+| `rx_order_schedule` | V73 | 订单排程视图 |
+| `rx_freight_cost_rule` | V75 | 运费规则 |
+| `rx_freight_cost_record` | V75 | 运费记录 |
+| `rx_inventory_simulation` | V75 | 库存模拟 |
+| `rx_order_collaboration` | V75 | 订单协作 |
+| `rx_collaboration_notification` | V75 | 协作通知 |
+| `rx_backup_status` | V79 | 备份状态 |
+| `rx_system_value_compliance` | V79 | 系统值合规 |
 
 ---
 
-## 索引
+## 索引（13 个）
 
 | 索引名 | 表 | 创建迁移 | 说明 |
 |--------|-----|---------|------|
 | `idx_audit_user_time` | `rx_audit_log` | V1 | 用户+时间查询 |
 | `idx_metric_instance_time` | `rx_metric` | V1/V42 | 实例+时间查询（V42 重建） |
-| `idx_job_instance` | `rx_job_history` | V1 | 实例查询 |
 | `idx_user_login_source` | `rx_user` | V2 | 登录来源 |
 | `idx_report_schedule_history` | `rx_report_schedule_history` | V26 | 调度+时间 |
 | `idx_doc_version_doc` | `rx_doc_version` | V35 | 文档版本 |
@@ -80,7 +101,6 @@
 | `idx_alert_event_rule` | `rx_alert_event` | V35 | 规则 |
 | `idx_alert_event_status_time` | `rx_alert_event` | V35 | 状态+时间 |
 | `idx_metric_name_time` | `rx_metric` | V41 | 名称+时间 |
-| `idx_job_history_name_number` | `rx_job_history` | V51 | 作业名+编号 |
 | `idx_sql_history_created_time` | `rx_sql_history` | V51 | 创建时间 |
 | `idx_compile_record_created_time` | `rx_compile_record` | V51 | 创建时间 |
 | `idx_audit_operate_target` | `rx_audit_log` | V53 | 操作目标 |
@@ -88,6 +108,7 @@
 | `idx_alert_event_upgrade` | `rx_alert_event` | V55 | 升级通知去重 |
 | `idx_sys_doc_status` | `rx_sys_doc` | V66 | 状态 |
 | `idx_sys_doc_category` | `rx_sys_doc` | V66 | 分类 |
+| `idx_i18n_module` | `rx_i18n` | V81 | 模块分类 |
 
 ---
 
@@ -120,8 +141,9 @@
 | V29/V30 重复建表 `rx_scheduler_lock` | V29, V30 | IF NOT EXISTS 幂等，历史遗留不可删 |
 | V31 空迁移 | V31 | AES 加密说明占位，无 DDL |
 | V54 `created_at`/`updated_at` 列名不一致 | V54 | V65 已统一为 `created_time`/`updated_time` |
+| V81 `updated_at` 列名不一致 | V81 | V89 已重命名为 `updated_time` |
 
 ---
 
-*最后更新：2026-08-28*
-*覆盖迁移：V1 ~ V66（共 66 个）*
+*最后更新：2026-09-04*
+*覆盖迁移：V1 ~ V90（共 90 个）*

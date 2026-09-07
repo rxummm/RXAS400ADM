@@ -111,8 +111,19 @@ class IbmiSystemServiceTest {
     @Test
     @DisplayName("delete → 删除服务器并缓存失效")
     void delete_shouldDeleteAndEvict() {
+        IbmiSystem existing = new IbmiSystem();
+        existing.setId(1L);
+        when(ibmiSystemMapper.selectById(1L)).thenReturn(existing);
         service.delete(1L);
         verify(ibmiSystemMapper).deleteById(1L);
         verify(clientProvider).evict(1L);
+    }
+
+    @Test
+    @DisplayName("delete → 不存在抛 NOT_FOUND")
+    void delete_notFound_shouldThrow() {
+        when(ibmiSystemMapper.selectById(99L)).thenReturn(null);
+        assertThrows(BusinessException.class,
+                () -> service.delete(99L));
     }
 }

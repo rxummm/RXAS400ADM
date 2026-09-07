@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/bpcs/items")
 @RequiredArgsConstructor
-@Tag(name = "BPCS物料主档")
+@Tag(name = "BPCS Item Master")
 public class BpcsItemController {
 
     private final IBpcsItemService itemService;

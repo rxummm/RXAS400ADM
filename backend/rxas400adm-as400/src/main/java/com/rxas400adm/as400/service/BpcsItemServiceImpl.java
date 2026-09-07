@@ -64,7 +64,7 @@ public class BpcsItemServiceImpl implements IBpcsItemService {
         List<Map<String, Object>> basicRows = clientProvider.current()
                 .queryListCheckedBounded(sqlBasic, 1, item);
         Map<String, Object> basic = basicRows.stream().findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "物料不存在: " + item));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Item not found: " + item));
         // 库存
         String sqlWh = statements.get("bpcs.item.warehouse").replace("{lib}", lib);
         List<Map<String, Object>> whRows = clientProvider.current()
@@ -104,7 +104,7 @@ public class BpcsItemServiceImpl implements IBpcsItemService {
         Map<String, Object> master = MockBpcsData.itemMasters().stream()
                 .filter(r -> BpcsRowUtil.strEq(r, "ITEM", item))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "物料不存在: " + item));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Item not found: " + item));
 
         List<Map<String, Object>> whData = MockBpcsData.inventoryItems().stream()
                 .filter(r -> BpcsRowUtil.strEq(r, "ITEM", item))

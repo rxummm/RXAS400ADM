@@ -33,17 +33,17 @@
 defineOptions({ name: 'BpcsShippingList' })
 import { reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { fetchShippingList, type ShippingLoad } from '@/api/supplyChain'
+import { searchLoads, type BpcsLoad } from '@/api/bpcs'
 const { t } = useI18n()
 const loading = ref(false)
-const rows = ref<ShippingLoad[]>([])
+const rows = ref<BpcsLoad[]>([])
 const query = reactive({ cono: '001', lhno: '', carrier: '' })
 function load() {
   loading.value = true
-  const p: Record<string, string | number> = { cono: query.cono || '001', limit: 200 }
+  const p: Record<string, string | number> = { cono: query.cono || '001', current: 1, size: 200 }
   if (query.lhno) p.lhno = query.lhno
   if (query.carrier) p.carrier = query.carrier
-  fetchShippingList(p).then(d => { rows.value = d }).finally(() => { loading.value = false })
+  searchLoads(p).then(d => { rows.value = d.records }).finally(() => { loading.value = false })
 }
 const statusLabel = (s: number) => {
   const keys = ['bpcs.shippingList.statusPlanned', 'bpcs.shippingList.statusFirmed', 'bpcs.shippingList.statusReleased', 'bpcs.shippingList.statusDispatched']

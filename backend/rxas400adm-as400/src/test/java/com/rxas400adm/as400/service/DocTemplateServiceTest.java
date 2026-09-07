@@ -127,9 +127,20 @@ class DocTemplateServiceTest {
     @Test
     @DisplayName("deleteTemplate → 正常删除")
     void deleteTemplate() {
+        DocTemplate existing = new DocTemplate();
+        existing.setId(1L);
+        when(templateMapper.selectById(1L)).thenReturn(existing);
         when(templateMapper.deleteById(1L)).thenReturn(1);
         service.deleteTemplate(1L);
         verify(templateMapper).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("deleteTemplate → 不存在抛 NOT_FOUND")
+    void deleteTemplate_notFound_shouldThrow() {
+        when(templateMapper.selectById(99L)).thenReturn(null);
+        assertThrows(BusinessException.class,
+                () -> service.deleteTemplate(99L));
     }
 
     @Test

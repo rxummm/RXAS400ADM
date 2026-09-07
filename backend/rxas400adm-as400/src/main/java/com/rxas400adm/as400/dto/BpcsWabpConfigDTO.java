@@ -6,27 +6,27 @@ import lombok.Data;
 
 @Data
 public class BpcsWabpConfigDTO {
-    @NotBlank(message = "仓库代码不能为空")
+    @NotBlank(message = "warehouse code is required")
     private String wh;
 
-    @NotNull(message = "星期几不能为空")
+    @NotNull(message = "day of week is required")
     private Integer dayOfWeek;
 
-    @NotBlank(message = "时间不能为空")
+    @NotBlank(message = "time is required")
     private String time;
 
-    @NotBlank(message = "SHPHOLD 不能为空")
+    @NotBlank(message = "SHPHOLD is required")
     private String shipHold;
 
-    @NotBlank(message = "CRHOLD 不能为空")
+    @NotBlank(message = "CRHOLD is required")
     private String crHold;
 
-    @NotBlank(message = "PRHOLD 不能为空")
+    @NotBlank(message = "PRHOLD is required")
     private String prHold;
 
-    @NotBlank(message = "状态不能为空")
+    @NotBlank(message = "status is required")
     private String active;
 
-    @NotBlank(message = "维护人不能为空")
+    @NotBlank(message = "maintainer is required")
     private String maintUser;
 }

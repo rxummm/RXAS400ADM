@@ -10,7 +10,7 @@ import lombok.Data;
 @Data
 public class PermissionRequestReviewDTO {
 
-    @Size(max = 500, message = "审批意见最长 500 字符")
+    @Size(max = 500, message = "max length is 500 characters")
     @Schema(description = "审批意见", example = "同意")
     private String comment;
 }

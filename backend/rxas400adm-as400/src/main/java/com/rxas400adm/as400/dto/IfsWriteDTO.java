@@ -10,8 +10,8 @@ import lombok.Data;
  */
 @Data
 public class IfsWriteDTO {
-    @NotBlank(message = "IFS 路径不能为空")
-    @Size(max = 500, message = "路径长度不能超过 500 个字符")
+    @NotBlank(message = "IFS path is required")
+    @Size(max = 500, message = "path length must not exceed 500 characters")
     @Schema(description = "IFS路径", example = "/home/user/file.txt")
     private String path;
 

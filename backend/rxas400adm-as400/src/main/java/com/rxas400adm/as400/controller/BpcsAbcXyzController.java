@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bpcs/inventory/abc-xyz")
 @RequiredArgsConstructor
-@Tag(name = "BPCS ABC/XYZ矩阵分析")
+@Tag(name = "BPCS ABC/XYZ Analysis")
 public class BpcsAbcXyzController {
 
     private final IBpcsAbcXyzService abcXyzService;

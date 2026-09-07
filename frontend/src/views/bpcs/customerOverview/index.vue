@@ -97,7 +97,7 @@
 
 <script setup lang="ts">
 //noinspection JSUnusedGlobalSymbols
-defineOptions({ name: 'CustomerOverview' })
+defineOptions({ name: 'BpcsCustomerOverview' })
 
 import { ref } from 'vue'
 import { getCustomerOverview, type CustomerOverview } from '@/api/bpcs'

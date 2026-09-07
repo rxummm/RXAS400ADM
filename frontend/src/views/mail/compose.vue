@@ -140,13 +140,15 @@ function handleEditorCreated(editor: IDomEditor) {
 onMounted(async () => {
   try {
     const [groupsData, sendersData] = await Promise.all([
-      listAllEmailGroups() as unknown as Promise<EmailGroup[]>,
-      listSenders() as unknown as Promise<string[]>,
+      listAllEmailGroups(),
+      listSenders(),
     ])
     groups.value = groupsData
     senders.value = sendersData
     if (sendersData.length > 0) form.value.sender = sendersData[0]
-  } catch { /* empty */ }
+  } catch {
+    ElMessage.error(t('common.loadFailed'))
+  }
 })
 
 onBeforeUnmount(() => {
@@ -160,11 +162,15 @@ function handleSenderSelect(sender: string) {
 
 async function handleGroupSelect(groupId: number | null) {
   if (!groupId) return
-  const members = await listGroupMembers(groupId)
-  const emails = members.filter((m: { enabled: number }) => m.enabled === 1).map((m: { email: string }) => m.email)
-  const existing = form.value.recipients.split(/[;, ]+/).filter(Boolean)
-  const merged = [...new Set([...existing, ...emails])]
-  form.value.recipients = merged.join(', ')
+  try {
+    const members = await listGroupMembers(groupId)
+    const emails = members.filter((m: { enabled: number }) => m.enabled === 1).map((m: { email: string }) => m.email)
+    const existing = form.value.recipients.split(/[;, ]+/).filter(Boolean)
+    const merged = [...new Set([...existing, ...emails])]
+    form.value.recipients = merged.join(', ')
+  } catch {
+    ElMessage.error(t('common.loadFailed'))
+  }
 }
 
 function handleFileChange(file: UploadFile) {

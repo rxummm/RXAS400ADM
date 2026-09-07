@@ -12,6 +12,9 @@ public interface SysUserService {
 
     SysUser getByUsername(String username);
 
+    /** 获取用户，不存在则抛出 NOT_FOUND */
+    SysUser requireByUsername(String username);
+
     PageResult<UserVO> page(long current, long size, String keyword);
 
     UserVO create(UserDTO dto);

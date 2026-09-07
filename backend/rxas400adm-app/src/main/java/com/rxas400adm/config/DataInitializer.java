@@ -55,13 +55,13 @@ public class DataInitializer implements CommandLineRunner {
         if (!demoProfile) {
             // 参照 StartupGuard 对默认 JWT 密钥的处理：非 mock/dev 的全新库拒绝注入演示数据，fail-fast
             throw new IllegalStateException(
-                    "全新数据库在非 mock/dev profile 下启动：为防止演示数据（admin/admin123、示例服务器）进入生产，"
-                            + "请先手动初始化管理员账号与基础数据，或使用 mock/dev profile 启动。");
+                    "Fresh database on non-mock/dev profile: to prevent demo data (admin/admin123, sample servers) entering production, "
+                            + "initialize admin account and base data manually, or start with mock/dev profile.");
         }
         initAdmin();
         initIbmiSystems();
         initAlertRules();
-        log.info("演示数据初始化完成：admin / admin123");
+        log.info("Demo data initialized: admin / admin123");
     }
 
     /** 演示管理员：admin / admin123；角色-权限、角色-菜单绑定已由 V38 种子提供（ADMIN=全量） */
@@ -79,7 +79,7 @@ public class DataInitializer implements CommandLineRunner {
                 new LambdaQueryWrapper<SysRole>().eq(SysRole::getRoleCode, "ADMIN"));
         /* B12：V38 种子被破坏时 fail-fast 给出明确原因，替代裸 NPE */
         if (adminRole == null) {
-            throw new IllegalStateException("ADMIN 角色缺失：V38 种子数据被破坏，请检查 Flyway 迁移");
+            throw new IllegalStateException("ADMIN role missing: V38 seed data corrupted, check Flyway migrations");
         }
         SysUserRole userRole = new SysUserRole();
         userRole.setUserId(admin.getId());

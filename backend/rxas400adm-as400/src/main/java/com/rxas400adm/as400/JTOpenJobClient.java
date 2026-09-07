@@ -10,6 +10,7 @@ import com.ibm.as400.access.AS400;
 import com.ibm.as400.access.CommandCall;
 import com.ibm.as400.access.AS400Message;
 import com.ibm.as400.access.IFSFileInputStream;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
@@ -47,8 +48,7 @@ class JTOpenJobClient implements JobClient {
 
     @Override
     public List<JobQueueRow> listJobQueues() {
-        return sqlClient.queryList("SELECT JOB_QUEUE_NAME, JOB_QUEUE_LIBRARY, JOB_QUEUE_STATUS, "
-                + "NUMBER_OF_JOBS, JOB_QUEUE_TYPE FROM QSYS2.JOB_QUEUE_INFO").stream()
+        return sqlClient.queryList(SqlStatementRegistry.of("job.queue.list")).stream()
                 .map(r -> new JobQueueRow(str(r, "JOB_QUEUE_NAME"), str(r, "JOB_QUEUE_LIBRARY"),
                         str(r, "JOB_QUEUE_STATUS"), lng(r, "NUMBER_OF_JOBS"), str(r, "JOB_QUEUE_TYPE")))
                 .toList();
@@ -56,10 +56,7 @@ class JTOpenJobClient implements JobClient {
 
     @Override
     public List<SpoolRow> listSpoolFiles(String jobName, String jobUser, String jobNumber) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT SPOOLED_FILE_NAME, JOB_NAME, JOB_USER, JOB_NUMBER, OUTPUT_QUEUE, "
-                        + "OUTPUT_QUEUE_LIBRARY, SPOOLED_FILE_STATUS, NUMBER_OF_PAGES, USER_DATA "
-                        + "FROM QSYS2.OUTPUT_QUEUE_INFO WHERE 1=1");
+        StringBuilder sql = new StringBuilder(SqlStatementRegistry.of("job.spool.list.base"));
         List<Object> params = new ArrayList<>();
         if (jobName != null && !jobName.isBlank()) {
             sql.append(" AND JOB_NAME = ?");
@@ -83,13 +80,10 @@ class JTOpenJobClient implements JobClient {
     @Override
     public InputStream spoolFileContent(String jobName, String jobUser, String jobNumber,
                                         String spoolName, String outputQueue) {
-        // 使用 DSPSPLF 命令输出到 IFS 临时文件，再读取返回
+        String tempPath = null;
         try {
             AS400 system = state.connect();
-            String tempPath = "/tmp/spool_" + spoolName.trim().toUpperCase() + "_" + System.currentTimeMillis() + ".txt";
-            String queue = outputQueue != null && !outputQueue.isBlank()
-                    ? outputQueue.trim().toUpperCase() : "*SELECT";
-            // DSPSPLF 输出到 IFS 文件
+            tempPath = "/tmp/rxas400/spool/" + java.util.UUID.randomUUID() + ".txt";
             String cmd = String.format(
                     "DSPSPLF FILE(%s) JOB(%s/%s/%s) SPLNBR(*SELECT) OUTPUT(%s) OUTTYPE(*OUTFILE) OUTFILE(QTEMP/SPLFOUT)",
                     spoolName.trim().toUpperCase(),
@@ -105,9 +99,7 @@ class JTOpenJobClient implements JobClient {
                 log.warn("DSPSPLF 失败(host={}, spool={}): {}", state.host, spoolName, sb);
                 return null;
             }
-            // 读取 IFS 文件内容
-            IFSFileInputStream in =
-                    new IFSFileInputStream(system, tempPath);
+            IFSFileInputStream in = new IFSFileInputStream(system, tempPath);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             byte[] buf = new byte[8192];
             int n;
@@ -115,16 +107,20 @@ class JTOpenJobClient implements JobClient {
                 baos.write(buf, 0, n);
             }
             in.close();
-            // 清理临时文件
-            try {
-                new CommandCall(system).run("DLTF FILE(" + tempPath + ")");
-            } catch (Exception ignored) {
-            }
             return new ByteArrayInputStream(baos.toByteArray());
         } catch (Exception e) {
             log.warn("读取 SPOOL 文件内容失败(host={}, spool={}): {}",
                     state.host, spoolName, state.redact(e.getMessage()));
             return null;
+        } finally {
+            if (tempPath != null) {
+                try {
+                    AS400 system = state.connect();
+                    new CommandCall(system).run("DLTF FILE(" + tempPath + ")");
+                } catch (Exception ignored) {
+                    log.debug("SPOOL 临时文件清理失败: {}", tempPath);
+                }
+            }
         }
     }
 
@@ -157,11 +153,7 @@ class JTOpenJobClient implements JobClient {
 
     @Override
     public List<JobSlaExecRow> jobSlaExecutions() {
-        String sql = "SELECT JOB_NUMBER, JOB_NAME, JOB_USER, "
-                + "MIN(MESSAGE_TIMESTAMP) AS START_TS, MAX(MESSAGE_TIMESTAMP) AS END_TS "
-                + "FROM TABLE(QSYS2.JOB_LOG_INFO(JOB_NAME_FILTER => '*ALL', JOB_USER_FILTER => '*ALL', "
-                + "JOB_NUMBER_FILTER => '*ALL')) X "
-                + "GROUP BY JOB_NUMBER, JOB_NAME, JOB_USER ORDER BY END_TS DESC FETCH FIRST 50 ROWS ONLY";
+        String sql = SqlStatementRegistry.of("job.sla.executions");
         List<Map<String, Object>> rows = sqlClient.queryList(sql);
         List<JobSlaExecRow> result = new ArrayList<>();
         Set<String> seen = new HashSet<>();
@@ -181,10 +173,7 @@ class JTOpenJobClient implements JobClient {
 
     @Override
     public GraphData jobDependencies() {
-        String sql = "SELECT JOB_NUMBER, JOB_NAME, JOB_USER, MESSAGE_TEXT "
-                + "FROM TABLE(QSYS2.JOB_LOG_INFO(JOB_NAME_FILTER => '*ALL', JOB_USER_FILTER => '*ALL', "
-                + "JOB_NUMBER_FILTER => '*ALL', MESSAGE_ID_FILTER => 'CPF1124')) X "
-                + "FETCH FIRST 200 ROWS ONLY";
+        String sql = SqlStatementRegistry.of("job.dependencies");
         List<Map<String, Object>> rows = sqlClient.queryList(sql);
         Map<String, String> nodes = new LinkedHashMap<>();
         List<GraphLink> links = new ArrayList<>();
@@ -254,11 +243,7 @@ class JTOpenJobClient implements JobClient {
 
     @Override
     public List<Map<String, Object>> historyLog(String jobName, String fromDate, String toDate) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT JOB_NAME, JOB_USER, JOB_NUMBER, MESSAGE_ID, MESSAGE_TEXT, "
-                        + "MESSAGE_TIMESTAMP, SEVERITY_NUMBER "
-                        + "FROM TABLE(QSYS2.HISTORY_LOG_INFO(JOB_NAME_FILTER => '*ALL')) X "
-                        + "WHERE 1=1");
+        StringBuilder sql = new StringBuilder(SqlStatementRegistry.of("job.history.log"));
         List<Object> params = new ArrayList<>();
         if (jobName != null && !jobName.isBlank()) {
             sql.append(" AND UPPER(JOB_NAME) LIKE ?");

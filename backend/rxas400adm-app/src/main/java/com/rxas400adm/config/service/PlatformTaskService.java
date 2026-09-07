@@ -106,7 +106,7 @@ public class PlatformTaskService {
         String taskKey = beanName + "." + methodName;
         // C5：同任务上一轮手动触发尚未结束时拒绝重入
         if (!runningTriggers.add(taskKey)) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "任务正在执行中，请稍后再试: " + taskKey);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Task is currently running, please retry later: " + taskKey);
         }
         platformTaskPool.execute(() -> {
             try {
@@ -128,7 +128,7 @@ public class PlatformTaskService {
     private void checkWhitelist(String beanName, String methodName) {
         Set<String> whitelist = parseWhitelist();
         if (!whitelist.isEmpty() && !whitelist.contains(beanName + "." + methodName)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "任务不在触发白名单内: " + beanName + "." + methodName);
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Task not in trigger whitelist: " + beanName + "." + methodName);
         }
     }
 
@@ -144,7 +144,7 @@ public class PlatformTaskService {
             long wait = TRIGGER_MIN_INTERVAL_MS - (now - prev);
             if (prev != 0L && wait > 0) {
                 throw new BusinessException(ErrorCode.BAD_REQUEST,
-                        "触发过于频繁，请 " + (wait / 1000 + 1) + " 秒后再试");
+                        "Trigger too frequent, please retry in " + (wait / 1000 + 1) + " seconds");
             }
             if (slot.compareAndSet(prev, now)) {
                 return;
@@ -157,7 +157,7 @@ public class PlatformTaskService {
         try {
             return applicationContext.getBean(beanName);
         } catch (Exception e) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "任务 Bean 不存在: " + beanName);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Task bean not found: " + beanName);
         }
     }
 
@@ -165,18 +165,18 @@ public class PlatformTaskService {
     private Method validateMethod(Object bean, String beanName, String methodName) {
         Class<?> targetClass = AopUtils.getTargetClass(bean);
         if (!targetClass.getName().startsWith(ALLOWED_PACKAGE)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "不允许触发外部 Bean 的任务: " + beanName);
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Cannot trigger external bean tasks: " + beanName);
         }
         Method method = Arrays.stream(targetClass.getDeclaredMethods())
                 .filter(m -> m.isAnnotationPresent(Scheduled.class) && m.getName().equals(methodName))
                 .findFirst().orElse(null);
         if (method == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND,
-                    "方法不存在或非定时任务: " + beanName + "." + methodName);
+                    "Method not found or not a scheduled task: " + beanName + "." + methodName);
         }
         if (method.getParameterCount() != 0) {
             throw new BusinessException(ErrorCode.BAD_REQUEST,
-                    "仅支持触发无参定时方法: " + beanName + "." + methodName);
+                    "Only parameterless scheduled methods can be triggered: " + beanName + "." + methodName);
         }
         return method;
     }
@@ -202,6 +202,6 @@ public class PlatformTaskService {
         if (scheduled.fixedRate() >= 0) {
             return "fixedRate: " + scheduled.fixedRate() + "ms";
         }
-        return "未配置";
+        return "not configured";
     }
 }

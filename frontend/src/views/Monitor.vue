@@ -46,7 +46,7 @@
     <el-card shadow="never">
       <template #header>{{ $t('monitor.history') }}</template>
       <el-table :data="pagedMetrics" size="small" :max-height="historyMaxHeight">
-        <el-table-column prop="id" :label="'ID'" width="80" />
+        <el-table-column prop="id" :label="$t('col.id')" width="80" />
         <el-table-column prop="metricName" :label="$t('monitor.metric')" width="120" />
         <el-table-column prop="metricValue" :label="$t('monitor.value')" width="120" />
         <el-table-column prop="collectTime" :label="$t('monitor.collectTime')" />
@@ -63,7 +63,7 @@
 defineOptions({ name: 'Monitor' })
 import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElNotification } from 'element-plus'
+import { ElMessage, ElNotification } from 'element-plus'
 import { useECharts } from '@/composables/useECharts'
 import { useStompClient } from '@/composables/useStompClient'
 import { fetchCapacity, fetchMetrics, fetchOverview, type CapacityResponse, type MetricOverview, type MetricPoint } from '@/api/monitor'
@@ -227,12 +227,16 @@ const load = async () => {
 let pollTimer: number | undefined
 
 onMounted(async () => {
-  // 先确保服务器列表已加载（selector 挂载前 store 可能为空，currentServerId 为 0）
-  await as400Store.fetchServers()
-  load()
-  loadCapacity()
-  connectSocket()
-  pollTimer = window.setInterval(load, 10000)
+  try {
+    // 先确保服务器列表已加载（selector 挂载前 store 可能为空，currentServerId 为 0）
+    await as400Store.fetchServers()
+    load()
+    loadCapacity()
+    connectSocket()
+    pollTimer = window.setInterval(load, 10000)
+  } catch (e: unknown) {
+    ElMessage.error((e instanceof Error ? e.message : null) || t('common.loadFailed'))
+  }
 })
 
 watch(

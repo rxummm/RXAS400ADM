@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -51,8 +52,8 @@ public class BpcsStockValueServiceImpl implements IBpcsStockValueService {
 
     private List<BpcsStockValueVO> mockValue() {
         return List.of(
-                new BpcsStockValueVO("DEF-2001", "螺柱 M12", "WH1", 5000, new java.math.BigDecimal("2.50"), new java.math.BigDecimal("12500.00")),
-                new BpcsStockValueVO("DEF-2005", "密封圈", "WH2", 200, new java.math.BigDecimal("15.00"), new java.math.BigDecimal("3000.00"))
+                new BpcsStockValueVO("DEF-2001", "螺柱 M12", "WH1", 5000, new BigDecimal("2.50"), new BigDecimal("12500.00")),
+                new BpcsStockValueVO("DEF-2005", "密封圈", "WH2", 200, new BigDecimal("15.00"), new BigDecimal("3000.00"))
         );
     }
 }

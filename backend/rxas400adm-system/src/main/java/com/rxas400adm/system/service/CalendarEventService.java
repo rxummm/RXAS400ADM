@@ -29,7 +29,7 @@ public class CalendarEventService implements ICalendarEventService {
     public List<CalendarEvent> month(int year, int month, Long userId) {
         /* B4：服务入口兜底校验（防绕过控制器 @Validated 的调用方），超界拒绝，避免 YearMonth.of 抛 DateTimeException */
         if (year < 1970 || year > 9999 || month < 1 || month > 12) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "年份/月份超出范围");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Year/month out of range");
         }
         YearMonth ym = YearMonth.of(year, month);
         return eventMapper.selectList(baseWrapper(userId)
@@ -53,10 +53,10 @@ public class CalendarEventService implements ICalendarEventService {
         event.setIsAllDay(dto.getIsAllDay());
         event.setStatus(dto.getStatus());
         if (!StringUtils.hasText(event.getTitle())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "事件标题必填");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Event title is required");
         }
         if (event.getEventDate() == null) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "事件日期必填");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Event date is required");
         }
         event.setId(null);
         event.setUserId(userId);
@@ -106,10 +106,10 @@ public class CalendarEventService implements ICalendarEventService {
     private CalendarEvent requireOwned(Long id, Long userId) {
         CalendarEvent event = eventMapper.selectById(id);
         if (event == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "日历事件不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Calendar event not found");
         }
         if (!event.getUserId().equals(userId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "无权操作他人的日历事件");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Cannot modify another user's calendar event");
         }
         return event;
     }

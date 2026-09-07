@@ -131,7 +131,7 @@
 
 <script setup lang="ts">
 //noinspection JSUnusedGlobalSymbols
-defineOptions({ name: 'OrderAnalytics' })
+defineOptions({ name: 'BpcsOrderAnalytics' })
 
 import { ref, onMounted } from 'vue'
 import {

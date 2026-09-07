@@ -1,7 +1,7 @@
 spring:
   datasource:
     # 生产数据库：可在服务器上配置环境变量覆盖
-    url: jdbc:mysql://${RXAS400_DB_HOST:localhost}:${RXAS400_DB_PORT:3306}/${RXAS400_DB_NAME:rxas400adm}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&useServerPrepStmts=true&auto-commit=true
+    url: jdbc:mysql://${RXAS400_DB_HOST:localhost}:${RXAS400_DB_PORT:3306}/${RXAS400_DB_NAME:rxas400adm}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=${RXAS400_DB_USE_SSL:false}&allowPublicKeyRetrieval=true&useServerPrepStmts=true&auto-commit=true
     username: ${RXAS400_DB_USER:root}
     # 生产强制环境变量注入，删除 :root 兜底，防止误配静默使用默认口令
     password: ${RXAS400_DB_PASSWORD}

@@ -70,7 +70,7 @@ public class PermissionRequestService implements IPermissionRequestService {
                                     List<String> menuNames, String reason) {
         boolean menuMode = menuIds != null && !menuIds.isEmpty();
         if (!menuMode && !StringUtils.hasText(permissionCode)) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "请选择要申请的菜单或填写权限码");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Please select menus or enter a permission code");
         }
         long dup = 0;
         if (menuMode) {
@@ -86,7 +86,7 @@ public class PermissionRequestService implements IPermissionRequestService {
                     .eq(PermissionRequest::getStatus, "PENDING"));
         }
         if (dup > 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "该权限已有待审批申请，请勿重复提交");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "A pending request already exists for this permission");
         }
         PermissionRequest request = new PermissionRequest();
         request.setUsername(username);
@@ -137,7 +137,9 @@ public class PermissionRequestService implements IPermissionRequestService {
 
     
     public PermissionRequest approve(Long id, String approver, String comment) {
-        PermissionRequest request = requirePending(id);
+        // CR-002 修复：CAS 原子 claim——UPDATE ... WHERE status='PENDING'，affectedRows==1 才继续
+        // 防止两个管理员并发审批同一请求
+        PermissionRequest request = claimPending(id);
         String grantText;
         if (StringUtils.hasText(request.getMenuIds())) {
             // 菜单树模式：写入 rx_user_menu 直接授权（含目录/按钮，自动补全子孙按钮）
@@ -154,8 +156,8 @@ public class PermissionRequestService implements IPermissionRequestService {
         request.setUpdatedTime(LocalDateTime.now());
         requestMapper.updateById(request);
         notificationService.send(request.getUsername(), "PERMISSION",
-                "权限申请已通过",
-                "您申请的权限「" + grantText + "」已审批通过，可重新登录后使用。");
+                "Permission request approved",
+                "Your requested permission [" + grantText + "] has been approved. Please login again to use it.");
         eventPublisher.publishEvent(new UserPermissionGrantedEvent(request.getUsername()));
         return request;
     }
@@ -169,10 +171,17 @@ public class PermissionRequestService implements IPermissionRequestService {
         request.setUpdatedTime(LocalDateTime.now());
         requestMapper.updateById(request);
         notificationService.send(request.getUsername(), "PERMISSION",
-                "权限申请被驳回",
-                "您申请的权限「" + request.getPermissionCode() + "」被驳回"
-                        + (StringUtils.hasText(comment) ? "，意见：" + comment : "") + "。");
+                "Permission request rejected",
+                "Your requested permission [" + request.getPermissionCode() + "] was rejected"
+                        + (StringUtils.hasText(comment) ? ", comment: " + comment : "") + ".");
         return request;
+    }
+
+    @Override
+    public void validateComment(String comment) {
+        if (comment != null && comment.length() > 500) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Comment must not exceed 500 characters");
+        }
     }
 
     /**
@@ -227,7 +236,7 @@ public class PermissionRequestService implements IPermissionRequestService {
         try {
             return OBJECT_MAPPER.writeValueAsString(obj);
         } catch (Exception e) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "参数序列化失败");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Parameter serialization failed");
         }
     }
 
@@ -235,21 +244,17 @@ public class PermissionRequestService implements IPermissionRequestService {
         try {
             return OBJECT_MAPPER.readValue(json, type);
         } catch (Exception e) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "参数解析失败");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Parameter parsing failed");
         }
     }
 
     /** 把权限码绑定到 REQUESTED 角色并加入申请人（幂等） */
     private void grantPermission(String username, String permissionCode) {
-        // 权限码不存在则创建
+        // SYS-004 修复：申请只能从已有 permission 选择，不存在则拒绝（禁止动态创建任意 code）
         SysPermission permission = permissionMapper.selectOne(new LambdaQueryWrapper<SysPermission>()
                 .eq(SysPermission::getPermissionCode, permissionCode));
         if (permission == null) {
-            permission = new SysPermission();
-            permission.setPermissionCode(permissionCode);
-            permission.setPermissionName(permissionCode);
-            permission.setModule("REQUESTED");
-            permissionMapper.insert(permission);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Permission code not found: " + permissionCode);
         }
         // REQUESTED 角色不存在则创建
         SysRole role = roleMapper.selectOne(new LambdaQueryWrapper<SysRole>()
@@ -257,7 +262,7 @@ public class PermissionRequestService implements IPermissionRequestService {
         if (role == null) {
             role = new SysRole();
             role.setRoleCode(REQUESTED_ROLE);
-            role.setRoleName("自助申请权限");
+            role.setRoleName("Self-service Permission Request");
             roleMapper.insert(role);
         }
         // 角色-权限绑定（幂等）
@@ -286,13 +291,37 @@ public class PermissionRequestService implements IPermissionRequestService {
         }
     }
 
+    /**
+     * CR-002 修复：CAS 原子 claim——UPDATE status='APPROVED' WHERE id=? AND status='PENDING'。
+     * affectedRows==1 → 成功 claim，并查回完整记录；affectedRows==0 → 已被并发处理。
+     */
+    private PermissionRequest claimPending(Long id) {
+        // CAS：原子更新状态，防止并发审批
+        PermissionRequest probe = new PermissionRequest();
+        probe.setStatus("APPROVED");
+        int affected = requestMapper.update(probe,
+                new LambdaQueryWrapper<PermissionRequest>()
+                        .eq(PermissionRequest::getId, id)
+                        .eq(PermissionRequest::getStatus, "PENDING"));
+        if (affected == 0) {
+            // 可能不存在，也可能已被处理
+            PermissionRequest existing = requestMapper.selectById(id);
+            if (existing == null) {
+                throw new BusinessException(ErrorCode.NOT_FOUND, "Permission request not found: " + id);
+            }
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Request already processed (status=" + existing.getStatus() + ")");
+        }
+        // CAS 成功，查回完整记录（status 已被改为 APPROVED，后续 updateById 会保留）
+        return requestMapper.selectById(id);
+    }
+
     private PermissionRequest requirePending(Long id) {
         PermissionRequest request = requestMapper.selectById(id);
         if (request == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "申请记录不存在: " + id);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Permission request not found: " + id);
         }
         if (!"PENDING".equals(request.getStatus())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "该申请已处理，不能重复审批");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Request already processed");
         }
         return request;
     }

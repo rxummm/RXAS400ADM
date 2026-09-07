@@ -52,6 +52,8 @@
 | 2.2.2 | **唯一例外**：Quartz Job 类必须字段注入（SpringBeanJobFactory 反射实例化不支持构造器） |
 | 2.2.3 | 多个类中出现相同工具方法时，提取到公共 utils 类（参照 `BpcsRowUtil`） |
 | 2.2.4 | `AS400Client` 操作**禁止**直接 `new AS400(...)`，一律经 `AS400ClientProvider` |
+| 2.2.5 | Service 查询方法**禁止**返回 null，无结果时**必须**抛 `BusinessException(ErrorCode.NOT_FOUND)` |
+| 2.2.6 | delete 方法**必须**先检查存在性（`selectById` + null 检查），不存在则抛 `NOT_FOUND` |
 
 ### 2.3 Entity 层
 
@@ -68,6 +70,7 @@
 | 2.4.1 | 查询 DTO 在 getter 中调用 `PageConstants.clampNum/clampSize` 做边界校验 |
 | 2.4.2 | VO 禁止暴露自增 id、审计字段、敏感列（除非前端确需） |
 | 2.4.3 | 分页返回统一用 `PageResult<T>` |
+| 2.4.4 | VO 字段**必须**用包装类型（`Integer`/`Long`），**禁止**原始类型（`int`/`long`），防止 `BpcsRowUtil.intOrNull()` 等返回 null 时自动拆箱 NPE |
 
 ---
 
@@ -106,6 +109,7 @@
 | 3.2.16 | el-tree 等非 EP 表格组件插槽仍可标注 `{ data }: { data: NodeType }`（不受 el-table 插槽规则限制） |
 | 3.2.17 | 无作用域的内容插槽（`<template #default>纯内容</template>`、`#header`/`#footer`/`#empty`）不需要任何处理 |
 | 3.2.18 | **CRITICAL：** `SysMenu.id` 等树/表主键字段可能是 `undefined`（`id?: number`），传给 EP 组件 prop 需 `as number` 断言、`Set.has(id)` 前守卫 `data.id != null &&` |
+| 3.2.19 | `onMounted` 中的 async 回调**必须** try/catch，错误**必须**用 `ElMessage.error()` 提示用户 |
 
 ### 3.3 Scoped 样式陷阱
 
@@ -125,6 +129,8 @@
 | 3.4.2 | `@typescript-eslint/no-unused-vars`: **error**（前缀 `_` 标记有意不用） | `eslint.config.js` |
 | 3.4.3 | `vue/no-v-html`: **error**（需 DOMPurify 先清洗） | `eslint.config.js` |
 | 3.4.4 | `vue/no-static-inline-styles`: **error** | `eslint.config.js` |
+| 3.4.5 | `catch (e: any)` **禁止**，**必须**用 `catch (e: unknown)` + 类型守卫 | — |
+| 3.4.6 | 前端 API 返回类型**必须**与后端 JSON 一致（禁止 `{ records: T[] }` 接收 `T[]`） | — |
 
 ### 3.5 组件与 Composable（必须复用）
 
@@ -162,7 +168,12 @@
 | 4.5 | 空迁移文件**禁止**（每个迁移至少含一条非注释语句） | `check-migrations.mjs` |
 | 4.6 | 跨迁移 CREATE TABLE/INDEX 名称**禁止**重复 | `check-migrations.mjs` |
 | 4.7 | MyBatis XML**禁止** `${}`，一律用 `#{}` | — |
+| 4.7.1 | **CRITICAL：Java 代码禁止内联 SQL 字符串**。MySQL 侧 SQL 必须写入 MyBatis Mapper XML（`src/main/resources/mapper/*.xml`）；AS400/DB2 for i 侧 SQL 必须写入 `SqlStatementRegistry` XML（`classpath:sql/as400-*.xml`）。禁止在 `.java` 文件中出现 `"SELECT ..."` / `"INSERT ..."` 等硬编码 SQL 字符串（审计、审查、维护统一在 XML 层面） | — |
 | 4.8 | 分页用 `Page` 对象或 `PageConstants.limitClause()`，**禁止** `.last("LIMIT n")` | — |
+| 4.9 | 菜单迁移引用父菜单时，`menu_name`/`title`/`path` **必须**与创建迁移完全一致 | — |
+| 4.10 | 菜单 `parent_id` **必须**指向 `menu_type=1`（目录），**禁止**指向 `menu_type=2`（叶子） | — |
+| 4.11 | Entity 新增字段后**必须**同步新增 DB 列（或在迁移中添加） | — |
+| 4.12 | 孤立表（无 Entity/Mapper/Service 引用）**必须**清理或归档 | — |
 
 ---
 
@@ -205,6 +216,9 @@
 | 7.12 | AES 加密使用 `AesCryptoService`（AES-256-GCM + PBKDF2），**禁止**自实现加解密 | — |
 | 7.13 | 环境判断使用 `ProfileResolver.isDevLikeMode()` / `isMockMode()`，**禁止**硬编码 `"dev".equals(...)` | — |
 | 7.14 | 跨模块事件使用 Spring `ApplicationEvent`（参照 `AlertRaisedEvent` / `UserPermissionGrantedEvent`） | — |
+| 7.15 | **禁止** `RuntimeException`/`IllegalArgumentException`/`IllegalStateException`，**必须**用 `BusinessException(ErrorCode.XXX)` | — |
+| 7.16 | `Collectors.toMap` **必须**提供 merge function `(v1,v2)->v1`，防止重复 key 崩溃 | — |
+| 7.17 | Controller **禁止**抛业务异常（业务校验必须下沉到 Service 层） | — |
 
 ### ErrorCode 域分段
 
@@ -340,7 +354,7 @@ Windows 中文环境默认编码为 GBK（CP936），以下场景会触发双编
 
 ---
 
-## 十四、常见违规 Top 10
+## 十四、常见违规 Top 15
 
 | # | 违规 | 正确做法 |
 |---|------|----------|
@@ -354,6 +368,11 @@ Windows 中文环境默认编码为 GBK（CP936），以下场景会触发双编
 | 8 | `style="width: 100%"` | 用 `.w-full` |
 | 9 | 多处重复工具方法 | 提取到公共 utils |
 | 10 | 未清理 unused import/变量 | 提交前清理 |
+| 11 | VO 用 `int`/`long` 原始类型 | 用 `Integer`/`Long` 包装类型 |
+| 12 | `Collectors.toMap` 无 merge | 添加 `(v1,v2)->v1` |
+| 13 | `RuntimeException` / `BusinessException("msg")` | `BusinessException(ErrorCode.XXX, "msg")` |
+| 14 | `onMounted` async 无 try/catch | 添加 try/catch + `ElMessage.error()` |
+| 15 | `catch (e: any)` | `catch (e: unknown)` + 类型守卫 |
 
 ---
 
@@ -377,6 +396,7 @@ Windows 中文环境默认编码为 GBK（CP936），以下场景会触发双编
 | 13.2.3 | CL 命令黑名单校验使用 `DangerousClCommandValidator`（17 内置动词 + SPI 扩展） |
 | 13.2.4 | BPCS/ERP 行级操作使用 `BpcsRowUtil` 工具类（`pickStr`/`strEq`/`decOrNull` 等），**禁止**各 Service 重复实现 |
 | 13.2.5 | IBM i 日期格式（YYYYMMDD/CYYMMDD）解析使用 `BpcsDateUtil.toLocalDate()` |
+| 13.2.6 | **CRITICAL：AS400 侧 SQL 语句必须集中声明于 XML 文件**（`classpath:sql/as400-*.xml`），通过 `SqlStatementRegistry.get(id)` 按 id 取用，**禁止**在 Java 代码中内联硬编码 SQL 字符串（与主数据源 Mapper XML 惯例对齐，便于统一审计、审查和维护） |
 
 ### 13.3 SQL 兼容性
 
@@ -422,6 +442,11 @@ Windows 中文环境默认编码为 GBK（CP936），以下场景会触发双编
 | 16.8 | `.last("LIMIT n")` 硬编码分页 | DB2 for i 不兼容 SQL 语法 | 用 `PageConstants.limitClause()` |
 | 16.9 | CRLF 批量替换吞换行 | `<template #default>` 与前一行 `el-*` 开标签拼行 | 用含换行的多行 `oldString` |
 | 16.10 | 脚本正则 `$]` 被环境展开 | 正则语法错误 | 用 `[A-Za-z0-9_]` / perl `[\w]` |
+| 16.11 | `BpcsRowUtil.intOrNull()` 返回 null 赋值给 `int` | NPE 自动拆箱 | VO 字段用 `Integer` 包装类型 |
+| 16.12 | 菜单迁移 `menu_name` 不匹配 | 子迁移引用父菜单失败 | 逐字核对创建迁移的 `menu_name` |
+| 16.13 | `parent_id` 指向叶子菜单 | 菜单树结构异常 | `parent_id` 必须指向 `menu_type=1`（目录） |
+| 16.14 | Service 返回 null | 调用方 NPE | 无结果时抛 `NOT_FOUND` |
+| 16.15 | delete 不检查存在性 | 静默忽略不存在的 ID | 先 `selectById` 检查 |
 
 ---
 
@@ -437,4 +462,4 @@ Windows 中文环境默认编码为 GBK（CP936），以下场景会触发双编
 
 ---
 
-*v1.0 | 2026-08-27 | 基于两轮完整 Code Review 制定*
+*v1.1 | 2026-09-04 | 基于三轮完整 Code Review 制定，新增 VO 类型安全/Service 返回值/delete 检查/异常处理/前端异步错误处理等规范*

@@ -26,6 +26,13 @@ public class WebhookNotifier {
             .requestFactory(new SimpleClientHttpRequestFactory())
             .build();
 
+    private static String maskUrl(String url) {
+        if (url == null) return "null";
+        int q = url.indexOf('?');
+        if (q < 0) return url;
+        return url.substring(0, q + 1) + "***";
+    }
+
     /** L2：URL 安全校验器（默认 SSRF 守卫；构造器注入供测试绕开环回限制验证 HTTP 通路） */
     private final Predicate<String> urlValidator;
 
@@ -55,7 +62,7 @@ public class WebhookNotifier {
         }
         // L2：SSRF 防护——出站出口统一校验，禁私网/回环/链路本地目标
         if (!urlValidator.test(url)) {
-            log.warn("[Webhook] 推送地址不合法（SSRF 防护拒绝）: {}", url);
+            log.warn("[Webhook] 推送地址不合法（SSRF 防护拒绝）: {}", maskUrl(url));
             return new PushResult(false, 0, "URL 不在允许范围（仅公网 http/https）");
         }
         Map<String, Object> payload = Map.of(
@@ -74,7 +81,7 @@ public class WebhookNotifier {
                 return new PushResult(true, attempt, null);
             } catch (Exception e) {
                 lastError = e.getMessage();
-                log.warn("[Webhook] 推送失败(第 {}/{} 次, url={}): {}", attempt, MAX_ATTEMPTS, url, e.getMessage());
+                log.warn("[Webhook] 推送失败(第 {}/{} 次, url={}): {}", attempt, MAX_ATTEMPTS, maskUrl(url), e.getMessage());
                 if (attempt < MAX_ATTEMPTS) {
                     try {
                         Thread.sleep(RETRY_DELAY.toMillis() * attempt);
@@ -85,7 +92,7 @@ public class WebhookNotifier {
                 }
             }
         }
-        log.error("[Webhook] 推送最终失败: {}", url);
+        log.error("[Webhook] 推送最终失败: {}", maskUrl(url));
         return new PushResult(false, MAX_ATTEMPTS, lastError);
     }
 }

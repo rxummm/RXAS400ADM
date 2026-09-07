@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
@@ -30,12 +31,14 @@ class AuthServiceTest {
     private ITokenBlacklistService tokenBlacklistService;
     @Mock
     private SysUserService userService;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     private AuthService service;
 
     @BeforeEach
     void setUp() {
-        service = new AuthService(jwtUtil, permissionService, tokenBlacklistService, userService);
+        service = new AuthService(jwtUtil, permissionService, tokenBlacklistService, userService, passwordEncoder);
     }
 
     @Test
@@ -54,25 +57,34 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("refreshToken → 已轮换的 token（黑名单）抛异常")
+    @DisplayName("refreshToken → 已轮换的 token（原子消费失败）抛异常")
     void refreshToken_blacklisted_shouldThrow() {
         when(jwtUtil.isValid("rt")).thenReturn(true);
         when(jwtUtil.isRefreshToken("rt")).thenReturn(true);
         when(jwtUtil.getJti("rt")).thenReturn("jti-1");
-        when(tokenBlacklistService.isBlacklisted("jti-1")).thenReturn(true);
+        when(jwtUtil.getUsername("rt")).thenReturn("admin");
+        when(jwtUtil.getRemainingMs("rt")).thenReturn(3600000L);
+        // CR-001 修复：consumeRefreshToken 返回 false（已被并发消费）
+        when(tokenBlacklistService.consumeRefreshToken("jti-1", "admin", 3600000L)).thenReturn(false);
 
         assertThrows(BusinessException.class, () -> service.refreshToken("rt"));
     }
 
     @Test
-    @DisplayName("refreshToken → 正常路径：吊销旧 token + 签发新对")
+    @DisplayName("refreshToken → 正常路径：原子消费成功 + 签发新对")
     void refreshToken_valid_shouldRotateAndReturn() {
         when(jwtUtil.isValid("rt")).thenReturn(true);
         when(jwtUtil.isRefreshToken("rt")).thenReturn(true);
         when(jwtUtil.getJti("rt")).thenReturn("jti-1");
-        when(tokenBlacklistService.isBlacklisted("jti-1")).thenReturn(false);
         when(jwtUtil.getUsername("rt")).thenReturn("admin");
         when(jwtUtil.getRemainingMs("rt")).thenReturn(3600000L);
+        // CR-001 修复：consumeRefreshToken 返回 true（原子消费成功）
+        when(tokenBlacklistService.consumeRefreshToken("jti-1", "admin", 3600000L)).thenReturn(true);
+        // SEC-001 修复：mock 用户状态检查
+        SysUser activeUser = new SysUser();
+        activeUser.setUsername("admin");
+        activeUser.setStatus("ACTIVE");
+        when(userService.getByUsername("admin")).thenReturn(activeUser);
         when(permissionService.loadPermissions("admin")).thenReturn(List.of("JOB_VIEW"));
         when(jwtUtil.generateToken(eq("admin"), anyList())).thenReturn("new-access");
         when(jwtUtil.generateRefreshToken("admin")).thenReturn("new-refresh");
@@ -82,7 +94,8 @@ class AuthServiceTest {
 
         assertEquals("new-access", result.token());
         assertEquals("new-refresh", result.refreshToken());
-        verify(tokenBlacklistService).blacklist("jti-1", "admin", 3600000L);
+        // CR-001 修复：验证原子消费被调用（替代原来的 blacklist）
+        verify(tokenBlacklistService).consumeRefreshToken("jti-1", "admin", 3600000L);
     }
 
     @Test

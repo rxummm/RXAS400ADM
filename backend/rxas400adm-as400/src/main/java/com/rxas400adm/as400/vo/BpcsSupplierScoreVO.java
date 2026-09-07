@@ -6,8 +6,8 @@ package com.rxas400adm.as400.vo;
 public record BpcsSupplierScoreVO(
         String vendor,
         String vendorName,
-        int totalPo,
-        int onTime,
+        Integer totalPo,
+        Integer onTime,
         double score
 ) {
 }

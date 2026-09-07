@@ -24,6 +24,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsAnomaly' })
+
 import { ref, onMounted } from 'vue'
 import { detectAnomalies, type OrderAnomaly } from '@/api/bpcs'
 
@@ -34,7 +37,7 @@ const rows = ref<OrderAnomaly[]>([])
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await detectAnomalies(cono.value) as unknown as OrderAnomaly[]
+    rows.value = await detectAnomalies(cono.value)
   } finally {
     loading.value = false
   }

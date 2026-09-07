@@ -2,6 +2,7 @@ package com.rxas400adm.monitor.collector;
 
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.monitor.domain.Metric;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,7 @@ public class NetworkCollector implements MetricCollector {
     public Metric collect(Long instanceId) {
         AS400Client client = clientProvider.forServer(instanceId);
         List<Map<String, Object>> rows = client.queryList(
-                "SELECT LOCAL_ADDRESS, REMOTE_ADDRESS, STATE FROM QSYS2.NETSTAT_INFO");
+                SqlStatementRegistry.of("monitor.network.connections"));
         long connections = rows.stream()
                 .filter(r -> "ESTABLISHED".equalsIgnoreCase(String.valueOf(r.get("STATE"))))
                 .count();

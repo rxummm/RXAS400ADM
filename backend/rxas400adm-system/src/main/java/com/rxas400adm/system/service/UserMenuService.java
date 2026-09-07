@@ -116,7 +116,7 @@ public class UserMenuService implements IUserMenuService {
                 .map(SysMenu::getId).collect(Collectors.toSet());
         List<Long> invalid = ids.stream().filter(i -> !existingIds.contains(i)).toList();
         if (!invalid.isEmpty()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "菜单不存在: " + invalid);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Menu not found: " + invalid);
         }
         // P6-③ 过滤已授权关联，规避 uk_user_menu 唯一键冲突
         Set<Long> granted = userMenuMapper.selectList(new LambdaQueryWrapper<SysUserMenu>()
@@ -173,7 +173,7 @@ public class UserMenuService implements IUserMenuService {
 
     private void requireUser(Long userId) {
         if (userMapper.selectById(userId) == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在: " + userId);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "User not found: " + userId);
         }
     }
 }

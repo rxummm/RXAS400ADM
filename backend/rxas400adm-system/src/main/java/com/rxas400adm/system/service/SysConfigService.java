@@ -1,5 +1,7 @@
 package com.rxas400adm.system.service;
 
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.security.SecretMasker;
 import com.rxas400adm.system.dto.SysConfigDTO;
 import com.rxas400adm.system.entity.SysConfig;
@@ -63,6 +65,9 @@ public class SysConfigService implements ISysConfigService {
 
     @Override
     public void delete(String configKey) {
+        if (configMapper.selectById(configKey) == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Config not found: " + configKey);
+        }
         configMapper.deleteById(configKey);
     }
 }

@@ -14,8 +14,7 @@
         <el-option :label="$t('executions.typeScript')" value="script" />
       </el-select>
       <el-select v-model="statusFilter" :placeholder="$t('executions.allStatus')" clearable class="w-130" @change="onFilterChange">
-        <el-option label="SUCCESS" value="SUCCESS" />
-        <el-option label="FAILED" value="FAILED" />
+        <el-option v-for="d in statusItems" :key="d.itemKey" :label="d.itemValue" :value="d.itemKey" />
       </el-select>
       <template #right>
         <el-button type="primary" :icon="Download" @click="exportCsv">{{ $t('executions.export') }}</el-button>
@@ -95,18 +94,25 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'Executions' })
 import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { Download } from '@element-plus/icons-vue'
 import QueryBar from '@/components/QueryBar.vue'
 import { listExecutions, getExecutionStats, type ExecutionRecord, type ExecutionStats } from '@/api/execution'
 import { triggerBlobDownload } from '@/api/blobClient'
+import { useDict } from '@/composables/useDict'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { formatDate } from '@/utils/format'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 
+const { t } = useI18n()
+
 const typeFilter = ref<string | null>(null)
 const statusFilter = ref<string | null>(null)
 const stats = ref<ExecutionStats | null>(null)
+
+const { items: statusItems } = useDict('EXEC_STATUS')
 
 const {
   pagedData,
@@ -139,27 +145,31 @@ const onFilterChange = () => {
 }
 
 const exportCsv = async () => {
-  const res = await listExecutions({
-    type: typeFilter.value || undefined,
-    status: statusFilter.value || undefined,
-    keyword: keyword.value || undefined,
-    limit: 500,
-  })
-  const rows = res?.records || []
-  if (rows.length === 0) {
-    return
+  try {
+    const res = await listExecutions({
+      type: typeFilter.value || undefined,
+      status: statusFilter.value || undefined,
+      keyword: keyword.value || undefined,
+      limit: 500,
+    })
+    const rows = res?.records || []
+    if (rows.length === 0) {
+      return
+    }
+    const header = ['source', 'name', 'type', 'serverId', 'user', 'runTime', 'status', 'message', 'costMs']
+    const lines = rows.map((r: ExecutionRecord) =>
+      header.map((h) => {
+        const v = r[h as keyof ExecutionRecord]
+        const s = v === null || v === undefined ? '' : String(v)
+        return `"${s.replace(/"/g, '""')}"`
+      }).join(','),
+    )
+    const csv = '\uFEFF' + [header.join(','), ...lines].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    triggerBlobDownload(blob, `rxas400-executions-${new Date().toISOString().slice(0, 10)}.csv`)
+  } catch {
+    ElMessage.error(t('common.requestFailed'))
   }
-  const header = ['source', 'name', 'type', 'serverId', 'user', 'runTime', 'status', 'message', 'costMs']
-  const lines = rows.map((r: ExecutionRecord) =>
-    header.map((h) => {
-      const v = r[h as keyof ExecutionRecord]
-      const s = v === null || v === undefined ? '' : String(v)
-      return `"${s.replace(/"/g, '""')}"`
-    }).join(','),
-  )
-  const csv = '\uFEFF' + [header.join(','), ...lines].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-  triggerBlobDownload(blob, `rxas400-executions-${new Date().toISOString().slice(0, 10)}.csv`)
 }
 
 async function loadStats() {

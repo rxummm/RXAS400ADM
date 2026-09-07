@@ -44,7 +44,7 @@ public class ExecutionService {
         List<Long> scheduleIds = histories.stream().map(JobScheduleHistory::getScheduleId).distinct().toList();
         Map<Long, JobSchedule> scheduleById = scheduleIds.isEmpty() ? Map.of()
                 : scheduleMapper.selectBatchIds(scheduleIds)
-                        .stream().collect(Collectors.toMap(JobSchedule::getId, s -> s));
+                        .stream().collect(Collectors.toMap(JobSchedule::getId, s -> s, (a, b) -> b));
 
         List<Map<String, Object>> rows = new ArrayList<>();
         for (JobScheduleHistory h : histories) {

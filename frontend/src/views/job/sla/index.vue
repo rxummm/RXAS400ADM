@@ -187,9 +187,13 @@ const { removeLoading, confirmRemove } = useConfirmDelete({
 })
 
 const toggle = async (row: JobSla) => {
-  await updateSlaRule(row.id!, { ...row, enabled: !row.enabled })
-  row.enabled = !row.enabled
-  ElMessage.success(t('jobSla.toggled'))
+  try {
+    await updateSlaRule(row.id!, { ...row, enabled: !row.enabled })
+    row.enabled = !row.enabled
+    ElMessage.success(t('jobSla.toggled'))
+  } catch {
+    ElMessage.error(t('common.requestFailed'))
+  }
 }
 
 onMounted(loadAll)

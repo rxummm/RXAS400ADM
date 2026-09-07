@@ -1,6 +1,7 @@
 package com.rxas400adm.as400.util;
 
 import com.rxas400adm.common.util.BpcsDateUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -9,6 +10,7 @@ import java.util.Map;
  * BPCS row-level utility methods shared across all BPCS Service implementations.
  * Eliminates duplicate private static helpers that were copy-pasted in 7+ services.
  */
+@Slf4j
 public final class BpcsRowUtil {
 
     private BpcsRowUtil() {}
@@ -190,7 +192,8 @@ public final class BpcsRowUtil {
                     if (s.length() == 8 || s.length() == 7) {
                         return BpcsDateUtil.toLocalDate(s).toString();
                     }
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    log.debug("Date parse failed for key={}: {}", key, e.getMessage());
                 }
             }
         }

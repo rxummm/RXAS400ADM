@@ -9,7 +9,7 @@ import lombok.Data;
  */
 @Data
 public class SystemValueUpdateDTO {
-    @NotBlank(message = "系统值不能为空")
+    @NotBlank(message = "system value is required")
     @Schema(description = "系统值", example = "2025-01-01")
     private String value;
 }

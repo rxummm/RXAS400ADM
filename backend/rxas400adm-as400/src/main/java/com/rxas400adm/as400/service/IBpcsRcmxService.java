@@ -4,6 +4,9 @@ import com.rxas400adm.as400.dto.BpcsRcmxConfigDTO;
 import com.rxas400adm.as400.dto.BpcsRcmxImportResult;
 import com.rxas400adm.as400.vo.*;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -31,6 +34,9 @@ public interface IBpcsRcmxService {
 
     /** CSR 选项（搜索 ECSR） */
     List<BpcsCsrOptionVO> searchCsrOptions(String cono, String keyword);
+
+    /** 解析 Excel 文件为 DTO 列表 */
+    List<BpcsRcmxConfigDTO> parseExcel(MultipartFile file) throws IOException;
 
     /** Excel 导入 */
     BpcsRcmxImportResult importAssignments(String cono, List<BpcsRcmxConfigDTO> list);

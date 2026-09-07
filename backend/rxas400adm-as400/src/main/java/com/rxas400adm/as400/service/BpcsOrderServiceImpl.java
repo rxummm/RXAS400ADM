@@ -82,7 +82,7 @@ public class BpcsOrderServiceImpl implements IBpcsOrderService {
                 .filter(r -> match(r, "CONO", cono) && match(r, "ORNO", orno))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND,
-                        "订单不存在: " + cono + "/" + orno));
+                        "Order not found: " + cono + "/" + orno));
 
         boolean c1 = flag(row, "CLSTS1", "CHSTS1");
         boolean c2 = flag(row, "CLSTS2", "CHSTS2");
@@ -177,7 +177,7 @@ public class BpcsOrderServiceImpl implements IBpcsOrderService {
         String v = lib == null ? "" : lib.trim().toUpperCase();
         if (!As400Identifiers.IDENTIFIER.matcher(v).matches()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST,
-                    "bpcs.library 配置非法（仅允许字母/数字/_/$/#/@）: " + lib);
+                    "Invalid bpcs.library config (only alphanumeric/_/$/#/@ allowed): " + lib);
         }
         return v;
     }
@@ -273,7 +273,7 @@ public class BpcsOrderServiceImpl implements IBpcsOrderService {
 
     private static String norm(String v) {
         if (v == null || v.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "公司码/订单号不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Company code / order number is required");
         }
         return v.trim();
     }

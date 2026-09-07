@@ -49,4 +49,10 @@ public class SysMenuDTO {
 
     @Schema(description = "仅管理员可见", example = "0")
     private Integer adminOnly;
+
+    @Schema(description = "是否启用 keep-alive 缓存：1=启用/0=不缓存", example = "1")
+    private Integer cached;
+
+    @Schema(description = "keep-alive 组件名（覆盖前端路由 name），为空时取前端路由 name", example = "BpcsOrder")
+    private String cacheName;
 }

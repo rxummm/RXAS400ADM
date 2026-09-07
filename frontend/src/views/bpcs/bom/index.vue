@@ -23,6 +23,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsBom' })
+
 import { ref } from 'vue'
 import { findBomParents, expandBomChildren, type BomLine } from '@/api/bpcs'
 
@@ -36,9 +39,9 @@ const load = async () => {
   loading.value = true
   try {
     if (mode.value === 'parents') {
-      rows.value = await findBomParents('001', searchItem.value) as unknown as BomLine[]
+      rows.value = await findBomParents('001', searchItem.value)
     } else {
-      rows.value = await expandBomChildren('001', searchItem.value) as unknown as BomLine[]
+      rows.value = await expandBomChildren('001', searchItem.value)
     }
   } finally {
     loading.value = false

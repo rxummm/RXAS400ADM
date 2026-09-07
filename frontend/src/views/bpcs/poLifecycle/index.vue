@@ -22,6 +22,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsPoLifecycle' })
+
 import { ref, onMounted } from 'vue'
 import { listPoLifecycle, type PoLifecycleVO } from '@/api/bpcs'
 
@@ -31,7 +34,7 @@ const rows = ref<PoLifecycleVO[]>([])
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listPoLifecycle() as unknown as PoLifecycleVO[]
+    rows.value = await listPoLifecycle()
   } finally {
     loading.value = false
   }

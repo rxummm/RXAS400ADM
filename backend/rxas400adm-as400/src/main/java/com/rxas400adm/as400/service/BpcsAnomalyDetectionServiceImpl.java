@@ -6,6 +6,8 @@ import com.rxas400adm.as400.util.BpcsRowUtil;
 import com.rxas400adm.as400.vo.BpcsOrderAnomalyVO;
 import com.rxas400adm.common.constants.As400Identifiers;
 import com.rxas400adm.common.config.ProfileResolver;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -64,8 +66,7 @@ public class BpcsAnomalyDetectionServiceImpl implements IBpcsAnomalyDetectionSer
 
     private void validate(String cono) {
         if (!As400Identifiers.IDENTIFIER.matcher(cono.toUpperCase()).matches()) {
-            throw new com.rxas400adm.common.exception.BusinessException(
-                    com.rxas400adm.common.exception.ErrorCode.BAD_REQUEST, "无效的公司码: " + cono);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "无效的公司码: " + cono);
         }
     }
 }

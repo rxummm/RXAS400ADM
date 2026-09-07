@@ -105,7 +105,7 @@ import {
   type PermissionCode,
 } from '@/api/permission'
 
-defineOptions({ name: 'Permissions' })
+defineOptions({ name: 'SysPermissions' })
 
 const { t } = useI18n()
 

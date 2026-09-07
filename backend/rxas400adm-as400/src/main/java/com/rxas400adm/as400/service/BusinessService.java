@@ -1,6 +1,7 @@
 package com.rxas400adm.as400.service;
 
 import com.rxas400adm.as400.AS400ClientProvider;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.common.constants.As400Identifiers;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
@@ -37,7 +38,7 @@ public class BusinessService implements IBusinessService {
     /** 库内文件/表清单（QSYS2.SYSTABLES） */
     public List<Map<String, Object>> tables(String library, String keyword) {
         StringBuilder sql = new StringBuilder(
-                "SELECT TABLE_SCHEMA, TABLE_NAME, TABLE_TEXT FROM QSYS2.SYSTABLES WHERE 1=1");
+                SqlStatementRegistry.of("business.table.schema.list"));
         List<Object> params = new ArrayList<>();
         if (library != null && !library.isBlank()) {
             sql.append(" AND TABLE_SCHEMA = ?");
@@ -55,10 +56,8 @@ public class BusinessService implements IBusinessService {
     public List<Map<String, Object>> columns(String library, String file) {
         String lib = requireIdentifier(library, "库");
         String tbl = requireIdentifier(file, "文件");
-        String sql = "SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, LENGTH, SCALE, IS_NULLABLE, "
-                + "COLUMN_TEXT, COLUMN_DEFAULT FROM QSYS2.SYSCOLUMNS "
-                + "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? "
-                + "ORDER BY ORDINAL_POSITION";
+        String sql = SqlStatementRegistry.of("business.column.list")
+                + " ORDER BY ORDINAL_POSITION";
         return clientProvider.current().queryList(sql, lib, tbl);
     }
 
@@ -84,7 +83,8 @@ public class BusinessService implements IBusinessService {
 
         List<Object> params = new ArrayList<>();
         String where = buildKeywordWhere(charColumns, keyword, params);
-        String countSql = "SELECT COUNT(*) AS CNT FROM " + lib + "." + tbl + where;
+        String countSql = SqlStatementRegistry.of("business.table.count")
+                .replace("{lib}", lib).replace("{tbl}", tbl) + where;
         long total = 0;
         List<Map<String, Object>> countRows = clientProvider.current().queryList(countSql, params.toArray());
         if (!countRows.isEmpty()) {
@@ -95,7 +95,8 @@ public class BusinessService implements IBusinessService {
         // B3：page 上限钳制——防 (page-1)*size 溢出为负拼出 OFFSET -20 ROWS（DB2 SQL 错误）
         safePage = Math.min(safePage, PageConstants.MAX_PAGE_NUM);
         long offset = (long) (safePage - 1) * safeSize;
-        String dataSql = "SELECT * FROM " + lib + "." + tbl + where
+        String dataSql = SqlStatementRegistry.of("business.table.data")
+                .replace("{lib}", lib).replace("{tbl}", tbl) + where
                 + " ORDER BY 1 OFFSET " + offset + " ROWS FETCH NEXT " + safeSize + " ROWS ONLY";
         List<Map<String, Object>> rows = clientProvider.current().queryList(dataSql, params.toArray());
 
@@ -113,7 +114,7 @@ public class BusinessService implements IBusinessService {
             return "";
         }
         String pattern = "%" + keyword.trim().toUpperCase() + "%";
-        StringBuilder where = new StringBuilder(" WHERE (");
+        StringBuilder where = new StringBuilder(" AND (");
         for (int i = 0; i < charColumns.size(); i++) {
             if (i > 0) {
                 where.append(" OR ");

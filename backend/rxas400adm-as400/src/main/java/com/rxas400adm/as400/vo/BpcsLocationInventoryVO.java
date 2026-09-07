@@ -8,7 +8,7 @@ public record BpcsLocationInventoryVO(
         String binLocation,
         String item,
         String description,
-        int qtyOnHand,
+        Integer qtyOnHand,
         String status
 ) {
 }

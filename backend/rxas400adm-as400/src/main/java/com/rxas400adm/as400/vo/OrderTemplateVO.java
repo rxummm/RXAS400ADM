@@ -1,5 +1,7 @@
 package com.rxas400adm.as400.vo;
 
+import com.rxas400adm.as400.entity.OrderTemplate;
+
 /**
  * 订单模板 VO。
  */
@@ -15,7 +17,7 @@ public record OrderTemplateVO(
         String active,
         String createdBy
 ) {
-    public static OrderTemplateVO from(com.rxas400adm.as400.entity.OrderTemplate e) {
+    public static OrderTemplateVO from(OrderTemplate e) {
         return new OrderTemplateVO(
                 e.getId(), e.getTemplateName(), e.getCono(), e.getCust(),
                 e.getShipTo(), e.getRemark(), e.getLineJson(),

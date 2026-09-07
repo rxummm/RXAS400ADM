@@ -4,6 +4,7 @@ import { useStorage, STORAGE_KEYS } from '@/composables/useStorage'
 export interface TagView {
   path: string
   title: string
+  icon?: string
   affix?: boolean
   /** 缓存组件名（对应路由 name / 页面 defineOptions name），用于 keep-alive 缓存 */
   cacheName?: string
@@ -29,7 +30,7 @@ export const useTagsStore = defineStore('tags', {
       raw.forEach((v) => {
         // 固定标签由 AFFIX_VIEWS 无条件重建；残留的旧版无 affix 总览一并丢弃，避免它变成可关闭的普通标签
         if (v && v.path && !v.affix && v.path !== '/dashboard') {
-          saved.push({ path: v.path, title: v.title || '', cacheName: v.cacheName })
+          saved.push({ path: v.path, title: v.title || '', icon: v.icon, cacheName: v.cacheName })
         }
       })
     }
@@ -51,10 +52,14 @@ export const useTagsStore = defineStore('tags', {
     addView(view: TagView) {
       const existing = this.visitedViews.find((v) => v.path === view.path)
       if (existing) {
-        // 已在打开列表中：补齐 cacheName；若新标签声明 affix（如总览）则升级为固定，防历史数据残留非固定
+        // 已在打开列表中：补齐 icon / cacheName；若新标签声明 affix（如总览）则升级为固定，防历史数据残留非固定
         let changed = false
         if (view.affix && !existing.affix) {
           existing.affix = true
+          changed = true
+        }
+        if (view.icon && !existing.icon) {
+          existing.icon = view.icon
           changed = true
         }
         if (view.cacheName && !existing.cacheName) {

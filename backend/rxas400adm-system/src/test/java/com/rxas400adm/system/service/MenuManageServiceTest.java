@@ -57,8 +57,18 @@ class MenuManageServiceTest {
     }
 
     @Test
+    @DisplayName("delete → 不存在抛 NOT_FOUND")
+    void delete_notFound_shouldThrow() {
+        when(menuMapper.selectById(99L)).thenReturn(null);
+        assertThrows(BusinessException.class, () -> service.delete(99L));
+    }
+
+    @Test
     @DisplayName("delete → 有子菜单抛异常")
     void delete_hasChildren_shouldThrow() {
+        SysMenu existing = new SysMenu();
+        existing.setId(1L);
+        when(menuMapper.selectById(1L)).thenReturn(existing);
         when(menuMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(2L);
 
         assertThrows(BusinessException.class, () -> service.delete(1L));
@@ -67,6 +77,9 @@ class MenuManageServiceTest {
     @Test
     @DisplayName("delete → 无子菜单则删除")
     void delete_noChildren_shouldDelete() {
+        SysMenu existing = new SysMenu();
+        existing.setId(1L);
+        when(menuMapper.selectById(1L)).thenReturn(existing);
         when(menuMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(0L);
 
         service.delete(1L);

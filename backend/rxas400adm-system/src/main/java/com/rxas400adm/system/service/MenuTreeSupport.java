@@ -47,7 +47,7 @@ final class MenuTreeSupport {
 
     /** 平铺菜单构建嵌套树：父在集合内则挂 children，否则作为根 */
     static List<SysMenu> buildTree(List<SysMenu> menus) {
-        Map<Long, SysMenu> byId = menus.stream().collect(Collectors.toMap(SysMenu::getId, m -> m));
+        Map<Long, SysMenu> byId = menus.stream().collect(Collectors.toMap(SysMenu::getId, m -> m, (a, b) -> b));
         List<SysMenu> roots = new ArrayList<>();
         for (SysMenu menu : menus) {
             if (menu.getParentId() != null && byId.containsKey(menu.getParentId())) {
@@ -70,7 +70,7 @@ final class MenuTreeSupport {
     static Set<Long> collectDescendantButtons(List<SysMenu> allMenus, Iterable<Long> parentIds) {
         Set<Long> buttons = new LinkedHashSet<>();
         Map<Long, SysMenu> byId = allMenus.stream()
-                .collect(Collectors.toMap(SysMenu::getId, Function.identity()));
+                .collect(Collectors.toMap(SysMenu::getId, Function.identity(), (a, b) -> b));
         for (Long parentId : parentIds) {
             for (Long id : collectDescendants(parentId, allMenus)) {
                 SysMenu m = byId.get(id);

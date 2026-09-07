@@ -17,12 +17,12 @@
     <div class="table-wrapper">
       <RxSkeleton type="table" :rows="8" :loading="loading">
         <el-table :data="rows" size="small" border>
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="id" :label="$t('col.id')" width="80" />
         <el-table-column prop="module" :label="$t('audit.module')" width="110" />
         <el-table-column prop="action" :label="$t('audit.action')" min-width="170" />
         <el-table-column prop="userName" :label="$t('audit.username')" width="120" />
         <el-table-column prop="target" :label="$t('audit.target')" min-width="140" />
-        <el-table-column prop="ip" label="IP" width="140" />
+        <el-table-column prop="ip" :label="$t('col.ip')" width="140" />
         <el-table-column prop="detail" :label="$t('audit.detail')" min-width="220" show-overflow-tooltip />
         <el-table-column prop="createdTime" :label="$t('audit.time')" width="170" />
       </el-table>

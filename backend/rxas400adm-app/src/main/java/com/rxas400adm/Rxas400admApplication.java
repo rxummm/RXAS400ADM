@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableScheduling
 @EnableAsync
-@MapperScan({"com.rxas400adm.**.mapper", "com.rxas400adm.**.collaboration", "com.rxas400adm.**.freight", "com.rxas400adm.**.simulation"})
+@MapperScan("com.rxas400adm.**.mapper")
 public class Rxas400admApplication {
 
     public static void main(String[] args) {

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/bpcs/customers/overview")
 @RequiredArgsConstructor
-@Tag(name = "BPCS客户360°视图")
+@Tag(name = "BPCS Customer 360° View")
 public class BpcsCustomerOverviewController {
 
     private final IBpcsCustomerOverviewService overviewService;

@@ -44,6 +44,7 @@ body,
 /* ---- 间距 ---- */
 .ml4 { margin-left: 4px; }
 .mt4 { margin-top: 4px; }
+.mt8 { margin-top: 8px; }
 .mt16 { margin-top: 16px; }
 .mb8 { margin-bottom: 8px; }
 .mb12 { margin-bottom: 12px; }
@@ -211,6 +212,7 @@ body,
 
 /* ---- 通用工具类（参照旧项目 common.scss） ---- */
 .w-full { width: 100%; }
+.text-center { text-align: center; }
 /* C1 宽度工具类：替代内联 style="width: xxxpx" */
 .w-90 { width: 90px; }
 .w-100 { width: 100px; }
@@ -238,6 +240,13 @@ body,
   color: var(--text-secondary);
   font-size: 12px;
 }
+
+/* ---- 图表容器高度（ECharts ref 容器，替代 inline style="height: Npx"） ---- */
+.h-280 { height: 280px; }
+.h-300 { height: 300px; }
+.h-320 { height: 320px; }
+.h-400 { height: 400px; }
+.fs-20 { font-size: 20px; }
 
 /* ====== 全局 Element Plus 微调（参照旧项目 global.scss，适配亮/暗） ====== */
 
@@ -365,10 +374,32 @@ html.dark .table-wrapper {
   border-color: var(--border-light);
 }
 
-/* ====== Font Awesome 菜单图标（与 el-icon 保持同距同位） ====== */
+/* ====== Font Awesome 菜单图标（与 el-icon 保持同距同位） ======
+   根因：EP 的 [class^=el-icon] 选择器匹配不到 FA 的 svg-inline--fa 类，
+   导致 FA 图标缺少 width:24px / font-size:18px / margin-right:5px 约束。
+   又因 FA 图标 viewBox 非正方形（如 fa-file-invoice 640×512），
+   缩放到同一高度时宽度 > EP 正方形图标，文字整体右移。
+   此处补齐：容器固定 24px × 24px（匹配 --el-menu-icon-width），
+   SVG 强制填充容器（覆盖 FA 内联 width/height 属性），实现等宽等位。 */
 .el-menu-item .fa-icon,
 .el-sub-menu__title .fa-icon {
-  margin-right: var(--el-menu-icon-margin-right, 6px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--el-menu-icon-width, 20px) !important;
+  height: var(--el-menu-icon-width, 20px) !important;
+  flex-shrink: 0;
+  font-size: 16px;
+  margin-right: var(--el-menu-icon-margin-right, 5px);
+  vertical-align: middle;
+}
+/* FA SVG 内联 width/height 属性会覆盖 CSS，需 !important 强制填充容器
+   vertical-align 覆盖 FA 默认的 -.125em（导致 FA 图标比 EP 图标低 2px+） */
+.el-menu-item .fa-icon > svg,
+.el-sub-menu__title .fa-icon > svg {
+  width: 100% !important;
+  height: 100% !important;
+  vertical-align: middle !important;
 }
 .el-menu--collapse .el-menu-item .fa-icon,
 .el-menu--collapse .el-sub-menu__title .fa-icon {

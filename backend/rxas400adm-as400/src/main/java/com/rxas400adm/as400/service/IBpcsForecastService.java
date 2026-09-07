@@ -1,5 +1,6 @@
 package com.rxas400adm.as400.service;
 
+import com.rxas400adm.as400.vo.BpcsCpfrVO;
 import com.rxas400adm.as400.vo.BpcsForecastVO;
 
 import java.util.List;
@@ -15,4 +16,7 @@ public interface IBpcsForecastService {
 
     /** 获取物料选项列表（用于下拉框） */
     List<Map<String, String>> getItemOptions(String cono, int limit);
+
+    /** 协同需求预测（CPFR）：季节性分解 + 准确率回溯 + 多方协作 */
+    BpcsCpfrVO getCpfrAnalysis(String cono, String item, int months);
 }

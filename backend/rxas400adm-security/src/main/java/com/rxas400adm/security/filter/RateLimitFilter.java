@@ -1,6 +1,6 @@
 package com.rxas400adm.security.filter;
 
-import com.rxas400adm.security.config.ProxyProperties;
+import com.rxas400adm.common.util.ClientIpResolver;
 import com.rxas400adm.security.config.RateLimitProperties;
 import com.rxas400adm.system.service.SysConfigService;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -16,12 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -45,8 +43,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     // R7：rate-limit.* 四键 + trusted-proxies 两处 @Value 收敛为 Properties 单点绑定
     private final RateLimitProperties rateLimitProperties;
 
-    /** S3：trusted-proxies 配置来源收敛至 ProxyProperties（与 AuthController/OperateLogAspect 同键单点） */
-    private final ProxyProperties proxyProperties;
+    private final ClientIpResolver clientIpResolver;
 
     private final SysConfigService sysConfigService;
 
@@ -148,40 +145,16 @@ public class RateLimitFilter extends OncePerRequestFilter {
             log.warn("[限流] IP {} 触发限流 (category={}, path={})", ip, category, path);
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            response.getWriter().write("{\"code\":429,\"message\":\"请求过于频繁，请稍后再试\",\"data\":null}");
+            response.getWriter().write("{\"code\":429,\"message\":\"Too many requests, please try again later\",\"data\":null}");
         }
     }
 
-    /**
-     * S3/C4：仅当直连方是可信反向代理时才采信转发头，否则一律取 remoteAddr，
-     * 与 AuthController.clientIp、OperateLogAspect.currentIp 保持同一策略。
-     */
     private String getClientIp(HttpServletRequest request) {
-        String remote = request.getRemoteAddr();
-        String trustedProxies = proxyProperties.getTrustedProxies();
-        if (remote == null || !StringUtils.hasText(trustedProxies)) {
-            return remote;
-        }
-        boolean trusted = Arrays.stream(trustedProxies.split(","))
-                .map(String::trim)
-                .filter(p -> !p.isBlank())
-                .anyMatch(p -> "*".equals(p) || p.equalsIgnoreCase(remote));
-        if (!trusted) {
-            return remote;
-        }
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            return xff.split(",")[0].trim();
-        }
-        String realIp = request.getHeader("X-Real-IP");
-        if (realIp != null && !realIp.isBlank()) {
-            return realIp.trim();
-        }
-        return remote;
+        return clientIpResolver.resolve(request);
     }
 
     private String resolveCategory(String path) {
-        if (path.startsWith("/api/v1/auth/login")) {
+        if (path.startsWith("/api/v1/auth/login") || path.startsWith("/api/v1/auth/as400-login")) {
             return "login";
         }
         if (path.startsWith("/api/v1/as400/commands")) {

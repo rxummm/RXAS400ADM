@@ -23,6 +23,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'WmsBatchTracking' })
+
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { searchBatches, type BatchTracking } from '@/api/wms'

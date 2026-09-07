@@ -73,7 +73,8 @@ public class SecurityConfig {
                         // connect-src 放行 WebSocket（监控/通知实时推送）；style-src 放行内联样式（ECharts/Element 运行时设置）
                         .contentSecurityPolicy(csp -> csp.policyDirectives(
                                 "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
-                                        + "img-src 'self' data:; font-src 'self'; connect-src 'self' ws: wss:"))
+                                        + "img-src 'self' data:; font-src 'self'; connect-src 'self' ws: wss:; "
+                                        + "frame-ancestors 'self'"))
                         .referrerPolicy(referrer -> referrer
                                 .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                         .permissionsPolicy(permissions -> permissions
@@ -83,13 +84,13 @@ public class SecurityConfig {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json;charset=UTF-8");
                             response.getWriter().write(objectMapper.writeValueAsString(
-                                    ApiResponse.error(401, "未登录或 Token 已过期")));
+                                    ApiResponse.error(401, "Not logged in or token expired")));
                         })
                         .accessDeniedHandler((request, response, e) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json;charset=UTF-8");
                             response.getWriter().write(objectMapper.writeValueAsString(
-                                    ApiResponse.error(403, "无权限访问")));
+                                    ApiResponse.error(403, "Access denied")));
                         }))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
@@ -105,7 +106,9 @@ public class SecurityConfig {
                 .toList();
         config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of(
+                "Authorization", "Content-Type", "X-Requested-With", "X-AS400-Server",
+                "Accept", "Origin", "Cache-Control", "X-XSRF-TOKEN"));
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

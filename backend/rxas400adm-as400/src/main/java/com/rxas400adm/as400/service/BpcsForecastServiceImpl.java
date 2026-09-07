@@ -3,6 +3,7 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.as400.util.BpcsRowUtil;
+import com.rxas400adm.as400.vo.BpcsCpfrVO;
 import com.rxas400adm.as400.vo.BpcsForecastVO;
 import com.rxas400adm.as400.vo.BpcsForecastVO.ForecastMetrics;
 import com.rxas400adm.as400.vo.BpcsForecastVO.MonthlyDemand;
@@ -171,13 +172,23 @@ public class BpcsForecastServiceImpl implements IBpcsForecastService {
         return String.format("%d%02d", year, month);
     }
 
+    @Override
+    public BpcsCpfrVO getCpfrAnalysis(String cono, String item, int months) {
+        if (cono == null || cono.isBlank()) cono = "001";
+        if (months <= 0 || months > 24) months = 12;
+        if (profileResolver.isMockMode()) {
+            return mockCpfr(months);
+        }
+        return mockCpfr(months);
+    }
+
     private BpcsForecastVO mockForecast(String item, int months) {
         String[] ymArr = {"202601", "202602", "202603", "202604", "202605", "202606",
                 "202607", "202608", "202609", "202610", "202611", "202612"};
         int[] actuals = {1200, 1350, 1180, 1420, 1500, 1380, 1450, 1300, 0, 0, 0, 0};
         List<MonthlyDemand> demand = new ArrayList<>();
         for (int i = 0; i < Math.min(ymArr.length, months); i++) {
-            int pred = i >= 2 ? (actuals[i-1] + actuals[i-2] + actuals[i-3]) / 3 : actuals[i];
+            int pred = i >= WINDOW ? (actuals[i-1] + actuals[i-2] + actuals[i-3]) / 3 : actuals[i];
             demand.add(new MonthlyDemand(ymArr[i], actuals[i], pred, (int)(pred * 1.2), (int)(pred * 0.8)));
         }
         List<StockLevel> stock = List.of(
@@ -193,5 +204,53 @@ public class BpcsForecastServiceImpl implements IBpcsForecastService {
                 new BigDecimal("8.5"), new BigDecimal("2.1"),
                 new BigDecimal("85.3"), new BigDecimal("78.6"));
         return new BpcsForecastVO(demand, stock, repl, metrics);
+    }
+
+    private BpcsCpfrVO mockCpfr(int months) {
+        // 季节性分解数据
+        String[] yms = {"202601", "202602", "202603", "202604", "202605", "202606",
+                "202607", "202608", "202609", "202610", "202611", "202612"};
+        int[] actuals = {1200, 1350, 1180, 1420, 1500, 1380, 1450, 1300, 1100, 1250, 1380, 1550};
+        int[] trends = {1200, 1220, 1240, 1260, 1280, 1300, 1320, 1340, 1360, 1380, 1400, 1420};
+        List<BpcsCpfrVO.MonthlyComponent> components = new ArrayList<>();
+        for (int i = 0; i < Math.min(yms.length, months); i++) {
+            int seasonal = actuals[i] - trends[i];
+            int residual = i > 0 ? (actuals[i] - trends[i] - (actuals[i-1] - trends[i-1])) / 2 : 0;
+            int deseasonalized = actuals[i] - seasonal;
+            components.add(new BpcsCpfrVO.MonthlyComponent(yms[i], actuals[i], trends[i],
+                    seasonal, residual, deseasonalized));
+        }
+        List<Double> indices = List.of(0.95, 1.02, 0.92, 1.08, 1.12, 1.05, 1.08, 0.98,
+                0.85, 0.96, 1.05, 1.15);
+
+        // 准确率回溯
+        List<BpcsCpfrVO.ForecastAccuracyBacktest> backtest = new ArrayList<>();
+        for (int i = 3; i < Math.min(yms.length, months); i++) {
+            int pred = (actuals[i-1] + actuals[i-2] + actuals[i-3]) / 3;
+            int mape = (int)(Math.abs((double)(actuals[i] - pred) / actuals[i]) * 100);
+            int bias = (int)((double)(actuals[i] - pred) / actuals[i] * 100);
+            String grade = mape <= 10 ? "A" : mape <= 20 ? "B" : "C";
+            backtest.add(new BpcsCpfrVO.ForecastAccuracyBacktest(yms[i], actuals[i], pred, mape, bias, grade));
+        }
+
+        // 协同预测
+        List<BpcsCpfrVO.CollaborativeForecast> collab = new ArrayList<>();
+        for (int i = 0; i < Math.min(yms.length, months); i++) {
+            int sales = (int)(actuals[i] * 1.05);
+            int marketing = (int)(actuals[i] * 1.10);
+            int supply = (int)(actuals[i] * 0.95);
+            int consensus = (sales + marketing + supply) / 3;
+            int deviation = Math.abs(consensus - actuals[i]);
+            collab.add(new BpcsCpfrVO.CollaborativeForecast(yms[i], sales, marketing, supply,
+                    consensus, actuals[i], deviation));
+        }
+
+        return new BpcsCpfrVO(
+                new BpcsCpfrVO.SeasonalDecomposition(components, indices, "Q4"),
+                backtest, collab,
+                new BpcsCpfrVO.CpfMetrics(
+                        new BigDecimal("87.5"), new BigDecimal("2.3"),
+                        new BigDecimal("0.82"), new BigDecimal("91.2"),
+                        new BigDecimal("89.6")));
     }
 }

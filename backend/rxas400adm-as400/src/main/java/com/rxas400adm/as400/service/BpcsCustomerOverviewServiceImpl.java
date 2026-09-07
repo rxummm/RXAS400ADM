@@ -7,6 +7,8 @@ import com.rxas400adm.as400.vo.BpcsCustomerOverviewVO;
 import com.rxas400adm.as400.vo.BpcsCustomerOverviewVO.OverdueInvoice;
 import com.rxas400adm.as400.vo.BpcsCustomerOverviewVO.RecentOrder;
 import com.rxas400adm.common.config.ProfileResolver;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,7 +42,7 @@ public class BpcsCustomerOverviewServiceImpl implements IBpcsCustomerOverviewSer
         String overviewSql = statements.get("bpcs.customer.overview");
         List<Map<String, Object>> overviewRows = clientProvider.current().queryListChecked(overviewSql, cono, cust);
         if (overviewRows.isEmpty()) {
-            return null;
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Customer not found: " + cono + "/" + cust);
         }
         Map<String, Object> row = overviewRows.get(0);
 

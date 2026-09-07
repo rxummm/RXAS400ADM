@@ -61,6 +61,8 @@ public class IbmiSystem {
 
     private LocalDateTime createdTime;
 
+    private LocalDateTime updatedTime;
+
     @TableField(exist = false)
     private String connectionStatus;
 }

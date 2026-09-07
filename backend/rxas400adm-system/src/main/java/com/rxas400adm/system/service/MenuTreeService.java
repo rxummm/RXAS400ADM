@@ -11,6 +11,8 @@ import com.rxas400adm.system.mapper.SysMenuMapper;
 import com.rxas400adm.system.mapper.SysRoleMapper;
 import com.rxas400adm.system.mapper.SysUserMapper;
 import com.rxas400adm.system.mapper.SysUserRoleMapper;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.system.vo.MenuVO;
 import com.rxas400adm.system.vo.RequestableMenuVO;
 import lombok.RequiredArgsConstructor;
@@ -155,7 +157,7 @@ public class MenuTreeService {
             SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                     .eq(SysUser::getUsername, k));
             if (user == null) {
-                return null;
+                throw new BusinessException(ErrorCode.USER_NOT_FOUND);
             }
             List<SysRole> roles = loadRolesByUser(user.getId());
             boolean isAdmin = roles.stream().anyMatch(r -> "ADMIN".equals(r.getRoleCode()));
@@ -191,6 +193,8 @@ public class MenuTreeService {
                 menu.getPath(),
                 menu.getTitle(),
                 StringUtils.hasText(menu.getIcon()) ? menu.getIcon() : null,
+                menu.getCached() == null || menu.getCached() == 1,
+                StringUtils.hasText(menu.getCacheName()) ? menu.getCacheName() : null,
                 menu.getChildren() != null && !menu.getChildren().isEmpty()
                         ? menu.getChildren().stream().map(this::toMenuVO).toList()
                         : null

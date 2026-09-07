@@ -6,8 +6,10 @@ import com.rxas400adm.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+
 
 /**
  * ㉗ 库位库存可视化 Controller。
@@ -15,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bpcs/location")
 @RequiredArgsConstructor
+@Tag(name = "BPCS Location", description = "Location and warehouse mapping")
 public class BpcsLocationController {
 
     private final IBpcsLocationService service;

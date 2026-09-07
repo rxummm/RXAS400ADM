@@ -110,7 +110,7 @@ public class DocService {
                 .distinct().toList();
         Map<Long, String> templateNames = templateIds.isEmpty() ? Map.of()
                 : templateMapper.selectBatchIds(templateIds).stream()
-                        .collect(Collectors.toMap(DocTemplate::getId, DocTemplate::getName));
+                        .collect(Collectors.toMap(DocTemplate::getId, DocTemplate::getName, (a, b) -> b));
         page.getRecords().forEach(doc -> {
             if (doc.getTemplateId() != null) {
                 doc.setTemplateName(templateNames.get(doc.getTemplateId()));
@@ -141,7 +141,7 @@ public class DocService {
     public Doc updateDoc(Long id, DocDTO update, String operator) {
         Doc doc = requireDoc(id);
         if (STATUS_PENDING.equals(doc.getStatus())) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "文档审批中不可编辑，请先驳回或等待结果");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Document is under review, cannot edit. Please reject or wait for approval");
         }
         doc.setTitle(update.getTitle());
         doc.setContent(update.getContent());
@@ -168,7 +168,7 @@ public class DocService {
     public void submit(Long id, String operator) {
         Doc doc = requireDoc(id);
         if (!STATUS_DRAFT.equals(doc.getStatus()) && !STATUS_REJECTED.equals(doc.getStatus())) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "仅草稿/驳回状态的文档可提交审批");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Only draft/rejected documents can be submitted for review");
         }
         doc.setStatus(STATUS_PENDING);
         doc.setRejectReason(null);
@@ -180,11 +180,11 @@ public class DocService {
     public void approve(Long id, String operator) {
         Doc doc = requireDoc(id);
         if (!STATUS_PENDING.equals(doc.getStatus())) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "仅审批中的文档可通过");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Only pending-review documents can be approved");
         }
         String docType = templateService.normalizeType(doc.getDocType());
         if (isBinaryType(docType) && !StringUtils.hasText(doc.getIfsPath())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "文件型文档（PDF/图片）须先上传到 IFS 才能发布");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "File-type documents (PDF/image) must be uploaded to IFS before publishing");
         }
         doc.setStatus(STATUS_PUBLISHED);
         doc.setApprovedBy(operator);
@@ -198,7 +198,7 @@ public class DocService {
     public void reject(Long id, String reason, String operator) {
         Doc doc = requireDoc(id);
         if (!STATUS_PENDING.equals(doc.getStatus())) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "仅审批中的文档可驳回");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Only pending-review documents can be rejected");
         }
         doc.setStatus(STATUS_REJECTED);
         doc.setRejectReason(reason);
@@ -210,7 +210,7 @@ public class DocService {
     public void delete(Long id) {
         Doc doc = requireDoc(id);
         if (STATUS_PENDING.equals(doc.getStatus())) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "审批中的文档不可删除");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Cannot delete document under review");
         }
         if (StringUtils.hasText(doc.getIfsPath())) {
             trashIfsQuietly(doc.getIfsPath());
@@ -225,7 +225,7 @@ public class DocService {
     public void restore(Long id) {
         Doc doc = docMapper.selectById(id);
         if (doc == null || doc.getDeleted() == null || doc.getDeleted() != 1) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "已删除文档不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Deleted document not found");
         }
         if (StringUtils.hasText(doc.getIfsPath())) {
             restoreIfsQuietly(doc.getIfsPath());
@@ -239,7 +239,7 @@ public class DocService {
     public void purge(Long id) {
         Doc doc = docMapper.selectById(id);
         if (doc == null || doc.getDeleted() == null || doc.getDeleted() != 1) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "已删除文档不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Deleted document not found");
         }
         docMapper.deleteById(id);
         versionService.deleteVersions(id);
@@ -362,11 +362,11 @@ public class DocService {
     /** 读取 IFS 发布文件 */
     private DocFileVO readFile(Long id, String ifsPath) {
         if (!StringUtils.hasText(ifsPath)) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "该文档尚未发布到 IFS");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Document not yet published to IFS");
         }
         byte[] bytes = clientProvider.current().readIfsFileBytes(ifsPath);
-        if (bytes == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "IFS 文件不存在或不可读: " + ifsPath);
+        if (bytes == null || bytes.length == 0) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "IFS file not found or unreadable: " + ifsPath);
         }
         String path = ifsPath.replace('\\', '/');
         String filename = path.substring(path.lastIndexOf('/') + 1);
@@ -429,7 +429,7 @@ public class DocService {
     private Doc requireDoc(Long id) {
         Doc doc = docMapper.selectById(id);
         if (doc == null || (doc.getDeleted() != null && doc.getDeleted() == 1)) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "文档不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Document not found");
         }
         return doc;
     }

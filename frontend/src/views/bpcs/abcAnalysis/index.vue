@@ -19,13 +19,9 @@
     <div class="table-wrapper">
       <el-table :data="items" v-loading="loading" size="small" border>
         <el-table-column prop="item" :label="$t('bpcs.line.item')" min-width="120" />
-        <el-table-column prop="description" :label="$t('bpcs.line.itemDesc')" min-width="140" show-overflow-tooltip />
-        <el-table-column prop="warehouse" :label="$t('bpcs.label.wh')" width="80" />
+        <el-table-column prop="itemDesc" :label="$t('bpcs.line.itemDesc')" min-width="140" show-overflow-tooltip />
         <el-table-column align="right" :label="$t('bpcs.inventoryHistory.quantity')" width="80">
-          <template #default="{ row }">{{ row.quantity }}</template>
-          </el-table-column>
-        <el-table-column align="right" :label="$t('bpcs.abcAnalysis.unitCost')" width="100">
-          <template #default="{ row }">{{ row.unitCost.toFixed(2) }}</template>
+          <template #default="{ row }">{{ row.totalQty }}</template>
           </el-table-column>
         <el-table-column align="right" :label="$t('bpcs.abcAnalysis.totalValue')" width="120">
           <template #default="{ row }">{{ row.stockValue.toFixed(0) }}</template>
@@ -44,26 +40,26 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'BpcsAbcAnalysis' })
 import { ref } from 'vue'
-import { fetchAbcAnalysis, type AbcItem } from '@/api/supplyChain'
+import { useI18n } from 'vue-i18n'
+import { getAbcXyzMatrix, type AbcXyzItem } from '@/api/bpcs'
 import { BPCS_EXPORT } from '@/api/bpcs'
 import ExportDropdown from '@/components/ExportDropdown.vue'
 import type { ExportColumn } from '@/components/ExportButton.vue'
+const { t } = useI18n()
 const cono = ref('001')
 const loading = ref(false)
-const items = ref<AbcItem[]>([])
+const items = ref<AbcXyzItem[]>([])
 const exportColumns: ExportColumn[] = [
-  { key: 'item', label: '物料号' },
-  { key: 'description', label: '描述' },
-  { key: 'warehouse', label: '仓库' },
-  { key: 'quantity', label: '数量' },
-  { key: 'unitCost', label: '单位成本' },
-  { key: 'stockValue', label: '库存价值' },
-  { key: 'abcClass', label: '分类' },
+  { key: 'item', label: t('bpcs.common.itemCode') },
+  { key: 'itemDesc', label: t('bpcs.common.description') },
+  { key: 'totalQty', label: t('bpcs.common.quantity') },
+  { key: 'stockValue', label: t('bpcs.inventory.stockValue') },
+  { key: 'abcClass', label: t('bpcs.common.category') },
 ]
 const classCount = (c: string) => items.value.filter(i => i.abcClass === c).length
 function load() {
   loading.value = true
-  fetchAbcAnalysis({ cono: cono.value || '001', limit: 200 }).then(d => { items.value = d }).finally(() => { loading.value = false })
+  getAbcXyzMatrix({ cono: cono.value || '001', limit: 200 }).then(d => { items.value = d }).finally(() => { loading.value = false })
 }
 </script>
 <style scoped>

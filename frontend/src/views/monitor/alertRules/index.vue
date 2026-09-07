@@ -73,7 +73,7 @@
       <el-form :model="form" label-width="var(--rx-form-label-width-wide)">
         <el-form-item :label="$t('alertRules.metric')" required>
           <el-select v-model="form.metricName" filterable allow-create default-first-option class="w-full">
-            <el-option v-for="m in metricOptions" :key="m" :label="m" :value="m" />
+            <el-option v-for="m in metricItems" :key="m.itemKey" :label="m.itemValue" :value="m.itemKey" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('alertRules.condition')" required>
@@ -94,8 +94,7 @@
         </el-form-item>
         <el-form-item :label="$t('alertRules.level')" required>
           <el-select v-model="form.level" class="w-full">
-            <el-option label="WARNING" value="WARNING" />
-            <el-option label="CRITICAL" value="CRITICAL" />
+            <el-option v-for="d in levelItems" :key="d.itemKey" :label="d.itemValue" :value="d.itemKey" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('alertRules.server')">
@@ -105,10 +104,7 @@
         </el-form-item>
         <el-form-item :label="$t('alertRules.channel')">
           <el-select v-model="form.channel" class="w-full">
-            <el-option :label="$t('alertRules.channelAll')" value="ALL" />
-            <el-option :label="$t('alertRules.channelWebhook')" value="WEBHOOK" />
-            <el-option :label="$t('alertRules.channelEmail')" value="EMAIL" />
-            <el-option :label="$t('alertRules.channelNone')" value="NONE" />
+            <el-option v-for="d in channelItems" :key="d.itemKey" :label="d.itemValue" :value="d.itemKey" />
           </el-select>
           <div class="hint">{{ $t('alertRules.channelHint') }}</div>
         </el-form-item>
@@ -135,6 +131,7 @@ defineOptions({ name: 'AlertRules' })
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useConfirmDelete } from '@/composables/useConfirmDelete'
+import { useDict } from '@/composables/useDict'
 import { Plus, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useAs400ServerStore, type As400Server } from '@/stores/as400Server'
@@ -160,7 +157,9 @@ const descText = (row: AlertRule) => {
 }
 const as400Store = useAs400ServerStore()
 
-const metricOptions = ['CPU', 'MEMORY', 'DISK', 'NETWORK', 'MSGW', 'LCKW', 'PRINTER']
+const { items: metricItems } = useDict('METRIC_TYPE')
+const { items: levelItems } = useDict('ALERT_LEVEL')
+const { items: channelItems, getTagType, getLabel } = useDict('ALERT_CHANNEL')
 const servers = ref<As400Server[]>([])
 
 const {
@@ -182,20 +181,9 @@ const {
   showRefresh: false,
 })
 
-const channelType = (ch: string) => {
-  if (ch === 'NONE') return 'info'
-  if (ch === 'EMAIL') return 'warning'
-  if (ch === 'WEBHOOK') return 'success'
-  return 'primary'
-}
+const channelType = (ch: string) => getTagType(ch)
 
-const channelLabel = (ch: string) => {
-  const key = (ch || 'ALL').toUpperCase()
-  if (key === 'WEBHOOK') return t('alertRules.channelWebhook')
-  if (key === 'EMAIL') return t('alertRules.channelEmail')
-  if (key === 'NONE') return t('alertRules.channelNone')
-  return t('alertRules.channelAll')
-}
+const channelLabel = (ch: string) => getLabel(ch)
 
 const serverName = (id: number) => servers.value.find((s) => s.id === id)?.name || `#${id}`
 
@@ -257,8 +245,12 @@ const { removeLoading, confirmRemove } = useConfirmDelete({
 })
 
 onMounted(async () => {
-  servers.value = await as400Store.fetchServers()
-  await load()
+  try {
+    servers.value = await as400Store.fetchServers()
+    await load()
+  } catch (e: unknown) {
+    ElMessage.error((e instanceof Error ? e.message : null) || t('common.loadFailed'))
+  }
 })
 </script>
 

@@ -34,13 +34,13 @@
     <el-dialog v-model="dialogVisible" :title="editMode ? $t('bpcs.rcmx.editTitle') : $t('bpcs.rcmx.addTitle')" width="500" destroy-on-close @close="resetForm">
       <el-form :model="form" label-width="100px" class="w-full">
         <el-form-item :label="$t('bpcs.common.customerCode')">
-          <el-input v-model="form.cust" :placeholder="$t('common.keyword')" style="width: 100%" :disabled="editMode" />
+          <el-input v-model="form.cust" :placeholder="$t('common.keyword')" class="w-full" :disabled="editMode" />
         </el-form-item>
         <el-form-item :label="$t('bpcs.rcmx.csrId')">
-          <el-input v-model="form.csrId" :placeholder="$t('common.keyword')" style="width: 100%" :disabled="editMode" />
+          <el-input v-model="form.csrId" :placeholder="$t('common.keyword')" class="w-full" :disabled="editMode" />
         </el-form-item>
         <el-form-item :label="$t('bpcs.common.status')">
-          <el-select v-model="form.active" :placeholder="$t('common.status')" style="width: 100%">
+          <el-select v-model="form.active" :placeholder="$t('common.status')" class="w-full">
             <el-option :label="$t('enabled')" value="Y" />
             <el-option :label="$t('disabled')" value="N" />
           </el-select>
@@ -84,6 +84,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsRcmx' })
+
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
@@ -115,7 +118,7 @@ const form = ref({
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listRcmx('001', custLike.value || undefined, csrLike.value || undefined) as unknown as RcmxAssignment[]
+    rows.value = await listRcmx('001', custLike.value || undefined, csrLike.value || undefined)
   } finally {
     loading.value = false
   }
@@ -129,7 +132,7 @@ const openAdd = () => {
 
 const openEdit = async (row: RcmxAssignment) => {
   editMode.value = true
-  const res = await getRcmx('001', row.cust) as unknown as RcmxAssignment
+  const res = await getRcmx('001', row.cust)
   form.value = { ...res }
   dialogVisible.value = true
 }
@@ -148,8 +151,9 @@ const submitForm = async () => {
     ElMessage.success(editMode.value ? t('common.updateSuccess') : t('common.addSuccess'))
     dialogVisible.value = false
     load()
-  } catch (e: any) {
-    ElMessage.error(e.response?.data?.message || t('common.operationFailed'))
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    ElMessage.error(msg)
   }
 }
 
@@ -160,8 +164,9 @@ const confirmDelete = (row: RcmxAssignment) => {
         await deleteRcmx('001', row.cust)
         ElMessage.success(t('common.deleteSuccess'))
         load()
-      } catch (e: any) {
-        ElMessage.error(e.response?.data?.message || t('common.deleteFailed'))
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e)
+        ElMessage.error(msg)
       }
     })
 }
@@ -187,23 +192,24 @@ const handleDrop = (e: DragEvent) => {
 const submitImport = async () => {
   if (!importFile.value) return
   try {
-    importResult.value = await importRcmx('001', importFile.value) as unknown as { successCount: number; failureCount: number; errors: string[] }
+    importResult.value = await importRcmx('001', importFile.value)
     importVisible.value = false
     resultVisible.value = true
-  } catch (e: any) {
-    ElMessage.error(e.response?.data?.message || t('common.importFailed'))
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    ElMessage.error(msg)
   }
 }
 
 const handleExport = async () => {
   try {
-    const data = await exportRcmx('001') as unknown as RcmxAssignment[]
+    const data = await exportRcmx('001')
     const wsData = [[t('bpcs.common.customerCode'), t('bpcs.common.customerName'), t('bpcs.rcmx.csrId'), t('bpcs.rcmx.csrName'), t('common.status'), t('bpcs.rcmx.maintUser'), t('bpcs.rcmx.maintDate')], ...data.map(r => [r.cust, r.custName, r.csrId, r.csrName, r.active, r.maintUser, r.maintDate])]
     const wb = XLSX.utils.book_new()
     const ws = XLSX.utils.aoa_to_sheet(wsData)
     XLSX.utils.book_append_sheet(wb, ws, 'RCMX')
     XLSX.writeFile(wb, 'RCMX.xlsx')
-  } catch (e: any) {
+  } catch (e: unknown) {
     ElMessage.error(t('common.exportFailed'))
   }
 }

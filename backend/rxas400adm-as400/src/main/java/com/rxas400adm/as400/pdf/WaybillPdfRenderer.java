@@ -10,6 +10,8 @@ import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
 import com.lowagie.text.Table;
 import com.lowagie.text.pdf.PdfWriter;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
@@ -126,7 +128,7 @@ public class WaybillPdfRenderer {
 
             doc.close();
         } catch (DocumentException e) {
-            throw new RuntimeException("Failed to render waybill PDF: " + e.getMessage(), e);
+            throw new BusinessException(ErrorCode.REPORT_GENERATE_FAILED, "运单 PDF 渲染失败: " + e.getMessage());
         }
         return out.toByteArray();
     }

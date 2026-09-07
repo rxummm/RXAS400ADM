@@ -2,8 +2,8 @@ spring:
   application:
     name: rxas400adm
   profiles:
-    # 默认演示模式（使用 MockAS400Client，无需真实 IBM i）
-    active: mock
+    # 默认演示模式（使用 MockAS400Client，无需真实 IBM i）；生产环境必须指定 --spring.profiles.active=prod
+    active: ${SPRING_PROFILES_ACTIVE:mock}
   task:
     # C9：调度线程池扩容（默认单线程）——慢采集/长同步不再拖垮黑名单清理、告警升级等定时任务
     scheduling:
@@ -13,9 +13,9 @@ spring:
     # W2：无 Accept-Language 时的校验消息默认语言（前端会显式传 Accept-Language）
     locale: zh-CN
   datasource:
-    url: jdbc:mysql://localhost:3306/rxas400adm?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&useServerPrepStmts=true&auto-commit=true
+    url: jdbc:mysql://localhost:3306/rxas400adm?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=${MYSQL_USE_SSL:false}&allowPublicKeyRetrieval=true&useServerPrepStmts=true&auto-commit=true
     username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:root}
+    password: ${MYSQL_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
     # P2: HikariCP 连接池参数配置化
     hikari:

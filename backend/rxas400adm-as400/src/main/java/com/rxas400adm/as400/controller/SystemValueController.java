@@ -7,6 +7,8 @@ import com.rxas400adm.as400.dto.SystemValueBatchUpdateDTO;
 import com.rxas400adm.as400.dto.SystemValueUpdateDTO;
 import com.rxas400adm.as400.model.SysvalRow;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +60,7 @@ public class SystemValueController {
         return ApiResponse.success(client.listSystemValues().stream()
                 .filter(r -> name.equalsIgnoreCase(String.valueOf(r.name())))
                 .findFirst()
-                .orElse(null));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "System value not found: " + name)));
     }
 
     /** 修改系统值（CHGSYSVAL），按钮级授权 SYSVAL_EDIT */

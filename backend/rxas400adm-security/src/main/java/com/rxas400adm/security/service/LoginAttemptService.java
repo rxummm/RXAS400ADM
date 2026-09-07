@@ -117,7 +117,7 @@ public class LoginAttemptService implements ILoginAttemptService {
         LocalDateTime now = LocalDateTime.now();
         if (attempt.getLockedUntil() != null && attempt.getLockedUntil().isAfter(now)) {
             long minutes = Duration.between(now, attempt.getLockedUntil()).toMinutes() + 1;
-            throw new BusinessException(ErrorCode.LOGIN_LOCKED, "账号已锁定，请 " + minutes + " 分钟后再试");
+            throw new BusinessException(ErrorCode.LOGIN_LOCKED, "Account locked, please try again in " + minutes + " minutes");
         }
         if (attempt.getLockedUntil() != null) {
             // 锁定已过期：自动解锁并清零
@@ -183,7 +183,7 @@ public class LoginAttemptService implements ILoginAttemptService {
     public void checkIpRate(String ip) {
         AtomicInteger counter = ipCache.get(ip, k -> new AtomicInteger(0));
         if (counter.incrementAndGet() > loginRuntime().maxIpPerMinute()) { // P2：阈值运行时可调
-            throw new BusinessException(ErrorCode.LOGIN_TOO_MANY, "登录尝试过于频繁，请稍后再试");
+            throw new BusinessException(ErrorCode.LOGIN_TOO_MANY, "Too many login attempts, please try again later");
         }
     }
 

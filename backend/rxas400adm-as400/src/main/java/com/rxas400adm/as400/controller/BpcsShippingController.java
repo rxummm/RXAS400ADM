@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/bpcs/shipping")
 @RequiredArgsConstructor
-@Tag(name = "BPCS发运看板")
+@Tag(name = "BPCS Shipping Kanban")
 public class BpcsShippingController {
 
     private final IBpcsShippingService shippingService;

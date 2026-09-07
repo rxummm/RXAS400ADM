@@ -19,7 +19,7 @@
         <el-tab-pane v-if="userStore.canSeeTab('users', 'usersTab')" :label="$t('users.usersTab')" name="users">
           <RxSkeleton type="table" :rows="8" :loading="loading">
             <el-table :data="users" size="small" border>
-            <el-table-column prop="id" label="ID" width="70" />
+            <el-table-column prop="id" :label="$t('col.id')" width="70" />
             <el-table-column prop="username" :label="$t('users.username')" min-width="130" />
             <el-table-column prop="email" :label="$t('users.email')" min-width="160" />
             <el-table-column :label="$t('users.roles')" min-width="180">
@@ -99,7 +99,7 @@
           <RxSkeleton type="table" :rows="5" :loading="attemptLoading">
             <el-table :data="attempts" size="small" border>
             <el-table-column prop="username" :label="$t('users.username')" min-width="120" />
-            <el-table-column prop="serverId" label="Server" width="80" />
+            <el-table-column prop="serverId" :label="$t('users.serverId')" width="80" />
             <el-table-column prop="failedCount" :label="$t('users.failedCount')" width="90" />
             <el-table-column :label="$t('users.lockStatus')" width="150">
               <template #default="{ row }">
@@ -109,7 +109,7 @@
                 <el-tag v-else type="info" size="small">{{ $t('users.notLocked') }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="lastIp" label="IP" min-width="130" />
+            <el-table-column prop="lastIp" :label="$t('col.ip')" min-width="130" />
             <el-table-column prop="lastFailTime" :label="$t('users.lastFail')" width="170" />
             <el-table-column :label="$t('common.operation')" width="90" fixed="right">
               <template #default="{ row }">
@@ -121,7 +121,7 @@
           <el-divider content-position="left">{{ $t('users.ipStats') }}</el-divider>
           <RxSkeleton type="table" :rows="5" :loading="ipLoading">
             <el-table :data="ipStats" size="small" border>
-            <el-table-column prop="ip" label="IP" min-width="150" />
+            <el-table-column prop="ip" :label="$t('col.ip')" min-width="150" />
             <el-table-column prop="attempts" :label="$t('users.attempts')" width="100" />
             <el-table-column prop="locked" :label="$t('users.lockedAccounts')" width="110" />
             <el-table-column prop="last_time" :label="$t('users.lastTime')" width="180" />
@@ -306,10 +306,14 @@ function openPermManage(row: UserVO) {
 }
 
 onMounted(async () => {
-  loadRoles()
-  servers.value = await as400Store.fetchServers()
-  loadAttempts()
-  loadIpStats()
+  try {
+    loadRoles()
+    servers.value = await as400Store.fetchServers()
+    loadAttempts()
+    loadIpStats()
+  } catch (e: unknown) {
+    ElMessage.error((e instanceof Error ? e.message : null) || t('common.loadFailed'))
+  }
 })
 </script>
 

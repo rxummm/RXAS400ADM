@@ -6,7 +6,7 @@ import java.util.List;
 
 @Data
 public class BpcsRcmxImportResult {
-    private int successCount;
-    private int failureCount;
+    private Integer successCount;
+    private Integer failureCount;
     private List<String> errors;
 }

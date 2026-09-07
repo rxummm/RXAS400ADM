@@ -17,6 +17,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsLocationInv' })
+
 import { ref, onMounted } from 'vue'
 import { listLocations, type LocationInventory } from '@/api/bpcs'
 
@@ -26,7 +29,7 @@ const rows = ref<LocationInventory[]>([])
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listLocations() as unknown as LocationInventory[]
+    rows.value = await listLocations()
   } finally {
     loading.value = false
   }

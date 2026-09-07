@@ -34,7 +34,7 @@ import SysConfig from '@/views/system/config/index.vue'
 import DictManage from '@/views/system/dict/index.vue'
 import Permissions from '@/views/system/permissions/index.vue'
 
-defineOptions({ name: 'Params' })
+defineOptions({ name: 'SysParams' })
 
 const userStore = useUserStore()
 

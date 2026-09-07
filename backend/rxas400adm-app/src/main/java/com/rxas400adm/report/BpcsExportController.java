@@ -1,12 +1,19 @@
 package com.rxas400adm.report;
 
+import com.rxas400adm.as400.dto.*;
 import com.rxas400adm.as400.service.*;
+import com.rxas400adm.as400.vo.*;
 import com.rxas400adm.common.response.PageResult;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,7 +27,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/bpcs/export")
 @RequiredArgsConstructor
-@Tag(name = "BPCS导出")
+@Tag(name = "BPCS Export")
 public class BpcsExportController {
 
     private final IReportService reportService;
@@ -36,24 +43,24 @@ public class BpcsExportController {
 
     @GetMapping("/orders")
     @PreAuthorize("hasAuthority('BPCS_ORDER_VIEW')")
-    public byte[] orders(@RequestParam(defaultValue = "xlsx") String format,
+    public ResponseEntity<byte[]> orders(@RequestParam(defaultValue = "xlsx") String format,
                          @RequestParam String cono,
                          @RequestParam String orno) {
-        var query = new com.rxas400adm.as400.dto.BpcsOrderQueryDTO();
+        var query = new BpcsOrderQueryDTO();
         query.setCono(cono);
         query.setOrno(orno);
         var vo = orderService.getHeader(query);
         List<Map<String, Object>> rows = orderRows(vo);
-        return reportService.render(format, "BPCS订单", orderHeaders(), rows);
+        return toResponse(reportService.render(format, "BPCS订单", orderHeaders(), rows), "BPCS订单", format);
     }
 
     @GetMapping("/customers")
     @PreAuthorize("hasAuthority('BPCS_CUSTOMER_VIEW')")
-    public byte[] customers(@RequestParam(defaultValue = "xlsx") String format,
+    public ResponseEntity<byte[]> customers(@RequestParam(defaultValue = "xlsx") String format,
                             @RequestParam(required = false) String cono,
                             @RequestParam(required = false) String cust,
                             @RequestParam(required = false) String name) {
-        var query = new com.rxas400adm.as400.dto.BpcsCustomerQueryDTO();
+        var query = new BpcsCustomerQueryDTO();
         query.setCono(cono);
         query.setCust(cust);
         query.setName(name);
@@ -61,17 +68,17 @@ public class BpcsExportController {
         query.setSize(10000);
         PageResult<?> result = customerService.search(query);
         List<Map<String, Object>> rows = customerRows(result.getRecords());
-        return reportService.render(format, "BPCS客户列表", customerHeaders(), rows);
+        return toResponse(reportService.render(format, "BPCS客户列表", customerHeaders(), rows), "BPCS客户列表", format);
     }
 
     @GetMapping("/inventory")
     @PreAuthorize("hasAuthority('BPCS_INVENTORY_VIEW')")
-    public byte[] inventory(@RequestParam(defaultValue = "xlsx") String format,
+    public ResponseEntity<byte[]> inventory(@RequestParam(defaultValue = "xlsx") String format,
                             @RequestParam(required = false) String cono,
                             @RequestParam(required = false) String item,
                             @RequestParam(required = false) String desc,
                             @RequestParam(required = false) String wh) {
-        var query = new com.rxas400adm.as400.dto.BpcsInventoryQueryDTO();
+        var query = new BpcsInventoryQueryDTO();
         query.setCono(cono);
         query.setItem(item);
         query.setDesc(desc);
@@ -80,61 +87,61 @@ public class BpcsExportController {
         query.setSize(10000);
         PageResult<?> result = inventoryService.search(query);
         List<Map<String, Object>> rows = inventoryRows(result.getRecords());
-        return reportService.render(format, "BPCS库存列表", inventoryHeaders(), rows);
+        return toResponse(reportService.render(format, "BPCS库存列表", inventoryHeaders(), rows), "BPCS库存列表", format);
     }
 
     @GetMapping("/shipping")
     @PreAuthorize("hasAuthority('BPCS_SHIPPING_VIEW')")
-    public byte[] shipping(@RequestParam(defaultValue = "xlsx") String format,
+    public ResponseEntity<byte[]> shipping(@RequestParam(defaultValue = "xlsx") String format,
                            @RequestParam(required = false) String cono,
                            @RequestParam(required = false) String lhno) {
-        var query = new com.rxas400adm.as400.dto.BpcsShippingQueryDTO();
+        var query = new BpcsShippingQueryDTO();
         query.setCono(cono);
         query.setLhno(lhno);
         query.setCurrent(1);
         query.setSize(10000);
         PageResult<?> result = shippingService.search(query);
         List<Map<String, Object>> rows = shippingRows(result.getRecords());
-        return reportService.render(format, "BPCS发运列表", shippingHeaders(), rows);
+        return toResponse(reportService.render(format, "BPCS发运列表", shippingHeaders(), rows), "BPCS发运列表", format);
     }
 
     @GetMapping("/invoices")
     @PreAuthorize("hasAuthority('BPCS_INVOICE_VIEW')")
-    public byte[] invoices(@RequestParam(defaultValue = "xlsx") String format,
+    public ResponseEntity<byte[]> invoices(@RequestParam(defaultValue = "xlsx") String format,
                            @RequestParam(required = false) String cono,
                            @RequestParam(required = false) String orno) {
-        var query = new com.rxas400adm.as400.dto.BpcsInvoiceQueryDTO();
+        var query = new BpcsInvoiceQueryDTO();
         query.setCono(cono);
         query.setOrno(orno);
         query.setCurrent(1);
         query.setSize(10000);
         PageResult<?> result = invoiceService.search(query);
         List<Map<String, Object>> rows = invoiceRows(result.getRecords());
-        return reportService.render(format, "BPCS发票列表", invoiceHeaders(), rows);
+        return toResponse(reportService.render(format, "BPCS发票列表", invoiceHeaders(), rows), "BPCS发票列表", format);
     }
 
     @GetMapping("/sales")
     @PreAuthorize("hasAuthority('BPCS_SALES_VIEW')")
-    public byte[] sales(@RequestParam(defaultValue = "xlsx") String format,
+    public ResponseEntity<byte[]> sales(@RequestParam(defaultValue = "xlsx") String format,
                         @RequestParam(required = false) String cono,
                         @RequestParam(required = false) String fromYm,
                         @RequestParam(required = false) String toYm) {
-        var query = new com.rxas400adm.as400.dto.BpcsSalesQueryDTO();
+        var query = new BpcsSalesQueryDTO();
         query.setCono(cono);
         query.setFromYm(fromYm);
         query.setToYm(toYm);
         var trend = salesService.getTrend(query);
         List<Map<String, Object>> rows = salesRows(trend);
-        return reportService.render(format, "BPCS销售趋势", salesHeaders(), rows);
+        return toResponse(reportService.render(format, "BPCS销售趋势", salesHeaders(), rows), "BPCS销售趋势", format);
     }
 
     @GetMapping("/purchases")
     @PreAuthorize("hasAuthority('BPCS_PURCHASE_VIEW')")
-    public byte[] purchases(@RequestParam(defaultValue = "xlsx") String format,
+    public ResponseEntity<byte[]> purchases(@RequestParam(defaultValue = "xlsx") String format,
                             @RequestParam(required = false) String cono,
                             @RequestParam(required = false) String pono,
                             @RequestParam(required = false) String vendor) {
-        var query = new com.rxas400adm.as400.dto.BpcsPurchaseQueryDTO();
+        var query = new BpcsPurchaseQueryDTO();
         query.setCono(cono);
         query.setPono(pono);
         query.setVendor(vendor);
@@ -142,16 +149,16 @@ public class BpcsExportController {
         query.setSize(10000);
         PageResult<?> result = purchaseService.search(query);
         List<Map<String, Object>> rows = purchaseRows(result.getRecords());
-        return reportService.render(format, "BPCS采购列表", purchaseHeaders(), rows);
+        return toResponse(reportService.render(format, "BPCS采购列表", purchaseHeaders(), rows), "BPCS采购列表", format);
     }
 
     @GetMapping("/items")
     @PreAuthorize("hasAuthority('BPCS_ITEM_VIEW')")
-    public byte[] items(@RequestParam(defaultValue = "xlsx") String format,
+    public ResponseEntity<byte[]> items(@RequestParam(defaultValue = "xlsx") String format,
                         @RequestParam(required = false) String cono,
                         @RequestParam(required = false) String item,
                         @RequestParam(required = false) String desc) {
-        var query = new com.rxas400adm.as400.dto.BpcsItemQueryDTO();
+        var query = new BpcsItemQueryDTO();
         query.setCono(cono);
         query.setItem(item);
         query.setDesc(desc);
@@ -159,12 +166,12 @@ public class BpcsExportController {
         query.setSize(10000);
         PageResult<?> result = itemService.search(query);
         List<Map<String, Object>> rows = itemRows(result.getRecords());
-        return reportService.render(format, "BPCS物料列表", itemHeaders(), rows);
+        return toResponse(reportService.render(format, "BPCS物料列表", itemHeaders(), rows), "BPCS物料列表", format);
     }
 
     @GetMapping("/supply-chain/{type}")
     @PreAuthorize("hasAuthority('BPCS_ORDER_VIEW')")
-    public byte[] supplyChain(@RequestParam(defaultValue = "xlsx") String format,
+    public ResponseEntity<byte[]> supplyChain(@RequestParam(defaultValue = "xlsx") String format,
                               @PathVariable String type,
                               @RequestParam(required = false) String cono,
                               @RequestParam(required = false) String item,
@@ -178,7 +185,7 @@ public class BpcsExportController {
         List<Map<String, Object>> rows;
         switch (type) {
             case "orders" -> {
-                var q = new com.rxas400adm.as400.dto.BpcsOrderListQueryDTO();
+                var q = new BpcsOrderListQueryDTO();
                 q.setCono(cono);
                 rows = scOrderRows(supplyChainService.searchOrders(q));
                 title = "BPCS供应链订单";
@@ -216,15 +223,27 @@ public class BpcsExportController {
                 headers = scSupplierHeaders();
             }
             default -> {
-                return new byte[0];
+                return toResponse(new byte[0], "export", format);
             }
         }
-        return reportService.render(format, title, headers, rows);
+        return toResponse(reportService.render(format, title, headers, rows), title, format);
+    }
+
+    // ==================== Response helper ====================
+
+    private ResponseEntity<byte[]> toResponse(byte[] data, String title, String format) {
+        String ext = "pdf".equalsIgnoreCase(format) ? "pdf" : "xlsx";
+        String filename = URLEncoder.encode(title, StandardCharsets.UTF_8) + "." + ext;
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + filename)
+                .contentType("pdf".equalsIgnoreCase(format) ? MediaType.APPLICATION_PDF : MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(data.length)
+                .body(data);
     }
 
     // ==================== Row conversion (record accessors: field() not get_FIELD()) ====================
 
-    private static List<Map<String, Object>> orderRows(com.rxas400adm.as400.vo.BpcsOrderHeaderVO v) {
+    private static List<Map<String, Object>> orderRows(BpcsOrderHeaderVO v) {
         List<Map<String, Object>> list = new ArrayList<>();
         if (v == null) return list;
         Map<String, Object> map = new LinkedHashMap<>();
@@ -247,8 +266,7 @@ public class BpcsExportController {
     private static List<Map<String, Object>> customerRows(List<?> records) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (Object rec : records) {
-            @SuppressWarnings("unchecked")
-            var v = (com.rxas400adm.as400.vo.BpcsCustomerVO) rec;
+            var v = (BpcsCustomerVO) rec;
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("公司", v.cono());
             map.put("客户号", v.cust());
@@ -272,8 +290,7 @@ public class BpcsExportController {
     private static List<Map<String, Object>> inventoryRows(List<?> records) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (Object rec : records) {
-            @SuppressWarnings("unchecked")
-            var v = (com.rxas400adm.as400.vo.BpcsInventoryVO) rec;
+            var v = (BpcsInventoryVO) rec;
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("物料号", v.item());
             map.put("描述", v.description());
@@ -295,8 +312,7 @@ public class BpcsExportController {
     private static List<Map<String, Object>> shippingRows(List<?> records) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (Object rec : records) {
-            @SuppressWarnings("unchecked")
-            var v = (com.rxas400adm.as400.vo.BpcsLoadVO) rec;
+            var v = (BpcsLoadVO) rec;
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("公司", v.cono());
             map.put("载荷号", v.lhno());
@@ -318,8 +334,7 @@ public class BpcsExportController {
     private static List<Map<String, Object>> invoiceRows(List<?> records) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (Object rec : records) {
-            @SuppressWarnings("unchecked")
-            var v = (com.rxas400adm.as400.vo.BpcsInvoiceVO) rec;
+            var v = (BpcsInvoiceVO) rec;
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("发票号", v.invNo());
             map.put("订单号", v.orno());
@@ -341,8 +356,7 @@ public class BpcsExportController {
     private static List<Map<String, Object>> salesRows(Object trendVo) {
         List<Map<String, Object>> list = new ArrayList<>();
         if (trendVo == null) return list;
-        @SuppressWarnings("unchecked")
-        var trend = (com.rxas400adm.as400.vo.BpcsSalesTrendVO) trendVo;
+        var trend = (BpcsSalesTrendVO) trendVo;
         if (trend.months() != null) {
             for (var m : trend.months()) {
                 Map<String, Object> map = new LinkedHashMap<>();
@@ -363,8 +377,7 @@ public class BpcsExportController {
     private static List<Map<String, Object>> purchaseRows(List<?> records) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (Object rec : records) {
-            @SuppressWarnings("unchecked")
-            var v = (com.rxas400adm.as400.vo.BpcsPurchaseOrderVO) rec;
+            var v = (BpcsPurchaseOrderVO) rec;
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("公司", v.cono());
             map.put("采购单号", v.pono());
@@ -387,8 +400,7 @@ public class BpcsExportController {
     private static List<Map<String, Object>> itemRows(List<?> records) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (Object rec : records) {
-            @SuppressWarnings("unchecked")
-            var v = (com.rxas400adm.as400.vo.BpcsItemVO) rec;
+            var v = (BpcsItemVO) rec;
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("物料号", v.item());
             map.put("描述", v.description());
@@ -410,7 +422,7 @@ public class BpcsExportController {
 
     // ==================== Supply-chain row helpers ====================
 
-    private static List<Map<String, Object>> scOrderRows(List<com.rxas400adm.as400.vo.BpcsOrderListVO> list) {
+    private static List<Map<String, Object>> scOrderRows(List<BpcsOrderListVO> list) {
         List<Map<String, Object>> rows = new ArrayList<>();
         for (var v : list) {
             Map<String, Object> map = new LinkedHashMap<>();
@@ -430,7 +442,7 @@ public class BpcsExportController {
         return new String[]{"公司", "订单号", "客户号", "客户名称", "订单日期", "状态", "总金额"};
     }
 
-    private static List<Map<String, Object>> scAlertRows(List<com.rxas400adm.as400.vo.BpcsInventoryAlertVO> list) {
+    private static List<Map<String, Object>> scAlertRows(List<BpcsInventoryAlertVO> list) {
         List<Map<String, Object>> rows = new ArrayList<>();
         for (var v : list) {
             Map<String, Object> map = new LinkedHashMap<>();
@@ -449,7 +461,7 @@ public class BpcsExportController {
         return new String[]{"物料号", "描述", "仓库", "在手量", "安全库存", "缺口"};
     }
 
-    private static List<Map<String, Object>> scAnalysisRows(com.rxas400adm.as400.vo.BpcsSalesAnalysisVO vo) {
+    private static List<Map<String, Object>> scAnalysisRows(BpcsSalesAnalysisVO vo) {
         List<Map<String, Object>> rows = new ArrayList<>();
         if (vo == null || vo.topItems() == null) return rows;
         for (var v : vo.topItems()) {
@@ -467,7 +479,7 @@ public class BpcsExportController {
         return new String[]{"编码", "名称", "收入", "订单数"};
     }
 
-    private static List<Map<String, Object>> scHistoryRows(List<com.rxas400adm.as400.vo.BpcsInventoryHistoryVO> list) {
+    private static List<Map<String, Object>> scHistoryRows(List<BpcsInventoryHistoryVO> list) {
         List<Map<String, Object>> rows = new ArrayList<>();
         for (var v : list) {
             Map<String, Object> map = new LinkedHashMap<>();
@@ -486,7 +498,7 @@ public class BpcsExportController {
         return new String[]{"物料号", "仓库", "事务类型", "数量", "参考号", "日期"};
     }
 
-    private static List<Map<String, Object>> scReceivingRows(List<com.rxas400adm.as400.vo.BpcsPurchaseReceivingVO> list) {
+    private static List<Map<String, Object>> scReceivingRows(List<BpcsPurchaseReceivingVO> list) {
         List<Map<String, Object>> rows = new ArrayList<>();
         for (var v : list) {
             Map<String, Object> map = new LinkedHashMap<>();
@@ -507,7 +519,7 @@ public class BpcsExportController {
         return new String[]{"采购单号", "供应商名称", "物料号", "物料描述", "已订购", "已收货", "未结量", "单价"};
     }
 
-    private static List<Map<String, Object>> scAbcRows(List<com.rxas400adm.as400.vo.BpcsAbcAnalysisVO> list) {
+    private static List<Map<String, Object>> scAbcRows(List<BpcsAbcAnalysisVO> list) {
         List<Map<String, Object>> rows = new ArrayList<>();
         for (var v : list) {
             Map<String, Object> map = new LinkedHashMap<>();
@@ -527,7 +539,7 @@ public class BpcsExportController {
         return new String[]{"物料号", "描述", "仓库", "数量", "单位成本", "库存价值", "分类"};
     }
 
-    private static List<Map<String, Object>> scSupplierRows(List<com.rxas400adm.as400.vo.BpcsSupplierPerfVO> list) {
+    private static List<Map<String, Object>> scSupplierRows(List<BpcsSupplierPerfVO> list) {
         List<Map<String, Object>> rows = new ArrayList<>();
         for (var v : list) {
             Map<String, Object> map = new LinkedHashMap<>();

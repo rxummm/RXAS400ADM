@@ -11,21 +11,21 @@ import java.time.LocalDate;
  */
 public class CycleCountPlanDTO {
 
-    @NotBlank(message = "物料号不能为空")
-    @Size(max = 15, message = "物料号最长 15 位")
+    @NotBlank(message = "item number is required")
+    @Size(max = 15, message = "max length is 15")
     private String item;
 
-    @Size(max = 50, message = "物料描述最长 50 位")
+    @Size(max = 50, message = "max length is 50")
     private String itemDesc;
 
-    @NotBlank(message = "仓库代码不能为空")
-    @Size(max = 4, message = "仓库代码最长 4 位")
+    @NotBlank(message = "warehouse code is required")
+    @Size(max = 4, message = "max length is 4")
     private String warehouse;
 
-    @NotNull(message = "计划日期不能为空")
+    @NotNull(message = "planned date is required")
     private LocalDate plannedDate;
 
-    @Size(max = 1, message = "ABC 分类最长 1 位")
+    @Size(max = 1, message = "max length is 1")
     private String abcClass;
 
     public String getItem() { return item; }

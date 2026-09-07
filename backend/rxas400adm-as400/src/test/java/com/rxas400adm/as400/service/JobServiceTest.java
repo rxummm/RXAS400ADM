@@ -3,9 +3,12 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.CommandResult;
+import com.rxas400adm.common.config.ProfileResolver;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.as400.vo.JobInfo;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -28,19 +32,40 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class JobServiceTest {
 
+    @BeforeAll
+    static void initSqlRegistry() throws Exception {
+        // 通过反射调用 SqlStatementRegistry.load() 初始化静态单例，加载 classpath:sql/as400-*.xml
+        SqlStatementRegistry registry = new SqlStatementRegistry();
+        java.lang.reflect.Method loadMethod = SqlStatementRegistry.class.getDeclaredMethod("load");
+        loadMethod.setAccessible(true);
+        loadMethod.invoke(registry);
+    }
+
     @Mock
     private AS400ClientProvider clientProvider;
 
     @Mock
     private AS400Client client;
 
+    @Mock
+    private ProfileResolver profileResolver;
+
+    @Mock
+    private ExecutorService msgwExecutor;
+
     private JobService jobService;
 
     @BeforeEach
     void setUp() {
-        jobService = new JobService(clientProvider);
+        jobService = new JobService(clientProvider, profileResolver, msgwExecutor);
         // S8：负面用例在触达 client 前即抛异常，current() 打桩需 lenient 避免 strict-stubs 误报
         lenient().when(clientProvider.current()).thenReturn(client);
+        // 模拟 ExecutorService 同步执行任务，避免 CompletableFuture.supplyAsync 挂起
+        lenient().doAnswer(inv -> {
+            Runnable task = inv.getArgument(0);
+            task.run();
+            return null;
+        }).when(msgwExecutor).execute(any(Runnable.class));
     }
 
     @Test

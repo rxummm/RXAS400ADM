@@ -1,7 +1,7 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="table-wrapper">
-      <iframe :src="docsUrl" class="docs-frame" :title="$t('menu.flowcharts')" />
+      <iframe :src="docsUrl" class="docs-frame" :title="$t('menu.flowcharts')" sandbox="allow-same-origin allow-scripts" />
     </div>
   </div>
 </template>

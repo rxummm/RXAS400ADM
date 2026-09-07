@@ -74,7 +74,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
 
     
     public ReportSchedule update(Long id, ReportScheduleDTO dto) {
-        EntityUtil.require(id, "报表定时任务", scheduleMapper::selectById);
+        EntityUtil.require(id, "Report Schedule", scheduleMapper::selectById);
         ReportSchedule schedule = toEntity(dto);
         applyDefaults(schedule);
         schedule.setId(id);
@@ -93,7 +93,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
 
     
     public void delete(Long id) {
-        EntityUtil.require(id, "报表定时任务", scheduleMapper::selectById);
+        EntityUtil.require(id, "Report Schedule", scheduleMapper::selectById);
         // T4：先落禁用守卫写再注销——防止后续失败时重启复活已删除任务
         scheduleMapper.update(null, new LambdaUpdateWrapper<ReportSchedule>()
                 .eq(ReportSchedule::getId, id)
@@ -106,7 +106,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
 
     
     public ReportSchedule toggle(Long id, Boolean enabled) {
-        ReportSchedule schedule = EntityUtil.require(id, "报表定时任务", scheduleMapper::selectById);
+        ReportSchedule schedule = EntityUtil.require(id, "Report Schedule", scheduleMapper::selectById);
         schedule.setEnabled(Boolean.TRUE.equals(enabled));
         schedule.setUpdatedTime(LocalDateTime.now());
         scheduleMapper.updateById(schedule);
@@ -133,7 +133,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
      */
 
     public ScheduleExecuteResultVO execute(Long id) {
-        ReportSchedule schedule = EntityUtil.require(id, "报表定时任务", scheduleMapper::selectById);
+        ReportSchedule schedule = EntityUtil.require(id, "Report Schedule", scheduleMapper::selectById);
         long start = System.currentTimeMillis();
         String status = ExecutionStatus.SUCCESS;
         String message;
@@ -143,7 +143,7 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
             byte[] data = reportService.generate(schedule.getReportType(), schedule.getFormat(),
                     schedule.getServerId(), days);
             if (data.length == 0) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "报表生成失败（数据为空或 PDF 字体不可用）");
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "Report generation failed (empty data or PDF font unavailable)");
             }
             fileBytes = data.length;
             String ext = "pdf".equalsIgnoreCase(schedule.getFormat()) ? "pdf" : "xlsx";
@@ -222,13 +222,13 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
 
     private void applyDefaults(ReportSchedule schedule) {
         if (schedule.getName() == null || schedule.getName().isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "任务名称不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Task name is required");
         }
         if (schedule.getReportType() == null || schedule.getReportType().isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "报表类型不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Report type is required");
         }
         if (schedule.getCronExpr() == null || schedule.getCronExpr().isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "cron 表达式不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Cron expression is required");
         }
         // P2-13：保存时即校验 cron，避免无效表达式静默注册失败（任务 enabled 但永不触发）
         String cronError = CronValidator.validate(schedule.getCronExpr());

@@ -1,6 +1,7 @@
 package com.rxas400adm.as400;
 
 import com.rxas400adm.as400.model.SubsystemRow;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 
 import java.util.List;
 import static com.rxas400adm.as400.JTOpenConnectionState.str;
@@ -21,9 +22,7 @@ class JTOpenSubsystemClient implements SubsystemClient {
 
     @Override
     public List<SubsystemRow> listSubsystems() {
-        return sqlClient.queryList("SELECT SUBSYSTEM_NAME, SUBSYSTEM_DESCRIPTION, STATUS, "
-                + "NUMBER_OF_ACTIVE_JOBS, MAXIMUM_ACTIVE_JOBS, SUBSYSTEM_LIBRARY "
-                + "FROM QSYS2.SUBSYSTEM_INFO").stream()
+        return sqlClient.queryList(SqlStatementRegistry.of("subsystem.list.detail")).stream()
                 .map(r -> new SubsystemRow(str(r, "SUBSYSTEM_NAME"), str(r, "SUBSYSTEM_DESCRIPTION"),
                         str(r, "STATUS"), lng(r, "NUMBER_OF_ACTIVE_JOBS"),
                         lng(r, "MAXIMUM_ACTIVE_JOBS"), str(r, "SUBSYSTEM_LIBRARY")))

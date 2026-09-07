@@ -140,7 +140,7 @@
                 <el-descriptions-item :label="$t('bpcs.item.unitCost')">{{ fmtMoney(detail.unitCost) }}</el-descriptions-item>
                 <el-descriptions-item :label="$t('bpcs.item.listPrice')">{{ fmtMoney(detail.listPrice) }}</el-descriptions-item>
                 <el-descriptions-item :label="$t('bpcs.item.weight')">{{ detail.weight != null ? detail.weight + ' kg' : '—' }}</el-descriptions-item>
-                <el-descriptions-item :label="$t('bpcs.item.shelfLife')">{{ detail.shelfLife != null ? detail.shelfLife + ' 天' : '—' }}</el-descriptions-item>
+                <el-descriptions-item :label="$t('bpcs.item.shelfLife')">{{ detail.shelfLife != null ? detail.shelfLife + ' ' + $t('common.unit.days') : '—' }}</el-descriptions-item>
               </el-descriptions>
             </el-tab-pane>
           </el-tabs>
@@ -153,6 +153,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { searchItems, getItemDetail, type BpcsItem, BPCS_EXPORT } from '@/api/bpcs'
 import AppPagination from '@/components/AppPagination.vue'
 import ExportDropdown from '@/components/ExportDropdown.vue'
@@ -160,6 +161,7 @@ import type { ExportColumn } from '@/components/ExportButton.vue'
 
 defineOptions({ name: 'BpcsItem' })
 
+const { t } = useI18n()
 const keyword = ref('')
 const loading = ref(false)
 const items = ref<BpcsItem[]>([])
@@ -171,15 +173,15 @@ const detail = ref<BpcsItem | null>(null)
 const activeTab = ref('inventory')
 
 const exportColumns: ExportColumn[] = [
-  { key: 'item', label: '物料号' },
-  { key: 'description', label: '描述' },
-  { key: 'uom', label: '单位' },
-  { key: 'category', label: '分类' },
-  { key: 'unitCost', label: '单位成本' },
-  { key: 'listPrice', label: '列表价' },
-  { key: 'totalOnHand', label: '在手量' },
-  { key: 'totalAllocated', label: '已分配' },
-  { key: 'totalAvailable', label: '可用量' },
+  { key: 'item', label: t('bpcs.common.itemCode') },
+  { key: 'description', label: t('bpcs.common.description') },
+  { key: 'uom', label: t('bpcs.common.uom') },
+  { key: 'category', label: t('bpcs.common.category') },
+  { key: 'unitCost', label: t('bpcs.common.unitCost') },
+  { key: 'listPrice', label: t('bpcs.common.listPrice') },
+  { key: 'totalOnHand', label: t('bpcs.common.onHand') },
+  { key: 'totalAllocated', label: t('bpcs.common.allocated') },
+  { key: 'totalAvailable', label: t('bpcs.common.available') },
 ]
 
 function search() {

@@ -17,7 +17,7 @@
  *   // 数据到达时：
  *   cpu.setOption({ series: [{ data: cpuData.value }] })
  */
-import { onBeforeUnmount, onMounted, type Ref } from 'vue'
+import { onActivated, onBeforeUnmount, onMounted, type Ref } from 'vue'
 import * as echarts from '@/utils/echarts'
 
 type EChartsInstance = ReturnType<typeof echarts.init>
@@ -49,6 +49,9 @@ export function useECharts(elRef: Ref<HTMLDivElement | undefined>, getBaseOption
   }
 
   onMounted(ensureInit)
+  onActivated(() => {
+    ensureInit()?.resize()
+  })
   window.addEventListener('resize', onResize)
 
   onBeforeUnmount(() => {

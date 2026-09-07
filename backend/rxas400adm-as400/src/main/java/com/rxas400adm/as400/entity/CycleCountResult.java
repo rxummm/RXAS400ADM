@@ -22,9 +22,9 @@ public class CycleCountResult {
     private String planNo;
     private String item;
     private String warehouse;
-    private int systemQty;
-    private int countedQty;
-    private int difference;
+    private Integer systemQty;
+    private Integer countedQty;
+    private Integer difference;
     private BigDecimal differenceValue;
     private String reason;
     private String countedBy;

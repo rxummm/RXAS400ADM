@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -133,11 +134,11 @@ public class WmsService implements IWmsService {
 
     private PageResult<BpcsBinVO> mockBins(BpcsBinQueryDTO query) {
         List<BpcsBinVO> list = List.of(
-                new BpcsBinVO("001", "WH1", "A-01-01", "标准", "O", java.math.BigDecimal.valueOf(1000)),
-                new BpcsBinVO("001", "WH1", "A-01-02", "标准", "F", java.math.BigDecimal.valueOf(1000)),
-                new BpcsBinVO("001", "WH1", "A-02-01", "重型", "O", java.math.BigDecimal.valueOf(2000)),
-                new BpcsBinVO("001", "WH2", "B-01-01", "标准", "O", java.math.BigDecimal.valueOf(1000)),
-                new BpcsBinVO("001", "WH2", "B-01-02", "标准", "F", java.math.BigDecimal.valueOf(1000)));
+                new BpcsBinVO("001", "WH1", "A-01-01", "标准", "O", BigDecimal.valueOf(1000)),
+                new BpcsBinVO("001", "WH1", "A-01-02", "标准", "F", BigDecimal.valueOf(1000)),
+                new BpcsBinVO("001", "WH1", "A-02-01", "重型", "O", BigDecimal.valueOf(2000)),
+                new BpcsBinVO("001", "WH2", "B-01-01", "标准", "O", BigDecimal.valueOf(1000)),
+                new BpcsBinVO("001", "WH2", "B-01-02", "标准", "F", BigDecimal.valueOf(1000)));
         return new PageResult<>(list.size(), list);
     }
 
@@ -227,10 +228,10 @@ public class WmsService implements IWmsService {
         try { return Integer.parseInt(String.valueOf(v)); } catch (Exception e) { return 0; }
     }
 
-    private java.math.BigDecimal num(Map<String, Object> row, String key) {
+    private BigDecimal num(Map<String, Object> row, String key) {
         Object v = row.get(key);
-        if (v instanceof java.math.BigDecimal bd) return bd;
-        try { return new java.math.BigDecimal(String.valueOf(v)); } catch (Exception e) { return java.math.BigDecimal.ZERO; }
+        if (v instanceof BigDecimal bd) return bd;
+        try { return new BigDecimal(String.valueOf(v)); } catch (Exception e) { return BigDecimal.ZERO; }
     }
 
     private String like(String val) {

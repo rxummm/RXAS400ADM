@@ -17,6 +17,7 @@ import com.rxas400adm.system.mapper.SysPermissionMapper;
 import com.rxas400adm.system.mapper.SysRolePermissionMapper;
 import com.rxas400adm.system.vo.PermissionVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import org.springframework.util.StringUtils;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
  *   供菜单管理页 perms 下拉选择，杜绝手填拼写错误
  * - 删除前检查引用（rx_role_permission 绑定 / rx_menu.perms 使用），被引用则拒绝
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PermissionManageService implements IPermissionManageService {
@@ -134,8 +136,8 @@ public class PermissionManageService implements IPermissionManageService {
             try {
                 return objectMapper.readValue(json, new TypeReference<Map<String, List<String>>>() {
                 });
-            } catch (Exception ignored) {
-                // 配置损坏时回退默认表，不阻塞下拉建议
+            } catch (Exception e) {
+                log.debug("Menu domain config JSON parse failed: {}", e.getMessage());
             }
         }
         return DEFAULT_MENU_DOMAIN;
@@ -163,13 +165,13 @@ public class PermissionManageService implements IPermissionManageService {
     /** 新增（权限码唯一） */
     public SysPermission create(SysPermissionDTO dto) {
         if (!StringUtils.hasText(dto.getPermissionCode())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "权限码不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Permission code is required");
         }
         String code = dto.getPermissionCode().trim().toUpperCase();
         long exists = permissionMapper.selectCount(new LambdaQueryWrapper<SysPermission>()
                 .eq(SysPermission::getPermissionCode, code));
         if (exists > 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "权限码已存在: " + code);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Permission code already exists: " + code);
         }
         SysPermission p = new SysPermission();
         p.setPermissionCode(code);
@@ -183,7 +185,7 @@ public class PermissionManageService implements IPermissionManageService {
     public SysPermission update(Long id, SysPermissionDTO dto) {
         SysPermission p = permissionMapper.selectById(id);
         if (p == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "权限码不存在: " + id);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Permission not found: " + id);
         }
         if (StringUtils.hasText(dto.getPermissionName())) p.setPermissionName(dto.getPermissionName());
         if (StringUtils.hasText(dto.getModule())) p.setModule(dto.getModule());
@@ -196,7 +198,7 @@ public class PermissionManageService implements IPermissionManageService {
     public void delete(Long id) {
         SysPermission p = permissionMapper.selectById(id);
         if (p == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "权限码不存在: " + id);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Permission not found: " + id);
         }
         long menuUsed = menuMapper.selectCount(new LambdaQueryWrapper<SysMenu>()
                 .eq(SysMenu::getPerms, p.getPermissionCode()));
@@ -205,7 +207,7 @@ public class PermissionManageService implements IPermissionManageService {
                         .eq(SysRolePermission::getPermissionId, id));
         if (menuUsed > 0 || roleUsed > 0) {
             throw new BusinessException(ErrorCode.FORBIDDEN,
-                    "权限码 " + p.getPermissionCode() + " 正在被使用（菜单 " + menuUsed + " 处 / 角色绑定 " + roleUsed + " 处），不能删除");
+                    "Permission " + p.getPermissionCode() + " is in use (menu: " + menuUsed + ", role binding: " + roleUsed + "), cannot delete");
         }
         permissionMapper.deleteById(id);
     }

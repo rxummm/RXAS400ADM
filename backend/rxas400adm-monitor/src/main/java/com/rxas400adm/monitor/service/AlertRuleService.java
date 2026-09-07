@@ -40,7 +40,7 @@ public class AlertRuleService {
     }
 
     public AlertRule update(Long id, AlertRuleDTO dto) {
-        EntityUtil.require(id, "告警规则", ruleMapper::selectById);
+        EntityUtil.require(id, "Alert Rule", ruleMapper::selectById);
         AlertRule rule = dto.toEntity();
         rule.setId(id);
         if (rule.getChannel() == null || rule.getChannel().isBlank()) {
@@ -51,12 +51,12 @@ public class AlertRuleService {
     }
 
     public void delete(Long id) {
-        EntityUtil.require(id, "告警规则", ruleMapper::selectById);
+        EntityUtil.require(id, "Alert Rule", ruleMapper::selectById);
         ruleMapper.deleteById(id);
     }
 
     public AlertRule toggle(Long id, Boolean enabled) {
-        AlertRule rule = EntityUtil.require(id, "告警规则", ruleMapper::selectById);
+        AlertRule rule = EntityUtil.require(id, "Alert Rule", ruleMapper::selectById);
         rule.setEnabled(enabled);
         ruleMapper.updateById(rule);
         return rule;

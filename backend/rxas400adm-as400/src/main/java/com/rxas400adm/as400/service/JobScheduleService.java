@@ -81,7 +81,7 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
 
     
     public JobSchedule update(Long id, JobScheduleRequest request) {
-        JobSchedule schedule = EntityUtil.require(id, "调度任务", scheduleMapper::selectById);
+        JobSchedule schedule = EntityUtil.require(id, "Job Schedule", scheduleMapper::selectById);
         apply(schedule, request);
         schedule.setUpdatedTime(LocalDateTime.now());
         scheduleMapper.updateById(schedule);
@@ -98,7 +98,7 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
 
     
     public void delete(Long id) {
-        EntityUtil.require(id, "调度任务", scheduleMapper::selectById);
+        EntityUtil.require(id, "Job Schedule", scheduleMapper::selectById);
         // T4：先落禁用守卫写再注销——若后续步骤失败，重启时不会把已删除任务复活（僵尸调度）
         scheduleMapper.update(null, new LambdaUpdateWrapper<JobSchedule>()
                 .eq(JobSchedule::getId, id)
@@ -111,7 +111,7 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
 
     
     public JobSchedule toggle(Long id, Boolean enabled) {
-        JobSchedule schedule = EntityUtil.require(id, "调度任务", scheduleMapper::selectById);
+        JobSchedule schedule = EntityUtil.require(id, "Job Schedule", scheduleMapper::selectById);
         schedule.setEnabled(Boolean.TRUE.equals(enabled));
         schedule.setUpdatedTime(LocalDateTime.now());
         scheduleMapper.updateById(schedule);
@@ -139,7 +139,7 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
      */
 
     public ScheduleExecuteResultVO execute(Long id) {
-        JobSchedule schedule = EntityUtil.require(id, "调度任务", scheduleMapper::selectById);
+        JobSchedule schedule = EntityUtil.require(id, "Job Schedule", scheduleMapper::selectById);
         long start = System.currentTimeMillis();
         String status = ExecutionStatus.SUCCESS;
         String message;
@@ -148,7 +148,7 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
             if ("SQL".equalsIgnoreCase(schedule.getScheduleType())) {
                 String sql = schedule.getCommand().trim();
                 if (!SqlReadOnlyValidator.isReadOnly(sql)) {
-                    throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "仅支持只读 SELECT/WITH 查询");
+                    throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "Only read-only SELECT/WITH queries are supported");
                 }
                 // S7：调度型 SQL 同样下推行数上限（内部任务取 1000 行足够聚合/校验用途）
                 List<Map<String, Object>> rows = client.queryListCheckedBounded(sql, 1000);
@@ -240,17 +240,17 @@ public class JobScheduleService implements IJobScheduleService, ApplicationRunne
         // S3：保存时即校验命令——与 SQL 类型的只读校验对称，CL 不再裸奔到执行期
         if ("SQL".equals(type)) {
             if (!SqlReadOnlyValidator.isReadOnly(command)) {
-                throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "SQL 类型任务仅支持只读 SELECT/WITH 查询");
+                throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "SQL-type tasks only support read-only SELECT/WITH queries");
             }
         } else {
             if (command.isEmpty()) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "CL 命令不能为空");
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "CL command is required");
             }
             if (command.length() > 500) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "CL 命令长度不能超过 500 字符");
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "CL command must not exceed 500 characters");
             }
             if (command.matches(".*[\\r\\n\\u0000].*")) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "CL 命令不允许包含换行/空字符");
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "CL command must not contain newlines or null characters");
             }
         }
         schedule.setName(request.getName());

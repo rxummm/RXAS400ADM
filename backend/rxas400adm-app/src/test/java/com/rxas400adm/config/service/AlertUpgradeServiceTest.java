@@ -181,7 +181,7 @@ class AlertUpgradeServiceTest {
 
         // 标题真实使用并落库
         verify(notificationService).send(eq("alice"), eq(AlertUpgradeService.NOTIFY_TYPE),
-                eq("告警升级通知"), any());
+                eq("Alert Escalation"), any());
 
         // P7：抢占为单条条件 UPDATE（WHERE id IN (...) AND upgrade_notified=0 SET ...=1）
         verify(alertEventMapper).update(isNull(), updateWrapperCaptor.capture());

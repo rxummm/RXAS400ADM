@@ -114,9 +114,9 @@ public class AlertUpgradeService {
 
     /** 逐用户定向发送站内通知（标题 + 摘要正文） */
     private void dispatchNotifications(List<AlertEvent> alerts, List<SysUser> users) {
-        String title = "告警升级通知";
+        String title = "Alert Escalation";
         String content = String.format(
-                "有 %d 条告警超过 %d 分钟未处理，请及时处理：%n%s",
+                "%d alert(s) unhandled for over %d minutes, please address promptly:%n%s",
                 alerts.size(), props.getUpgradeAfterMinutes(), formatAlertSummary(alerts));
         for (SysUser user : users) {
             notificationService.send(user.getUsername(), NOTIFY_TYPE, title, content);
@@ -133,7 +133,7 @@ public class AlertUpgradeService {
                     alert.getLevel(), alert.getMessage(), alert.getCreatedTime()));
         }
         if (alerts.size() > displayCount) {
-            sb.append(String.format("... 还有 %d 条告警%n", alerts.size() - displayCount));
+            sb.append(String.format("... and %d more alert(s)%n", alerts.size() - displayCount));
         }
         return sb.toString();
     }

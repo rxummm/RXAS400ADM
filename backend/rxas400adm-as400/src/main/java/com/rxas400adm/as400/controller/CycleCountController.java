@@ -24,7 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/bpcs/cycle-count")
 @RequiredArgsConstructor
-@Tag(name = "BPCS循环盘点")
+@Tag(name = "BPCS Cycle Count")
 public class CycleCountController {
 
     private final ICycleCountService cycleCountService;

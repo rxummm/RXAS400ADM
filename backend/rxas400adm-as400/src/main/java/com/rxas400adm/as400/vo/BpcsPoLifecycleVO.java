@@ -12,6 +12,6 @@ public record BpcsPoLifecycleVO(
         String receivedDate,
         String status,
         boolean onHold,
-        int lineCount
+        Integer lineCount
 ) {
 }

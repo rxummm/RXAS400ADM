@@ -2,6 +2,7 @@ package com.rxas400adm.as400.simulation;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.rxas400adm.as400.simulation.mapper.InventorySimulationMapper;
 import com.rxas400adm.common.util.EntityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -45,7 +46,7 @@ public class InventorySimulationService {
     }
 
     public InventorySimulation run(Long id) {
-        InventorySimulation sim = EntityUtil.require(id, "库存模拟", simulationMapper::selectById);
+        InventorySimulation sim = EntityUtil.require(id, "Inventory Simulation", simulationMapper::selectById);
         sim.setStatus("RUNNING");
         simulationMapper.updateById(sim);
 
@@ -95,7 +96,7 @@ public class InventorySimulationService {
     }
 
     public void delete(Long id) {
-        EntityUtil.require(id, "库存模拟", simulationMapper::selectById);
+        EntityUtil.require(id, "Inventory Simulation", simulationMapper::selectById);
         simulationMapper.deleteById(id);
     }
 }

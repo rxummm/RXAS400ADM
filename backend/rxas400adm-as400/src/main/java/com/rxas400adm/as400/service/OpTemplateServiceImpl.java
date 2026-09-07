@@ -63,7 +63,7 @@ public class OpTemplateServiceImpl implements IOpTemplateService {
         template.setDescription(dto.getDescription());
         template.setSteps(dto.getSteps());
         template.setCreatedBy(username);
-        template.setCreatedAt(LocalDateTime.now());
+        template.setCreatedTime(LocalDateTime.now());
         opTemplateMapper.insert(template);
         return OpTemplateVO.from(template);
     }
@@ -71,30 +71,30 @@ public class OpTemplateServiceImpl implements IOpTemplateService {
     @Override
     public OpTemplateVO update(Long id, OpTemplateUpdateDTO dto, String username) {
         parseSteps(dto.getSteps());
-        OpTemplate template = EntityUtil.require(id, "模板", opTemplateMapper::selectById);
+        OpTemplate template = EntityUtil.require(id, "Op Template", opTemplateMapper::selectById);
         template.setName(dto.getName());
         template.setDescription(dto.getDescription());
         template.setSteps(dto.getSteps());
         template.setUpdatedBy(username);
-        template.setUpdatedAt(LocalDateTime.now());
+        template.setUpdatedTime(LocalDateTime.now());
         opTemplateMapper.updateById(template);
         return OpTemplateVO.from(template);
     }
 
     @Override
     public void delete(Long id) {
-        EntityUtil.require(id, "模板", opTemplateMapper::selectById);
+        EntityUtil.require(id, "Op Template", opTemplateMapper::selectById);
         opTemplateMapper.deleteById(id);
     }
 
     @Override
     public void execute(Long id, Long serverId) {
-        OpTemplate template = EntityUtil.require(id, "模板", opTemplateMapper::selectById);
+        OpTemplate template = EntityUtil.require(id, "Op Template", opTemplateMapper::selectById);
         AS400Client client = clientProvider.forServer(serverId);
         List<Map<String, String>> steps = parseSteps(template.getSteps());
         /* B9：历史脏数据兜底，空步骤直接拒绝执行 */
         if (steps.isEmpty()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "操作模板步骤不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Operation template steps are required");
         }
 
         for (Map<String, String> step : steps) {
@@ -106,7 +106,7 @@ public class OpTemplateServiceImpl implements IOpTemplateService {
                 log.info("模板[{}]执行命令: {} -> {}", template.getName(), command, result.success() ? "OK" : "FAIL");
                 if (!result.success()) {
                     throw new BusinessException(ErrorCode.AS400_COMMAND_FAILED,
-                            "命令执行失败: " + command + " - " + result.message());
+                            "Command execution failed: " + command + " - " + result.message());
                 }
             }
         }
@@ -120,11 +120,11 @@ public class OpTemplateServiceImpl implements IOpTemplateService {
             /* B9：字面量 "null" 合法 JSON 但解析为 null，需显式拒绝 */
             List<Map<String, String>> steps = objectMapper.readValue(stepsJson, new TypeReference<>() {});
             if (steps == null) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "操作模板步骤不能为空");
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "Operation template steps are required");
             }
             return steps;
         } catch (JsonProcessingException e) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "模板步骤不是合法的 JSON 数组");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Template steps must be a valid JSON array");
         }
     }
 }

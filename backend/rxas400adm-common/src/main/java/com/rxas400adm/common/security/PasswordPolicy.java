@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 /**
  * 统一密码强度策略（P2-3）：改密/建户/重置密码共用同一套校验，消除各处不一致。
- * 规则：至少 8 位，且同时包含字母与数字。
+ * 规则：至少 8 位，且同时包含大写字母、小写字母与数字。
  */
 public final class PasswordPolicy {
 
@@ -17,16 +17,23 @@ public final class PasswordPolicy {
 
     public static final int MIN_LENGTH = 8;
 
-    private static final Pattern HAS_LETTER = Pattern.compile("[A-Za-z]");
+    private static final Pattern HAS_UPPER = Pattern.compile("[A-Z]");
+    private static final Pattern HAS_LOWER = Pattern.compile("[a-z]");
     private static final Pattern HAS_DIGIT = Pattern.compile("[0-9]");
 
     /** 校验密码强度，不通过抛 BusinessException（带友好提示） */
     public static void validate(String password) {
         if (password == null || password.length() < MIN_LENGTH) {
-            throw new BusinessException(ErrorCode.PASSWORD_POLICY_VIOLATION, "密码长度不能少于 " + MIN_LENGTH + " 位");
+            throw new BusinessException(ErrorCode.PASSWORD_POLICY_VIOLATION, "Password must be at least " + MIN_LENGTH + " characters");
         }
-        if (!HAS_LETTER.matcher(password).find() || !HAS_DIGIT.matcher(password).find()) {
-            throw new BusinessException(ErrorCode.PASSWORD_POLICY_VIOLATION, "密码必须同时包含字母和数字");
+        if (!HAS_UPPER.matcher(password).find()) {
+            throw new BusinessException(ErrorCode.PASSWORD_POLICY_VIOLATION, "Password must contain at least one uppercase letter");
+        }
+        if (!HAS_LOWER.matcher(password).find()) {
+            throw new BusinessException(ErrorCode.PASSWORD_POLICY_VIOLATION, "Password must contain at least one lowercase letter");
+        }
+        if (!HAS_DIGIT.matcher(password).find()) {
+            throw new BusinessException(ErrorCode.PASSWORD_POLICY_VIOLATION, "Password must contain at least one digit");
         }
     }
 

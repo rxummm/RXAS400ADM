@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/bpcs/sales")
 @RequiredArgsConstructor
-@Tag(name = "BPCS销售趋势")
+@Tag(name = "BPCS Sales Trend")
 public class BpcsSalesController {
 
     private final IBpcsSalesService salesService;

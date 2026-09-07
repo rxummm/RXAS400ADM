@@ -1,0 +1,7 @@
+<statements>
+    <!-- ==================== AS400 Login Sync ==================== -->
+    <statement id="sync.user.list">
+        SELECT AUTHORIZATION_NAME, GROUP_PROFILE_NAME FROM QSYS2.USER_INFO
+        ORDER BY AUTHORIZATION_NAME
+    </statement>
+</statements>

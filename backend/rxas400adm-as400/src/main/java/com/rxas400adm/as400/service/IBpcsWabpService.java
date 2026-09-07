@@ -4,6 +4,9 @@ import com.rxas400adm.as400.dto.BpcsWabpConfigDTO;
 import com.rxas400adm.as400.dto.BpcsWabpImportResult;
 import com.rxas400adm.as400.vo.BpcsWabpConfigVO;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -25,6 +28,9 @@ public interface IBpcsWabpService {
 
     /** 删除配置 */
     void deleteConfig(String cono, String wh, int dayOfWeek);
+
+    /** 解析 Excel 文件为 DTO 列表 */
+    List<BpcsWabpConfigDTO> parseExcel(MultipartFile file) throws IOException;
 
     /** Excel 导入 */
     BpcsWabpImportResult importConfigs(String cono, List<BpcsWabpConfigDTO> list);

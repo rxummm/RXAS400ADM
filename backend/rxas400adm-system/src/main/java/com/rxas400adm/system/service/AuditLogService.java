@@ -60,7 +60,7 @@ public class AuditLogService implements IAuditLogService {
             AuditLog audit = new AuditLog();
             audit.setUserName(username);
             audit.setAction(action);
-            audit.setModule("登录安全");
+            audit.setModule("Login Security");
             audit.setTarget(source + (serverId == null ? "" : " server=" + serverId));
             audit.setIp(ip);
             audit.setDetail(detail);

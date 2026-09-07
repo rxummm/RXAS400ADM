@@ -15,16 +15,16 @@ public interface IIfsService {
 
     String read(String path);
 
-    boolean write(String path, String content);
+    void write(String path, String content);
 
-    boolean writeBytes(String path, byte[] content);
+    void writeBytes(String path, byte[] content);
 
-    /** 打开 IFS 文件输入流（流式下载，避免大文件整读内存）；失败返回 null，调用方负责关闭 */
+    /** 打开 IFS 文件输入流（流式下载，避免大文件整读内存）；文件不存在时抛 NOT_FOUND */
     InputStream readStream(String path);
 
-    boolean mkdir(String path);
+    void mkdir(String path);
 
     String trash(String path);
 
-    boolean restore(String trashPath);
+    void restore(String trashPath);
 }

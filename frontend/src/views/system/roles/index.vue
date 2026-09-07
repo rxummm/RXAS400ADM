@@ -135,7 +135,7 @@
             :data="menuTree"
             show-checkbox
             node-key="id"
-            default-expand-all
+            :default-expand-all="true"
             :props="{ label: 'menuName', children: 'children' }"
           />
           <el-empty

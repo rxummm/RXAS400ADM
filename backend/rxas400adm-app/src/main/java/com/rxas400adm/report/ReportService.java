@@ -76,7 +76,7 @@ public class ReportService implements IReportService {
             List<Long> scheduleIds = histories.stream().map(JobScheduleHistory::getScheduleId).toList();
             Map<Long, JobSchedule> scheduleMap = scheduleIds.isEmpty() ? Map.of()
                     : scheduleMapper.selectBatchIds(scheduleIds).stream()
-                            .collect(Collectors.toMap(JobSchedule::getId, s -> s));
+                            .collect(Collectors.toMap(JobSchedule::getId, s -> s, (a, b) -> b));
             for (JobScheduleHistory h : histories) {
                 JobSchedule schedule = scheduleMap.get(h.getScheduleId());
                 Map<String, Object> row = new LinkedHashMap<>();
@@ -123,7 +123,7 @@ public class ReportService implements IReportService {
             @SuppressWarnings("unchecked")
             Map<String, Object> point = (Map<String, Object>) p;
             Map<String, Object> row = new LinkedHashMap<>(point);
-            row.put("kind", "历史");
+            row.put("kind", "Actual");
             rows.add(row);
         }
         for (Object p : (List<?>) trend.get("prediction")) {
@@ -133,7 +133,7 @@ public class ReportService implements IReportService {
             row.put("date", point.get("date"));
             row.put("avg", point.get("value"));
             row.put("max", "-");
-            row.put("kind", "预测");
+            row.put("kind", "Predicted");
             rows.add(row);
         }
         return rows;

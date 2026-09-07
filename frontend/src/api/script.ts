@@ -30,7 +30,7 @@ export const updateScript = (id: number, data: Partial<CommandScript>) =>
 export const deleteScript = (id: number) => request.delete(`/scripts/${id}`)
 
 export const toggleScriptFavorite = (id: number, favorite: boolean) =>
-  request.put(`/scripts/${id}/favorite`, null, { params: { favorite } })
+  request.post(`/scripts/${id}/favorite`, null, { params: { favorite } })
 
 export const executeScript = (id: number, serverId: number): Promise<ScriptRunResult> =>
   request.post(`/scripts/${id}/execute`, null, { params: { serverId } })

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/gen-fallback-i18n.mjs",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "check:i18n": "node scripts/check-i18n.mjs",
@@ -13,8 +14,8 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
-    "@fortawesome/fontawesome-svg-core": "^7.3.1",
-    "@fortawesome/free-solid-svg-icons": "^7.3.1",
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/vue-fontawesome": "^3.3.3",
     "@stomp/stompjs": "^7.0.0",
     "@wangeditor/editor-for-vue": "^5.1.12",

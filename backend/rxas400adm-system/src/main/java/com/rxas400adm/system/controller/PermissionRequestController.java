@@ -2,8 +2,6 @@ package com.rxas400adm.system.controller;
 import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
-import com.rxas400adm.common.exception.BusinessException;
-import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.PermissionRequestCreateDTO;
@@ -94,8 +92,6 @@ public class PermissionRequestController {
 
     /** R6：@RequestBody(required=false) 使 @Valid 失效，这里手动对齐 DTO 的 @Size(500) 约束 */
     private void validateComment(PermissionRequestReviewDTO dto) {
-        if (dto != null && dto.getComment() != null && dto.getComment().length() > 500) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "审批意见最长 500 字符");
-        }
+        requestService.validateComment(dto != null ? dto.getComment() : null);
     }
 }

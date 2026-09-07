@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/bpcs/purchases")
 @RequiredArgsConstructor
-@Tag(name = "BPCS采购订单")
+@Tag(name = "BPCS Purchase Orders")
 public class BpcsPurchaseController {
 
     private final IBpcsPurchaseService purchaseService;

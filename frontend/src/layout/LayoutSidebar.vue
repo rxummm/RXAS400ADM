@@ -67,6 +67,7 @@ defineExpose({ favoritesRef })
 }
 .menu {
   border-right: none;
+  --el-menu-icon-width: 20px;
   --el-menu-bg-color: var(--sidebar-bg);
   --el-menu-text-color: var(--sidebar-text);
   --el-menu-active-color: var(--sidebar-text-active);

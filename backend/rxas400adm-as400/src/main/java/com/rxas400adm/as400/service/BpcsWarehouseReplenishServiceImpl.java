@@ -165,13 +165,13 @@ public class BpcsWarehouseReplenishServiceImpl implements IBpcsWarehouseReplenis
             BigDecimal avgDemand = BpcsRowUtil.decOrNull(first, "AVG_DEMAND");
             BigDecimal suggestQty = BigDecimal.ZERO;
             if (shortage.compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal buffer = avgDemand != null ? avgDemand.multiply(BigDecimal.valueOf(7)).setScale(0, java.math.RoundingMode.CEILING) : BigDecimal.ZERO;
+                BigDecimal buffer = avgDemand != null ? avgDemand.multiply(BigDecimal.valueOf(7)).setScale(0, RoundingMode.CEILING) : BigDecimal.ZERO;
                 suggestQty = shortage.add(buffer);
             }
             List<BpcsWarehouseReplenishVO.WarehouseStockVO> whVos = rows.stream().map(r -> {
                 BigDecimal qtyOh = BpcsRowUtil.decOrNull(r, "QTYOH");
                 BigDecimal pct = totalQty.compareTo(BigDecimal.ZERO) > 0
-                        ? (qtyOh != null ? qtyOh : BigDecimal.ZERO).divide(totalQty, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).setScale(1, java.math.RoundingMode.HALF_UP)
+                        ? (qtyOh != null ? qtyOh : BigDecimal.ZERO).divide(totalQty, 4, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).setScale(1, RoundingMode.HALF_UP)
                         : BigDecimal.ZERO;
                 return new BpcsWarehouseReplenishVO.WarehouseStockVO(
                         BpcsRowUtil.pickStr(r, "WH"), qtyOh,

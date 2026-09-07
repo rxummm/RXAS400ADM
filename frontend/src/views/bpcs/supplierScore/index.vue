@@ -20,6 +20,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsSupplierScore' })
+
 import { ref, onMounted } from 'vue'
 import { listSupplierScores, type SupplierScoreVO } from '@/api/bpcs'
 
@@ -29,7 +32,7 @@ const rows = ref<SupplierScoreVO[]>([])
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listSupplierScores() as unknown as SupplierScoreVO[]
+    rows.value = await listSupplierScores()
   } finally {
     loading.value = false
   }

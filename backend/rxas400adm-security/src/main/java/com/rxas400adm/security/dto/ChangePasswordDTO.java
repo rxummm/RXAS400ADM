@@ -9,11 +9,12 @@ import lombok.Data;
 public class ChangePasswordDTO {
 
     @NotBlank(message = "{validation.notBlank}")
+    @Size(min = 8, max = 128, message = "{validation.password.length}")
     @Schema(description = "旧密码", example = "oldPass123")
     private String oldPassword;
 
     @NotBlank(message = "{validation.notBlank}")
-    @Size(min = 8, message = "{validation.password.length}")
+    @Size(min = 8, max = 128, message = "{validation.password.length}")
     @Schema(description = "新密码", example = "newPass123")
     private String newPassword;
 }

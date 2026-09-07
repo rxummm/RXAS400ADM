@@ -21,13 +21,13 @@ export const useAs400ServerStore = defineStore('as400Server', () => {
     serverList.value.find((s) => s.id === currentServerId.value) || null,
   )
 
-  async function fetchServers() {
+  /** 内部公共拉取 + 缓存逻辑 */
+  async function fetchAndCache(fetcher: () => Promise<As400Server[]>): Promise<As400Server[]> {
     if (loaded.value) {
       return serverList.value
     }
     if (!inflight) {
-      // noDedupe：Dashboard 等页面并发直连 /as400/systems 时，避免本请求被去重逻辑 abort（P2-23）
-      inflight = fetchSystems(true)
+      inflight = fetcher()
         .then((data) => {
           serverList.value = data.filter((s) => s.enabled !== false)
           loaded.value = true
@@ -43,6 +43,11 @@ export const useAs400ServerStore = defineStore('as400Server', () => {
       if (def) setCurrentServer(def.id)
     }
     return serverList.value
+  }
+
+  async function fetchServers() {
+    // noDedupe：Dashboard 等页面并发直连 /as400/systems 时，避免本请求被去重逻辑 abort（P2-23）
+    return fetchAndCache(() => fetchSystems(true))
   }
 
   /** 强制刷新（服务器配置变更后调用，重新拉取并重置缓存） */
@@ -56,26 +61,7 @@ export const useAs400ServerStore = defineStore('as400Server', () => {
    * 与 fetchServers 共用 serverList/loaded 缓存，统一走 store action（F8：避免 Login 直连 API 手动拼装）。
    */
   async function fetchEnabledServers() {
-    if (loaded.value) {
-      return serverList.value
-    }
-    if (!inflight) {
-      inflight = fetchEnabledServersApi()
-        .then((data) => {
-          serverList.value = data.filter((s) => s.enabled !== false)
-          loaded.value = true
-          return serverList.value
-        })
-        .finally(() => {
-          inflight = null
-        })
-    }
-    const list = await inflight
-    if (!currentServer.value) {
-      const def = list.find((s) => s.defaultServer) || list[0]
-      if (def) setCurrentServer(def.id)
-    }
-    return serverList.value
+    return fetchAndCache(fetchEnabledServersApi)
   }
 
   function setCurrentServer(id: number) {

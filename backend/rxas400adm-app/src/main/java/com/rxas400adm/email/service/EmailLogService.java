@@ -3,6 +3,8 @@ package com.rxas400adm.email.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.common.constants.PageConstants;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.email.entity.EmailLog;
 import com.rxas400adm.email.mapper.EmailLogMapper;
@@ -40,6 +42,9 @@ public class EmailLogService implements IEmailLogService {
     @Override
     public EmailLogVO detail(Long id) {
         EmailLog log = emailLogMapper.selectById(id);
-        return log != null ? EmailLogVO.from(log) : null;
+        if (log == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Email log not found: " + id);
+        }
+        return EmailLogVO.from(log);
     }
 }

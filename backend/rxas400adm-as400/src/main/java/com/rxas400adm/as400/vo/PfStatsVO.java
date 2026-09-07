@@ -13,9 +13,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PfStatsVO {
-    private long recordCount;
-    private long storageSize;
-    private int indexCount;
+    private Long recordCount;
+    private Long storageSize;
+    private Integer indexCount;
     private List<String> indexNames;
-    private int memberCount;
+    private Integer memberCount;
 }

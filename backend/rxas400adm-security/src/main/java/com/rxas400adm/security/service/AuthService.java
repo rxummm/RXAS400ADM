@@ -2,12 +2,15 @@ package com.rxas400adm.security.service;
 
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.security.dto.LoginRequest;
+import com.rxas400adm.security.dto.LoginResponse;
 import com.rxas400adm.security.jwt.JwtUtil;
 import com.rxas400adm.security.vo.ProfileVO;
 import com.rxas400adm.security.vo.TokenRefreshVO;
 import com.rxas400adm.system.entity.SysUser;
 import com.rxas400adm.system.service.SysUserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -24,31 +27,61 @@ public class AuthService {
     private final IPermissionService permissionService;
     private final ITokenBlacklistService tokenBlacklistService;
     private final SysUserService userService;
+    private final PasswordEncoder passwordEncoder;
+
+    /**
+     * 平台登录：校验用户名/密码 + 用户状态，返回 token 对。
+     * 失败时抛 BusinessException（LOGIN_FAILED / FORBIDDEN）。
+     */
+    public LoginResponse login(LoginRequest request, String ip) {
+        SysUser user = userService.getByUsername(request.getUsername());
+        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BusinessException(ErrorCode.LOGIN_FAILED, "Invalid username or password");
+        }
+        if (!"ACTIVE".equals(user.getStatus())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "User is disabled");
+        }
+        List<String> permissions = permissionService.refresh(user);
+        String token = jwtUtil.generateToken(user.getUsername(), permissions);
+        String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
+        return new LoginResponse(token, refreshToken, jwtUtil.getExpireMs(), user.getUsername(), permissions);
+    }
 
     /**
      * 刷新 Token：校验 refresh token → 吊销旧 refresh token（rotation）→ 签发新 token 对。
      */
     public TokenRefreshVO refreshToken(String refreshToken) {
         if (!StringUtils.hasText(refreshToken) || !jwtUtil.isValid(refreshToken)) {
-            throw new BusinessException(ErrorCode.LOGIN_FAILED, "无效的 refresh token");
+            throw new BusinessException(ErrorCode.LOGIN_FAILED, "Invalid refresh token");
         }
         if (!jwtUtil.isRefreshToken(refreshToken)) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "token 类型错误，需要 refresh token");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Invalid token type, refresh token required");
         }
-        // C1：轮换前置黑名单检查——已消费（已轮换）的 refresh token 直接拒绝，
-        // 防止重放/并发复用在吊销旧 token 的同时仍各自签发新对
+        // CR-001 修复：原子消费 refresh token——INSERT 成功才允许签发新 token，
+        // DuplicateKey 说明已被并发请求消费，必须拒绝（消除 TOCTOU 竞态窗口）
         String jti = jwtUtil.getJti(refreshToken);
-        if (tokenBlacklistService.isBlacklisted(jti)) {
-            throw new BusinessException(ErrorCode.LOGIN_FAILED, "refresh token 已失效（已被轮换使用）");
+        boolean consumed = tokenBlacklistService.consumeRefreshToken(
+                jti, jwtUtil.getUsername(refreshToken), jwtUtil.getRemainingMs(refreshToken));
+        if (!consumed) {
+            throw new BusinessException(ErrorCode.LOGIN_FAILED, "Refresh token already consumed (rotation)");
         }
-        // 吊销旧 refresh token（rotation 防重放）
-        tokenBlacklistService.blacklist(jti, jwtUtil.getUsername(refreshToken),
-                jwtUtil.getRemainingMs(refreshToken));
         String username = jwtUtil.getUsername(refreshToken);
+        // SEC-001 修复：refresh 时检查用户状态，禁用用户不允许签发新 token
+        SysUser user = userService.getByUsername(username);
+        if (user == null || !"ACTIVE".equals(user.getStatus())) {
+            throw new BusinessException(ErrorCode.LOGIN_FAILED, "User account is disabled or not found");
+        }
         List<String> permissions = permissionService.loadPermissions(username);
         String newToken = jwtUtil.generateToken(username, permissions);
         String newRefreshToken = jwtUtil.generateRefreshToken(username);
         return new TokenRefreshVO(newToken, newRefreshToken, jwtUtil.getExpireMs());
+    }
+
+    /**
+     * 修改当前用户密码：委托 SysUserService 实现。
+     */
+    public void changePassword(String username, String oldPassword, String newPassword) {
+        userService.changePassword(username, oldPassword, newPassword);
     }
 
     /**

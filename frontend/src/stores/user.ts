@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { ElMessage } from 'element-plus'
 import {
   as400Login as as400LoginApi,
   login as loginApi,
@@ -10,9 +11,11 @@ import {
   type MenuResponse,
   type TabItem as ApiTabItem,
 } from '@/api/auth'
+import { fetchTranslations } from '@/api/i18n'
 import { useStorage, STORAGE_KEYS } from '@/composables/useStorage'
 import { clearTablePageCache } from '@/composables/useTablePage'
 import { useAs400ServerStore } from '@/stores/as400Server'
+import i18n from '@/i18n'
 
 export type MenuItem = MenuNode
 
@@ -37,6 +40,7 @@ const usernameStore = useStorage(STORAGE_KEYS.USERNAME)
  * 重复请求 /auth/menu（同一个 SPA 会话内只允许一个在途请求）。
  */
 let menusFetchPromise: Promise<void> | null = null
+let i18nFetchPromise: Promise<void> | null = null
 
 export const useUserStore = defineStore('user', {
   state: (): UserState => ({
@@ -87,6 +91,7 @@ export const useUserStore = defineStore('user', {
       }
       usernameStore.set(data.username)
       void this.fetchMenus()
+      void this.loadDbTranslations()
     },
     /** P2: 用 refresh token 换取新 access token，成功后更新 store */
     async tryRefreshToken(): Promise<boolean> {
@@ -122,6 +127,30 @@ export const useUserStore = defineStore('user', {
         this.tabs = data?.tabs || []
       } catch {
         this.menus = []
+        this.permissions = []
+        this.tabs = []
+      }
+    },
+    /** Load translations from DB (rx_i18n) and merge into i18n messages（并发去重，与 fetchMenus 同模式） */
+    async loadDbTranslations() {
+      if (i18nFetchPromise) return i18nFetchPromise
+      i18nFetchPromise = this._doLoadDbTranslations().finally(() => {
+        i18nFetchPromise = null
+      })
+      return i18nFetchPromise
+    },
+    async _doLoadDbTranslations() {
+      try {
+        const lang = i18n.global.locale.value as string
+        const data = await fetchTranslations(lang)
+        if (data && typeof data === 'object') {
+          i18n.global.mergeLocaleMessage(lang, data)
+        }
+      } catch {
+        // Admin users see warning to remind DB translation maintenance
+        if (this.permissions.includes('I18N_MANAGE')) {
+          ElMessage.warning(i18n.global.t('common.dbTranslationFailed'))
+        }
       }
     },
     logout() {

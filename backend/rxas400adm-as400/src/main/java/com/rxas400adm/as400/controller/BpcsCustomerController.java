@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/bpcs/customers")
 @RequiredArgsConstructor
-@Tag(name = "BPCS客户档案")
+@Tag(name = "BPCS Customer Master")
 public class BpcsCustomerController {
 
     private final IBpcsCustomerService customerService;

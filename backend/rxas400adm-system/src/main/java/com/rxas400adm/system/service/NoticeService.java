@@ -55,7 +55,7 @@ public class NoticeService implements INoticeService {
         notice.setContent(dto.getContent());
         notice.setStatus(dto.getStatus());
         if (!StringUtils.hasText(notice.getTitle()) || !StringUtils.hasText(notice.getContent())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "标题与内容必填");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Title and content are required");
         }
         notice.setId(null);
         notice.setStatus(notice.getStatus() == null ? 1 : notice.getStatus());
@@ -74,7 +74,7 @@ public class NoticeService implements INoticeService {
 
     
     public Notice update(Long id, NoticeDTO dto) {
-        Notice notice = EntityUtil.require(id, "公告", noticeMapper::selectById);
+        Notice notice = EntityUtil.require(id, "Notice", noticeMapper::selectById);
         if (StringUtils.hasText(dto.getTitle())) {
             notice.setTitle(dto.getTitle());
         }
@@ -95,6 +95,6 @@ public class NoticeService implements INoticeService {
 
     
     public void delete(Long id) {
-        noticeMapper.deleteById(EntityUtil.require(id, "公告", noticeMapper::selectById).getId());
+        noticeMapper.deleteById(EntityUtil.require(id, "Notice", noticeMapper::selectById).getId());
     }
 }

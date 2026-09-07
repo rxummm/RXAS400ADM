@@ -7,6 +7,7 @@ import com.rxas400adm.email.vo.EmailLogVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * 邮件发送日志查询。
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/email/logs")
 @RequiredArgsConstructor
+@Tag(name = "Email Logs", description = "Email sending logs")
 public class EmailLogController {
 
     private final IEmailLogService emailLogService;

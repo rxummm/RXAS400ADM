@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +53,8 @@ public class BpcsReplenishmentServiceImpl implements IBpcsReplenishmentService {
 
     private List<BpcsReplenishmentVO> mockReplenishment() {
         return List.of(
-                new BpcsReplenishmentVO("DEF-2001", "螺柱 M12", "WH1", 50, 200, 150, new java.math.BigDecimal("30")),
-                new BpcsReplenishmentVO("DEF-2005", "密封圈", "WH2", 10, 100, 90, new java.math.BigDecimal("15"))
+                new BpcsReplenishmentVO("DEF-2001", "螺柱 M12", "WH1", 50, 200, 150, new BigDecimal("30")),
+                new BpcsReplenishmentVO("DEF-2005", "密封圈", "WH2", 10, 100, 90, new BigDecimal("15"))
         );
     }
 }

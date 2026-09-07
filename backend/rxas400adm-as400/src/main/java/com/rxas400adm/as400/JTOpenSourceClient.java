@@ -1,5 +1,8 @@
 package com.rxas400adm.as400;
 
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -31,11 +34,7 @@ class JTOpenSourceClient implements SourceClient {
      */
     @Override
     public List<String> listLibraries() {
-        String sql = "SELECT DISTINCT TABLE_SCHEMA FROM QSYS2.SYSTABLES " +
-                "WHERE FILE_TYPE = 'S' " +
-                "AND TABLE_SCHEMA NOT IN ('QSYS2','QTEMP','QSYS','QGPL') " +
-                "ORDER BY TABLE_SCHEMA";
-        return queryStrings(sql);
+        return queryStrings(SqlStatementRegistry.of("source.library.list"));
     }
 
     /**
@@ -44,10 +43,7 @@ class JTOpenSourceClient implements SourceClient {
     @Override
     public List<String> listSourceFiles(String library) {
         String lib = JTOpenConnectionState.requireIdentifier(library, "库名");
-        String sql = "SELECT TABLE_NAME FROM QSYS2.SYSTABLES " +
-                "WHERE TABLE_SCHEMA = ? AND FILE_TYPE = 'S' " +
-                "ORDER BY TABLE_NAME";
-        return queryStrings(sql, lib);
+        return queryStrings(SqlStatementRegistry.of("source.file.list"), lib);
     }
 
     /**
@@ -57,10 +53,7 @@ class JTOpenSourceClient implements SourceClient {
     public List<String> listMembers(String library, String sourceFile) {
         String lib = JTOpenConnectionState.requireIdentifier(library, "库名");
         String file = JTOpenConnectionState.requireIdentifier(sourceFile, "源文件名");
-        String sql = "SELECT MEMBER_NAME FROM QSYS2.SYSMEMBER " +
-                "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? " +
-                "ORDER BY MEMBER_NAME";
-        return queryStrings(sql, lib, file);
+        return queryStrings(SqlStatementRegistry.of("source.member.list"), lib, file);
     }
 
     /**
@@ -71,8 +64,7 @@ class JTOpenSourceClient implements SourceClient {
         String lib = JTOpenConnectionState.requireIdentifier(library, "库名");
         String file = JTOpenConnectionState.requireIdentifier(sourceFile, "源文件名");
         String mbr = JTOpenConnectionState.requireIdentifier(member, "成员名");
-        String sql = "SELECT MEMBER_DEFINITION FROM QSYS2.SYSMEMBER " +
-                "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND MEMBER_NAME = ?";
+        String sql = SqlStatementRegistry.of("source.member.content");
         try (Connection conn = state.pooledConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
@@ -89,7 +81,8 @@ class JTOpenSourceClient implements SourceClient {
         } catch (SQLException e) {
             log.error("IBM i 读取源成员失败(host={}, {}/{}/{}): {}",
                     state.host, lib, file, mbr, state.redact(e.getMessage()));
-            return "";
+            throw new BusinessException(ErrorCode.AS400_CONNECTION_FAILED,
+                    "读取源成员失败: " + lib + "/" + file + "/" + mbr + " - " + e.getMessage());
         }
     }
 
@@ -111,7 +104,8 @@ class JTOpenSourceClient implements SourceClient {
             }
         } catch (SQLException e) {
             log.error("IBM i SQL 查询失败(host={}): {}", state.host, state.redact(e.getMessage()));
-            return List.of();
+            throw new BusinessException(ErrorCode.AS400_CONNECTION_FAILED,
+                    "IBM i SQL query failed: " + state.redact(e.getMessage()));
         }
     }
 
@@ -134,7 +128,8 @@ class JTOpenSourceClient implements SourceClient {
             }
         } catch (SQLException e) {
             log.error("IBM i SQL 参数化查询失败(host={}): {}", state.host, state.redact(e.getMessage()));
-            return List.of();
+            throw new BusinessException(ErrorCode.AS400_CONNECTION_FAILED,
+                    "IBM i SQL parameterized query failed: " + state.redact(e.getMessage()));
         }
     }
 }

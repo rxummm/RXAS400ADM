@@ -40,9 +40,11 @@ public class MenuManageService {
         menu.setVisible(dto.getVisible());
         menu.setStatus(dto.getStatus());
         menu.setAdminOnly(dto.getAdminOnly());
+        menu.setCached(dto.getCached());
+        menu.setCacheName(dto.getCacheName());
         menu.setId(null);
         if (menu.getParentId() != null && menuMapper.selectById(menu.getParentId()) == null) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "父菜单不存在: " + menu.getParentId());
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Parent menu not found: " + menu.getParentId());
         }
         menu.setCreatedTime(LocalDateTime.now());
         menu.setUpdatedTime(LocalDateTime.now());
@@ -54,14 +56,14 @@ public class MenuManageService {
     public SysMenu update(Long id, SysMenuDTO dto) {
         SysMenu menu = menuMapper.selectById(id);
         if (menu == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "菜单不存在: " + id);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Menu not found: " + id);
         }
         if (dto.getParentId() != null && !dto.getParentId().equals(menu.getId())) {
             if (menuMapper.selectById(dto.getParentId()) == null) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "父菜单不存在: " + dto.getParentId());
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "Parent menu not found: " + dto.getParentId());
             }
             if (wouldCreateCycle(dto.getParentId(), menu.getId())) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "不能将菜单移动到其子孙节点下（会形成环）");
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "Cannot move menu under its own descendant (cycle detected)");
             }
             menu.setParentId(dto.getParentId());
         }
@@ -76,6 +78,8 @@ public class MenuManageService {
         if (dto.getVisible() != null) menu.setVisible(dto.getVisible());
         if (dto.getStatus() != null) menu.setStatus(dto.getStatus());
         if (dto.getAdminOnly() != null) menu.setAdminOnly(dto.getAdminOnly());
+        if (dto.getCached() != null) menu.setCached(dto.getCached());
+        if (dto.getCacheName() != null) menu.setCacheName(dto.getCacheName());
         menu.setUpdatedTime(LocalDateTime.now());
         menuMapper.updateById(menu);
         return menu;
@@ -85,7 +89,7 @@ public class MenuManageService {
     public SysMenu toggleStatus(Long id, Integer status) {
         SysMenu menu = menuMapper.selectById(id);
         if (menu == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "菜单不存在: " + id);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Menu not found: " + id);
         }
         menu.setStatus(status);
         menu.setUpdatedTime(LocalDateTime.now());
@@ -95,10 +99,13 @@ public class MenuManageService {
 
     /** 删除菜单（有子节点则拒绝） */
     public void delete(Long id) {
+        if (menuMapper.selectById(id) == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Menu not found: " + id);
+        }
         Long children = menuMapper.selectCount(new LambdaQueryWrapper<SysMenu>()
                 .eq(SysMenu::getParentId, id));
         if (children > 0) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "存在子菜单，请先删除子菜单");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Menu has children, please delete them first");
         }
         menuMapper.deleteById(id);
     }

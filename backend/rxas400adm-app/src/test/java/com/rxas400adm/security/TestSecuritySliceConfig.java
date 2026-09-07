@@ -1,5 +1,6 @@
 package com.rxas400adm.security;
 
+import com.rxas400adm.common.util.ClientIpResolver;
 import com.rxas400adm.security.config.CorsProperties;
 import com.rxas400adm.security.config.JwtProperties;
 import com.rxas400adm.security.config.LoginSecurityProperties;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.lenient;
         RateLimitProperties.class,
         ProxyProperties.class,
         CorsProperties.class,
+        ClientIpResolver.class,
 })
 public class TestSecuritySliceConfig {
 

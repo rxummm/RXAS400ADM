@@ -101,6 +101,7 @@ public class OrderCollaborationController {
 
     @PutMapping("/notifications/{notifId}/read")
     @PreAuthorize("hasAuthority('BPCS_VIEW')")
+    @OperateLog(module = "协同通知", operation = "标记通知已读")
     @Operation(summary = "标记通知已读")
     public ApiResponse<Void> markAsRead(@PathVariable Long notifId) {
         collaborationService.markAsRead(notifId);

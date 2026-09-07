@@ -1,6 +1,7 @@
 package com.rxas400adm.as400;
 
 import com.rxas400adm.as400.model.SysvalRow;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,8 +23,7 @@ class JTOpenSysvalClient implements SysvalClient {
 
     @Override
     public List<SysvalRow> listSystemValues() {
-        return sqlClient.queryList("SELECT SYSTEM_VALUE_NAME, CURRENT_VALUE, VALUE_DESCRIPTION, SYSTEM_VALUE_TYPE "
-                + "FROM QSYS2.SYSTEM_VALUE_INFO").stream()
+        return sqlClient.queryList(SqlStatementRegistry.of("sysval.list")).stream()
                 .map(r -> new SysvalRow(str(r, "SYSTEM_VALUE_NAME"), str(r, "CURRENT_VALUE"),
                         str(r, "VALUE_DESCRIPTION"), str(r, "SYSTEM_VALUE_TYPE")))
                 .toList();

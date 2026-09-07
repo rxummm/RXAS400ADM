@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.entity.IbmiSystem;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.as400.mapper.IbmiSystemMapper;
 import com.rxas400adm.as400.model.UserProfileRow;
 import com.rxas400adm.system.entity.SysUser;
@@ -115,23 +116,46 @@ public class As400LoginSyncService implements IAs400LoginSyncService {
     }
 
     /**
-     * P15 批量探测：一次查询 IBM i 全库用户（QSYS2.USER_INFO，全库通常 < 数千行，上限 5000 兜底），
-     * 构建「大写用户名 → profile」映射替代原逐账号 userProfile RPC。
-     * 查询失败直接抛出，由 dailySync 按服务器粒度跳过；空名行不入映射（等价原 isMissing 判定）。
+     * CR-003 修复：分页查询 IBM i 全库用户（QSYS2.USER_INFO），避免 5000 上限导致用户误删。
+     * 每批 FETCH FIRST 2000 ROWS ONLY，循环直到无更多数据，构建完整 name→profile 映射。
+     * 查询失败直接抛出，由 dailySync 按服务器粒度跳过；空名行不入映射。
      */
     private Map<String, UserProfileRow> loadAllProfiles(AS400Client client) {
-        List<Map<String, Object>> rows = client.queryListCheckedBounded(
-                "SELECT AUTHORIZATION_NAME, GROUP_PROFILE_NAME FROM QSYS2.USER_INFO", 5000);
         Map<String, UserProfileRow> profiles = new HashMap<>();
-        for (Map<String, Object> row : rows) {
-            Object name = row.get("AUTHORIZATION_NAME");
-            if (name == null || String.valueOf(name).isBlank()) {
-                continue;
+        int batchSize = 2000;
+        int offset = 0;
+        boolean hasMore = true;
+        while (hasMore) {
+            // DB2 for i 支持 OFFSET/FETCH：跳过已读行，取下一批
+            String baseSql;
+            try {
+                baseSql = SqlStatementRegistry.of("sync.user.list");
+            } catch (IllegalStateException e) {
+                baseSql = "SELECT AUTHORIZATION_NAME, GROUP_PROFILE_NAME FROM QSYS2.USER_INFO ORDER BY AUTHORIZATION_NAME";
             }
-            // STATUS 列不取：dailySync 原逻辑仅用 userName/groupProfile，无 *ENABLED 判断
-            String group = row.get("GROUP_PROFILE_NAME") == null ? null : String.valueOf(row.get("GROUP_PROFILE_NAME"));
-            profiles.put(profileKey(String.valueOf(name)), new UserProfileRow(String.valueOf(name), group, null));
+            String sql = baseSql + String.format(" OFFSET %d ROWS FETCH FIRST %d ROWS ONLY",
+                    offset, batchSize);
+            List<Map<String, Object>> rows = client.queryListCheckedBounded(sql, batchSize);
+            if (rows.isEmpty()) {
+                hasMore = false;
+                break;
+            }
+            for (Map<String, Object> row : rows) {
+                Object name = row.get("AUTHORIZATION_NAME");
+                if (name == null || String.valueOf(name).isBlank()) {
+                    continue;
+                }
+                String group = row.get("GROUP_PROFILE_NAME") == null ? null :
+                        String.valueOf(row.get("GROUP_PROFILE_NAME"));
+                profiles.put(profileKey(String.valueOf(name)),
+                        new UserProfileRow(String.valueOf(name), group, null));
+            }
+            // 如果本批返回行数 < batchSize，说明已是最后一批
+            hasMore = rows.size() >= batchSize;
+            offset += rows.size();
         }
+        log.info("[AS400同步] 加载全库用户 profile {} 条（{} 批次）", profiles.size(),
+                (offset + batchSize - 1) / batchSize);
         return profiles;
     }
 

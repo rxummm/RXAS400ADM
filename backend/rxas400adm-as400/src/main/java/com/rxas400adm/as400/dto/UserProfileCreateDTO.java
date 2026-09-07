@@ -14,17 +14,17 @@ import java.util.List;
 @Schema(description = "AS400用户Profile创建请求")
 public class UserProfileCreateDTO {
 
-    @NotBlank(message = "用户名不能为空")
-    @Size(min = 1, max = 10, message = "用户名长度1-10个字符")
+    @NotBlank(message = "username is required")
+    @Size(min = 1, max = 10, message = "username length must be 1-10 characters")
     @Schema(description = "用户名", example = "TESTUSER")
     private String userName;
 
-    @NotBlank(message = "初始密码不能为空")
-    @Size(min = 6, max = 128, message = "密码长度6-128个字符")
+    @NotBlank(message = "initial password is required")
+    @Size(min = 6, max = 128, message = "password length must be 6-128 characters")
     @Schema(description = "初始密码", example = "P@ssw0rd")
     private String password;
 
-    @Size(max = 50, message = "描述最长50个字符")
+    @Size(max = 50, message = "max length is 50 characters")
     @Schema(description = "用户描述", example = "测试用户")
     private String description;
 
@@ -40,7 +40,7 @@ public class UserProfileCreateDTO {
     @Schema(description = "是否发送邮件通知", example = "NO")
     private String emailNotification;
 
-    @Size(max = 200, message = "邮箱最长200个字符")
+    @Size(max = 200, message = "max length is 200 characters")
     @Schema(description = "收件人邮箱", example = "user@example.com")
     private String recipientEmail;
 }

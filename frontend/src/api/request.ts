@@ -8,62 +8,62 @@ import { getActivePinia } from 'pinia'
 // P3：拦截器提示文案走全局 i18n（模块加载期不调用，仅回调运行时求值，无循环依赖）
 import i18n from '@/i18n'
 
-/** D2: 错误码到 i18n key 的映射（code -> common.error.XXX） */
+/** D2: 错误码到 i18n key 的映射（code -> error.XXX） */
 const ERROR_CODE_I18N_MAP: Record<number, string> = {
   // 通用 HTTP 级
-  400: 'common.error.BAD_REQUEST',
-  401: 'common.error.UNAUTHORIZED',
-  403: 'common.error.FORBIDDEN',
-  404: 'common.error.NOT_FOUND',
-  500: 'common.error.INTERNAL_ERROR',
+  400: 'error.BAD_REQUEST',
+  401: 'error.UNAUTHORIZED',
+  403: 'error.FORBIDDEN',
+  404: 'error.NOT_FOUND',
+  500: 'error.INTERNAL_ERROR',
   // 用户/角色 (10000+)
-  10001: 'common.error.USER_NOT_FOUND',
-  10002: 'common.error.USERNAME_EXISTS',
-  10003: 'common.error.LOGIN_FAILED',
-  10004: 'common.error.LOGIN_LOCKED',
-  10005: 'common.error.LOGIN_TOO_MANY',
+  10001: 'error.USER_NOT_FOUND',
+  10002: 'error.USERNAME_EXISTS',
+  10003: 'error.LOGIN_FAILED',
+  10004: 'error.LOGIN_LOCKED',
+  10005: 'error.LOGIN_TOO_MANY',
   // AS400 实例 (20000+)
-  20001: 'common.error.AS400_SERVER_NOT_FOUND',
-  20002: 'common.error.AS400_SERVER_DISABLED',
-  20003: 'common.error.AS400_CONNECTION_FAILED',
-  20004: 'common.error.AS400_COMMAND_FAILED',
-  20005: 'common.error.AS400_SERVER_REQUIRED',
-  20007: 'common.error.AS400_SQL_FAILED',
-  20006: 'common.error.AS400_HOST_NOT_CONFIGURED',
+  20001: 'error.AS400_SERVER_NOT_FOUND',
+  20002: 'error.AS400_SERVER_DISABLED',
+  20003: 'error.AS400_CONNECTION_FAILED',
+  20004: 'error.AS400_COMMAND_FAILED',
+  20005: 'error.AS400_SERVER_REQUIRED',
+  20007: 'error.AS400_SQL_FAILED',
+  20006: 'error.AS400_HOST_NOT_CONFIGURED',
   // 发布 (30000+)
-  30001: 'common.error.DEPLOY_NOT_FOUND',
-  30002: 'common.error.DEPLOY_STATUS_INVALID',
-  30003: 'common.error.APPROVAL_NOT_FOUND',
-  30004: 'common.error.DEPLOY_ROLLBACK_FAILED',
-  30005: 'common.error.DEPLOY_CONCURRENT',
+  30001: 'error.DEPLOY_NOT_FOUND',
+  30002: 'error.DEPLOY_STATUS_INVALID',
+  30003: 'error.APPROVAL_NOT_FOUND',
+  30004: 'error.DEPLOY_ROLLBACK_FAILED',
+  30005: 'error.DEPLOY_CONCURRENT',
   // 监控/告警 (40000+)
-  40001: 'common.error.MONITOR_COLLECT_FAILED',
-  40002: 'common.error.ALERT_RULE_INVALID',
-  40003: 'common.error.ALERT_RULE_NOT_FOUND',
-  40004: 'common.error.ALERT_EVENT_NOT_FOUND',
+  40001: 'error.MONITOR_COLLECT_FAILED',
+  40002: 'error.ALERT_RULE_INVALID',
+  40003: 'error.ALERT_RULE_NOT_FOUND',
+  40004: 'error.ALERT_EVENT_NOT_FOUND',
   // 系统/管理 (50000+)
-  50001: 'common.error.SYSTEM_USER_OPERATION',
-  50002: 'common.error.SYSTEM_NOTICE_NOT_FOUND',
-  50003: 'common.error.SYSTEM_REQUEST_NOT_FOUND',
-  50004: 'common.error.SYSTEM_SCHEDULER_LOCKED',
+  50001: 'error.SYSTEM_USER_OPERATION',
+  50002: 'error.SYSTEM_NOTICE_NOT_FOUND',
+  50003: 'error.SYSTEM_REQUEST_NOT_FOUND',
+  50004: 'error.SYSTEM_SCHEDULER_LOCKED',
   // 报表/SQL (60000+)
-  60001: 'common.error.REPORT_GENERATE_FAILED',
-  60002: 'common.error.SQL_READONLY_REQUIRED',
+  60001: 'error.REPORT_GENERATE_FAILED',
+  60002: 'error.SQL_READONLY_REQUIRED',
   // 编译 (70000+) 错误码已随 V56 下线删除，号段保留勿复用
   // 源文件 (80000+)
-  80001: 'common.error.SOURCE_NOT_FOUND',
-  80002: 'common.error.SOURCE_READ_FAILED',
-  80003: 'common.error.FILE_PATH_INVALID',
+  80001: 'error.SOURCE_NOT_FOUND',
+  80002: 'error.SOURCE_READ_FAILED',
+  80003: 'error.FILE_PATH_INVALID',
   // 作业/子系统 (90000+)
-  90001: 'common.error.JOB_NOT_FOUND',
-  90002: 'common.error.JOB_INVALID_STATUS',
-  90003: 'common.error.NAME_REQUIRED',
+  90001: 'error.JOB_NOT_FOUND',
+  90002: 'error.JOB_INVALID_STATUS',
+  90003: 'error.NAME_REQUIRED',
   // 角色 (110000+)
-  110001: 'common.error.ROLE_NOT_FOUND',
-  110002: 'common.error.ROLE_CODE_EXISTS',
-  110003: 'common.error.ROLE_ADMIN_PROTECTED',
+  110001: 'error.ROLE_NOT_FOUND',
+  110002: 'error.ROLE_CODE_EXISTS',
+  110003: 'error.ROLE_ADMIN_PROTECTED',
   // 密码/编译 (120000+)
-  120001: 'common.error.PASSWORD_POLICY_VIOLATION',
+  120001: 'error.PASSWORD_POLICY_VIOLATION',
 }
 
 /** D2: 根据错误码获取 i18n 文案，未命中则返回 null */

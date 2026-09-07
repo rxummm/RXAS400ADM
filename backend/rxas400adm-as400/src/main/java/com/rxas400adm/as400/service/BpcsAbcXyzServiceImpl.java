@@ -108,12 +108,12 @@ public class BpcsAbcXyzServiceImpl implements IBpcsAbcXyzService {
 
     private List<BpcsInventoryAbcXyzVO> mockMatrix() {
         return List.of(
-                new BpcsInventoryAbcXyzVO("DEF-2001", "螺柱 M12x30", 5000, new java.math.BigDecimal("90000.00"), "A", new java.math.BigDecimal("200"), new java.math.BigDecimal("0.3"), "X", "AX"),
-                new BpcsInventoryAbcXyzVO("DEF-2002", "螺母 M12", 8000, new java.math.BigDecimal("64000.00"), "A", new java.math.BigDecimal("350"), new java.math.BigDecimal("0.6"), "Y", "AY"),
-                new BpcsInventoryAbcXyzVO("DEF-2005", "轴承 6205", 300, new java.math.BigDecimal("45000.00"), "A", new java.math.BigDecimal("15"), new java.math.BigDecimal("1.2"), "Z", "AZ"),
-                new BpcsInventoryAbcXyzVO("DEF-2003", "垫片 M12", 20000, new java.math.BigDecimal("10000.00"), "B", new java.math.BigDecimal("800"), new java.math.BigDecimal("0.4"), "X", "BX"),
-                new BpcsInventoryAbcXyzVO("DEF-2007", "密封圈套装", 500, new java.math.BigDecimal("6000.00"), "B", new java.math.BigDecimal("20"), new java.math.BigDecimal("0.8"), "Y", "BY"),
-                new BpcsInventoryAbcXyzVO("DEF-2010", "旧型号轴承", 50, new java.math.BigDecimal("4250.00"), "C", new java.math.BigDecimal("2"), new java.math.BigDecimal("1.5"), "Z", "CZ")
+                new BpcsInventoryAbcXyzVO("DEF-2001", "螺柱 M12x30", 5000, new BigDecimal("90000.00"), "A", new BigDecimal("200"), new BigDecimal("0.3"), "X", "AX"),
+                new BpcsInventoryAbcXyzVO("DEF-2002", "螺母 M12", 8000, new BigDecimal("64000.00"), "A", new BigDecimal("350"), new BigDecimal("0.6"), "Y", "AY"),
+                new BpcsInventoryAbcXyzVO("DEF-2005", "轴承 6205", 300, new BigDecimal("45000.00"), "A", new BigDecimal("15"), new BigDecimal("1.2"), "Z", "AZ"),
+                new BpcsInventoryAbcXyzVO("DEF-2003", "垫片 M12", 20000, new BigDecimal("10000.00"), "B", new BigDecimal("800"), new BigDecimal("0.4"), "X", "BX"),
+                new BpcsInventoryAbcXyzVO("DEF-2007", "密封圈套装", 500, new BigDecimal("6000.00"), "B", new BigDecimal("20"), new BigDecimal("0.8"), "Y", "BY"),
+                new BpcsInventoryAbcXyzVO("DEF-2010", "旧型号轴承", 50, new BigDecimal("4250.00"), "C", new BigDecimal("2"), new BigDecimal("1.5"), "Z", "CZ")
         );
     }
 }

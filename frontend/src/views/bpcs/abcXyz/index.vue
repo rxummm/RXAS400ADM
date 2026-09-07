@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 //noinspection JSUnusedGlobalSymbols
-defineOptions({ name: 'AbcXyzAnalysis' })
+defineOptions({ name: 'BpcsAbcXyz' })
 
 import { ref } from 'vue'
 import { getAbcXyzMatrix, type AbcXyzItem } from '@/api/bpcs'

@@ -17,7 +17,7 @@
         </el-select>
 
         <template v-if="currentSourceMeta">
-          <div class="section" style="margin-top:16px">{{ $t('reports.builder.availableFields') }}</div>
+          <div class="section mt16">{{ $t('reports.builder.availableFields') }}</div>
           <el-checkbox-group v-model="selectedKeys" class="field-list">
             <el-checkbox v-for="f in currentSourceMeta.fields" :key="f.key" :value="f.key"
               :label="f.label" class="field-item" />
@@ -51,7 +51,7 @@
         </el-button>
 
         <!-- 排序 -->
-        <div class="section" style="margin-top:16px">{{ $t('reports.builder.sorts') }}</div>
+        <div class="section mt16">{{ $t('reports.builder.sorts') }}</div>
         <div v-for="(sort, i) in sorts" :key="i" class="filter-row">
           <el-select v-model="sort.field" class="filter-field" :placeholder="$t('reports.builder.field')">
             <el-option v-for="f in currentSourceMeta?.fields" :key="f.key" :label="f.label" :value="f.key" />
@@ -67,7 +67,7 @@
         </el-button>
 
         <!-- 预览 -->
-        <div class="section" style="margin-top:16px">{{ $t('reports.builder.preview') }}</div>
+        <div class="section mt16">{{ $t('reports.builder.preview') }}</div>
         <div class="preview-actions">
           <el-button type="primary" :loading="executing" @click="executePreview">
             {{ $t('reports.builder.execute') }}
@@ -82,7 +82,7 @@
         </div>
 
         <el-table v-if="previewData" :data="previewData.rows" size="small" border
-          style="margin-top:8px" max-height="400" v-loading="executing">
+          class="mt8" max-height="400" v-loading="executing">
           <el-table-column v-for="(col, i) in previewData.columns" :key="i"
             :prop="previewData.keys[i]" :label="col" min-width="120" />
         </el-table>
@@ -97,7 +97,7 @@
           <el-table-column prop="createdBy" :label="$t('reports.author')" width="100" />
           <el-table-column :label="$t('common.operation')" width="100">
             <template #default="{ row }">
-              <el-button link type="danger" size="small" @click.stop="deleteDef(row)">
+              <el-button link type="danger" size="small" @click.stop="deleteDef(row as ReportDefinition)">
                 {{ $t('common.delete') }}
               </el-button>
             </template>
@@ -126,6 +126,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'ReportBuilder' })
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete } from '@element-plus/icons-vue'
@@ -254,7 +257,8 @@ async function loadDefinitionList() {
   } catch { /* ignore */ }
 }
 
-async function loadDefinition(row: { id: number }) {
+async function loadDefinition(row: ReportDefinition) {
+  if (row.id == null) return
   try {
     const def = await getReportDefinition(row.id)
     currentSource.value = def.dataSource
@@ -279,28 +283,36 @@ async function loadDefinition(row: { id: number }) {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function onDefRowClick(row: any) {
+function onDefRowClick(row: ReportDefinition) {
   loadDefinition(row)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function deleteDef(row: any) {
+async function deleteDef(row: ReportDefinition) {
   try {
     await ElMessageBox.confirm(t('reports.deleteConfirm', { name: row.name }))
-    await deleteReportDefinition(row.id)
-    definitions.value = definitions.value.filter(d => d.id !== row.id)
+    if (row.id != null) {
+      await deleteReportDefinition(row.id)
+      definitions.value = definitions.value.filter(d => d.id !== row.id)
+    }
   } catch { /* cancel */ }
 }
 
 async function exportXlsx() {
   if (!editId.value) return
-  await exportReport(editId.value, 'xlsx', saveForm.value.title || saveForm.value.name || 'report')
+  try {
+    await exportReport(editId.value, 'xlsx', saveForm.value.title || saveForm.value.name || 'report')
+  } catch {
+    ElMessage.error(t('common.requestFailed'))
+  }
 }
 
 async function exportPdf() {
   if (!editId.value) return
-  await exportReport(editId.value, 'pdf', saveForm.value.title || saveForm.value.name || 'report')
+  try {
+    await exportReport(editId.value, 'pdf', saveForm.value.title || saveForm.value.name || 'report')
+  } catch {
+    ElMessage.error(t('common.requestFailed'))
+  }
 }
 
 // 打开定义列表时加载

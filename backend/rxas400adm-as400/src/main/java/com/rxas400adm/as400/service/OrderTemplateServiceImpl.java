@@ -35,7 +35,7 @@ public class OrderTemplateServiceImpl implements IOrderTemplateService {
     public OrderTemplate get(Long id) {
         OrderTemplate t = mapper.selectById(id);
         if (t == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "模板不存在: " + id);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Template not found: " + id);
         }
         return t;
     }
@@ -59,7 +59,7 @@ public class OrderTemplateServiceImpl implements IOrderTemplateService {
     @Override
     public OrderTemplate update(OrderTemplateDTO dto) {
         if (dto.getId() == null) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "模板 ID 不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Template ID is required");
         }
         OrderTemplate t = get(dto.getId());
         if (dto.getTemplateName() != null) t.setTemplateName(dto.getTemplateName());

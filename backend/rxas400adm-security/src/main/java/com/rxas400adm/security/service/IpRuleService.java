@@ -14,6 +14,8 @@ import com.rxas400adm.security.mapper.IpRuleMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.regex.Pattern;
+
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -45,14 +47,14 @@ public class IpRuleService implements IIpRuleService {
                 .filter(r -> "BLACK".equals(r.getType()))
                 .anyMatch(r -> match(r.getIp(), ip));
         if (blackHit) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "当前 IP 已被加入黑名单，禁止登录");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "IP is blacklisted, login denied");
         }
         List<String> whites = enabled.stream()
                 .filter(r -> "WHITE".equals(r.getType()))
                 .map(IpRule::getIp)
                 .toList();
         if (!whites.isEmpty() && whites.stream().noneMatch(w -> match(w, ip))) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "当前 IP 不在白名单内，禁止登录");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "IP not in whitelist, login denied");
         }
     }
 
@@ -72,9 +74,11 @@ public class IpRuleService implements IIpRuleService {
         if (r.contains("/")) {
             return matchCidr(r, v);
         }
-        // 通配
+        // 通配（将 * 替换为 .*，其余正则元字符转义）
         if (r.contains("*")) {
-            String regex = r.replace(".", "\\.").replace("*", "\\d+").replaceAll("\\\\\\d\\+", "\\d+");
+            String regex = java.util.Arrays.stream(r.split("\\*", -1))
+                    .map(Pattern::quote)
+                    .collect(java.util.stream.Collectors.joining(".*"));
             return v.matches(regex);
         }
         return r.equals(v);
@@ -123,16 +127,16 @@ public class IpRuleService implements IIpRuleService {
 
     public IpRule create(IpRuleCreateDTO dto, String username) {
         if (!StringUtils.hasText(dto.ip()) || !StringUtils.hasText(dto.type())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "IP 与类型必填");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "IP and type are required");
         }
         if (!"BLACK".equals(dto.type()) && !"WHITE".equals(dto.type())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "类型仅支持 BLACK/WHITE");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Type must be BLACK or WHITE");
         }
         long exists = ipRuleMapper.selectCount(new LambdaQueryWrapper<IpRule>()
                 .eq(IpRule::getIp, dto.ip().trim())
                 .eq(IpRule::getType, dto.type().trim()));
         if (exists > 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "同类型 IP 规则已存在: " + dto.ip());
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "IP rule already exists for this type: " + dto.ip());
         }
         IpRule rule = new IpRule();
         rule.setIp(dto.ip().trim());
@@ -148,7 +152,7 @@ public class IpRuleService implements IIpRuleService {
 
 
     public IpRule update(Long id, IpRuleUpdateDTO dto) {
-        IpRule rule = EntityUtil.require(id, "IP 规则", ipRuleMapper::selectById);
+        IpRule rule = EntityUtil.require(id, "IP Rule", ipRuleMapper::selectById);
         if (StringUtils.hasText(dto.ip())) {
             rule.setIp(dto.ip().trim());
         }
@@ -168,7 +172,7 @@ public class IpRuleService implements IIpRuleService {
 
     
     public void delete(Long id) {
-        ipRuleMapper.deleteById(EntityUtil.require(id, "IP 规则", ipRuleMapper::selectById).getId());
+        ipRuleMapper.deleteById(EntityUtil.require(id, "IP Rule", ipRuleMapper::selectById).getId());
     }
 
 

@@ -9,6 +9,7 @@ import com.rxas400adm.as400.mapper.CycleCountPlanMapper;
 import com.rxas400adm.as400.mapper.CycleCountResultMapper;
 import com.rxas400adm.as400.vo.CycleCountPlanVO;
 import com.rxas400adm.as400.vo.CycleCountResultVO;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +57,7 @@ public class CycleCountServiceImpl implements ICycleCountService {
             wrapper.eq(CycleCountPlan::getStatus, status);
         }
         wrapper.orderByDesc(CycleCountPlan::getCreatedTime);
-        wrapper.last("LIMIT " + limit);
+        wrapper.last(PageConstants.limitClause(limit));
         return planMapper.selectList(wrapper).stream().map(this::toPlanVO).collect(Collectors.toList());
     }
 
@@ -63,10 +65,10 @@ public class CycleCountServiceImpl implements ICycleCountService {
     public CycleCountResultVO recordResult(CycleCountResultDTO dto, String operator, int systemQty) {
         CycleCountPlan plan = planMapper.selectById(dto.getPlanId());
         if (plan == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "盘点计划不存在: " + dto.getPlanId());
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Cycle count plan not found: " + dto.getPlanId());
         }
         if (!"PENDING".equals(plan.getStatus()) && !"IN_PROGRESS".equals(plan.getStatus())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "该计划状态不允许录入结果: " + plan.getStatus());
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Plan status does not allow recording results: " + plan.getStatus());
         }
 
         // 更新计划状态
@@ -116,7 +118,7 @@ public class CycleCountServiceImpl implements ICycleCountService {
                 "totalItems", totalItems,
                 "matchedItems", matchedItems,
                 "mismatchedItems", mismatchedItems,
-                "accuracyRate", totalItems > 0 ? BigDecimal.valueOf(matchedItems).multiply(BigDecimal.valueOf(100)).divide(BigDecimal.valueOf(totalItems), 1, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO
+                "accuracyRate", totalItems > 0 ? BigDecimal.valueOf(matchedItems).multiply(BigDecimal.valueOf(100)).divide(BigDecimal.valueOf(totalItems), 1, RoundingMode.HALF_UP) : BigDecimal.ZERO
         );
     }
 

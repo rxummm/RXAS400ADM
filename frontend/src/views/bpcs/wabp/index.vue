@@ -1,7 +1,7 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-select v-model="queryWh" placeholder="仓库" style="width: 120px" clearable>
+      <el-select v-model="queryWh" :placeholder="$t('bpcs.common.warehouse')" class="w-120" clearable>
         <el-option v-for="w in warehouses" :key="w" :label="w" :value="w" />
       </el-select>
       <el-button type="primary" @click="load">{{ $t('common.search') }}</el-button>
@@ -39,38 +39,38 @@
     <el-dialog v-model="dialogVisible" :title="editMode ? $t('bpcs.wabp.editTitle') : $t('bpcs.wabp.addTitle')" width="500" destroy-on-close @close="resetForm">
       <el-form :model="form" label-width="120px" class="w-full">
         <el-form-item :label="$t('bpcs.wms.warehouse')">
-          <el-select v-model="form.wh" :placeholder="$t('common.status')" style="width: 100%" :disabled="editMode">
+          <el-select v-model="form.wh" :placeholder="$t('common.status')" class="w-full" :disabled="editMode">
             <el-option v-for="w in warehouses" :key="w" :label="w" :value="w" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('bpcs.wabp.dayOfWeek')">
-          <el-select v-model="form.dayOfWeek" :placeholder="$t('common.status')" style="width: 100%" :disabled="editMode">
+          <el-select v-model="form.dayOfWeek" :placeholder="$t('common.status')" class="w-full" :disabled="editMode">
             <el-option v-for="d in dayOptions" :key="d.value" :label="d.label" :value="d.value" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('bpcs.wabp.time')">
-          <el-time-picker v-model="form.time" format="HH:mm:ss" value-format="HH:mm:ss" style="width: 100%" />
+          <el-time-picker v-model="form.time" format="HH:mm:ss" value-format="HH:mm:ss" class="w-full" />
         </el-form-item>
         <el-form-item :label="$t('bpcs.wabp.shipHold')">
-          <el-select v-model="form.shipHold" :placeholder="$t('common.status')" style="width: 100%">
+          <el-select v-model="form.shipHold" :placeholder="$t('common.status')" class="w-full">
             <el-option :label="$t('common.yes')" value="Y" />
             <el-option :label="$t('common.no')" value="N" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('bpcs.wabp.crHold')">
-          <el-select v-model="form.crHold" :placeholder="$t('common.status')" style="width: 100%">
+          <el-select v-model="form.crHold" :placeholder="$t('common.status')" class="w-full">
             <el-option :label="$t('common.yes')" value="Y" />
             <el-option :label="$t('common.no')" value="N" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('bpcs.wabp.prHold')">
-          <el-select v-model="form.prHold" :placeholder="$t('common.status')" style="width: 100%">
+          <el-select v-model="form.prHold" :placeholder="$t('common.status')" class="w-full">
             <el-option :label="$t('common.yes')" value="Y" />
             <el-option :label="$t('common.no')" value="N" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('bpcs.common.status')">
-          <el-select v-model="form.active" :placeholder="$t('common.status')" style="width: 100%">
+          <el-select v-model="form.active" :placeholder="$t('common.status')" class="w-full">
             <el-option :label="$t('enabled')" value="Y" />
             <el-option :label="$t('disabled')" value="N" />
           </el-select>
@@ -114,6 +114,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsWabp' })
+
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
@@ -136,10 +139,10 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 
 const warehouses = ['WH1', 'WH2', 'WH3', 'WH4']
 const dayOptions = [
-  { value: 1, label: 'Mon' }, { value: 2, label: 'Tue' },
-  { value: 3, label: 'Wed' }, { value: 4, label: 'Thu' },
-  { value: 5, label: 'Fri' }, { value: 6, label: 'Sat' },
-  { value: 7, label: 'Sun' }
+  { value: 1, label: t('bpcs.wabp.monday') }, { value: 2, label: t('bpcs.wabp.tuesday') },
+  { value: 3, label: t('bpcs.wabp.wednesday') }, { value: 4, label: t('bpcs.wabp.thursday') },
+  { value: 5, label: t('bpcs.wabp.friday') }, { value: 6, label: t('bpcs.wabp.saturday') },
+  { value: 7, label: t('bpcs.wabp.sunday') }
 ]
 
 const form = ref({
@@ -158,7 +161,7 @@ const dayLabel = (d: number) => dayOptions.find(o => o.value === d)?.label || St
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listWabp(queryWh.value || '001') as unknown as WabpConfig[]
+    rows.value = await listWabp(queryWh.value || '001')
   } finally {
     loading.value = false
   }
@@ -172,7 +175,7 @@ const openAdd = () => {
 
 const openEdit = async (row: WabpConfig) => {
   editMode.value = true
-  const res = await getWabp('001', row.wh, row.dayOfWeek) as unknown as WabpConfig
+  const res = await getWabp('001', row.wh, row.dayOfWeek)
   form.value = { ...res }
   dialogVisible.value = true
 }
@@ -191,8 +194,9 @@ const submitForm = async () => {
     ElMessage.success(editMode.value ? t('common.updateSuccess') : t('common.addSuccess'))
     dialogVisible.value = false
     load()
-  } catch (e: any) {
-    ElMessage.error(e.response?.data?.message || t('common.operationFailed'))
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    ElMessage.error(msg)
   }
 }
 
@@ -203,8 +207,9 @@ const confirmDelete = (row: WabpConfig) => {
         await deleteWabp('001', row.wh, row.dayOfWeek)
         ElMessage.success(t('common.deleteSuccess'))
         load()
-      } catch (e: any) {
-        ElMessage.error(e.response?.data?.message || t('common.deleteFailed'))
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e)
+        ElMessage.error(msg)
       }
     })
 }
@@ -230,23 +235,24 @@ const handleDrop = (e: DragEvent) => {
 const submitImport = async () => {
   if (!importFile.value) return
   try {
-    importResult.value = await importWabp('001', importFile.value) as unknown as { successCount: number; failureCount: number; errors: string[] }
+    importResult.value = await importWabp('001', importFile.value)
     importVisible.value = false
     resultVisible.value = true
-  } catch (e: any) {
-    ElMessage.error(e.response?.data?.message || t('common.importFailed'))
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    ElMessage.error(msg)
   }
 }
 
 const handleExport = async () => {
   try {
-    const data = await exportWabp('001') as unknown as WabpConfig[]
+    const data = await exportWabp('001')
     const wsData = [[t('bpcs.wms.warehouse'), t('bpcs.wabp.dayOfWeek'), t('bpcs.wabp.time'), 'SHPHOLD', 'CRHOLD', 'PRHOLD', t('common.status'), t('bpcs.rcmx.maintUser'), t('bpcs.rcmx.maintDate')], ...data.map(r => [r.wh, dayLabel(r.dayOfWeek), r.time, r.shipHold, r.crHold, r.prHold, r.active, r.maintUser, r.maintDate])]
     const wb = XLSX.utils.book_new()
     const ws = XLSX.utils.aoa_to_sheet(wsData)
     XLSX.utils.book_append_sheet(wb, ws, 'WABP')
     XLSX.writeFile(wb, 'WABP.xlsx')
-  } catch (e: any) {
+  } catch (e: unknown) {
     ElMessage.error(t('common.exportFailed'))
   }
 }

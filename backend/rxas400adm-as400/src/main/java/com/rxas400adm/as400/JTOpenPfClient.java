@@ -3,7 +3,9 @@ package com.rxas400adm.as400;
 import com.rxas400adm.as400.model.PfColumnRow;
 import com.rxas400adm.as400.model.PfRow;
 import com.rxas400adm.as400.model.PfStatsRow;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.common.constants.PageConstants;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +16,7 @@ import static com.rxas400adm.as400.JTOpenConnectionState.lng;
 /**
  * JTOpen PfClient 委托实现（物理文件列表 / 字段定义 / 记录分页查看）。
  */
+@Slf4j
 class JTOpenPfClient implements PfClient {
 
     private final JTOpenSqlClient sqlClient;
@@ -25,9 +28,7 @@ class JTOpenPfClient implements PfClient {
     @Override
     public List<PfRow> listPfFiles(String library) {
         String lib = library == null || library.isBlank() ? "QSYS" : library.trim().toUpperCase();
-        return sqlClient.queryList("SELECT TABLE_NAME, TABLE_SCHEMA, TABLE_TEXT "
-                + "FROM QSYS2.SYSTABLES WHERE TABLE_SCHEMA = ? "
-                + "AND TABLE_TYPE = 'P' FETCH FIRST 200 ROWS ONLY", lib).stream()
+        return sqlClient.queryList(SqlStatementRegistry.of("pf.table.list"), lib).stream()
                 .map(r -> new PfRow(str(r, "TABLE_NAME"), str(r, "TABLE_SCHEMA"), str(r, "TABLE_TEXT")))
                 .toList();
     }
@@ -37,10 +38,9 @@ class JTOpenPfClient implements PfClient {
         if (file == null || file.isBlank()) {
             return List.of();
         }
-        String lib = library == null || library.isBlank() ? "QSYS" : library.trim().toUpperCase();
-        return sqlClient.queryList("SELECT COLUMN_NAME, COLUMN_TYPE, LENGTH, NULLABLE "
-                + "FROM QSYS2.SYSCOLUMNS WHERE TABLE_SCHEMA = ? "
-                + "AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION", lib, file.trim().toUpperCase()).stream()
+        String lib = library == null || library.isBlank() ? "QSYS" : JTOpenConnectionState.requireIdentifier(library, "库名");
+        String tbl = JTOpenConnectionState.requireIdentifier(file, "文件/表名");
+        return sqlClient.queryList(SqlStatementRegistry.of("pf.column.list"), lib, tbl).stream()
                 .map(r -> new PfColumnRow(str(r, "COLUMN_NAME"), str(r, "COLUMN_TYPE"),
                         (int) lng(r, "LENGTH"), str(r, "NULLABLE")))
                 .toList();
@@ -53,7 +53,7 @@ class JTOpenPfClient implements PfClient {
         }
         String lib = library == null || library.isBlank() ? "QSYS" : JTOpenConnectionState.requireIdentifier(library, "库名");
         int capped = Math.max(1, Math.min(limit, PageConstants.MAX_PF_DATA_LIMIT));
-        return sqlClient.queryList("SELECT * FROM " + lib + "." + JTOpenConnectionState.requireIdentifier(file, "文件/表名")
+        return sqlClient.queryList(SqlStatementRegistry.of("pf.data.read").replace("{lib}", lib).replace("{tbl}", JTOpenConnectionState.requireIdentifier(file, "文件/表名"))
                 + " FETCH FIRST " + capped + " ROWS ONLY");
     }
 
@@ -62,32 +62,33 @@ class JTOpenPfClient implements PfClient {
         if (file == null || file.isBlank()) {
             return new PfStatsRow(0, 0, 0, List.of(), 0);
         }
-        String lib = library == null || library.isBlank() ? "QSYS" : library.trim().toUpperCase();
-        String tbl = file.trim().toUpperCase();
+        String lib = library == null || library.isBlank() ? "QSYS" : JTOpenConnectionState.requireIdentifier(library, "库名");
+        String tbl = JTOpenConnectionState.requireIdentifier(file, "文件/表名");
 
         // 记录数
         long recordCount = 0;
         try {
             var rows = sqlClient.queryList(
-                    "SELECT COUNT(*) AS CNT FROM " + lib + "." + tbl);
+                    SqlStatementRegistry.of("pf.count").replace("{lib}", lib).replace("{tbl}", tbl));
             if (!rows.isEmpty() && rows.get(0).get("CNT") instanceof Number n) {
                 recordCount = n.longValue();
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.debug("PF record count query failed for {}.{}: {}", lib, tbl, e.getMessage());
         }
 
         // 存储大小（从 QSYS2.SYSTABLES 获取行数估算，精确值需 DSPFD）
         long storageSize = 0;
         try {
             var rows = sqlClient.queryList(
-                    "SELECT DATA_SPACE_SIZE, NUMBER_MEMBERS FROM QSYS2.SYSTABLES"
-                            + " WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", lib, tbl);
+                    SqlStatementRegistry.of("pf.storage.info"), lib, tbl);
             if (!rows.isEmpty()) {
                 if (rows.get(0).get("DATA_SPACE_SIZE") instanceof Number n) {
                     storageSize = n.longValue() * 1024; // KB → bytes
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.debug("PF storage info query failed for {}.{}: {}", lib, tbl, e.getMessage());
         }
 
         // 索引信息
@@ -95,8 +96,7 @@ class JTOpenPfClient implements PfClient {
         int indexCount = 0;
         try {
             var rows = sqlClient.queryList(
-                    "SELECT INDEX_NAME FROM QSYS2.SYSINDEXES"
-                            + " WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", lib, tbl);
+                    SqlStatementRegistry.of("pf.index.list"), lib, tbl);
             indexCount = rows.size();
             for (var row : rows) {
                 String name = str(row, "INDEX_NAME");
@@ -104,19 +104,21 @@ class JTOpenPfClient implements PfClient {
                     indexNames.add(name);
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.debug("PF index list query failed for {}.{}: {}", lib, tbl, e.getMessage());
         }
 
         // 成员数
         int memberCount = 1;
         try {
             var rows = sqlClient.queryList(
-                    "SELECT NUMBER_MEMBERS FROM QSYS2.SYSTABLES"
+                    SqlStatementRegistry.of("pf.member.count")
                             + " WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", lib, tbl);
             if (!rows.isEmpty() && rows.get(0).get("NUMBER_MEMBERS") instanceof Number n) {
                 memberCount = n.intValue();
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.debug("PF member count query failed for {}.{}: {}", lib, tbl, e.getMessage());
         }
 
         return new PfStatsRow(recordCount, storageSize, indexCount, indexNames, memberCount);

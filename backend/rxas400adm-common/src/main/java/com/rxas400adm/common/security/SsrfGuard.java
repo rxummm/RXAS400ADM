@@ -24,7 +24,7 @@ public final class SsrfGuard {
     public static void assertSafeUrl(String url) {
         if (!isSafeUrl(url)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST,
-                    "推送地址不合法：仅允许公网 http/https，禁止内网/回环/链路本地地址");
+                    "Invalid webhook URL: only public http/https allowed, internal/loopback/link-local addresses blocked");
         }
     }
 

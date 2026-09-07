@@ -1,7 +1,9 @@
 package com.rxas400adm.security.service;
 
 import com.rxas400adm.system.entity.SysUser;
-import com.rxas400adm.system.service.MenuService;
+import com.rxas400adm.system.mapper.SysRoleMapper;
+import com.rxas400adm.system.mapper.SysUserRoleMapper;
+import com.rxas400adm.system.service.IMenuService;
 import com.rxas400adm.system.service.SysUserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,13 +25,19 @@ class PermissionServiceTest {
     private SysUserService userService;
 
     @Mock
-    private MenuService menuService;
+    private IMenuService menuService;
+
+    @Mock
+    private SysUserRoleMapper userRoleMapper;
+
+    @Mock
+    private SysRoleMapper roleMapper;
 
     private PermissionService service;
 
     @BeforeEach
     void setUp() {
-        service = new PermissionService(userService, menuService);
+        service = new PermissionService(userService, menuService, userRoleMapper, roleMapper);
         SysUser user = new SysUser();
         user.setId(1L);
         user.setUsername("admin");

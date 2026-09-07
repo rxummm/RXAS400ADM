@@ -7,10 +7,17 @@ import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.as400.util.BpcsRowUtil;
 import com.rxas400adm.as400.vo.BpcsWabpConfigVO;
 import com.rxas400adm.common.config.ProfileResolver;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -114,7 +121,7 @@ public class BpcsWabpServiceImpl implements IBpcsWabpService {
                 dayOfWeek
         );
         if (updated == 0) {
-            throw new IllegalStateException("WABP 配置不存在: cono=" + cono + ", wh=" + wh + ", dayOfWeek=" + dayOfWeek);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "WABP config not found: cono=" + cono + ", wh=" + wh + ", dayOfWeek=" + dayOfWeek);
         }
     }
 
@@ -128,8 +135,34 @@ public class BpcsWabpServiceImpl implements IBpcsWabpService {
         String sql = statements.get("bpcs.wabp.delete");
         int deleted = clientProvider.current().executeUpdate(sql, cono, wh, dayOfWeek);
         if (deleted == 0) {
-            throw new IllegalStateException("WABP 配置不存在: cono=" + cono + ", wh=" + wh + ", dayOfWeek=" + dayOfWeek);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "WABP config not found: cono=" + cono + ", wh=" + wh + ", dayOfWeek=" + dayOfWeek);
         }
+    }
+
+    @Override
+    public List<BpcsWabpConfigDTO> parseExcel(MultipartFile file) throws IOException {
+        if (file.isEmpty()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "File cannot be empty");
+        }
+        List<BpcsWabpConfigDTO> list = new ArrayList<>();
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                BpcsWabpConfigDTO dto = new BpcsWabpConfigDTO();
+                dto.setWh(getCellString(row, 0));
+                dto.setDayOfWeek(getCellInt(row, 1));
+                dto.setTime(getCellString(row, 2));
+                dto.setShipHold(getCellString(row, 3));
+                dto.setCrHold(getCellString(row, 4));
+                dto.setPrHold(getCellString(row, 5));
+                dto.setActive(getCellString(row, 6));
+                dto.setMaintUser("IMPORT");
+                list.add(dto);
+            }
+        }
+        return list;
     }
 
     @Override
@@ -143,12 +176,12 @@ public class BpcsWabpServiceImpl implements IBpcsWabpService {
             try {
                 // 校验必填
                 if (dto.getWh() == null || dto.getWh().isBlank()) {
-                    result.getErrors().add("第 " + rowNum + " 行: 仓库代码不能为空");
+                    result.getErrors().add("Row " + rowNum + ": warehouse code is required");
                     result.setFailureCount(result.getFailureCount() + 1);
                     continue;
                 }
                 if (dto.getDayOfWeek() == null) {
-                    result.getErrors().add("第 " + rowNum + " 行: 星期几不能为空");
+                    result.getErrors().add("Row " + rowNum + ": day of week is required");
                     result.setFailureCount(result.getFailureCount() + 1);
                     continue;
                 }
@@ -185,6 +218,31 @@ public class BpcsWabpServiceImpl implements IBpcsWabpService {
                 pickStr(row, "MAINT_USER"),
                 BpcsRowUtil.dateStr(row, "MAINT_DATE")
         );
+    }
+
+    private String getCellString(Row row, int cellIndex) {
+        Cell cell = row.getCell(cellIndex);
+        if (cell == null) return "";
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue().trim();
+            case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
+            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+            default -> "";
+        };
+    }
+
+    private Integer getCellInt(Row row, int cellIndex) {
+        Cell cell = row.getCell(cellIndex);
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC) {
+            return (int) cell.getNumericCellValue();
+        }
+        String val = getCellString(row, cellIndex);
+        try {
+            return Integer.parseInt(val);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private List<BpcsWabpConfigVO> mockConfigs() {

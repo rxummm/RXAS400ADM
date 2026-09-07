@@ -11,6 +11,6 @@ public record BpcsOrderAnomalyVO(
         String orderDate,
         String reqDate,
         String status,
-        int backorderLines
+        Integer backorderLines
 ) {
 }

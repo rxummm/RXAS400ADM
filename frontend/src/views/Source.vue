@@ -24,7 +24,11 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'SourceManager' })
 import { onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { fetchLibraries, fetchMember, fetchMembers, fetchSourceFiles } from '@/api/source'
+
+const { t } = useI18n()
 
 interface TreeNode {
   key: string
@@ -39,9 +43,13 @@ const loading = ref(false)
 
 const onNodeClick = async (node: TreeNode) => {
   if (node.type === 'member') {
-    const parts = node.key.split('/')
-    const data: Record<string, unknown> = await fetchMember(parts[0], parts[1], parts[2])
-    content.value = String(data.content ?? '')
+    try {
+      const parts = node.key.split('/')
+      const data: Record<string, unknown> = await fetchMember(parts[0], parts[1], parts[2])
+      content.value = String(data.content ?? '')
+    } catch {
+      ElMessage.error(t('common.loadFailed'))
+    }
   }
 }
 

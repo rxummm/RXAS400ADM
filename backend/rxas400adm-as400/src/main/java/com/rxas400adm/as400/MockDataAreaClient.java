@@ -12,11 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class MockDataAreaClient implements DataAreaClient {
 
-    private final MockState state;
     private final Map<String, String> dataAreas = new ConcurrentHashMap<>();
 
     MockDataAreaClient(MockState state) {
-        this.state = state;
         // 初始化仿真数据
         dataAreas.put("QSYS/RXCONFIG", "{\"app\":\"rxas400\",\"version\":\"1.0\"}");
         dataAreas.put("QSYS/RXSESSION", "ACTIVE");

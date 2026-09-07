@@ -2,13 +2,14 @@ package com.rxas400adm.system.aspect;
 import com.rxas400adm.common.util.SecurityUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Arrays;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.util.ClientIpResolver;
 import com.rxas400adm.system.entity.AuditLog;
 import com.rxas400adm.system.mapper.AuditLogMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
@@ -24,7 +25,6 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -41,16 +41,8 @@ public class OperateLogAspect {
 
     private final AuditLogMapper auditLogMapper;
     private final ObjectMapper objectMapper;
+    private final ClientIpResolver clientIpResolver;
     private static final ExpressionParser parser = new SpelExpressionParser();
-
-    /**
-     * 可信反向代理 IP 列表（逗号分隔，S3）；留空则完全忽略 X-Forwarded-For。
-     * <p>R7 归属标注：该键已收敛至 security 模块 ProxyProperties（rxas400.security 前缀单点）；
-     * 因 rxas400adm-system 不依赖 security 模块（security→system 单向，反向引入会循环依赖），
-     * 此处暂保留 @Value 同键读取；判定逻辑三处复制维持不动（抽公共工具列为后续）。
-     */
-    @Value("${rxas400.security.trusted-proxies:}")
-    private String trustedProxies;
 
     @Around("@annotation(operateLog)")
     public Object around(ProceedingJoinPoint joinPoint, OperateLog operateLog) throws Throwable {
@@ -203,30 +195,12 @@ public class OperateLogAspect {
     }
 
 
-    /**
-     * S3：与 AuthController.clientIp 一致——仅当请求直接来自可信反向代理时才信任 X-Forwarded-For，
-     * 避免伪造头污染审计 IP。
-     */
     private String currentIp() {
         ServletRequestAttributes attributes =
                 (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes == null) {
             return null;
         }
-        HttpServletRequest request = attributes.getRequest();
-        String remote = request.getRemoteAddr();
-        if (remote != null && StringUtils.hasText(trustedProxies)) {
-            boolean trusted = Arrays.stream(trustedProxies.split(","))
-                    .map(String::trim)
-                    .filter(p -> !p.isBlank())
-                    .anyMatch(p -> "*".equals(p) || p.equalsIgnoreCase(remote));
-            if (trusted) {
-                String ip = request.getHeader("X-Forwarded-For");
-                if (ip != null && !ip.isBlank()) {
-                    return ip.split(",")[0].trim();
-                }
-            }
-        }
-        return remote;
+        return clientIpResolver.resolve(attributes.getRequest());
     }
 }

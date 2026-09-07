@@ -10,8 +10,6 @@ import com.rxas400adm.as400.vo.DocTemplateVO;
 import com.rxas400adm.as400.vo.DocVersionVO;
 import com.rxas400adm.as400.vo.DocVO;
 import com.rxas400adm.common.annotation.OperateLog;
-import com.rxas400adm.common.exception.BusinessException;
-import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.util.SecurityUtils;
@@ -188,9 +186,6 @@ public class DocController {
     @PreAuthorize("hasAuthority('DOC_VIEW')")
     public ResponseEntity<byte[]> file(@PathVariable Long id) {
         DocFileVO file = docService.file(id);
-        if (file.bytes() == null || file.bytes().length == 0) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "IFS 文件内容为空");
-        }
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
                 .contentType(MediaType.parseMediaType(file.contentType()))

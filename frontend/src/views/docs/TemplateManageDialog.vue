@@ -57,6 +57,7 @@ import { computed, defineAsyncComponent, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { useConfirmDelete } from '@/composables/useConfirmDelete'
+import { useDict } from '@/composables/useDict'
 import {
   createTemplate, deleteTemplate, listTemplates, updateTemplate,
   type DocType, type TemplateItem,
@@ -81,7 +82,10 @@ const visible = computed({
 const { t } = useI18n()
 const templates = ref<TemplateItem[]>([])
 /** 模板可用类型：正文型（二进制模板无意义） */
-const textTypes = ['MARKDOWN', 'TEXT', 'HTML'] as const
+const { items: docTypeItems } = useDict('DOC_TYPE')
+const textTypes = computed(() =>
+  docTypeItems.value.filter(d => ['MARKDOWN', 'TEXT', 'HTML'].includes(d.itemKey)).map(d => d.itemKey as DocType)
+)
 
 const docTypeKey = (docType?: DocType) =>
   `docs.docType${(docType || 'MARKDOWN').charAt(0) + (docType || 'MARKDOWN').slice(1).toLowerCase()}`

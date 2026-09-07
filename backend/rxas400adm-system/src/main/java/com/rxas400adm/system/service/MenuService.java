@@ -139,6 +139,6 @@ public class MenuService implements IMenuService {
             return Map.of();
         }
         return menuMapper.selectBatchIds(parentIds).stream()
-                .collect(Collectors.toMap(SysMenu::getId, SysMenu::getTitle));
+                .collect(Collectors.toMap(SysMenu::getId, SysMenu::getTitle, (a, b) -> b));
     }
 }

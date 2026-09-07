@@ -49,7 +49,7 @@ export const updateSchedule = (id: number, data: JobScheduleRequest) =>
 export const deleteSchedule = (id: number) => request.delete(`/schedules/${id}`)
 
 export const toggleSchedule = (id: number, enabled: boolean) =>
-  request.put(`/schedules/${id}/toggle`, null, { params: { enabled } })
+  request.post(`/schedules/${id}/toggle`, null, { params: { enabled } })
 
 export const executeSchedule = (id: number): Promise<ScheduleRunResult> =>
   request.post(`/schedules/${id}/execute`)

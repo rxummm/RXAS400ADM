@@ -42,7 +42,7 @@ public class FavoriteService implements IFavoriteService {
     public FavoriteToggleVO toggle(String username, String title, String path, String icon) {
         if (path == null || path.isBlank()) {
             // 【E12】IllegalArgumentException 直抛会落兜底 500，参数非法应走受控 BusinessException(400)
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "收藏路径不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Favorite path is required");
         }
         Favorite existing = favoriteMapper.selectOne(new LambdaQueryWrapper<Favorite>()
                 .eq(Favorite::getUsername, username)

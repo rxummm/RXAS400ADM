@@ -1,6 +1,7 @@
 package com.rxas400adm.as400.controller;
 
 import com.rxas400adm.as400.service.IBpcsForecastService;
+import com.rxas400adm.as400.vo.BpcsCpfrVO;
 import com.rxas400adm.as400.vo.BpcsForecastVO;
 import com.rxas400adm.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,7 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/bpcs/forecast")
 @RequiredArgsConstructor
-@Tag(name = "BPCS预测补货看板")
+@Tag(name = "BPCS Forecast & Replenish")
 public class BpcsForecastController {
 
     private final IBpcsForecastService forecastService;
@@ -41,5 +42,15 @@ public class BpcsForecastController {
             @RequestParam(defaultValue = "001") String cono,
             @RequestParam(defaultValue = "50") int limit) {
         return ApiResponse.success(forecastService.getItemOptions(cono, limit));
+    }
+
+    @GetMapping("/cpfr")
+    @PreAuthorize("hasAuthority('BPCS_VIEW')")
+    @Operation(summary = "协同需求预测分析（CPFR）")
+    public ApiResponse<BpcsCpfrVO> getCpfrAnalysis(
+            @RequestParam(defaultValue = "001") String cono,
+            @RequestParam(required = false) String item,
+            @RequestParam(defaultValue = "12") int months) {
+        return ApiResponse.success(forecastService.getCpfrAnalysis(cono, item, months));
     }
 }

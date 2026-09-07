@@ -24,7 +24,13 @@ public class JwtUtil {
 
     // R7：5 处 @Value 收敛为 JwtProperties 单点绑定（rxas400.jwt.*）
     public JwtUtil(JwtProperties properties) {
-        this.key = Keys.hmacShaKeyFor(properties.getSecret().getBytes(StandardCharsets.UTF_8));
+        // P2-15：密钥长度校验——HMAC-SHA 要求至少 256 位（32 字节）
+        byte[] secretBytes = properties.getSecret().getBytes(StandardCharsets.UTF_8);
+        if (secretBytes.length < 32) {
+            throw new IllegalArgumentException(
+                    "JWT secret must be at least 32 bytes (256 bits) for HMAC-SHA, got: " + secretBytes.length);
+        }
+        this.key = Keys.hmacShaKeyFor(secretBytes);
         this.expireMs = properties.getExpireMs();
         this.refreshExpireMs = properties.getRefreshExpireMs();
         this.issuer = properties.getIssuer();

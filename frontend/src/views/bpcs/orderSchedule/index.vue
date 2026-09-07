@@ -21,6 +21,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsOrderSchedule' })
+
 import { ref } from 'vue'
 import request from '@/api/request'
 

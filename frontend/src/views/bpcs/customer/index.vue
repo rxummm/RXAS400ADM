@@ -96,6 +96,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { searchCustomers, type BpcsCustomer, BPCS_EXPORT } from '@/api/bpcs'
 import AppPagination from '@/components/AppPagination.vue'
 import ExportDropdown from '@/components/ExportDropdown.vue'
@@ -103,22 +104,23 @@ import type { ExportColumn } from '@/components/ExportButton.vue'
 
 defineOptions({ name: 'BpcsCustomer' })
 
+const { t } = useI18n()
 const keyword = ref('')
 const loading = ref(false)
 const customers = ref<BpcsCustomer[]>([])
 const total = ref(0)
 
 const exportColumns: ExportColumn[] = [
-  { key: 'cono', label: '公司' },
-  { key: 'cust', label: '客户号' },
-  { key: 'name', label: '客户名称' },
-  { key: 'address1', label: '地址' },
-  { key: 'city', label: '城市' },
-  { key: 'state', label: '州' },
-  { key: 'zip', label: '邮编' },
-  { key: 'phone', label: '电话' },
-  { key: 'contact', label: '联系人' },
-  { key: 'creditLimit', label: '信用额度' },
+  { key: 'cono', label: t('bpcs.common.companyCode') },
+  { key: 'cust', label: t('bpcs.common.customerCode') },
+  { key: 'name', label: t('bpcs.common.customerName') },
+  { key: 'address1', label: t('bpcs.common.address') },
+  { key: 'city', label: t('bpcs.common.city') },
+  { key: 'state', label: t('bpcs.common.state') },
+  { key: 'zip', label: t('bpcs.common.zip') },
+  { key: 'phone', label: t('bpcs.common.phone') },
+  { key: 'contact', label: t('bpcs.common.contact') },
+  { key: 'creditLimit', label: t('bpcs.common.creditLimit') },
 ]
 const current = ref(1)
 const size = ref(20)

@@ -24,4 +24,7 @@ public interface IPermissionRequestService {
     PermissionRequest approve(Long id, String approver, String comment);
 
     PermissionRequest reject(Long id, String approver, String comment);
+
+    /** 校验评论长度（@RequestBody(required=false) 使 @Valid 失效，服务层兜底） */
+    void validateComment(String comment);
 }

@@ -6,8 +6,10 @@ import com.rxas400adm.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+
 
 /**
  * ㉚ 库存价值核算 Controller。
@@ -15,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bpcs/stockValue")
 @RequiredArgsConstructor
+@Tag(name = "BPCS Stock Value", description = "Stock value analysis and reporting")
 public class BpcsStockValueController {
 
     private final IBpcsStockValueService service;

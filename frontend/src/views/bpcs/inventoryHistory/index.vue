@@ -39,20 +39,22 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'BpcsInventoryHistory' })
 import { reactive, ref } from 'vue'
-import { fetchInventoryHistory, type InventoryHistory } from '@/api/supplyChain'
+import { useI18n } from 'vue-i18n'
+import { getInventoryHistory, type InventoryHistory } from '@/api/bpcs'
 import { BPCS_EXPORT } from '@/api/bpcs'
 import ExportDropdown from '@/components/ExportDropdown.vue'
 import type { ExportColumn } from '@/components/ExportButton.vue'
+const { t } = useI18n()
 const loading = ref(false)
 const rows = ref<InventoryHistory[]>([])
 const query = reactive({ cono: '001', item: '', fromDate: '', toDate: '' })
 const exportColumns: ExportColumn[] = [
-  { key: 'item', label: '物料号' },
-  { key: 'warehouse', label: '仓库' },
-  { key: 'type', label: '事务类型' },
-  { key: 'quantity', label: '数量' },
-  { key: 'referenceNo', label: '参考号' },
-  { key: 'date', label: '日期' },
+  { key: 'item', label: t('bpcs.common.itemCode') },
+  { key: 'warehouse', label: t('bpcs.common.warehouse') },
+  { key: 'type', label: t('bpcs.common.transactionType') },
+  { key: 'quantity', label: t('bpcs.common.quantity') },
+  { key: 'referenceNo', label: t('bpcs.common.referenceNo') },
+  { key: 'date', label: t('bpcs.common.date') },
 ]
 function load() {
   loading.value = true
@@ -60,6 +62,6 @@ function load() {
   if (query.item) p.item = query.item
   if (query.fromDate) p.fromDate = query.fromDate
   if (query.toDate) p.toDate = query.toDate
-  fetchInventoryHistory(p).then(d => { rows.value = d }).finally(() => { loading.value = false })
+  getInventoryHistory(p).then(d => { rows.value = d }).finally(() => { loading.value = false })
 }
 </script>

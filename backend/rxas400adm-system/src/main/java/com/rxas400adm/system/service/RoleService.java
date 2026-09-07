@@ -92,7 +92,7 @@ public class RoleService implements IRoleService {
         long exists = roleMapper.selectCount(new LambdaQueryWrapper<SysRole>()
                 .eq(SysRole::getRoleCode, role.getRoleCode()));
         if (exists > 0) {
-            throw new BusinessException(ErrorCode.ROLE_CODE_EXISTS, "角色编码已存在: " + role.getRoleCode());
+            throw new BusinessException(ErrorCode.ROLE_CODE_EXISTS, "Role code already exists: " + role.getRoleCode());
         }
         if (role.getSort() == null) role.setSort(0);
         if (role.getStatus() == null) role.setStatus(1);
@@ -108,11 +108,11 @@ public class RoleService implements IRoleService {
     public SysRole update(Long id, SysRoleDTO dto) {
         SysRole role = roleMapper.selectById(id);
         if (role == null) {
-            throw new BusinessException(ErrorCode.ROLE_NOT_FOUND, "角色不存在: " + id);
+            throw new BusinessException(ErrorCode.ROLE_NOT_FOUND, "Role not found: " + id);
         }
         // ADMIN 角色不可停用（防止把自己锁死）
         if (ADMIN_CODE.equals(role.getRoleCode()) && dto.getStatus() != null && dto.getStatus() == 0) {
-            throw new BusinessException(ErrorCode.ROLE_ADMIN_PROTECTED, "内置 ADMIN 角色不可停用");
+            throw new BusinessException(ErrorCode.ROLE_ADMIN_PROTECTED, "Built-in ADMIN role cannot be disabled");
         }
         if (StringUtils.hasText(dto.getRoleName())) role.setRoleName(dto.getRoleName());
         if (StringUtils.hasText(dto.getDescription())) role.setDescription(dto.getDescription());
@@ -134,10 +134,10 @@ public class RoleService implements IRoleService {
     public void delete(Long id) {
         SysRole role = roleMapper.selectById(id);
         if (role == null) {
-            throw new BusinessException(ErrorCode.ROLE_NOT_FOUND, "角色不存在: " + id);
+            throw new BusinessException(ErrorCode.ROLE_NOT_FOUND, "Role not found: " + id);
         }
         if (ADMIN_CODE.equals(role.getRoleCode())) {
-            throw new BusinessException(ErrorCode.ROLE_ADMIN_PROTECTED, "内置 ADMIN 角色不可删除");
+            throw new BusinessException(ErrorCode.ROLE_ADMIN_PROTECTED, "Built-in ADMIN role cannot be deleted");
         }
         roleMenuMapper.deleteByRoleId(id);
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getRoleId, id));
@@ -157,7 +157,7 @@ public class RoleService implements IRoleService {
         long adminCount = roleMapper.selectCount(new LambdaQueryWrapper<SysRole>()
                 .in(SysRole::getId, distinctIds).eq(SysRole::getRoleCode, ADMIN_CODE));
         if (adminCount > 0) {
-            throw new BusinessException(ErrorCode.ROLE_ADMIN_PROTECTED, "内置 ADMIN 角色不可删除");
+            throw new BusinessException(ErrorCode.ROLE_ADMIN_PROTECTED, "Built-in ADMIN role cannot be deleted");
         }
         // B7：批量删除改为 IN 条件，消除逐条 delete 的 N 次 DB 往返
         roleMenuMapper.delete(new LambdaQueryWrapper<SysRoleMenu>().in(SysRoleMenu::getRoleId, distinctIds));
@@ -189,7 +189,7 @@ public class RoleService implements IRoleService {
         Set<Long> existingIds = existing.stream().map(SysMenu::getId).collect(Collectors.toSet());
         List<Long> invalid = ids.stream().filter(i -> !existingIds.contains(i)).toList();
         if (!invalid.isEmpty()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "菜单不存在: " + invalid);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Menu not found: " + invalid);
         }
         return ids;
     }

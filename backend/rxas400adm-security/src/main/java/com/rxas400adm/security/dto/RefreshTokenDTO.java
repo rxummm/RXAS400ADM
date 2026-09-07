@@ -9,7 +9,7 @@ import lombok.Data;
  */
 @Data
 public class RefreshTokenDTO {
-    @NotBlank(message = "refreshToken 不能为空")
+    @NotBlank(message = "refreshToken is required")
     @Schema(description = "刷新令牌", example = "eyJhbGciOi...")
     private String refreshToken;
 }

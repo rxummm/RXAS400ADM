@@ -21,6 +21,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsStockValue' })
+
 import { ref, onMounted } from 'vue'
 import { listStockValue, type StockValueVO } from '@/api/bpcs'
 
@@ -29,8 +32,8 @@ const rows = ref<StockValueVO[]>([])
 
 const formatCurrency = (v: number) => v != null ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0'
 
-const getSummary = ({ columns, data }: { columns: any[]; data: StockValueVO[] }) => {
-  return columns.map((col: any, idx: number) => {
+const getSummary = ({ columns, data }: { columns: { property?: string }[]; data: StockValueVO[] }) => {
+  return columns.map((col: { property?: string }, idx: number) => {
     if (idx === 0) return 'Total'
     if (col.property === 'stockValue') return formatCurrency(data.reduce((s: number, r: StockValueVO) => s + (r.stockValue || 0), 0))
     if (col.property === 'qtyOnHand') return String(data.reduce((s: number, r: StockValueVO) => s + (r.qtyOnHand || 0), 0))
@@ -41,7 +44,7 @@ const getSummary = ({ columns, data }: { columns: any[]; data: StockValueVO[] })
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listStockValue() as unknown as StockValueVO[]
+    rows.value = await listStockValue()
   } finally {
     loading.value = false
   }

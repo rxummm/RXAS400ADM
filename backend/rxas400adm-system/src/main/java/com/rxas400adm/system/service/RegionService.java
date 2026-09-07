@@ -83,12 +83,12 @@ public class RegionService implements IRegionService {
         region.setSort(dto.getSort());
         region.setStatus(dto.getStatus());
         if (!StringUtils.hasText(region.getCode()) || !StringUtils.hasText(region.getName())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "行政区划代码与名称必填");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Region code and name are required");
         }
         long exists = regionMapper.selectCount(new LambdaQueryWrapper<Region>()
                 .eq(Region::getCode, region.getCode().trim()));
         if (exists > 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "行政区划代码已存在: " + region.getCode());
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Region code already exists: " + region.getCode());
         }
         region.setId(null);
         region.setCode(region.getCode().trim());
@@ -103,7 +103,7 @@ public class RegionService implements IRegionService {
 
     
     public Region update(Long id, RegionDTO dto) {
-        Region region = EntityUtil.require(id, "行政区划", regionMapper::selectById);
+        Region region = EntityUtil.require(id, "Region", regionMapper::selectById);
         if (StringUtils.hasText(dto.getCode())) {
             region.setCode(dto.getCode().trim());
         }
@@ -129,11 +129,11 @@ public class RegionService implements IRegionService {
 
     
     public void delete(Long id) {
-        Region region = EntityUtil.require(id, "行政区划", regionMapper::selectById);
+        Region region = EntityUtil.require(id, "Region", regionMapper::selectById);
         Long children = regionMapper.selectCount(new LambdaQueryWrapper<Region>()
                 .eq(Region::getParentCode, region.getCode()));
         if (children > 0) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "该行政区划下存在下级数据，无法删除");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Cannot delete region with child data");
         }
         regionMapper.deleteById(id);
     }

@@ -119,7 +119,7 @@
           </RxSkeleton>
         </el-tab-pane>
         <el-tab-pane :label="$t('reports.builder.list')" name="builder">
-          <div style="padding:16px">
+          <div class="p16">
             <el-button type="primary" @click="$router.push('/report/builder')">
               {{ $t('reports.builder.list') }}
             </el-button>
@@ -259,9 +259,13 @@ const openEdit = (row: ReportSchedule) => {
 }
 
 const toggle = async (row: ReportSchedule, v: boolean) => {
-  await toggleReportSchedule(row.id!, v)
-  ElMessage.success(v ? t('reports.enabledOn') : t('reports.enabledOff'))
-  await loadSchedules()
+  try {
+    await toggleReportSchedule(row.id!, v)
+    ElMessage.success(v ? t('reports.enabledOn') : t('reports.enabledOff'))
+    await loadSchedules()
+  } catch {
+    ElMessage.error(t('common.requestFailed'))
+  }
 }
 
 const run = async (row: ReportSchedule) => {
@@ -310,7 +314,11 @@ onMounted(async () => {
     activeTab.value = 'schedule'
   }
   if (scheduleVisible) {
-    await loadSchedules()
+    try {
+      await loadSchedules()
+    } catch {
+      ElMessage.error(t('common.loadFailed'))
+    }
   }
 })
 </script>

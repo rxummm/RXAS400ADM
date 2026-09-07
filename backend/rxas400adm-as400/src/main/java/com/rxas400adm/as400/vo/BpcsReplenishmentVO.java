@@ -9,9 +9,9 @@ public record BpcsReplenishmentVO(
         String item,
         String description,
         String wh,
-        int qtyOnHand,
-        int safetyStock,
-        int shortage,
+        Integer qtyOnHand,
+        Integer safetyStock,
+        Integer shortage,
         BigDecimal avgDemand
 ) {
 }

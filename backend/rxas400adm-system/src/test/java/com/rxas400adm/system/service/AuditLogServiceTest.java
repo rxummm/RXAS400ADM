@@ -60,7 +60,7 @@ class AuditLogServiceTest {
         AuditLog log = captor.getValue();
         assertEquals("admin", log.getUserName());
         assertEquals("LOGIN_SUCCESS", log.getAction());
-        assertEquals("登录安全", log.getModule());
+        assertEquals("Login Security", log.getModule());
         assertEquals("127.0.0.1", log.getIp());
         assertEquals("PLATFORM", log.getTarget());
         assertNotNull(log.getCreatedTime());

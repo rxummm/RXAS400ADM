@@ -69,7 +69,7 @@ public class EmailGroupService implements IEmailGroupService {
 
     @Override
     public void update(Long id, EmailGroupCreateDTO dto) {
-        EmailRecipientGroup group = EntityUtil.require(id, "收件人分组", groupMapper::selectById);
+        EmailRecipientGroup group = EntityUtil.require(id, "Email Group", groupMapper::selectById);
         group.setGroupName(dto.getGroupName());
         group.setDescription(dto.getDescription());
         group.setUpdatedTime(LocalDateTime.now());
@@ -78,7 +78,7 @@ public class EmailGroupService implements IEmailGroupService {
 
     @Override
     public void delete(Long id) {
-        EntityUtil.require(id, "收件人分组", groupMapper::selectById);
+        EntityUtil.require(id, "Email Group", groupMapper::selectById);
         groupMapper.deleteById(id);
         recipientMapper.delete(new LambdaQueryWrapper<EmailRecipient>()
                 .eq(EmailRecipient::getGroupId, id));
@@ -94,12 +94,12 @@ public class EmailGroupService implements IEmailGroupService {
 
     @Override
     public void addMember(Long id, EmailRecipientDTO dto) {
-        EntityUtil.require(id, "收件人分组", groupMapper::selectById);
+        EntityUtil.require(id, "Email Group", groupMapper::selectById);
         Long exists = recipientMapper.selectCount(new LambdaQueryWrapper<EmailRecipient>()
                 .eq(EmailRecipient::getGroupId, id)
                 .eq(EmailRecipient::getEmail, dto.getEmail()));
         if (exists > 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "该邮箱已在分组中");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Email address already in group");
         }
         EmailRecipient recipient = new EmailRecipient();
         recipient.setGroupId(id);
@@ -112,6 +112,7 @@ public class EmailGroupService implements IEmailGroupService {
 
     @Override
     public void removeMember(Long id, Long memberId) {
+        EntityUtil.require(memberId, "Email Recipient", recipientMapper::selectById);
         recipientMapper.deleteById(memberId);
     }
 }

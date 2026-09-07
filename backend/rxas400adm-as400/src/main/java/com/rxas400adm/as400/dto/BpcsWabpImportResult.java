@@ -6,7 +6,7 @@ import java.util.List;
 
 @Data
 public class BpcsWabpImportResult {
-    private int successCount;
-    private int failureCount;
+    private Integer successCount;
+    private Integer failureCount;
     private List<String> errors;
 }

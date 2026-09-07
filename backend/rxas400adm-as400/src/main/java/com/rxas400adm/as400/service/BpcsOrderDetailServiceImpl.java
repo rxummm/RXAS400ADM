@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -87,9 +88,9 @@ public class BpcsOrderDetailServiceImpl implements IBpcsOrderDetailService {
 
     private List<BpcsOrderLineDetailVO> mockLineDetails() {
         return List.of(
-                new BpcsOrderLineDetailVO("001", "123456", "001", "DEF-2001", "螺柱 M12x30", 500, 500, 500, 500, new java.math.BigDecimal("18.00"), new java.math.BigDecimal("9000.00"), "20315", "20250401", "20250312", "20250328", "1", "LH-001", "INV-2025001", "20250402", new java.math.BigDecimal("9000.00"), "INVOICED"),
-                new BpcsOrderLineDetailVO("001", "123456", "003", "DEF-2003", "垫片 M12", 1000, 800, 600, 0, new java.math.BigDecimal("0.50"), new java.math.BigDecimal("300.00"), "20315", "20250401", "20250312", "20250328", "1", "LH-001", null, null, null, "PARTIAL_SHIP"),
-                new BpcsOrderLineDetailVO("001", "234567", "001", "DEF-2005", "轴承 6205", 200, 100, 0, 0, new java.math.BigDecimal("45.00"), null, "20777", "20250815", "20250720", null, null, null, null, null, null, "ALLOCATED")
+                new BpcsOrderLineDetailVO("001", "123456", "001", "DEF-2001", "螺柱 M12x30", 500, 500, 500, 500, new BigDecimal("18.00"), new BigDecimal("9000.00"), "20315", "20250401", "20250312", "20250328", "1", "LH-001", "INV-2025001", "20250402", new BigDecimal("9000.00"), "INVOICED"),
+                new BpcsOrderLineDetailVO("001", "123456", "003", "DEF-2003", "垫片 M12", 1000, 800, 600, 0, new BigDecimal("0.50"), new BigDecimal("300.00"), "20315", "20250401", "20250312", "20250328", "1", "LH-001", null, null, null, "PARTIAL_SHIP"),
+                new BpcsOrderLineDetailVO("001", "234567", "001", "DEF-2005", "轴承 6205", 200, 100, 0, 0, new BigDecimal("45.00"), null, "20777", "20250815", "20250720", null, null, null, null, null, null, "ALLOCATED")
         );
     }
 

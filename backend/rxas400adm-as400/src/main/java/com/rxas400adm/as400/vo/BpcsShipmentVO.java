@@ -8,7 +8,7 @@ public record BpcsShipmentVO(
         String carrier,
         String destination,
         String shipDate,
-        int lineCount,
+        Integer lineCount,
         double weight,
         String orderNos
 ) {

@@ -23,7 +23,7 @@
 
     <!-- PDF 预览对话框 -->
     <el-dialog v-model="pdfVisible" :title="$t('bpcs.shipment.pdfPreview')" width="90%" fullscreen>
-      <iframe v-if="pdfUrl" :src="pdfUrl" style="width: 100%; height: 100%; border: none;" />
+      <iframe v-if="pdfUrl" :src="pdfUrl" class="pdf-iframe" sandbox="allow-same-origin allow-scripts" />
       <template #footer>
         <el-button @click="pdfVisible = false">{{ $t('common.close') }}</el-button>
         <el-button type="primary" @click="downloadPdf">{{ $t('common.download') }}</el-button>
@@ -34,10 +34,15 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsShipmentMgmt' })
+
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { listShipments, exportShipmentPdf, type ShipmentVO } from '@/api/bpcs'
 import { ElMessage } from 'element-plus'
 
+const { t } = useI18n()
 const cono = ref('001')
 const loading = ref(false)
 const rows = ref<ShipmentVO[]>([])
@@ -48,7 +53,7 @@ const currentWaybillNo = ref('')
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listShipments(cono.value) as unknown as ShipmentVO[]
+    rows.value = await listShipments(cono.value)
   } finally {
     loading.value = false
   }
@@ -63,13 +68,14 @@ const handlePdf = async (row: ShipmentVO) => {
       weight: row.weight,
       items: [{ itemCode: 'N/A', description: row.orderNos, qty: row.lineCount, unit: 'PCS' }]
     }
-    const blob = await exportShipmentPdf(cono.value, row.loadNo, params) as unknown as Blob
+    const blob = await exportShipmentPdf(cono.value, row.loadNo, params).then(r => r.data)
     const url = URL.createObjectURL(blob)
     pdfUrl.value = url
     currentWaybillNo.value = row.loadNo
     pdfVisible.value = true
-  } catch (e: any) {
-    ElMessage.error(e.response?.data?.message || '生成 PDF 失败')
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    ElMessage.error(msg)
   }
 }
 
@@ -96,3 +102,11 @@ const printPdf = () => {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.pdf-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+</style>

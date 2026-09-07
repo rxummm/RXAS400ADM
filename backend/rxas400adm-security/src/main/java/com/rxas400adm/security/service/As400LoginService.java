@@ -72,7 +72,7 @@ public class As400LoginService implements IAs400LoginService {
     public LoginResponse login(As400LoginRequest request) {
         AS400Client client = clientProvider.forServer(request.getServerId());
         if (!client.authenticate(request.getUsername(), request.getPassword())) {
-            throw new BusinessException(ErrorCode.LOGIN_FAILED, "AS400 账号或密码错误");
+            throw new BusinessException(ErrorCode.LOGIN_FAILED, "Invalid AS400 credentials");
         }
         SysUser user = resolveOrCreateUser(client, request);
         // 角色收敛后强制刷新权限缓存（S1）：组映射变更立即体现在本次会话与 token 中
@@ -90,7 +90,7 @@ public class As400LoginService implements IAs400LoginService {
         if (user != null) {
             // S1：平台侧已禁用/删除的本地映射账号，AS400 认证通过也不允许登录
             if (!"ACTIVE".equals(user.getStatus())) {
-                throw new BusinessException(ErrorCode.FORBIDDEN, "用户已被禁用，无法通过 AS400 账号登录");
+                throw new BusinessException(ErrorCode.FORBIDDEN, "User is disabled, cannot login via AS400");
             }
             // 平台注册用户首次用 AS400 账号登录：补记来源标记
             if (!"AS400".equals(user.getLoginSource())) {
@@ -115,7 +115,7 @@ public class As400LoginService implements IAs400LoginService {
         created.setUpdatedTime(LocalDateTime.now());
         userMapper.insert(created);
         applyRoles(created.getId(), roleCodes);
-        log.info("AS400 登录自动创建用户: {} (server={}, roles={})", name, request.getServerId(), roleCodes);
+        log.info("AS400 login auto-created user: {} (server={}, roles={})", name, request.getServerId(), roleCodes);
         return created;
     }
 
@@ -156,7 +156,7 @@ public class As400LoginService implements IAs400LoginService {
         List<SysRole> roles = roleMapper.selectList(
                 new LambdaQueryWrapper<SysRole>().in(SysRole::getRoleCode, roleCodes));
         Map<String, Long> codeToId = roles.stream()
-                .collect(Collectors.toMap(SysRole::getRoleCode, SysRole::getId));
+                .collect(Collectors.toMap(SysRole::getRoleCode, SysRole::getId, (a, b) -> b));
         // T5：单条多值 INSERT 收窄「先删后插」窗口（无事务架构下的批量化收口）
         List<SysUserRole> userRoles = new ArrayList<>();
         for (String code : roleCodes) {

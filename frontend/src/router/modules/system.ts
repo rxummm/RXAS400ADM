@@ -1,0 +1,136 @@
+import type { RouteRecordRaw } from 'vue-router'
+
+export default [
+  {
+    path: 'users',
+    name: 'Users',
+    component: () => import('@/views/system/Users.vue'),
+    meta: { title: 'menu.users', cached: true },
+  },
+  {
+    path: 'user-profiles',
+    name: 'UserProfiles',
+    component: () => import('@/views/system/userProfiles/index.vue'),
+    meta: { title: 'menu.userProfiles', cached: true },
+  },
+  {
+    path: 'roles',
+    name: 'Roles',
+    component: () => import('@/views/system/roles/index.vue'),
+    meta: { title: 'menu.roles', cached: true },
+  },
+  {
+    path: 'menus',
+    name: 'Menus',
+    component: () => import('@/views/system/menus/index.vue'),
+    meta: { title: 'menu.menus', cached: true },
+  },
+  {
+    path: 'system/config',
+    name: 'SysConfig',
+    component: () => import('@/views/system/config/index.vue'),
+    meta: { title: 'menu.config', cached: true },
+  },
+  {
+    path: 'system/i18n',
+    name: 'SysI18n',
+    component: () => import('@/views/system/i18n/index.vue'),
+    meta: { title: 'menu.i18n', cached: true },
+  },
+  {
+    path: 'system/login-log',
+    name: 'LoginLog',
+    component: () => import('@/views/system/loginLog/index.vue'),
+    meta: { title: 'menu.loginLog', cached: true },
+  },
+  {
+    path: 'system/cache',
+    name: 'SysCache',
+    component: () => import('@/views/system/cache/index.vue'),
+    meta: { title: 'menu.cache', cached: true },
+  },
+  {
+    path: 'system/tasks',
+    name: 'SysTasks',
+    component: () => import('@/views/system/tasks/index.vue'),
+    meta: { title: 'menu.tasks', cached: true },
+  },
+  {
+    path: 'system/ip-rules',
+    name: 'IpRules',
+    component: () => import('@/views/system/ipRules/index.vue'),
+    meta: { title: 'menu.ipRules', cached: true },
+  },
+  {
+    path: 'system/webhooks',
+    name: 'Webhooks',
+    component: () => import('@/views/system/webhooks/index.vue'),
+    meta: { title: 'menu.webhooks', cached: true },
+  },
+  {
+    path: 'sys-docs',
+    name: 'SysDocs',
+    component: () => import('@/views/sysDocs/index.vue'),
+    meta: { title: 'menu.sysDocs', cached: true },
+  },
+  {
+    path: 'system/permission-request',
+    name: 'PermissionRequest',
+    component: () => import('@/views/system/permissionRequest/index.vue'),
+    meta: { title: 'menu.permissionRequest', cached: true },
+  },
+  {
+    path: 'system/notices',
+    name: 'Notice',
+    component: () => import('@/views/system/notice/index.vue'),
+    meta: { title: 'menu.notices', cached: true },
+  },
+  {
+    path: 'system/notifications',
+    name: 'Notifications',
+    component: () => import('@/views/system/notifications/index.vue'),
+    meta: { title: 'menu.notifications', cached: true },
+  },
+  {
+    path: 'system/permissions',
+    name: 'SysPermissions',
+    component: () => import('@/views/system/permissions/index.vue'),
+    meta: { title: 'menu.permissions', cached: true },
+  },
+  {
+    path: 'system/dict',
+    name: 'SysDict',
+    component: () => import('@/views/system/dict/index.vue'),
+    meta: { title: 'menu.dict', cached: true },
+  },
+  {
+    path: 'system/params',
+    name: 'SysParams',
+    component: () => import('@/views/system/params/index.vue'),
+    meta: { title: 'menu.params', cached: true },
+  },
+  {
+    path: 'system/email-config',
+    name: 'EmailConfig',
+    component: () => import('@/views/system/emailConfig/index.vue'),
+    meta: { title: 'menu.emailConfig', cached: true },
+  },
+  {
+    path: 'system/email-groups',
+    name: 'EmailGroups',
+    component: () => import('@/views/system/emailGroups/index.vue'),
+    meta: { title: 'menu.emailGroups', cached: true },
+  },
+  {
+    path: 'system/email-log',
+    name: 'EmailLog',
+    component: () => import('@/views/system/emailLog/index.vue'),
+    meta: { title: 'menu.emailLog', cached: true },
+  },
+  {
+    path: 'biz-data',
+    name: 'BizData',
+    component: () => import('@/views/biz/data/index.vue'),
+    meta: { title: 'menu.bizData', cached: true },
+  },
+] satisfies RouteRecordRaw[]

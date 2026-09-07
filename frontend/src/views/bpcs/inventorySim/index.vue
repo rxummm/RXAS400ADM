@@ -131,7 +131,7 @@ async function load() {
     if (query.itemNo) params.itemNo = query.itemNo
     if (query.warehouse) params.warehouse = query.warehouse
     if (query.status) params.status = query.status
-    const res = await listSimulations(params) as unknown as { records: InventorySimulationVO[]; total: number }
+    const res = await listSimulations(params)
     rows.value = res.records
     total.value = res.total
   } finally { loading.value = false }
@@ -157,22 +157,22 @@ async function handleCreate() {
   try {
     await createSimulation(form)
     dialogVisible.value = false
-    ElMessage.success('OK')
+    ElMessage.success(t('common.success'))
     load()
   } finally { saving.value = false }
 }
 
 async function handleRun(row: InventorySimulationVO) {
-  await ElMessageBox.confirm(`Run simulation "${row.simName}"?`, '', { type: 'info' })
+  await ElMessageBox.confirm(t('common.confirm.runSimulation', { name: row.simName }), '', { type: 'info' })
   await runSimulation(row.id)
-  ElMessage.success('OK')
+  ElMessage.success(t('common.success'))
   load()
 }
 
 async function handleDelete(row: InventorySimulationVO) {
-  await ElMessageBox.confirm(`Delete simulation "${row.simName}"?`, '', { type: 'warning' })
+  await ElMessageBox.confirm(t('common.confirm.deleteSimulation', { name: row.simName }), '', { type: 'warning' })
   await deleteSimulation(row.id)
-  ElMessage.success('OK')
+  ElMessage.success(t('common.success'))
   load()
 }
 

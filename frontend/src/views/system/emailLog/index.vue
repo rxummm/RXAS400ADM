@@ -2,9 +2,9 @@
   <div class="page-container page-container--fit">
     <div class="search-bar">
       <el-select v-model="filterChannel" clearable :placeholder="$t('emailLog.channel')" class="w-150">
-        <el-option label="ALERT" value="ALERT" />
-        <el-option label="REPORT" value="REPORT" />
-        <el-option label="MANUAL" value="MANUAL" />
+        <el-option :label="$t('emailLog.channelAlert')" value="ALERT" />
+        <el-option :label="$t('emailLog.channelReport')" value="REPORT" />
+        <el-option :label="$t('emailLog.channelManual')" value="MANUAL" />
       </el-select>
       <el-select v-model="filterStatus" clearable :placeholder="$t('emailLog.status')" class="w-150">
         <el-option :label="$t('emailLog.success')" value="SUCCESS" />

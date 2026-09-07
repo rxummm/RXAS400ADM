@@ -2,7 +2,9 @@ package com.rxas400adm.monitor.collector;
 
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.monitor.domain.Metric;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +20,14 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DiskCollectorTest {
+
+    @BeforeAll
+    static void initSqlRegistry() throws Exception {
+        SqlStatementRegistry registry = new SqlStatementRegistry();
+        java.lang.reflect.Method loadMethod = SqlStatementRegistry.class.getDeclaredMethod("load");
+        loadMethod.setAccessible(true);
+        loadMethod.invoke(registry);
+    }
 
     @Mock
     private AS400ClientProvider clientProvider;

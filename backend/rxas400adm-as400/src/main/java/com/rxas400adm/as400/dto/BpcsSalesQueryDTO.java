@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
  */
 public class BpcsSalesQueryDTO {
 
-    @Size(max = 3, message = "公司码最长 3 位")
+    @Size(max = 3, message = "max length is 3")
     private String cono;
 
     /** 起始年月 YYYYMM（可选） */

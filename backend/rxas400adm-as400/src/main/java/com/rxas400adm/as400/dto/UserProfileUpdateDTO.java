@@ -13,7 +13,7 @@ import java.util.List;
 @Schema(description = "AS400用户Profile更新请求")
 public class UserProfileUpdateDTO {
 
-    @Size(max = 50, message = "描述最长50个字符")
+    @Size(max = 50, message = "max length is 50 characters")
     @Schema(description = "用户描述", example = "测试用户")
     private String description;
 
@@ -29,7 +29,7 @@ public class UserProfileUpdateDTO {
     @Schema(description = "特殊权限列表", example = "[\"*ALLOBJ\", \"*SAVRST\"]")
     private List<String> specialAuthorities;
 
-    @Size(min = 6, max = 128, message = "密码长度6-128个字符")
+    @Size(min = 6, max = 128, message = "password length must be 6-128 characters")
     @Schema(description = "新密码（不为空则修改密码）", example = "P@ssw0rd")
     private String newPassword;
 }

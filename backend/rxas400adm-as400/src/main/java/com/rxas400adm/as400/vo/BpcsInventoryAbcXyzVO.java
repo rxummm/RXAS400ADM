@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 public record BpcsInventoryAbcXyzVO(
         String item,
         String itemDesc,
-        int totalQty,
+        Integer totalQty,
         BigDecimal stockValue,
         /** ABC 分类：A/B/C */
         String abcClass,

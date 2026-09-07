@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/bpcs/inventory")
 @RequiredArgsConstructor
-@Tag(name = "BPCS库存可用量")
+@Tag(name = "BPCS Inventory Availability")
 public class BpcsInventoryController {
 
     private final IBpcsInventoryService inventoryService;

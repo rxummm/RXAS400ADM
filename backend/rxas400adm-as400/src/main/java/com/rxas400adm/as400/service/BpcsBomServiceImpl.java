@@ -6,10 +6,13 @@ import com.rxas400adm.as400.util.BpcsRowUtil;
 import com.rxas400adm.as400.vo.BpcsBomLineVO;
 import com.rxas400adm.common.constants.As400Identifiers;
 import com.rxas400adm.common.config.ProfileResolver;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -71,21 +74,19 @@ public class BpcsBomServiceImpl implements IBpcsBomService {
 
     private List<BpcsBomLineVO> mockBom() {
         return List.of(
-                new BpcsBomLineVO("ASM-100", "DEF-2001", "螺柱 M12", new java.math.BigDecimal("4"), "PCS", "20250101", null, 5000, 200, 4800),
-                new BpcsBomLineVO("ASM-100", "DEF-2002", "螺母 M12", new java.math.BigDecimal("4"), "PCS", "20250101", null, 8000, 300, 7700),
-                new BpcsBomLineVO("ASM-100", "DEF-2003", "垫片 M12", new java.math.BigDecimal("4"), "PCS", "20250101", null, 10000, 500, 9500)
+                new BpcsBomLineVO("ASM-100", "DEF-2001", "螺柱 M12", new BigDecimal("4"), "PCS", "20250101", null, 5000, 200, 4800),
+                new BpcsBomLineVO("ASM-100", "DEF-2002", "螺母 M12", new BigDecimal("4"), "PCS", "20250101", null, 8000, 300, 7700),
+                new BpcsBomLineVO("ASM-100", "DEF-2003", "垫片 M12", new BigDecimal("4"), "PCS", "20250101", null, 10000, 500, 9500)
         );
     }
 
     private void validate(String cono, String item) {
         if (cono == null || cono.isBlank()) cono = "001";
         if (item == null || item.isBlank()) {
-            throw new com.rxas400adm.common.exception.BusinessException(
-                    com.rxas400adm.common.exception.ErrorCode.BAD_REQUEST, "物料号不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "物料号不能为空");
         }
         if (!As400Identifiers.IDENTIFIER.matcher(cono.toUpperCase()).matches()) {
-            throw new com.rxas400adm.common.exception.BusinessException(
-                    com.rxas400adm.common.exception.ErrorCode.BAD_REQUEST, "无效的公司码: " + cono);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "无效的公司码: " + cono);
         }
     }
 }

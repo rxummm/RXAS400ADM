@@ -13,8 +13,8 @@ public record BpcsBomLineVO(
         String uom,
         String effective,
         String expired,
-        int onHandQty,
-        int allocQty,
-        int availQty
+        Integer onHandQty,
+        Integer allocQty,
+        Integer availQty
 ) {
 }

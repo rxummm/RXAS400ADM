@@ -39,28 +39,48 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'BpcsPurchaseReceiving' })
 import { reactive, ref } from 'vue'
-import { fetchPurchaseReceiving, type PurchaseReceiving } from '@/api/supplyChain'
+import { useI18n } from 'vue-i18n'
+import { searchPurchases, type BpcsPurchaseOrder } from '@/api/bpcs'
 import { BPCS_EXPORT } from '@/api/bpcs'
 import ExportDropdown from '@/components/ExportDropdown.vue'
 import type { ExportColumn } from '@/components/ExportButton.vue'
+const { t } = useI18n()
 const loading = ref(false)
-const rows = ref<PurchaseReceiving[]>([])
+const rows = ref<Array<BpcsPurchaseOrder & { item?: string; itemDesc?: string; qtyOrdered?: number; qtyReceived?: number; qtyOpen?: number }>>([])
 const query = reactive({ cono: '001', pono: '', vendor: '' })
 const exportColumns: ExportColumn[] = [
-  { key: 'pono', label: '采购单号' },
-  { key: 'vendorName', label: '供应商' },
-  { key: 'orderDate', label: '订单日期' },
-  { key: 'item', label: '物料号' },
-  { key: 'itemDesc', label: '物料描述' },
-  { key: 'qtyOrdered', label: '已订购' },
-  { key: 'qtyReceived', label: '已收货' },
-  { key: 'qtyOpen', label: '未结量' },
+  { key: 'pono', label: t('bpcs.common.poNo') },
+  { key: 'vendorName', label: t('bpcs.common.vendorName') },
+  { key: 'orderDate', label: t('bpcs.common.orderDate') },
+  { key: 'item', label: t('bpcs.common.itemCode') },
+  { key: 'itemDesc', label: t('bpcs.common.itemDesc') },
+  { key: 'qtyOrdered', label: t('bpcs.common.qtyOrdered') },
+  { key: 'qtyReceived', label: t('bpcs.common.qtyReceived') },
 ]
 function load() {
   loading.value = true
-  const p: Record<string, string | number> = { cono: query.cono || '001', limit: 200 }
+  const p: Record<string, string | number> = { cono: query.cono || '001', current: 1, size: 200 }
   if (query.pono) p.pono = query.pono
   if (query.vendor) p.vendor = query.vendor
-  fetchPurchaseReceiving(p).then(d => { rows.value = d }).finally(() => { loading.value = false })
+  searchPurchases(p).then(d => {
+    const flatRows: Array<BpcsPurchaseOrder & { item?: string; itemDesc?: string; qtyOrdered?: number; qtyReceived?: number; qtyOpen?: number }> = []
+    for (const po of d.records) {
+      if (po.lines && po.lines.length > 0) {
+        for (const line of po.lines) {
+          flatRows.push({
+            ...po,
+            item: line.item ?? undefined,
+            itemDesc: line.itemDesc ?? undefined,
+            qtyOrdered: line.qtyOrdered ?? undefined,
+            qtyReceived: line.qtyReceived ?? undefined,
+            qtyOpen: (line.qtyOrdered ?? 0) - (line.qtyReceived ?? 0),
+          })
+        }
+      } else {
+        flatRows.push(po)
+      }
+    }
+    rows.value = flatRows
+  }).finally(() => { loading.value = false })
 }
 </script>

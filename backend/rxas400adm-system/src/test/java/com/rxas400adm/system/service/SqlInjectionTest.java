@@ -213,7 +213,7 @@ class SqlInjectionTest {
 
             UserDTO dto = new UserDTO();
             dto.setUsername("admin'--");
-            dto.setPassword("secret123");
+            dto.setPassword("Secret123!");
 
             service.create(dto);
 
@@ -238,7 +238,7 @@ class SqlInjectionTest {
 
             UserDTO dto = new UserDTO();
             dto.setUsername("test; DROP TABLE rx_user;--");
-            dto.setPassword("secret123");
+            dto.setPassword("Secret123!");
 
             service.create(dto);
 

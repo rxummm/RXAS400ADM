@@ -34,13 +34,13 @@
         <el-col :span="12">
           <el-card shadow="never">
             <template #header>{{ $t('bpcs.transport.weeklyShipments') }}</template>
-            <div ref="barChartRef" class="w-full" style="height: 300px"></div>
+            <div ref="barChartRef" class="w-full h-300"></div>
           </el-card>
         </el-col>
         <el-col :span="12">
           <el-card shadow="never">
             <template #header>{{ $t('bpcs.transport.statusBreakdown') }}</template>
-            <div ref="pieChartRef" class="w-full" style="height: 300px"></div>
+            <div ref="pieChartRef" class="w-full h-300"></div>
           </el-card>
         </el-col>
       </el-row>
@@ -48,7 +48,7 @@
         <el-col :span="24">
           <el-card shadow="never">
             <template #header>{{ $t('bpcs.transport.costTrend') }}</template>
-            <div ref="lineChartRef" class="w-full" style="height: 300px"></div>
+            <div ref="lineChartRef" class="w-full h-300"></div>
           </el-card>
         </el-col>
       </el-row>
@@ -57,6 +57,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsTransportDashboard' })
+
 import { ref, reactive, onMounted } from 'vue'
 import { useECharts, type ECOption } from '@/composables/useECharts'
 import { listShipments, type ShipmentVO } from '@/api/bpcs'
@@ -137,7 +140,7 @@ const lineChart = useECharts(lineChartRef, (): ECOption => ({
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listShipments('001', 200) as unknown as ShipmentVO[]
+    rows.value = await listShipments('001', 200)
     summary.totalShipments = rows.value.length
     summary.onTimeRate = 92.3
     summary.avgTransitDays = 3.2

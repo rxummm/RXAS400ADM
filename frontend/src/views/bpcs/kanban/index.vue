@@ -21,7 +21,7 @@
         </el-table-column>
         <el-table-column prop="partialLines" :label="$t('bpcs.kanban.partial')" width="90" align="center">
           <template #default="{ row }">
-            <span style="color: var(--el-color-warning)">{{ row.partialLines }}</span>
+            <span class="text-warning">{{ row.partialLines }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="shippedLines" :label="$t('bpcs.kanban.shipped')" width="90" align="center">
@@ -35,6 +35,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsKanban' })
+
 import { ref, onMounted } from 'vue'
 import { listKanbanOrders, type KanbanVO } from '@/api/bpcs'
 
@@ -44,7 +47,7 @@ const rows = ref<KanbanVO[]>([])
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listKanbanOrders() as unknown as KanbanVO[]
+    rows.value = await listKanbanOrders()
   } finally {
     loading.value = false
   }

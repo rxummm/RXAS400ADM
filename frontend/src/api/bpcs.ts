@@ -2,6 +2,7 @@
  * 【AS400 业务增强】BPCS 客户订单时间轴 + 客户档案 + 库存可用量 + 发运看板 API
  */
 import request from './request'
+import blobClient from './blobClient'
 
 /** 分页结果 */
 export interface PageResult<T> {
@@ -623,8 +624,8 @@ export interface ShipmentVO {
 }
 export const listShipments = (cono = '001', limit = 50) =>
   request.get<ShipmentVO[]>('/bpcs/shipment/list', { params: { cono, limit } })
-export const exportShipmentPdf = (cono: string, waybillNo: string, params: Record<string, any>) =>
-  request.post<Blob>('/bpcs/shipment/pdf', params, { params: { waybillNo, cono }, responseType: 'blob' })
+export const exportShipmentPdf = (cono: string, waybillNo: string, params: Record<string, unknown>) =>
+  blobClient.post('/bpcs/shipment/pdf', params, { params: { waybillNo, cono } })
 
 /** ㊾ RCMX CSR 分配 */
 export interface RcmxAssignment {
@@ -988,3 +989,546 @@ export const getForecast = (params: { cono?: string; item?: string; months?: num
   request.get<ForecastResult>('/bpcs/forecast', { params })
 export const getForecastItemOptions = (params: { cono?: string; limit?: number }) =>
   request.get<{ value: string; label: string }[]>('/bpcs/forecast/items', { params })
+
+// ==================== ㉑ 订单模板 ====================
+export interface OrderTemplate {
+  id: number
+  templateName: string
+  cono: string | null
+  cust: string | null
+  shipTo: string | null
+  remark: string | null
+  lineJson: string | null
+  useCount: number
+  active: string | null
+  createdBy: string | null
+}
+export const listOrderTemplates = (params?: { keyword?: string }) =>
+  request.get<OrderTemplate[]>('/bpcs/orderTemplate', { params })
+export const getOrderTemplate = (id: number) =>
+  request.get<OrderTemplate>(`/bpcs/orderTemplate/${id}`)
+export const createOrderTemplate = (data: Partial<OrderTemplate>) =>
+  request.post<OrderTemplate>('/bpcs/orderTemplate', data)
+export const updateOrderTemplate = (data: Partial<OrderTemplate>) =>
+  request.put<OrderTemplate>('/bpcs/orderTemplate', data)
+export const deleteOrderTemplate = (id: number) =>
+  request.delete(`/bpcs/orderTemplate/${id}`)
+export const useOrderTemplate = (id: number) =>
+  request.post<OrderTemplate>(`/bpcs/orderTemplate/${id}/use`)
+
+// ==================== ㉒ 订单复制 ====================
+export const copyOrder = (params: { cono: string; sourceOrno: string }) =>
+  request.post<string>('/bpcs/orderCopy', null, { params })
+
+// ==================== ㉓ 订单变更管理 ====================
+export interface OrderChange {
+  id: number
+  cono: string | null
+  orno: string | null
+  changeType: string | null
+  fieldName: string | null
+  oldValue: string | null
+  newValue: string | null
+  reason: string | null
+  changedBy: string | null
+  changedTime: string | null
+}
+export const listOrderChanges = (params: { cono: string; orno: string }) =>
+  request.get<OrderChange[]>('/bpcs/orderChange', { params })
+
+// ==================== ⑭ 退货与 RMA ====================
+export interface Rma {
+  id: number
+  rmaNo: string | null
+  orno: string | null
+  item: string | null
+  cono: string | null
+  cust: string | null
+  qty: number | null
+  reason: string | null
+  status: string | null
+  createdBy: string | null
+  createdTime: string | null
+}
+export const listRma = (params?: { status?: string }) =>
+  request.get<Rma[]>('/bpcs/rma', { params })
+export const getRma = (id: number) =>
+  request.get<Rma>(`/bpcs/rma/${id}`)
+export const createRma = (data: Partial<Rma>) =>
+  request.post<Rma>('/bpcs/rma', data)
+export const updateRmaStatus = (id: number, status: string) =>
+  request.put<Rma>(`/bpcs/rma/${id}/status`, { status })
+
+// ==================== Supply Chain 迁移补充 API ====================
+
+/** 库存交易历史 */
+export interface InventoryHistory {
+  item: string
+  warehouse: string
+  type: string
+  quantity: number
+  referenceNo: string
+  date: string
+  time: string
+  userId: string
+}
+
+export const getInventoryHistory = (params: Record<string, string | number>) =>
+  request.get<InventoryHistory[]>('/bpcs/supply-chain/inventory/history', { params })
+
+/** 供应链 KPI */
+export interface SupplyChainKpi {
+  totalOrders: number
+  closedOrders: number
+  completionRate: number
+  totalItems: number
+  inventoryValue: number
+  onTimeDeliveryRate: number
+}
+
+export const getSupplyChainKpi = (params?: Record<string, string | number>) =>
+  request.get<SupplyChainKpi>('/bpcs/supply-chain/kpi', { params })
+
+/** 销售分析 Top N 条目 */
+export interface SalesTopEntry {
+  code: string
+  name: string | null
+  orderCount: number
+  totalAmount: number
+}
+
+/** 销售分析 Top N 结果 */
+export interface SalesTopN {
+  topCustomers: SalesTopEntry[]
+  topItems: SalesTopEntry[]
+  totalRevenue: number
+  totalOrders: number
+}
+
+export const getSalesTopN = (params: Record<string, string | number>) =>
+  request.get<SalesTopN>('/bpcs/supply-chain/sales/analysis', { params })
+
+/** 库存预警（低于安全库存） */
+export interface InventoryAlert {
+  item: string
+  description: string | null
+  warehouse: string
+  uom: string
+  onHand: number
+  allocated: number
+  onOrder: number
+  available: number
+  safetyStock: number
+  deficit: number
+}
+
+export const getInventoryAlerts = (params: Record<string, string | number>) =>
+  request.get<InventoryAlert[]>('/bpcs/supply-chain/inventory/alerts', { params })
+
+// ========== A1 系统健康仪表板 ==========
+
+export interface SystemHealthOverview {
+  totalServers: number
+  onlineServers: number
+  offlineServers: number
+  avgCpuUsage: number
+  avgMemoryUsage: number
+  avgDiskUsage: number
+  activeJobs: number
+  alertCount: number
+  criticalAlertCount: number
+  todayBackupSuccess: number
+  todayBackupFailed: number
+  complianceRate: number
+}
+
+export interface SecurityAuditSummary {
+  serverId: number
+  serverName: string
+  totalLogins: number
+  successfulLogins: number
+  failedLogins: number
+  uniqueUsers: number
+  uniqueIps: number
+  permissionChanges: number
+  highRiskOperations: number
+  lastLoginTime: string | null
+  lastHighRiskTime: string | null
+}
+
+export interface UserPermissionMatrix {
+  userName: string
+  status: string
+  roles: string[]
+  permissions: string[]
+  lastLoginTime: string | null
+  passwordExpireDays: number
+  changeCount: number
+}
+
+export const getSystemHealthOverview = () =>
+  request.get<SystemHealthOverview>('/as400/system-health/overview')
+
+export const getSecurityAuditSummary = () =>
+  request.get<SecurityAuditSummary[]>('/as400/system-health/security-audit')
+
+export const getUserPermissionMatrix = () =>
+  request.get<UserPermissionMatrix[]>('/as400/system-health/permission-matrix')
+
+// ========== A4 备份监控 ==========
+
+export interface BackupStatus {
+  id: number
+  serverId: number
+  serverName: string
+  backupName: string
+  backupType: string
+  status: string
+  startTime: string | null
+  endTime: string | null
+  durationSeconds: number | null
+  objectsCount: number | null
+  sizeBytes: number | null
+  mediaName: string | null
+  errorMessage: string | null
+  createdTime: string
+}
+
+export const getBackupList = (params?: { serverId?: number }) =>
+  request.get<BackupStatus[]>('/as400/backup/list', { params })
+
+export const getBackupLatest = (params?: { serverId?: number }) =>
+  request.get<BackupStatus>('/as400/backup/latest', { params })
+
+// ========== A8 系统值合规检查 ==========
+
+export interface SystemValueCompliance {
+  id: number
+  serverId: number
+  serverName: string
+  systemValue: string
+  currentValue: string
+  expectedValue: string
+  complianceStatus: string
+  severity: string
+  description: string | null
+  remediation: string | null
+  lastChecked: string
+  createdTime: string
+  updatedTime: string
+}
+
+export const getComplianceList = (params?: { serverId?: number }) =>
+  request.get<SystemValueCompliance[]>('/as400/compliance/list', { params })
+
+export const getComplianceLatest = (params?: { serverId?: number }) =>
+  request.get<SystemValueCompliance>('/as400/compliance/latest', { params })
+
+// ==================== Supply Chain Control Tower 2.0 ====================
+
+export interface OtifSummary {
+  totalShipments: number
+  otifCompliant: number
+  otifRate: number
+  avgLeadTimeDays: number
+  fillRatePct: number
+  lateShipments: number
+  shortShipments: number
+  totalDisruptions: number
+}
+export interface OtifByParty {
+  partyCode: string
+  partyName: string
+  totalOrders: number
+  onTimeInFull: number
+  otifRate: number
+  avgLeadTimeDays: number
+  rating: string
+}
+export interface OtifTrend {
+  ym: string
+  otifRate: number
+  totalShipments: number
+  compliantCount: number
+  lateCount: number
+  shortCount: number
+}
+export interface OtifResult {
+  summary: OtifSummary
+  byCustomer: OtifByParty[]
+  bySupplier: OtifByParty[]
+  monthlyTrend: OtifTrend[]
+}
+export const getOtifTracking = (params?: { cono?: string; months?: number }) =>
+  request.get<OtifResult>('/bpcs/supply-chain/otif', { params })
+
+export interface DisruptionSummary {
+  activeAlerts: number
+  criticalCount: number
+  warningCount: number
+  infoCount: number
+  resolvedToday: number
+}
+export interface DisruptionEvent {
+  id: number
+  eventType: string
+  severity: string
+  title: string
+  description: string
+  affectedItem: string
+  affectedWarehouse: string
+  detectedTime: string
+  status: string
+  impactOrders: string[]
+}
+export interface RiskItem {
+  item: string
+  itemDesc: string
+  warehouse: string
+  daysOfSupply: number
+  leadTimeDays: number
+  riskLevel: string
+  recommendation: string
+}
+export interface DisruptionResult {
+  summary: DisruptionSummary
+  events: DisruptionEvent[]
+  riskItems: RiskItem[]
+}
+export const getDisruptionAlerts = (params?: { cono?: string; limit?: number }) =>
+  request.get<DisruptionResult>('/bpcs/supply-chain/disruption', { params })
+
+export interface NodeInfo {
+  nodeId: string
+  nodeName: string
+  nodeType: string
+  totalItems: number
+  totalOnHand: number
+  totalValue: number
+  capacityPct: number
+  alertCount: number
+}
+export interface NodeFlow {
+  fromNode: string
+  toNode: string
+  item: string
+  quantity: number
+  flowType: string
+  plannedDate: string
+}
+export interface CrossNodeWhStock {
+  warehouse: string
+  onHand: number
+  allocated: number
+  available: number
+  safetyStock: number
+}
+export interface ImbalanceItem {
+  item: string
+  itemDesc: string
+  warehouseStocks: CrossNodeWhStock[]
+  imbalanceIndex: number
+  recommendation: string
+}
+export interface CrossNodeResult {
+  nodes: NodeInfo[]
+  flows: NodeFlow[]
+  imbalances: ImbalanceItem[]
+  heatmap: { items: string[]; warehouses: string[]; data: number[][] }
+}
+export const getCrossNodeInventory = (params?: { cono?: string }) =>
+  request.get<CrossNodeResult>('/bpcs/supply-chain/cross-node', { params })
+
+// ==================== CPFR 协同预测 ====================
+
+export interface MonthlyComponent {
+  ym: string
+  actual: number
+  trend: number
+  seasonal: number
+  residual: number
+  deseasonalized: number
+}
+export interface SeasonalDecomposition {
+  components: MonthlyComponent[]
+  seasonalIndices: number[]
+  dominantSeason: string
+}
+export interface ForecastAccuracyBacktest {
+  ym: string
+  actual: number
+  predicted: number
+  mapePct: number
+  biasPct: number
+  accuracyGrade: string
+}
+export interface CollaborativeForecast {
+  ym: string
+  salesForecast: number
+  marketingForecast: number
+  supplyForecast: number
+  consensusForecast: number
+  finalActual: number
+  consensusDeviation: number
+}
+export interface CpfMetrics {
+  forecastAccuracy: number
+  bias: number
+  seasonalStrength: number
+  collaborativeAlignment: number
+  overallScore: number
+}
+export interface CpfrResult {
+  seasonal: SeasonalDecomposition
+  accuracyBacktest: ForecastAccuracyBacktest[]
+  collaborativeForecasts: CollaborativeForecast[]
+  metrics: CpfMetrics
+}
+export const getCpfrAnalysis = (params?: { cono?: string; item?: string; months?: number }) =>
+  request.get<CpfrResult>('/bpcs/forecast/cpfr', { params })
+
+// ==================== TMS Lite 运输管理 ====================
+
+export interface RoutePlan {
+  routeId: string
+  origin: string
+  destination: string
+  distanceKm: number
+  estimatedHours: number
+  stopCount: number
+  carrier: string
+  estimatedCost: number
+  status: string
+  orderNos: string[]
+}
+export interface CarrierComparison {
+  carrierCode: string
+  carrierName: string
+  rating: number
+  totalShipments: number
+  onTimeRate: number
+  avgCostPerKg: number
+  avgTransitDays: number
+  serviceLevel: string
+  recommended: boolean
+}
+export interface CarrierCostShare {
+  carrier: string
+  totalCost: number
+  sharePct: number
+  shipmentCount: number
+}
+export interface MonthlyFreightTrend {
+  ym: string
+  totalCost: number
+  shipmentCount: number
+  avgCost: number
+}
+export interface FreightCostByRoute {
+  route: string
+  avgCost: number
+  count: number
+  pctOfTotal: number
+}
+export interface FreightAnalysis {
+  totalFreightCost: number
+  avgCostPerShipment: number
+  avgCostPerKg: number
+  costChangePct: number
+  carrierShares: CarrierCostShare[]
+  monthlyTrends: MonthlyFreightTrend[]
+  costByRoutes: FreightCostByRoute[]
+}
+export interface TrackingEvent {
+  timestamp: string
+  location: string
+  event: string
+  detail: string
+}
+export interface DeliveryTracking {
+  loadNo: string
+  orderNo: string
+  carrier: string
+  origin: string
+  destination: string
+  shipDate: string
+  estimatedArrival: string
+  actualArrival: string | null
+  status: string
+  statusKey: string
+  signedBy: string | null
+  proofOfDelivery: string | null
+  events: TrackingEvent[]
+}
+export interface TmsLiteResult {
+  routePlans: RoutePlan[]
+  carrierComparisons: CarrierComparison[]
+  freightAnalysis: FreightAnalysis
+  deliveryTrackings: DeliveryTracking[]
+}
+export const getTmsRoutePlans = (params?: { cono?: string; limit?: number }) =>
+  request.get<RoutePlan[]>('/bpcs/tms/route-plans', { params })
+export const getTmsCarrierComparison = (params?: { cono?: string }) =>
+  request.get<CarrierComparison[]>('/bpcs/tms/carrier-comparison', { params })
+export const getTmsFreightAnalysis = (params?: { cono?: string; months?: number }) =>
+  request.get<FreightAnalysis>('/bpcs/tms/freight-analysis', { params })
+export const getTmsDeliveryTracking = (params?: { cono?: string; status?: string; limit?: number }) =>
+  request.get<DeliveryTracking[]>('/bpcs/tms/delivery-tracking', { params })
+export const getTmsAll = (params?: { cono?: string; months?: number }) =>
+  request.get<TmsLiteResult>('/bpcs/tms/all', { params })
+
+// ==================== ATP Available to Promise ====================
+
+export interface AtpSummary {
+  totalItems: number
+  atpSufficient: number
+  atpShortage: number
+  overallFillRate: number
+  avgPromiseDays: number
+}
+export interface AtpTimePhased {
+  period: string
+  onHand: number
+  plannedReceipt: number
+  committedDemand: number
+  atpQty: number
+  cumAtpQty: number
+  remark: string | null
+}
+export interface AtpLinePromise {
+  cono: string
+  orno: string
+  lineNo: number
+  item: string
+  itemDesc: string
+  requestedQty: number
+  requestedDate: string
+  availableNowQty: number
+  earliestDate: string
+  canFulfillNow: boolean
+  leadTimeDays: number
+  promiseStatus: string
+}
+export interface AtpDeviation {
+  item: string
+  itemDesc: string
+  partyCode: string
+  partyName: string
+  atpAccuracy: number
+  otifRate: number
+  deviationPct: number
+  totalPromises: number
+  fulfilledOnTime: number
+  rootCause: string
+  recommendation: string
+}
+export interface AtpResult {
+  summary: AtpSummary
+  timePhased: AtpTimePhased[]
+  linePromises: AtpLinePromise[]
+  deviations: AtpDeviation[]
+}
+export const getAtpOverview = (params?: { cono?: string; weeks?: number }) =>
+  request.get<AtpResult>('/bpcs/supply-chain/atp', { params })
+export const getAtpDeviation = (params?: { cono?: string }) =>
+  request.get<AtpDeviation[]>('/bpcs/supply-chain/atp/deviation', { params })

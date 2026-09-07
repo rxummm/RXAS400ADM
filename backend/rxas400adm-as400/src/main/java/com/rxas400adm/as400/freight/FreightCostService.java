@@ -2,6 +2,9 @@ package com.rxas400adm.as400.freight;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.rxas400adm.as400.freight.mapper.FreightCostMapper;
+import com.rxas400adm.as400.freight.mapper.FreightCostRuleMapper;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.util.EntityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,7 +39,7 @@ public class FreightCostService {
     }
 
     public FreightCostRule updateRule(Long id, FreightCostRuleDTO dto) {
-        EntityUtil.require(id, "运费规则", ruleMapper::selectById);
+        EntityUtil.require(id, "Freight Rule", ruleMapper::selectById);
         FreightCostRule rule = dto.toEntity();
         rule.setId(id);
         ruleMapper.updateById(rule);
@@ -44,12 +47,12 @@ public class FreightCostService {
     }
 
     public void deleteRule(Long id) {
-        EntityUtil.require(id, "运费规则", ruleMapper::selectById);
+        EntityUtil.require(id, "Freight Rule", ruleMapper::selectById);
         ruleMapper.deleteById(id);
     }
 
     public FreightCostRule toggleRule(Long id, Boolean enabled) {
-        FreightCostRule rule = EntityUtil.require(id, "运费规则", ruleMapper::selectById);
+        FreightCostRule rule = EntityUtil.require(id, "Freight Rule", ruleMapper::selectById);
         rule.setEnabled(enabled);
         ruleMapper.updateById(rule);
         return rule;
@@ -97,7 +100,7 @@ public class FreightCostService {
     }
 
     public void deleteRecord(Long id) {
-        EntityUtil.require(id, "运费记录", recordMapper::selectById);
+        EntityUtil.require(id, "Freight Record", recordMapper::selectById);
         recordMapper.deleteById(id);
     }
 
@@ -108,7 +111,7 @@ public class FreightCostService {
                 .like(carrier != null && !carrier.isBlank(), FreightCostRecord::getCarrier, carrier)
                 .isNotNull(FreightCostRecord::getShipDate)
                 .orderByDesc(FreightCostRecord::getShipDate)
-                .last("LIMIT " + Math.max(1, months * 30)))
+                .last(PageConstants.limitClause(Math.max(1, months * 30))))
                 .stream()
                 .collect(Collectors.groupingBy(
                         r -> r.getShipDate() != null ? r.getShipDate().toString().substring(0, 7) : "unknown",
@@ -132,7 +135,7 @@ public class FreightCostService {
         List<FreightCostRecord> all = recordMapper.selectList(new LambdaQueryWrapper<FreightCostRecord>()
                 .isNotNull(FreightCostRecord::getActualCost)
                 .orderByDesc(FreightCostRecord::getShipDate)
-                .last("LIMIT 1000"));
+                .last(PageConstants.limitClause(1000)));
         return all.stream()
                 .collect(Collectors.groupingBy(
                         FreightCostRecord::getCarrier,

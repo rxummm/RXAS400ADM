@@ -11,17 +11,17 @@ import lombok.Data;
 @Data
 public class OpTemplateCreateDTO {
 
-    @NotBlank(message = "模板名称不能为空")
-    @Size(max = 100, message = "模板名称最长 100 字符")
+    @NotBlank(message = "template name is required")
+    @Size(max = 100, message = "max length is 100 characters")
     @Schema(description = "模板名称", example = "系统检查")
     private String name;
 
-    @Size(max = 500, message = "描述最长 500 字符")
+    @Size(max = 500, message = "max length is 500 characters")
     @Schema(description = "模板描述", example = "检查系统状态")
     private String description;
 
     @Schema(description = "步骤JSON数组", example = "[{\"command\":\"DSPMSG\"}]")
-    @NotBlank(message = "模板步骤不能为空")
-    @Size(max = 10000, message = "步骤定义过长")
+    @NotBlank(message = "template steps are required")
+    @Size(max = 10000, message = "step definition too long")
     private String steps;
 }

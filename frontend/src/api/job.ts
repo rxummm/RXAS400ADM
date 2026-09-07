@@ -1,4 +1,5 @@
 import request from './request'
+import blobClient from './blobClient'
 
 /** 活动作业（后端 JobInfo VO：ACTIVE_JOB_INFO，字段以 VO 为准） */
 export interface JobInfo {
@@ -32,6 +33,12 @@ export interface JobQueueInfo {
   JOB_QUEUE_TYPE: string
 }
 
+/** CL 命令执行结果 */
+export interface CommandResult {
+  success: boolean
+  message: string
+}
+
 export const fetchJobs = (status?: string): Promise<JobInfo[]> =>
   request.get('/jobs', { params: { status } })
 
@@ -39,16 +46,16 @@ export const fetchMsgwJobs = (): Promise<JobInfo[]> => request.get('/jobs/msgw')
 
 export const fetchLckwJobs = (): Promise<JobInfo[]> => request.get('/jobs/lckw')
 
-export const endJob = (jobName: string, jobUser: string, jobNumber: string): Promise<void> =>
+export const endJob = (jobName: string, jobUser: string, jobNumber: string): Promise<CommandResult> =>
   request.post('/jobs/end', null, { params: { jobName, jobUser, jobNumber } })
 
-export const batchEndJobs = (jobs: { jobName: string; jobUser: string; jobNumber: string }[]): Promise<void> =>
+export const batchEndJobs = (jobs: { jobName: string; jobUser: string; jobNumber: string }[]): Promise<CommandResult[]> =>
   request.post('/jobs/batch-end', jobs)
 
-export const holdJob = (jobName: string, jobUser: string, jobNumber: string): Promise<void> =>
+export const holdJob = (jobName: string, jobUser: string, jobNumber: string): Promise<CommandResult> =>
   request.post('/jobs/hold', null, { params: { jobName, jobUser, jobNumber } })
 
-export const releaseJob = (jobName: string, jobUser: string, jobNumber: string): Promise<void> =>
+export const releaseJob = (jobName: string, jobUser: string, jobNumber: string): Promise<CommandResult> =>
   request.post('/jobs/release', null, { params: { jobName, jobUser, jobNumber } })
 
 /** 作业日志行（后端 QSYS2.JOBLOG_INFO，大写列名） */
@@ -79,7 +86,7 @@ export interface MsgwMessage {
 
 export const fetchMsgwMessages = (): Promise<MsgwMessage[]> => request.get('/jobs/msgw/messages')
 
-export const replyMsg = (jobName: string, jobUser: string, jobNumber: string): Promise<void> =>
+export const replyMsg = (jobName: string, jobUser: string, jobNumber: string): Promise<CommandResult> =>
   request.post('/jobs/reply', null, { params: { jobName, jobUser, jobNumber } })
 
 export const fetchJobQueues = (): Promise<JobQueueInfo[]> => request.get('/jobs/queues')
@@ -98,14 +105,11 @@ export const downloadSpoolFile = (params: {
   jobName: string; jobUser: string; jobNumber: string;
   spoolName: string; outputQueue?: string
 }): Promise<Blob> =>
-  request.get('/jobs/spool/content', {
-    params,
-    responseType: 'blob',
-  })
+  blobClient.get('/jobs/spool/content', { params })
 
 /** 删除 SPOOL 文件 */
 export const deleteSpoolFile = (params: {
   jobName: string; jobUser: string; jobNumber: string;
   spoolName: string; outputQueue?: string
-}): Promise<void> =>
+}): Promise<CommandResult> =>
   request.post('/jobs/spool/delete', null, { params })

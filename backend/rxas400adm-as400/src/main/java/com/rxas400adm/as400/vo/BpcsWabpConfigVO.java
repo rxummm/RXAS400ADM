@@ -5,7 +5,7 @@ package com.rxas400adm.as400.vo;
  */
 public record BpcsWabpConfigVO(
         String wh,
-        int dayOfWeek,
+        Integer dayOfWeek,
         String time,
         String shipHold,
         String crHold,

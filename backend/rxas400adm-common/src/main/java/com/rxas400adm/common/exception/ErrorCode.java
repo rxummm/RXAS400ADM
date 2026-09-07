@@ -6,80 +6,80 @@ package com.rxas400adm.common.exception;
  */
 public enum ErrorCode {
 
-    // ---------- 通用 ----------
-    SUCCESS(0, "操作成功"),
-    BAD_REQUEST(400, "请求参数错误"),
-    UNAUTHORIZED(401, "未登录或登录已过期"),
-    FORBIDDEN(403, "没有操作权限"),
-    NOT_FOUND(404, "资源不存在"),
-    INTERNAL_ERROR(500, "系统繁忙"),
+    // ---------- Common ----------
+    SUCCESS(0, "Operation succeeded"),
+    BAD_REQUEST(400, "Invalid request parameter"),
+    UNAUTHORIZED(401, "Not logged in or session expired"),
+    FORBIDDEN(403, "Access denied"),
+    NOT_FOUND(404, "Resource not found"),
+    INTERNAL_ERROR(500, "Internal server error"),
 
-    // ---------- 用户 / 角色 (10000+) ----------
-    USER_NOT_FOUND(10001, "用户不存在"),
-    USERNAME_EXISTS(10002, "用户名已存在"),
-    LOGIN_FAILED(10003, "登录失败"),
-    LOGIN_LOCKED(10004, "账号已锁定"),
-    LOGIN_TOO_MANY(10005, "登录尝试过于频繁"),
+    // ---------- User / Role (10000+) ----------
+    USER_NOT_FOUND(10001, "User not found"),
+    USERNAME_EXISTS(10002, "Username already exists"),
+    LOGIN_FAILED(10003, "Login failed"),
+    LOGIN_LOCKED(10004, "Account locked"),
+    LOGIN_TOO_MANY(10005, "Too many login attempts"),
 
-    // ---------- AS400 实例 (20000+) ----------
-    AS400_SERVER_NOT_FOUND(20001, "AS400 服务器配置不存在"),
-    AS400_SERVER_DISABLED(20002, "AS400 服务器已禁用"),
-    AS400_CONNECTION_FAILED(20003, "AS400 服务器连接失败"),
-    AS400_COMMAND_FAILED(20004, "CL 命令执行失败"),
-    AS400_SERVER_REQUIRED(20005, "当前请求未指定 AS400 Server"),
-    AS400_HOST_NOT_CONFIGURED(20006, "未配置 IBM i 服务器地址"),
-    AS400_SQL_FAILED(20007, "SQL 查询执行失败"),
-    AS400_COMMAND_BUSY(20008, "命令执行并发已满，请稍后再试"),
+    // ---------- AS400 Instance (20000+) ----------
+    AS400_SERVER_NOT_FOUND(20001, "AS400 server configuration not found"),
+    AS400_SERVER_DISABLED(20002, "AS400 server is disabled"),
+    AS400_CONNECTION_FAILED(20003, "AS400 server connection failed"),
+    AS400_COMMAND_FAILED(20004, "CL command execution failed"),
+    AS400_SERVER_REQUIRED(20005, "No AS400 server specified in request"),
+    AS400_HOST_NOT_CONFIGURED(20006, "IBM i server address not configured"),
+    AS400_SQL_FAILED(20007, "SQL query execution failed"),
+    AS400_COMMAND_BUSY(20008, "Command concurrency limit reached, please retry later"),
 
-    // ---------- 发布 (30000+) ----------
-    DEPLOY_NOT_FOUND(30001, "发布不存在"),
-    DEPLOY_STATUS_INVALID(30002, "当前发布状态不允许该操作"),
-    APPROVAL_NOT_FOUND(30003, "没有待审批的记录"),
-    DEPLOY_ROLLBACK_FAILED(30004, "发布失败，且回滚执行失败"),
-    DEPLOY_CONCURRENT(30005, "该发布已在执行中，请勿重复操作"),
+    // ---------- Deploy (30000+) ----------
+    DEPLOY_NOT_FOUND(30001, "Deployment not found"),
+    DEPLOY_STATUS_INVALID(30002, "Current deployment status does not allow this operation"),
+    APPROVAL_NOT_FOUND(30003, "No pending approval record"),
+    DEPLOY_ROLLBACK_FAILED(30004, "Deployment failed and rollback also failed"),
+    DEPLOY_CONCURRENT(30005, "Deployment already in progress, please do not submit again"),
 
-    // ---------- 监控 / 告警 (40000+) ----------
-    MONITOR_COLLECT_FAILED(40001, "监控指标采集失败"),
-    ALERT_RULE_INVALID(40002, "告警规则不合法"),
-    ALERT_RULE_NOT_FOUND(40003, "告警规则不存在"),
-    ALERT_EVENT_NOT_FOUND(40004, "告警事件不存在"),
+    // ---------- Monitor / Alert (40000+) ----------
+    MONITOR_COLLECT_FAILED(40001, "Monitor metric collection failed"),
+    ALERT_RULE_INVALID(40002, "Invalid alert rule"),
+    ALERT_RULE_NOT_FOUND(40003, "Alert rule not found"),
+    ALERT_EVENT_NOT_FOUND(40004, "Alert event not found"),
 
-    // ---------- 系统 / 管理 (50000+) ----------
-    SYSTEM_USER_OPERATION(50001, "用户操作失败"),
-    SYSTEM_NOTICE_NOT_FOUND(50002, "公告不存在"),
-    SYSTEM_REQUEST_NOT_FOUND(50003, "权限申请不存在"),
-    SYSTEM_SCHEDULER_LOCKED(50004, "调度任务已被其他节点占用"),
+    // ---------- System / Admin (50000+) ----------
+    SYSTEM_USER_OPERATION(50001, "User operation failed"),
+    SYSTEM_NOTICE_NOT_FOUND(50002, "Notice not found"),
+    SYSTEM_REQUEST_NOT_FOUND(50003, "Permission request not found"),
+    SYSTEM_SCHEDULER_LOCKED(50004, "Scheduler task occupied by another node"),
 
-    // ---------- 报表 / SQL 查询 (60000+) ----------
-    REPORT_GENERATE_FAILED(60001, "报表生成失败"),
-    SQL_READONLY_REQUIRED(60002, "仅允许执行单条只读 SELECT 查询"),
+    // ---------- Report / SQL (60000+) ----------
+    REPORT_GENERATE_FAILED(60001, "Report generation failed"),
+    SQL_READONLY_REQUIRED(60002, "Only single read-only SELECT queries are allowed"),
 
-    // ---------- 编译 (70000+) ----------
-    // 编译功能已下线（V56），70001/70002 错误码随之删除，勿复用该号段于其他语义
+    // ---------- Compile (70000+) ----------
+    // Compile feature offline since V56; 70001/70002 removed, do not reuse this range
 
-    // ---------- 源文件 (80000+) ----------
-    SOURCE_NOT_FOUND(80001, "源文件不存在"),
-    SOURCE_READ_FAILED(80002, "源文件读取失败"),
-    FILE_PATH_INVALID(80003, "非法文件路径"),
+    // ---------- Source File (80000+) ----------
+    SOURCE_NOT_FOUND(80001, "Source file not found"),
+    SOURCE_READ_FAILED(80002, "Failed to read source file"),
+    FILE_PATH_INVALID(80003, "Invalid file path"),
 
-    // ---------- 作业 / 子系统 (90000+) ----------
-    JOB_NOT_FOUND(90001, "作业不存在"),
-    JOB_INVALID_STATUS(90002, "非法作业状态"),
-    NAME_REQUIRED(90003, "名称不能为空"),
+    // ---------- Job / Subsystem (90000+) ----------
+    JOB_NOT_FOUND(90001, "Job not found"),
+    JOB_INVALID_STATUS(90002, "Invalid job status"),
+    NAME_REQUIRED(90003, "Name is required"),
 
-    // ---------- 角色 (110000+) ----------
-    ROLE_NOT_FOUND(110001, "角色不存在"),
-    ROLE_CODE_EXISTS(110002, "角色编码已存在"),
-    ROLE_ADMIN_PROTECTED(110003, "内置 ADMIN 角色不可修改或删除"),
+    // ---------- Role (110000+) ----------
+    ROLE_NOT_FOUND(110001, "Role not found"),
+    ROLE_CODE_EXISTS(110002, "Role code already exists"),
+    ROLE_ADMIN_PROTECTED(110003, "Built-in ADMIN role cannot be modified or deleted"),
 
-    // ---------- 密码 (120000+) ----------
-    PASSWORD_POLICY_VIOLATION(120001, "密码不符合安全策略"),
+    // ---------- Password (120000+) ----------
+    PASSWORD_POLICY_VIOLATION(120001, "Password does not meet security policy"),
 
-    // ---------- 邮件 (130000+) ----------
-    EMAIL_SMTP_NOT_CONFIGURED(130001, "未配置 SMTP 服务器"),
-    EMAIL_SEND_FAILED(130002, "邮件发送失败"),
-    EMAIL_GROUP_NOT_FOUND(130003, "收件人分组不存在"),
-    EMAIL_RECIPIENT_EXISTS(130004, "该邮箱已在分组中");
+    // ---------- Email (130000+) ----------
+    EMAIL_SMTP_NOT_CONFIGURED(130001, "SMTP server not configured"),
+    EMAIL_SEND_FAILED(130002, "Email sending failed"),
+    EMAIL_GROUP_NOT_FOUND(130003, "Email group not found"),
+    EMAIL_RECIPIENT_EXISTS(130004, "Email address already in group");
 
     private final int code;
     private final String message;

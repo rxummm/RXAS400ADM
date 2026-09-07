@@ -13,12 +13,12 @@ public record OpTemplateVO(
         String description,
         String steps,
         String createdBy,
-        LocalDateTime createdAt,
+        LocalDateTime createdTime,
         String updatedBy,
-        LocalDateTime updatedAt) {
+        LocalDateTime updatedTime) {
 
     public static OpTemplateVO from(OpTemplate e) {
         return new OpTemplateVO(e.getId(), e.getName(), e.getDescription(), e.getSteps(),
-                e.getCreatedBy(), e.getCreatedAt(), e.getUpdatedBy(), e.getUpdatedAt());
+                e.getCreatedBy(), e.getCreatedTime(), e.getUpdatedBy(), e.getUpdatedTime());
     }
 }

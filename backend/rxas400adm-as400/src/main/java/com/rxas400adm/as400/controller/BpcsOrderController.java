@@ -22,7 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bpcs/orders")
 @RequiredArgsConstructor
-@Tag(name = "BPCS客户订单")
+@Tag(name = "BPCS Customer Orders")
 public class BpcsOrderController {
 
     private final IBpcsOrderService bpcsOrderService;

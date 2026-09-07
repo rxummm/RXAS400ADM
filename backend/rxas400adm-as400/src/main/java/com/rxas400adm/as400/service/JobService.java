@@ -3,13 +3,16 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.CommandResult;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.as400.model.JobQueueRow;
 import com.rxas400adm.as400.model.SpoolRow;
 import com.rxas400adm.as400.vo.JobInfo;
 import com.rxas400adm.common.constants.As400Identifiers;
+import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -20,14 +23,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
-
 /**
  * Job 中心：基于 QSYS2.ACTIVE_JOB_INFO() 的活动作业查询与作业控制。
  * 数据源按当前请求的 X-AS400-Server 头路由（AS400ClientProvider.current()）。
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JobService implements IJobService {
@@ -48,23 +49,9 @@ public class JobService implements IJobService {
     /** S6：作业号单独精确校验（1~6 位十进制），比通用标识符白名单更早拦截畸形输入 */
     private static final Pattern JOB_NUMBER = As400Identifiers.JOB_NUMBER;
 
-    /** P9：MSGW 消息并行抓取并发度上限（有界，防止 MSGW 作业多时线程数失控/压垮宿主） */
-    private static final int MAX_PARALLEL_MSGW_FETCH = 4;
-
-    private static final AtomicInteger MSGW_THREAD_SEQ = new AtomicInteger();
-
-    /**
-     * P9：MSGW 消息抓取共享线程池（固定 4 并发，命名守护线程 msgw-fetch-N）。
-     * 静态共享 + 守护线程——进程退出由 JVM 兜底回收（JobService 为 singleton bean，
-     * 但静态池跨实例共享，不挂 @PreDestroy 生命周期钩子）。
-     */
-    private static final ExecutorService MSGW_EXECUTOR = Executors.newFixedThreadPool(MAX_PARALLEL_MSGW_FETCH, r -> {
-        Thread t = new Thread(r, "msgw-fetch-" + MSGW_THREAD_SEQ.incrementAndGet());
-        t.setDaemon(true);
-        return t;
-    });
-
     private final AS400ClientProvider clientProvider;
+    private final ProfileResolver profileResolver;
+    private final ExecutorService msgwExecutor;
 
     /** 活动作业列表，可按状态过滤（MSGW / LCKW / RUN / JOBQ ...） */
     public List<JobInfo> activeJobs(String status) {
@@ -73,7 +60,7 @@ public class JobService implements IJobService {
         if (StringUtils.hasText(status)) {
             String upper = status.trim().toUpperCase();
             if (!ALLOWED_STATUS.contains(upper)) {
-                throw new BusinessException(ErrorCode.JOB_INVALID_STATUS, "非法的作业状态: " + status);
+                throw new BusinessException(ErrorCode.JOB_INVALID_STATUS, "Invalid job status: " + status);
             }
             rows = client.queryList(ACTIVE_JOB_SQL + " WHERE JOB_STATUS = ?", upper);
         } else {
@@ -94,6 +81,9 @@ public class JobService implements IJobService {
 
     /** 作业详情：按 作业名/用户/编号 精确匹配 */
     public JobInfo jobDetail(String jobName, String jobUser, String jobNumber) {
+        if (!StringUtils.hasText(jobName)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Job name is required");
+        }
         AS400Client client = clientProvider.current();
         // P10：JOB_NAME 过滤下推 DB2（保守包裹方案——表函数仍全量执行、WHERE 减少向 JVM 传输的数据量；
         // 未用 JOB_NAME_FILTER 参数因无法确证目标系统 DB2 for i 版本均 ≥7.2）。UPPER 双侧保持
@@ -105,7 +95,7 @@ public class JobService implements IJobService {
                 .filter(j -> !StringUtils.hasText(jobUser) || j.getJobUser().equalsIgnoreCase(jobUser))
                 .filter(j -> !StringUtils.hasText(jobNumber) || j.getJobNumber().equals(jobNumber))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.JOB_NOT_FOUND, "作业不存在: " + jobName + "/" + jobUser));
+                .orElseThrow(() -> new BusinessException(ErrorCode.JOB_NOT_FOUND, "Job not found: " + jobName + "/" + jobUser));
     }
 
     /** ENDJOB 立即结束作业（权限 JOB_END，审计记录） */
@@ -137,15 +127,14 @@ public class JobService implements IJobService {
         requireJob(jobName, jobUser, jobNumber);
         AS400Client client = clientProvider.current();
         // P1-6：表函数入参用占位符绑定，替代 sq() 拼接
-        String sql = "SELECT ORDINAL_POSITION, MESSAGE_ID, MESSAGE_TYPE, MESSAGE_TEXT, MESSAGE_TIMESTAMP "
-                + "FROM TABLE(QSYS2.JOBLOG_INFO('JOB', ?, '*JOBLOG')) X ORDER BY ORDINAL_POSITION";
+        String sql = SqlStatementRegistry.of("job.log.info");
         return client.queryList(sql, jobUser + "/" + jobName);
     }
 
     /**
      * MSGW 作业的等待消息列表：先取 MSGW 作业，再逐个取消息（含应答状态）。
      * 无真实环境（mock/降级）时返回仿真消息。
-     * P9：原实现逐作业串行取消息，改为有界并行（{@link #MAX_PARALLEL_MSGW_FETCH} 固定并发），
+     * P9：原实现逐作业串行取消息，改为有界并行（Spring Bean msgwExecutor 固定并发），
      * futures 按作业顺序创建、按序 join——返回顺序与原串行实现一致。
      */
     public List<Map<String, Object>> msgwMessages() {
@@ -154,7 +143,7 @@ public class JobService implements IJobService {
         AS400Client client = clientProvider.current();
         List<CompletableFuture<Map<String, Object>>> futures = new ArrayList<>(msgwJobs.size());
         for (JobInfo job : msgwJobs) {
-            futures.add(CompletableFuture.supplyAsync(() -> fetchMsgwMessageRow(client, job), MSGW_EXECUTOR));
+            futures.add(CompletableFuture.supplyAsync(() -> fetchMsgwMessageRow(client, job), msgwExecutor));
         }
         return futures.stream().map(CompletableFuture::join).toList();
     }
@@ -168,17 +157,20 @@ public class JobService implements IJobService {
         try {
             // P1-6：表函数入参用占位符绑定，替代 sq() 拼接
             List<Map<String, Object>> msgs = client.queryList(
-                    "SELECT MESSAGE_ID, MESSAGE_TYPE, MESSAGE_TEXT, REPLY_STATUS "
-                            + "FROM TABLE(QSYS2.MESSAGE_QUEUE_INFO('*JOB', ?)) X WHERE REPLY_STATUS = 'MSGW'",
+                    SqlStatementRegistry.of("job.msgw.detail.msgw"),
                     job.getJobUser() + "/" + job.getJobName());
             if (!msgs.isEmpty()) {
                 msgs.stream().findFirst().ifPresent(row::putAll);
                 return row;
             }
         } catch (Exception e) {
-            // P9：取消息失败降级为下方仿真行（保持接口可用），不向整体传播
+            if (!profileResolver.isMockMode()) {
+                throw new BusinessException(ErrorCode.AS400_CONNECTION_FAILED,
+                        "MSGW 查询失败(job=" + job.getJobUser() + "/" + job.getJobName() + "): " + e.getMessage());
+            }
+            log.warn("MSGW 查询失败(job={}/{}): {}", job.getJobUser(), job.getJobName(), e.getMessage());
         }
-        // MSGW 作业的等待消息兜底（真实查询为空/失败时返回仿真）
+        // MSGW 作业的等待消息兜底（仅 mock 模式返回仿真数据）
         row.put("MESSAGE_ID", "CPF0000");
         row.put("MESSAGE_TYPE", "INQUIRY");
         row.put("MESSAGE_TEXT", "作业 " + job.getJobName() + " 等待消息应答（仿真）");
@@ -222,7 +214,7 @@ public class JobService implements IJobService {
 
     private void requireJob(String jobName, String jobUser, String jobNumber) {
         if (!StringUtils.hasText(jobName) || !StringUtils.hasText(jobUser) || !StringUtils.hasText(jobNumber)) {
-            throw new BusinessException(ErrorCode.NAME_REQUIRED, "作业名/用户/编号不能为空");
+            throw new BusinessException(ErrorCode.NAME_REQUIRED, "Job name/user/number is required");
         }
         if (!IDENTIFIER.matcher(jobName.trim()).matches()
                 || !IDENTIFIER.matcher(jobUser.trim()).matches()) {
@@ -231,7 +223,7 @@ public class JobService implements IJobService {
         }
         // S6：作业号精确校验为 1~6 位十进制（IBM i 约定），比通用标识符白名单更早拦截畸形输入
         if (!JOB_NUMBER.matcher(jobNumber.trim()).matches()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "作业编号必须是 1~6 位数字: " + jobNumber);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Job number must be 1-6 digits: " + jobNumber);
         }
     }
 

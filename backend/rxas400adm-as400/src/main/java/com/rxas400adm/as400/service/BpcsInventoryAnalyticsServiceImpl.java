@@ -73,7 +73,7 @@ public class BpcsInventoryAnalyticsServiceImpl implements IBpcsInventoryAnalytic
         List<Map<String, Object>> rows = clientProvider.current().queryListCheckedBounded(sql, limit, cono, cutoffDate);
         List<BpcsInventorySlowMovingVO> result = new ArrayList<>();
         for (Map<String, Object> row : rows) {
-            int idleDays = BpcsRowUtil.intOrNull(row, "IDLE_DAYS");
+            int idleDays = BpcsRowUtil.intVal(row, "IDLE_DAYS");
             String level;
             if (idleDays > 365) level = "OVER_12M";
             else if (idleDays > 180) level = "6M_12M";
@@ -84,7 +84,7 @@ public class BpcsInventoryAnalyticsServiceImpl implements IBpcsInventoryAnalytic
                     pickStr(row, "ITEM"),
                     pickStr(row, "ITDSC"),
                     pickStr(row, "WH"),
-                    BpcsRowUtil.intOrNull(row, "QTYOH"),
+                    BpcsRowUtil.intVal(row, "QTYOH"),
                     pickStr(row, "UNIT"),
                     BpcsRowUtil.decOrNull(row, "UNITCOST"),
                     BpcsRowUtil.decOrNull(row, "STOCK_VALUE"),
@@ -129,23 +129,23 @@ public class BpcsInventoryAnalyticsServiceImpl implements IBpcsInventoryAnalytic
         String sql = statements.get(sqlId);
         List<Map<String, Object>> rows = clientProvider.current().queryListChecked(sql, cono, item);
         if (rows.isEmpty()) return 0;
-        return BpcsRowUtil.intOrNull(rows.get(0), "TOTAL_QTY");
+        return BpcsRowUtil.intVal(rows.get(0), "TOTAL_QTY");
     }
 
     private int queryLevelCount(String sqlId, String cono, String item, String countCol) {
         String sql = statements.get(sqlId);
         List<Map<String, Object>> rows = clientProvider.current().queryListChecked(sql, cono, item);
         if (rows.isEmpty()) return 0;
-        return BpcsRowUtil.intOrNull(rows.get(0), countCol);
+        return BpcsRowUtil.intVal(rows.get(0), countCol);
     }
 
     private void validateIdentifiers(String cono, String item) {
         validateCono(cono);
         if (item == null || item.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "物料号不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Item number is required");
         }
         if (!As400Identifiers.IDENTIFIER.matcher(item.toUpperCase()).matches()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "无效的物料号: " + item);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Invalid item number: " + item);
         }
     }
 
@@ -154,7 +154,7 @@ public class BpcsInventoryAnalyticsServiceImpl implements IBpcsInventoryAnalytic
             cono = "001";
         }
         if (!As400Identifiers.IDENTIFIER.matcher(cono.toUpperCase()).matches()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "无效的公司码: " + cono);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Invalid company code: " + cono);
         }
     }
 }

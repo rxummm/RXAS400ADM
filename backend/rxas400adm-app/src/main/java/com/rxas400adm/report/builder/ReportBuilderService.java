@@ -3,6 +3,7 @@ package com.rxas400adm.report.builder;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.report.IReportService;
 import com.rxas400adm.report.builder.dto.ReportDefinitionDTO;
@@ -269,7 +270,7 @@ public class ReportBuilderService implements IReportBuilderService {
     @Override
     public ReportDefinitionVO getDefinition(Long id) {
         ReportDefinition def = definitionMapper.selectById(id);
-        if (def == null) throw new BusinessException("报表定义不存在: " + id);
+        if (def == null) throw new BusinessException(ErrorCode.NOT_FOUND, "报表定义不存在: " + id);
         return ReportDefinitionVO.from(def);
     }
 
@@ -290,7 +291,7 @@ public class ReportBuilderService implements IReportBuilderService {
     @Override
     public ReportDefinitionVO updateDefinition(Long id, ReportDefinitionDTO dto) {
         ReportDefinition def = definitionMapper.selectById(id);
-        if (def == null) throw new BusinessException("报表定义不存在: " + id);
+        if (def == null) throw new BusinessException(ErrorCode.NOT_FOUND, "报表定义不存在: " + id);
         def.setName(dto.getName());
         def.setDataSource(dto.getDataSource());
         def.setTitle(dto.getTitle() != null ? dto.getTitle() : def.getTitle());
@@ -303,18 +304,18 @@ public class ReportBuilderService implements IReportBuilderService {
 
     @Override
     public void deleteDefinition(Long id) {
-        if (definitionMapper.selectById(id) == null) throw new BusinessException("报表定义不存在: " + id);
+        if (definitionMapper.selectById(id) == null) throw new BusinessException(ErrorCode.NOT_FOUND, "报表定义不存在: " + id);
         definitionMapper.deleteById(id);
     }
 
     @Override
     public Map<String, Object> executeReport(Long id) {
         ReportDefinition def = definitionMapper.selectById(id);
-        if (def == null) throw new BusinessException("报表定义不存在: " + id);
+        if (def == null) throw new BusinessException(ErrorCode.NOT_FOUND, "报表定义不存在: " + id);
 
         Map<String, DataSourceEntry> registry = buildRegistry();
         DataSourceEntry entry = registry.get(def.getDataSource());
-        if (entry == null) throw new BusinessException("未知数据源: " + def.getDataSource());
+        if (entry == null) throw new BusinessException(ErrorCode.BAD_REQUEST, "未知数据源: " + def.getDataSource());
 
         // 1. 获取全量数据
         String cono = "001"; // 默认公司代码，可扩展
@@ -325,9 +326,9 @@ public class ReportBuilderService implements IReportBuilderService {
         try {
             selectedCols = MAPPER.readValue(def.getColumnsJson(), COL_REF);
         } catch (Exception e) {
-            throw new BusinessException("列定义解析失败: " + e.getMessage());
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "列定义解析失败: " + e.getMessage());
         }
-        if (selectedCols.isEmpty()) throw new BusinessException("请至少选择一列");
+        if (selectedCols.isEmpty()) throw new BusinessException(ErrorCode.BAD_REQUEST, "请至少选择一列");
 
         // 3. 应用筛选
         List<FilterDef> filters = parseJson(def.getFiltersJson(), FIL_REF);
@@ -436,7 +437,9 @@ public class ReportBuilderService implements IReportBuilderService {
                 if (val == null) continue;
                 if (val instanceof List) continue; // 跳过嵌套 List（如 warehouses/lines）
                 map.put(c.getName(), val);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.debug("Record component accessor failed for {}: {}", c.getName(), e.getMessage());
+            }
         }
         return map;
     }

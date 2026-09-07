@@ -25,6 +25,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'WmsOverview' })
+
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { warehouseSummary, type WarehouseSummary } from '@/api/wms'

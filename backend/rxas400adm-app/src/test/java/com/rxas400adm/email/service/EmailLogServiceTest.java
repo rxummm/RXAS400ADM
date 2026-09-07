@@ -76,13 +76,12 @@ class EmailLogServiceTest {
     }
 
     @Test
-    @DisplayName("detail() — 不存在返回 null")
+    @DisplayName("detail() — 不存在抛 NOT_FOUND")
     void detail_notExists() {
         when(emailLogMapper.selectById(99L)).thenReturn(null);
 
-        EmailLogVO result = service.detail(99L);
-
-        assertNull(result);
+        assertThrows(com.rxas400adm.common.exception.BusinessException.class,
+                () -> service.detail(99L));
     }
 
     private EmailLog createSampleLog() {

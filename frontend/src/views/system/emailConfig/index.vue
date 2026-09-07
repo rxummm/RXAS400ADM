@@ -92,6 +92,8 @@ onMounted(async () => {
         ;(form.value as Record<string, string>)[key] = item.configValue || ''
       }
     }
+  } catch {
+    ElMessage.error(t('common.loadFailed'))
   } finally {
     loading.value = false
   }

@@ -10,10 +10,17 @@ import com.rxas400adm.as400.vo.BpcsCustOptionVO;
 import com.rxas400adm.as400.vo.BpcsRcmxAssignmentVO;
 import com.rxas400adm.common.constants.As400Identifiers;
 import com.rxas400adm.common.config.ProfileResolver;
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -81,7 +88,7 @@ public class BpcsRcmxServiceImpl implements IBpcsRcmxService {
         String checkSql = statements.get("bpcs.rcmx.checkUnique");
         Long count = clientProvider.current().queryForObject(checkSql, Long.class, cono, dto.getCust());
         if (count != null && count > 0) {
-            throw new IllegalStateException("该客户已分配 CSR，请先停用现有分配: " + dto.getCust());
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Customer already assigned to CSR, deactivate existing first: " + dto.getCust());
         }
         String sql = statements.get("bpcs.rcmx.insert");
         String maintDate = LocalDateTime.now().format(DATE_FMT);
@@ -131,7 +138,7 @@ public class BpcsRcmxServiceImpl implements IBpcsRcmxService {
                 cust
         );
         if (updated == 0) {
-            throw new IllegalStateException("RCMX 分配不存在: cono=" + cono + ", cust=" + cust);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "RCMX assignment not found: cono=" + cono + ", cust=" + cust);
         }
     }
 
@@ -146,7 +153,7 @@ public class BpcsRcmxServiceImpl implements IBpcsRcmxService {
         String sql = statements.get("bpcs.rcmx.delete");
         int deleted = clientProvider.current().executeUpdate(sql, cono, cust);
         if (deleted == 0) {
-            throw new IllegalStateException("RCMX 分配不存在: cono=" + cono + ", cust=" + cust);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "RCMX assignment not found: cono=" + cono + ", cust=" + cust);
         }
     }
 
@@ -183,6 +190,28 @@ public class BpcsRcmxServiceImpl implements IBpcsRcmxService {
     }
 
     @Override
+    public List<BpcsRcmxConfigDTO> parseExcel(MultipartFile file) throws IOException {
+        if (file.isEmpty()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "File cannot be empty");
+        }
+        List<BpcsRcmxConfigDTO> list = new ArrayList<>();
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                BpcsRcmxConfigDTO dto = new BpcsRcmxConfigDTO();
+                dto.setCust(getCellString(row, 0));
+                dto.setCsrId(getCellString(row, 1));
+                dto.setActive(getCellString(row, 2));
+                dto.setMaintUser("IMPORT");
+                list.add(dto);
+            }
+        }
+        return list;
+    }
+
+    @Override
     public BpcsRcmxImportResult importAssignments(String cono, List<BpcsRcmxConfigDTO> list) {
         if (cono == null || cono.isBlank()) cono = "001";
         BpcsRcmxImportResult result = new BpcsRcmxImportResult();
@@ -192,12 +221,12 @@ public class BpcsRcmxServiceImpl implements IBpcsRcmxService {
             int rowNum = i + 1;
             try {
                 if (dto.getCust() == null || dto.getCust().isBlank()) {
-                    result.getErrors().add("第 " + rowNum + " 行: 客户代码不能为空");
+                    result.getErrors().add("Row " + rowNum + ": customer code is required");
                     result.setFailureCount(result.getFailureCount() + 1);
                     continue;
                 }
                 if (dto.getCsrId() == null || dto.getCsrId().isBlank()) {
-                    result.getErrors().add("第 " + rowNum + " 行: CSR 工号不能为空");
+                    result.getErrors().add("Row " + rowNum + ": CSR ID is required");
                     result.setFailureCount(result.getFailureCount() + 1);
                     continue;
                 }
@@ -241,10 +270,20 @@ public class BpcsRcmxServiceImpl implements IBpcsRcmxService {
         );
     }
 
+    private String getCellString(Row row, int cellIndex) {
+        Cell cell = row.getCell(cellIndex);
+        if (cell == null) return "";
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue().trim();
+            case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
+            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+            default -> "";
+        };
+    }
+
     private void validate(String cono) {
         if (!As400Identifiers.IDENTIFIER.matcher(cono.toUpperCase()).matches()) {
-            throw new com.rxas400adm.common.exception.BusinessException(
-                    com.rxas400adm.common.exception.ErrorCode.BAD_REQUEST, "无效的公司码: " + cono);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Invalid company code: " + cono);
         }
     }
 }

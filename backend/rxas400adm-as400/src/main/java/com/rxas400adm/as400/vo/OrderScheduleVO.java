@@ -1,5 +1,7 @@
 package com.rxas400adm.as400.vo;
 
+import com.rxas400adm.as400.entity.OrderSchedule;
+
 /**
  * 订单排程 VO。
  */
@@ -14,7 +16,7 @@ public record OrderScheduleVO(
         int priority,
         String createdBy
 ) {
-    public static OrderScheduleVO from(com.rxas400adm.as400.entity.OrderSchedule e) {
+    public static OrderScheduleVO from(OrderSchedule e) {
         return new OrderScheduleVO(
                 e.getId(), e.getCono(), e.getOrno(), e.getCust(),
                 e.getStartDate(), e.getEndDate(),

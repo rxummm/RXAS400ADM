@@ -9,7 +9,7 @@ public record BpcsStockValueVO(
         String item,
         String description,
         String wh,
-        int qtyOnHand,
+        Integer qtyOnHand,
         BigDecimal unitCost,
         BigDecimal stockValue
 ) {

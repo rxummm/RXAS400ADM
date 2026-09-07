@@ -11,13 +11,13 @@
         <el-col :span="12">
           <el-card shadow="never">
             <template #header>{{ $t('bpcs.forecast.demandForecast') }}</template>
-            <div ref="forecastChartRef" class="w-full" style="height: 320px"></div>
+            <div ref="forecastChartRef" class="w-full h-320"></div>
           </el-card>
         </el-col>
         <el-col :span="12">
           <el-card shadow="never">
             <template #header>{{ $t('bpcs.forecast.replenishmentSuggestions') }}</template>
-            <div ref="replenishChartRef" class="w-full" style="height: 320px"></div>
+            <div ref="replenishChartRef" class="w-full h-320"></div>
           </el-card>
         </el-col>
       </el-row>
@@ -25,7 +25,7 @@
         <el-col :span="12">
           <el-card shadow="never">
             <template #header>{{ $t('bpcs.forecast.stockLevel') }}</template>
-            <div ref="stockChartRef" class="w-full" style="height: 280px"></div>
+            <div ref="stockChartRef" class="w-full h-280"></div>
           </el-card>
         </el-col>
         <el-col :span="12">
@@ -47,9 +47,13 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsForecast' })
+
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useECharts, type ECOption } from '@/composables/useECharts'
 import { useI18n } from 'vue-i18n'
+import { CHART_COLORS } from '@/constants/chart'
 import { getForecast, getForecastItemOptions, type ForecastResult } from '@/api/bpcs'
 
 const { t } = useI18n()
@@ -70,8 +74,8 @@ const forecastChart = useECharts(forecastChartRef, (): ECOption => ({
   xAxis: { type: 'category', data: [] },
   yAxis: { type: 'value', name: t('bpcs.forecast.units') },
   series: [
-    { name: t('bpcs.forecast.actual'), type: 'bar', data: [], itemStyle: { color: '#409EFF' } },
-    { name: t('bpcs.forecast.forecast'), type: 'line', smooth: true, data: [], lineStyle: { type: 'dashed', color: '#F56C6C' }, itemStyle: { color: '#F56C6C' } },
+    { name: t('bpcs.forecast.actual'), type: 'bar', data: [], itemStyle: { color: CHART_COLORS.primary } },
+    { name: t('bpcs.forecast.forecast'), type: 'line', smooth: true, data: [], lineStyle: { type: 'dashed', color: CHART_COLORS.danger }, itemStyle: { color: CHART_COLORS.danger } },
     { name: t('bpcs.forecast.upperBound'), type: 'line', data: [], lineStyle: { opacity: 0.3 }, symbol: 'none' },
     { name: t('bpcs.forecast.lowerBound'), type: 'line', data: [], lineStyle: { opacity: 0.3 }, symbol: 'none', areaStyle: { opacity: 0.05 } },
   ],
@@ -83,8 +87,8 @@ const replenishChart = useECharts(replenishChartRef, (): ECOption => ({
   xAxis: { type: 'category', data: [] },
   yAxis: { type: 'value', name: t('bpcs.forecast.reorderQty') },
   series: [
-    { name: t('bpcs.forecast.currentStock'), type: 'bar', stack: 'total', data: [], itemStyle: { color: '#67C23A' } },
-    { name: t('bpcs.forecast.suggestedOrder'), type: 'bar', stack: 'total', data: [], itemStyle: { color: '#E6A23C' } },
+    { name: t('bpcs.forecast.currentStock'), type: 'bar', stack: 'total', data: [], itemStyle: { color: CHART_COLORS.success } },
+    { name: t('bpcs.forecast.suggestedOrder'), type: 'bar', stack: 'total', data: [], itemStyle: { color: CHART_COLORS.warning } },
   ],
 }))
 
@@ -97,20 +101,20 @@ const stockChart = useECharts(stockChartRef, (): ECOption => ({
     { type: 'value', name: t('bpcs.forecast.daysOfSupply'), position: 'right' },
   ],
   series: [
-    { name: t('bpcs.inventory.onHand'), type: 'bar', data: [], itemStyle: { color: '#409EFF' } },
-    { name: t('bpcs.alert.safetyStock'), type: 'line', yAxisIndex: 1, data: [], lineStyle: { type: 'dashed', color: '#F56C6C' }, itemStyle: { color: '#F56C6C' } },
+    { name: t('bpcs.inventory.onHand'), type: 'bar', data: [], itemStyle: { color: CHART_COLORS.primary } },
+    { name: t('bpcs.alert.safetyStock'), type: 'line', yAxisIndex: 1, data: [], lineStyle: { type: 'dashed', color: CHART_COLORS.danger }, itemStyle: { color: CHART_COLORS.danger } },
   ],
 }))
 
 async function loadItems() {
-  const items = await getForecastItemOptions({ limit: 50 }) as unknown as { value: string; label: string }[]
+  const items = await getForecastItemOptions({ limit: 50 })
   itemOptions.value = items
 }
 
 async function load() {
   loading.value = true
   try {
-    const data = await getForecast({ cono: '001', item: selectedItem.value || undefined, months: 6 }) as unknown as ForecastResult
+    const data = await getForecast({ cono: '001', item: selectedItem.value || undefined, months: 6 })
     // Update metrics
     Object.assign(metrics, data.metrics)
     // Update forecast chart

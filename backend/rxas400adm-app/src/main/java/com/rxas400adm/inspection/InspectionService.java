@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.entity.IbmiSystem;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.as400.model.SubsystemRow;
 import com.rxas400adm.as400.service.IIbmiSystemService;
 import com.rxas400adm.common.constants.PageConstants;
@@ -52,7 +53,7 @@ public class InspectionService implements IInspectionService {
         AS400Client client = clientProvider.forServer(serverId);
         IbmiSystem system = systemService.get(serverId);
         Map<String, Object> overview = metricService.overview(serverId);
-        List<Map<String, Object>> asp = safeList(client.queryList("SELECT * FROM QSYS2.ASP_INFO"));
+        List<Map<String, Object>> asp = safeList(client.queryList(SqlStatementRegistry.of("inspection.asp.info")));
         List<SubsystemRow> subsystems = client.listSubsystems() == null ? List.of() : client.listSubsystems();
         List<AlertEvent> alerts = alertEventMapper.selectList(new LambdaQueryWrapper<AlertEvent>()
                 .eq(AlertEvent::getInstanceId, serverId)

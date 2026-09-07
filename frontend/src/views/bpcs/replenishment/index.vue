@@ -22,6 +22,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsReplenishment' })
+
 import { ref, onMounted } from 'vue'
 import { listReplenishment, type ReplenishmentVO } from '@/api/bpcs'
 
@@ -31,7 +34,7 @@ const rows = ref<ReplenishmentVO[]>([])
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listReplenishment() as unknown as ReplenishmentVO[]
+    rows.value = await listReplenishment()
   } finally {
     loading.value = false
   }

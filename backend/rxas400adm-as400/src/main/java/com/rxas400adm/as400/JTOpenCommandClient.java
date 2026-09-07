@@ -33,7 +33,7 @@ class JTOpenCommandClient implements CommandClient {
     public CommandResult execute(String command) {
         // B12：每服务器并发命令数流控，避免 CL 命令风暴拖垮 IBM i
         if (!commandSemaphore.tryAcquire()) {
-            throw new BusinessException(ErrorCode.AS400_COMMAND_BUSY, "命令执行并发已满，请稍后再试");
+            throw new BusinessException(ErrorCode.AS400_COMMAND_BUSY, "Command concurrency limit reached, please retry later");
         }
         try {
             AS400 system = state.connect();
@@ -44,12 +44,12 @@ class JTOpenCommandClient implements CommandClient {
                 for (AS400Message msg : call.getMessageList()) {
                     sb.append(msg.getText()).append('\n');
                 }
-                return ok ? CommandResult.ok(sb.toString().isBlank() ? "执行成功" : sb.toString())
-                        : CommandResult.fail(sb.toString().isBlank() ? "执行失败" : sb.toString());
+                return ok ? CommandResult.ok(sb.toString().isBlank() ? "Command executed successfully" : sb.toString())
+                        : CommandResult.fail(sb.toString().isBlank() ? "Command execution failed" : sb.toString());
             } catch (Exception e) {
                 state.invalidate(system);
                 log.warn("IBM i 命令执行失败(host={}): {}", state.host, state.redact(command), e);
-                return CommandResult.fail("命令执行失败: " + state.redact(e.getMessage()));
+                return CommandResult.fail("Command execution failed: " + state.redact(e.getMessage()));
             }
         } finally {
             commandSemaphore.release();
@@ -61,10 +61,10 @@ class JTOpenCommandClient implements CommandClient {
         AS400 system = state.connect();
         try {
             system.validateSignon();
-            return CommandResult.ok("JT400 连接成功: " + state.host);
+            return CommandResult.ok("JT400 connection successful: " + state.host);
         } catch (Exception e) {
             state.invalidate(system);
-            return CommandResult.fail("连接失败: " + state.redact(e.getMessage()));
+            return CommandResult.fail("Connection failed: " + state.redact(e.getMessage()));
         }
     }
 

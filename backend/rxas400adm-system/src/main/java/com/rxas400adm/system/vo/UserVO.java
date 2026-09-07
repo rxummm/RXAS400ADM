@@ -1,6 +1,5 @@
 package com.rxas400adm.system.vo;
 
-import com.rxas400adm.system.entity.SysRole;
 import lombok.Builder;
 import lombok.Data;
 
@@ -29,7 +28,7 @@ public class UserVO {
     /** AS400 登录来源的服务器 ID */
     private Long as400ServerId;
 
-    private List<SysRole> roles;
+    private List<SysRoleVO> roles;
 
     private LocalDateTime createdTime;
 }

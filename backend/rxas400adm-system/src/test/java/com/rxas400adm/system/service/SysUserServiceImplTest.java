@@ -60,7 +60,7 @@ class SysUserServiceImplTest {
         SysUserServiceImpl service = service();
         UserDTO dto = new UserDTO();
         dto.setUsername("dev1");
-        dto.setPassword("secret123");
+        dto.setPassword("Secret123!");
 
         UserVO created = service.create(dto);
         assertEquals("dev1", created.getUsername());
@@ -122,7 +122,7 @@ class SysUserServiceImplTest {
 
         UserDTO dto = new UserDTO();
         dto.setUsername("op1");
-        dto.setPassword("secret123");
+        dto.setPassword("Secret123!");
         dto.setRoleIds(List.of(10L));
 
         service().create(dto);
@@ -144,7 +144,7 @@ class SysUserServiceImplTest {
 
         UserDTO dto = new UserDTO();
         dto.setUsername("op2");
-        dto.setPassword("secret123");
+        dto.setPassword("Secret123!");
         dto.setRoleCodes(List.of("OPERATOR"));
 
         service().create(dto);

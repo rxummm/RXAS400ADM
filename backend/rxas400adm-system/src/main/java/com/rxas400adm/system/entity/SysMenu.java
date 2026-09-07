@@ -50,6 +50,12 @@ public class SysMenu {
     /** 1 可见 / 0 隐藏 */
     private Integer visible;
 
+    /** 1 启用 keep-alive 缓存 / 0 不缓存 */
+    private Integer cached;
+
+    /** keep-alive 组件名（覆盖前端路由 name），为空时取前端路由 name */
+    private String cacheName;
+
     /** 1 启用 / 0 停用（停用=前端菜单隐藏） */
     private Integer status;
 

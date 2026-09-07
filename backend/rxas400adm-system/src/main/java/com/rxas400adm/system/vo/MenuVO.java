@@ -10,5 +10,7 @@ public record MenuVO(
         String path,
         String title,
         String icon,
+        Boolean cached,
+        String cacheName,
         List<MenuVO> children) {
 }

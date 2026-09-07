@@ -70,7 +70,7 @@ public class JobController {
 
     @PostMapping("/end")
     @PreAuthorize("hasAuthority('JOB_END')")
-    @OperateLog(module = "Job 中心", operation = "ENDJOB 结束作业")
+    @OperateLog(module = "Job Center", operation = "ENDJOB")
     public ApiResponse<CommandResult> end(@RequestParam String jobName,
                                           @RequestParam String jobUser,
                                           @RequestParam String jobNumber) {
@@ -79,7 +79,7 @@ public class JobController {
 
     @PostMapping("/batch-end")
     @PreAuthorize("hasAuthority('JOB_END')")
-    @OperateLog(module = "Job 中心", operation = "批量 ENDJOB 结束作业")
+    @OperateLog(module = "Job Center", operation = "Batch ENDJOB")
     public ApiResponse<List<CommandResult>> batchEnd(@RequestBody @Valid List<JobParam> jobs) {
         List<CommandResult> results = new ArrayList<>();
         for (JobParam job : jobs) {
@@ -90,7 +90,7 @@ public class JobController {
 
     @PostMapping("/hold")
     @PreAuthorize("hasAuthority('JOB_END')")
-    @OperateLog(module = "Job 中心", operation = "HLDJOB 挂起作业")
+    @OperateLog(module = "Job Center", operation = "HLDJOB")
     public ApiResponse<CommandResult> hold(@RequestParam String jobName,
                                            @RequestParam String jobUser,
                                            @RequestParam String jobNumber) {
@@ -99,7 +99,7 @@ public class JobController {
 
     @PostMapping("/release")
     @PreAuthorize("hasAuthority('JOB_END')")
-    @OperateLog(module = "Job 中心", operation = "RLSJOB 释放作业")
+    @OperateLog(module = "Job Center", operation = "RLSJOB")
     public ApiResponse<CommandResult> release(@RequestParam String jobName,
                                               @RequestParam String jobUser,
                                               @RequestParam String jobNumber) {
@@ -140,7 +140,7 @@ public class JobController {
                               HttpServletResponse response) throws Exception {
         InputStream in = jobService.spoolFileContent(jobName, jobUser, jobNumber, spoolName, outputQueue);
         if (in == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "SPOOL 文件未找到");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "SPOOL file not found");
             return;
         }
         response.setContentType("text/plain; charset=UTF-8");
@@ -160,7 +160,7 @@ public class JobController {
     /** 删除 SPOOL 文件 */
     @PostMapping("/spool/delete")
     @PreAuthorize("hasAuthority('JOB_END')")
-    @OperateLog(module = "作业管理", operation = "删除 SPOOL 文件")
+    @OperateLog(module = "Job Center", operation = "Delete SPOOL file")
     public ApiResponse<CommandResult> deleteSpool(@RequestParam String jobName,
                                                    @RequestParam String jobUser,
                                                    @RequestParam String jobNumber,
@@ -179,7 +179,7 @@ public class JobController {
 
     @PostMapping("/reply")
     @PreAuthorize("hasAuthority('JOB_END')")
-    @OperateLog(module = "Job 中心", operation = "应答 MSGW 消息")
+    @OperateLog(module = "Job Center", operation = "Reply MSGW")
     public ApiResponse<CommandResult> reply(@RequestParam String jobName,
                                             @RequestParam String jobUser,
                                             @RequestParam String jobNumber) {

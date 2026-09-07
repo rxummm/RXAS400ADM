@@ -9,13 +9,13 @@ import jakarta.validation.constraints.Size;
  */
 public class BpcsWarehouseReplenishQueryDTO {
 
-    @Size(max = 3, message = "公司码最长 3 位")
+    @Size(max = 3, message = "max length is 3")
     private String cono;
 
-    @Size(max = 20, message = "物料号最长 20 位")
+    @Size(max = 20, message = "max length is 20")
     private String item;
 
-    @Size(max = 40, message = "物料描述最长 40 位")
+    @Size(max = 40, message = "max length is 40")
     private String itdsc;
 
     /** 是否仅显示低于安全库存的物料 */

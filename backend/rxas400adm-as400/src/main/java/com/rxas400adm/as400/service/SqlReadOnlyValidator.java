@@ -55,22 +55,22 @@ public final class SqlReadOnlyValidator {
     public static void assertReadOnly(String sql) {
         String trimmed = sql == null ? "" : stripSqlComments(sql.trim());
         if (trimmed.isEmpty()) {
-            throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "SQL 不能为空");
+            throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "SQL must not be empty");
         }
         if (trimmed.length() > MAX_SQL_LEN) {
-            throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "SQL 长度不能超过 " + MAX_SQL_LEN + " 字符");
+            throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "SQL length must not exceed " + MAX_SQL_LEN + " characters");
         }
         if (trimmed.contains(";")) {
-            throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "仅允许单条 SQL，禁止多语句/分号");
+            throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "Only single SQL statement allowed, no semicolons");
         }
         String upper = trimmed.toUpperCase();
         if (!upper.startsWith("SELECT") && !upper.startsWith("WITH")) {
-            throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "仅允许只读 SELECT/WITH 查询");
+            throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "Only read-only SELECT/WITH queries are allowed");
         }
         if (WRITE_CLAUSE.matcher(trimmed).find() || READONLY_VIOLATIONS.matcher(trimmed).find()
                 || SIDE_EFFECT_FUNCTION.matcher(trimmed).find()
                 || SIDE_EFFECT_FUNCTION_BARE.matcher(trimmed).find()) {
-            throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "SQL 包含写入/破坏只读语义的操作，已拒绝执行");
+            throw new BusinessException(ErrorCode.SQL_READONLY_REQUIRED, "SQL contains write/read-only-violating operations, execution denied");
         }
     }
 

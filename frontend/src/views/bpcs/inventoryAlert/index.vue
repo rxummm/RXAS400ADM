@@ -66,7 +66,7 @@ defineOptions({ name: 'BpcsInventoryAlert' })
 import { computed, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElNotification } from 'element-plus'
-import { fetchInventoryAlerts, type InventoryAlert } from '@/api/supplyChain'
+import { getInventoryAlerts, type InventoryAlert } from '@/api/bpcs'
 import { BPCS_EXPORT } from '@/api/bpcs'
 import ExportDropdown from '@/components/ExportDropdown.vue'
 import type { ExportColumn } from '@/components/ExportButton.vue'
@@ -79,15 +79,15 @@ const alerts = ref<InventoryAlert[]>([])
 const wsConnected = ref(false)
 
 const exportColumns: ExportColumn[] = [
-  { key: 'item', label: '物料号' },
-  { key: 'description', label: '描述' },
-  { key: 'warehouse', label: '仓库' },
-  { key: 'uom', label: '单位' },
-  { key: 'onHand', label: '在手量' },
-  { key: 'allocated', label: '已分配' },
-  { key: 'available', label: '可用量' },
-  { key: 'safetyStock', label: '安全库存' },
-  { key: 'deficit', label: '缺口' },
+  { key: 'item', label: t('bpcs.common.itemCode') },
+  { key: 'description', label: t('bpcs.common.description') },
+  { key: 'warehouse', label: t('bpcs.common.warehouse') },
+  { key: 'uom', label: t('bpcs.common.uom') },
+  { key: 'onHand', label: t('bpcs.common.onHand') },
+  { key: 'allocated', label: t('bpcs.common.allocated') },
+  { key: 'available', label: t('bpcs.common.available') },
+  { key: 'safetyStock', label: t('bpcs.common.safetyStock') },
+  { key: 'deficit', label: t('bpcs.common.deficit') },
 ]
 
 const totalDeficit = computed(() => alerts.value.reduce((s, a) => s + a.deficit, 0))
@@ -116,7 +116,7 @@ onMounted(() => {
 
 function load() {
   loading.value = true
-  fetchInventoryAlerts({ cono: cono.value || '001', limit: 100 })
+  getInventoryAlerts({ cono: cono.value || '001', limit: 100 })
     .then(data => { alerts.value = data })
     .finally(() => { loading.value = false })
 }

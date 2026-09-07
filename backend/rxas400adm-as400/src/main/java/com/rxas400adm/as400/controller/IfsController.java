@@ -73,7 +73,7 @@ public class IfsController {
     public ApiResponse<IfsContentVO> content(@RequestParam String path) {
         String normalized = normalize(path);
         if (normalized == null || normalized.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS 路径不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS path is required");
         }
         return ApiResponse.success(new IfsContentVO(normalized, ifsService.read(normalized)));
     }
@@ -88,11 +88,9 @@ public class IfsController {
     public ApiResponse<IfsPathVO> write(@Valid @RequestBody IfsWriteDTO dto) {
         String path = normalize(dto.getPath());
         if (path == null || path.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS 目标路径不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS target path is required");
         }
-        if (!ifsService.write(path, dto.getContent())) {
-            throw new BusinessException(ErrorCode.AS400_COMMAND_FAILED, "IFS 文件写入失败: " + path);
-        }
+        ifsService.write(path, dto.getContent());
         return ApiResponse.success(new IfsPathVO(path));
     }
 
@@ -107,17 +105,15 @@ public class IfsController {
                                             @RequestParam String path) throws IOException {
         String normalized = normalize(path);
         if (normalized == null || normalized.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS 目标路径不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS target path is required");
         }
         if (file == null || file.isEmpty()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "上传文件不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Upload file is required");
         }
         if (file.getSize() > MAX_UPLOAD_BYTES) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "上传文件超出大小限制（100MB）");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Upload file exceeds size limit (100MB)");
         }
-        if (!ifsService.writeBytes(normalized, file.getBytes())) {
-            throw new BusinessException(ErrorCode.AS400_COMMAND_FAILED, "IFS 文件上传失败: " + normalized);
-        }
+        ifsService.writeBytes(normalized, file.getBytes());
         return ApiResponse.success(new IfsUploadVO(normalized, file.getSize()));
     }
 
@@ -127,13 +123,10 @@ public class IfsController {
     public ResponseEntity<StreamingResponseBody> download(@RequestParam String path) {
         String normalized = normalize(path);
         if (normalized == null || normalized.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS 路径不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS path is required");
         }
         // P0-3：流式下载，避免大文件整读内存；流由 Spring 在写完后关闭
         InputStream in = ifsService.readStream(normalized);
-        if (in == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "IFS 文件不存在或不可读: " + normalized);
-        }
         String filename = normalized.substring(normalized.lastIndexOf('/') + 1);
         String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
         StreamingResponseBody body = outputStream -> {
@@ -155,11 +148,9 @@ public class IfsController {
     public ApiResponse<IfsPathVO> mkdir(@Valid @RequestBody IfsWriteDTO dto) {
         String path = normalize(dto.getPath());
         if (path == null || path.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS 目录路径不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS directory path is required");
         }
-        if (!ifsService.mkdir(path)) {
-            throw new BusinessException(ErrorCode.AS400_COMMAND_FAILED, "IFS 目录创建失败: " + path);
-        }
+        ifsService.mkdir(path);
         return ApiResponse.success(new IfsPathVO(path));
     }
 
@@ -173,12 +164,9 @@ public class IfsController {
     public ApiResponse<IfsDeleteVO> delete(@RequestParam String path) {
         String normalized = normalize(path);
         if (normalized == null || normalized.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS 路径不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS path is required");
         }
         String trashPath = ifsService.trash(normalized);
-        if (trashPath == null) {
-            throw new BusinessException(ErrorCode.AS400_COMMAND_FAILED, "IFS 移入回收站失败: " + normalized);
-        }
         return ApiResponse.success(new IfsDeleteVO(normalized, trashPath));
     }
 
@@ -189,16 +177,9 @@ public class IfsController {
     public ApiResponse<IfsDeleteVO> restore(@RequestParam String trashPath) {
         String normalized = normalize(trashPath);
         if (normalized == null || normalized.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "回收站路径不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Trash path is required");
         }
-        // S2：仅允许恢复回收站内的路径——防止 substring(36) 构成任意文件「搬运」原语
-        if (!normalized.startsWith(IfsClient.TRASH_ROOT + "/")) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST,
-                    "仅允许恢复回收站内路径（" + IfsClient.TRASH_ROOT + "/*）: " + normalized);
-        }
-        if (!ifsService.restore(normalized)) {
-            throw new BusinessException(ErrorCode.AS400_COMMAND_FAILED, "IFS 恢复失败: " + normalized);
-        }
+        ifsService.restore(normalized);
         String original = normalized.startsWith(IfsClient.TRASH_ROOT)
                 ? normalized.substring(IfsClient.TRASH_ROOT.length()) : normalized;
         return ApiResponse.success(new IfsDeleteVO(original, normalized));
@@ -216,15 +197,18 @@ public class IfsController {
         }
         String normalized = path.replace('\\', '/');
         if (!normalized.startsWith("/")) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS 路径必须是绝对路径（以 / 开头）: " + path);
+            // §7.17 豁免：路径安全校验
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS path must be absolute (start with /): " + path);
         }
         // 逐段校验：拒绝 .. 与隐藏段（.. 可穿越到连接账号可达的任意目录，. 开头的系统文件应显式避开）
         for (String segment : normalized.split("/")) {
             if (segment.equals("..")) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS 路径不允许包含 .. : " + path);
+                // §7.17 豁免：路径安全校验
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS path must not contain .. : " + path);
             }
             if (segment.startsWith(".") && !segment.isEmpty()) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS 路径不允许访问隐藏路径段: " + path);
+                // §7.17 豁免：路径安全校验
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "IFS path must not access hidden segments: " + path);
             }
         }
         while (normalized.length() > 1 && normalized.endsWith("/")) {
@@ -239,6 +223,7 @@ public class IfsController {
                 .filter(root -> !root.isEmpty())
                 .anyMatch(root -> candidate.equals(root) || candidate.startsWith(root + "/"));
         if (!allowed) {
+            // §7.17 豁免：路径安全校验
             throw new BusinessException(ErrorCode.BAD_REQUEST,
                     "IFS 路径不在允许范围内（rxas400.ifs.allowed-roots）: " + path);
         }

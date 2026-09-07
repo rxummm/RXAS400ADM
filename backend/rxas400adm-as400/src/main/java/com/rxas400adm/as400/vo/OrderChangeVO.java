@@ -1,5 +1,7 @@
 package com.rxas400adm.as400.vo;
 
+import com.rxas400adm.as400.entity.OrderChange;
+
 /**
  * 订单变更 VO。
  */
@@ -15,7 +17,7 @@ public record OrderChangeVO(
         String changedBy,
         String changedTime
 ) {
-    public static OrderChangeVO from(com.rxas400adm.as400.entity.OrderChange e) {
+    public static OrderChangeVO from(OrderChange e) {
         return new OrderChangeVO(
                 e.getId(), e.getCono(), e.getOrno(), e.getChangeType(),
                 e.getFieldName(), e.getOldValue(), e.getNewValue(),

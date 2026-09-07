@@ -8,19 +8,19 @@
         <el-col :span="8">
           <el-card shadow="never">
             <template #header>{{ $t('bpcs.alert.gauge') }}</template>
-            <div ref="gaugeChartRef" class="w-full" style="height: 280px"></div>
+            <div ref="gaugeChartRef" class="w-full h-280"></div>
           </el-card>
         </el-col>
         <el-col :span="8">
           <el-card shadow="never">
             <template #header>{{ $t('bpcs.alert.distribution') }}</template>
-            <div ref="barChartRef" class="w-full" style="height: 280px"></div>
+            <div ref="barChartRef" class="w-full h-280"></div>
           </el-card>
         </el-col>
         <el-col :span="8">
           <el-card shadow="never">
             <template #header>{{ $t('bpcs.alert.trend') }}</template>
-            <div ref="lineChartRef" class="w-full" style="height: 280px"></div>
+            <div ref="lineChartRef" class="w-full h-280"></div>
           </el-card>
         </el-col>
       </el-row>
@@ -42,8 +42,12 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'BpcsAlertEngine' })
+
 import { ref, onMounted } from 'vue'
 import { useECharts, type ECOption } from '@/composables/useECharts'
+import { CHART_COLORS } from '@/constants/chart'
 import { listAlertRules, type AlertRuleVO } from '@/api/bpcs'
 import { useI18n } from 'vue-i18n'
 
@@ -67,7 +71,7 @@ const gaugeChart = useECharts(gaugeChartRef, (): ECOption => ({
     axisLine: {
       lineStyle: {
         width: 12,
-        color: [[0.3, '#67C23A'], [0.7, '#E6A23C'], [1, '#F56C6C']],
+        color: [[0.3, CHART_COLORS.success], [0.7, CHART_COLORS.warning], [1, CHART_COLORS.danger]],
       },
     },
     pointer: { width: 5 },
@@ -90,10 +94,10 @@ const barChart = useECharts(barChartRef, (): ECOption => ({
   series: [{
     type: 'bar',
     data: [
-      { value: 12, itemStyle: { color: '#F56C6C' } },
-      { value: 5, itemStyle: { color: '#E6A23C' } },
-      { value: 3, itemStyle: { color: '#409EFF' } },
-      { value: 8, itemStyle: { color: '#909399' } },
+      { value: 12, itemStyle: { color: CHART_COLORS.danger } },
+      { value: 5, itemStyle: { color: CHART_COLORS.warning } },
+      { value: 3, itemStyle: { color: CHART_COLORS.primary } },
+      { value: 8, itemStyle: { color: CHART_COLORS.info } },
     ],
     barWidth: '50%',
   }],
@@ -112,13 +116,13 @@ const lineChart = useECharts(lineChartRef, (): ECOption => ({
       name: t('bpcs.alert.critical'),
       type: 'line',
       data: [5, 3, 8, 4],
-      itemStyle: { color: '#F56C6C' },
+      itemStyle: { color: CHART_COLORS.danger },
     },
     {
       name: t('bpcs.alert.warning'),
       type: 'line',
       data: [12, 15, 10, 14],
-      itemStyle: { color: '#E6A23C' },
+      itemStyle: { color: CHART_COLORS.warning },
     },
   ],
 }))
@@ -126,7 +130,7 @@ const lineChart = useECharts(lineChartRef, (): ECOption => ({
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listAlertRules() as unknown as AlertRuleVO[]
+    rows.value = await listAlertRules()
   } finally {
     loading.value = false
   }

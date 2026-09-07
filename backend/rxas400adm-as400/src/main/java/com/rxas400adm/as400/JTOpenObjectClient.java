@@ -7,6 +7,7 @@ import com.rxas400adm.as400.model.GraphNode;
 import com.rxas400adm.as400.model.ObjectDetail;
 import com.rxas400adm.as400.model.ObjectRefRow;
 import com.rxas400adm.as400.model.ObjectRow;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -40,9 +41,7 @@ class JTOpenObjectClient implements ObjectClient {
     @Override
     public List<ObjectRow> searchObjects(String library, String objectType) {
         String lib = library == null || library.isBlank() ? "QSYS" : library.trim().toUpperCase();
-        StringBuilder sql = new StringBuilder(
-                "SELECT OBJECT_NAME, OBJECT_TYPE, OBJECT_LIBRARY, OBJECT_SIZE, OBJECT_CREATION_TIMESTAMP "
-                        + "FROM QSYS2.OBJECT_STATISTICS WHERE OBJECT_LIBRARY = ?");
+        StringBuilder sql = new StringBuilder(SqlStatementRegistry.of("object.search.base"));
         List<Object> params = new ArrayList<>();
         params.add(lib);
         if (objectType != null && !objectType.isBlank()) {
@@ -61,10 +60,7 @@ class JTOpenObjectClient implements ObjectClient {
             return null;
         }
         String lib = library == null || library.isBlank() ? "QSYS" : library.trim().toUpperCase();
-        String sql = "SELECT OBJECT_NAME, OBJECT_TYPE, OBJECT_LIBRARY, OBJECT_SIZE, "
-                + "OBJECT_CREATION_TIMESTAMP, OBJECT_CHANGE_TIMESTAMP, OBJECT_TEXT_DESCRIPTION, "
-                + "OBJECT_OWNER, ASP_NAME FROM QSYS2.OBJECT_STATISTICS "
-                + "WHERE OBJECT_LIBRARY = ? AND OBJECT_NAME = ?";
+        String sql = SqlStatementRegistry.of("object.detail");
         List<Map<String, Object>> rows = sqlClient.queryList(sql, lib, objectName.toUpperCase());
         Map<String, Object> row = rows.isEmpty() ? Map.of() : rows.get(0);
         if (row == null || row.isEmpty()) {
@@ -84,18 +80,7 @@ class JTOpenObjectClient implements ObjectClient {
         }
         String lib = library == null || library.isBlank() ? "QSYS" : library.trim().toUpperCase();
         boolean inbound = direction != null && "IN".equalsIgnoreCase(direction);
-        String sql;
-        if (inbound) {
-            sql = "SELECT OBJECT_LIBRARY, OBJECT_NAME, OBJECT_TYPE, REF_OBJ_LIBRARY, REF_OBJ_NAME, REF_OBJ_TYPE "
-                    + "FROM QSYS2.OBJECT_STATISTICS "
-                    + "WHERE REF_OBJ_LIBRARY = ? AND REF_OBJ_NAME = ? "
-                    + "FETCH FIRST 200 ROWS ONLY";
-        } else {
-            sql = "SELECT OBJECT_LIBRARY, OBJECT_NAME, OBJECT_TYPE, REF_OBJ_LIBRARY, REF_OBJ_NAME, REF_OBJ_TYPE "
-                    + "FROM QSYS2.OBJECT_STATISTICS "
-                    + "WHERE OBJECT_LIBRARY = ? AND OBJECT_NAME = ? "
-                    + "AND REF_OBJ_NAME IS NOT NULL FETCH FIRST 200 ROWS ONLY";
-        }
+        String sql = inbound ? SqlStatementRegistry.of("object.refs.inbound") : SqlStatementRegistry.of("object.refs.outbound");
         return sqlClient.queryList(sql, lib, objectName.toUpperCase()).stream().map(r -> new ObjectRefRow(
                 str(r, "OBJECT_LIBRARY"), str(r, "OBJECT_NAME"), str(r, "OBJECT_TYPE"),
                 str(r, "REF_OBJ_LIBRARY"), str(r, "REF_OBJ_NAME"), str(r, "REF_OBJ_TYPE"))).toList();
@@ -107,9 +92,7 @@ class JTOpenObjectClient implements ObjectClient {
             return List.of();
         }
         String lib = library == null || library.isBlank() ? "QSYS" : library.trim().toUpperCase();
-        return sqlClient.queryList("SELECT AUTHORITY_HOLDER, AUTHORITY_HOLDER_TYPE, AUTHORITY "
-                + "FROM QSYS2.OBJECT_PRIVILEGES "
-                + "WHERE OBJECT_SCHEMA = ? AND OBJECT_NAME = ?", lib, objectName.trim().toUpperCase()).stream()
+        return sqlClient.queryList(SqlStatementRegistry.of("object.authority.list"), lib, objectName.trim().toUpperCase()).stream()
                 .map(r -> new AuthorityRow(str(r, "AUTHORITY_HOLDER"), str(r, "AUTHORITY_HOLDER_TYPE"),
                         str(r, "AUTHORITY")))
                 .toList();
@@ -118,11 +101,7 @@ class JTOpenObjectClient implements ObjectClient {
     @Override
     public GraphData objectGraph(String library) {
         String lib = library == null || library.isBlank() ? "QSYS" : library.trim().toUpperCase();
-        List<Map<String, Object>> rows = sqlClient.queryList("SELECT OBJECT_LIBRARY, OBJECT_NAME, OBJECT_TYPE, "
-                + "REF_OBJ_LIBRARY, REF_OBJ_NAME, REF_OBJ_TYPE "
-                + "FROM QSYS2.OBJECT_STATISTICS "
-                + "WHERE OBJECT_LIBRARY = ? AND REF_OBJ_NAME IS NOT NULL "
-                + "FETCH FIRST 500 ROWS ONLY", lib);
+        List<Map<String, Object>> rows = sqlClient.queryList(SqlStatementRegistry.of("object.graph"), lib);
         Map<String, GraphNode> nodes = new LinkedHashMap<>();
         List<GraphLink> links = new ArrayList<>();
         for (Map<String, Object> r : rows) {

@@ -8,19 +8,19 @@ import jakarta.validation.constraints.Size;
  */
 public class CycleCountResultDTO {
 
-    @NotNull(message = "计划ID不能为空")
+    @NotNull(message = "plan ID is required")
     private Long planId;
 
-    @NotNull(message = "实盘数量不能为空")
-    private int countedQty;
+    @NotNull(message = "actual count is required")
+    private Integer countedQty;
 
-    @Size(max = 100, message = "差异原因最长 100 位")
+    @Size(max = 100, message = "max length is 100")
     private String reason;
 
     public Long getPlanId() { return planId; }
     public void setPlanId(Long planId) { this.planId = planId; }
-    public int getCountedQty() { return countedQty; }
-    public void setCountedQty(int countedQty) { this.countedQty = countedQty; }
+    public Integer getCountedQty() { return countedQty; }
+    public void setCountedQty(Integer countedQty) { this.countedQty = countedQty; }
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
 }

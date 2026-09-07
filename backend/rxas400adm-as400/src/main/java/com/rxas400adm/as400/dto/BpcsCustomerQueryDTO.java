@@ -9,13 +9,13 @@ import jakarta.validation.constraints.Size;
  */
 public class BpcsCustomerQueryDTO {
 
-    @Size(max = 3, message = "公司码最长 3 位")
+    @Size(max = 3, message = "max length is 3")
     private String cono;
 
-    @Size(max = 6, message = "客户号最长 6 位")
+    @Size(max = 6, message = "max length is 6")
     private String cust;
 
-    @Size(max = 40, message = "客户名最长 40 位")
+    @Size(max = 40, message = "max length is 40")
     private String name;
 
     private int current = 1;

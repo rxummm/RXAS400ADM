@@ -47,21 +47,21 @@ public class IpRuleController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('SYS_IP_MANAGE')")
-    @OperateLog(module = "登录安全", operation = "新增 IP 规则")
+    @OperateLog(module = "Login Security", operation = "新增 IP 规则")
     public ApiResponse<IpRuleVO> create(@Valid @RequestBody IpRuleCreateDTO dto) {
         return ApiResponse.success(IpRuleVO.from(ipRuleService.create(dto, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('SYS_IP_MANAGE')")
-    @OperateLog(module = "登录安全", operation = "修改 IP 规则")
+    @OperateLog(module = "Login Security", operation = "修改 IP 规则")
     public ApiResponse<IpRuleVO> update(@PathVariable Long id, @Valid @RequestBody IpRuleUpdateDTO dto) {
         return ApiResponse.success(IpRuleVO.from(ipRuleService.update(id, dto)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('SYS_IP_MANAGE')")
-    @OperateLog(module = "登录安全", operation = "删除 IP 规则")
+    @OperateLog(module = "Login Security", operation = "删除 IP 规则")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         ipRuleService.delete(id);
         return ApiResponse.success(null);

@@ -10,8 +10,8 @@
         <template #header>
           <div class="flex-row-center">
             <span>{{ $t('bpcs.orderTracking.orderPrefix') }}{{ tracking.cono }}-{{ tracking.orno }}</span>
-            <el-tag size="small" type="info" class="ml8">{{ tracking.statusLabel }}</el-tag>
-            <span class="ml8 text-muted">{{ tracking.custNo }} {{ tracking.custName || '' }}</span>
+            <el-tag size="small" type="info" class="ml8">{{ tracking.timeline.find((t: TimelineNode) => t.current)?.nameKey || tracking.currentStageIndex }}</el-tag>
+            <span class="ml8 text-muted">{{ tracking.customerNo }}</span>
           </div>
         </template>
         <el-table :data="tracking.lines" size="small" border>
@@ -29,8 +29,7 @@
           <el-table-column align="right" :label="$t('bpcs.line.qtyInvoiced')" width="70">
           <template #default="{ row }">{{ row.qtyInvoiced }}</template>
           </el-table-column>
-          <el-table-column prop="shipDate" :label="$t('bpcs.shipping.shipDate')" width="110" />
-          <el-table-column prop="shipStatus" :label="$t('bpcs.shipping.status')" width="90" />
+          <el-table-column prop="stageKey" :label="$t('bpcs.shipping.status')" width="90" />
         </el-table>
       </el-card>
       <el-timeline class="mt16">
@@ -48,23 +47,29 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'BpcsOrderTracking' })
 import { reactive, ref } from 'vue'
-import { fetchOrderTracking, type OrderTracking } from '@/api/supplyChain'
+import { getOrderHeader, getOrderLines, type BpcsOrderHeader, type BpcsOrderLine, type TimelineNode } from '@/api/bpcs'
 const loading = ref(false)
 const searched = ref(false)
-const tracking = ref<OrderTracking | null>(null)
+const tracking = ref<(BpcsOrderHeader & { lines: BpcsOrderLine[] }) | null>(null)
 const query = reactive({ cono: '001', orno: '' })
 function load() {
   if (!query.orno) return
   loading.value = true
   searched.value = true
-  fetchOrderTracking(query.cono || '001', query.orno)
-    .then(d => { tracking.value = d })
+  const cono = query.cono || '001'
+  Promise.all([
+    getOrderHeader(cono, query.orno),
+    getOrderLines(cono, query.orno),
+  ])
+    .then(([header, lines]) => {
+      tracking.value = header ? { ...header, lines: lines || [] } : null
+    })
     .finally(() => { loading.value = false })
 }
 function stageReached(idx: number) {
   if (!tracking.value) return false
-  const line = tracking.value.lines[0]
-  if (!line) return false
-  return [line.qtyAllocated > 0, line.qtyShipped > 0, line.qtyInvoiced > 0, tracking.value.statusLabel === 'Closed'][idx]
+  const timeline = tracking.value.timeline
+  if (!timeline || timeline.length === 0) return false
+  return timeline[idx]?.reached || false
 }
 </script>

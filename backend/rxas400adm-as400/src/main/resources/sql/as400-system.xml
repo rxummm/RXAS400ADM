@@ -1,0 +1,352 @@
+<statements>
+    <!-- ==================== Job ==================== -->
+    <statement id="job.queue.list">
+        SELECT JOB_QUEUE_NAME, JOB_QUEUE_LIBRARY, JOB_QUEUE_STATUS,
+               NUMBER_OF_JOBS, JOB_QUEUE_TYPE
+        FROM QSYS2.JOB_QUEUE_INFO
+    </statement>
+
+    <statement id="job.spool.list.base">
+        SELECT SPOOLED_FILE_NAME, JOB_NAME, JOB_USER, JOB_NUMBER, OUTPUT_QUEUE,
+               OUTPUT_QUEUE_LIBRARY, SPOOLED_FILE_STATUS, NUMBER_OF_PAGES, USER_DATA
+        FROM QSYS2.OUTPUT_QUEUE_INFO WHERE 1=1
+    </statement>
+
+    <statement id="job.active.list">
+        SELECT JOB_NUMBER, JOB_NAME, JOB_USER,
+               JOB_STATUS, FUNCTION_TYPE, SUBSYSTEM, MEMORY_POOL
+        FROM QSYS2.ACTIVE_JOB_INFO
+    </statement>
+
+    <statement id="job.message.list">
+        SELECT JOB_NUMBER, JOB_NAME, JOB_USER, MESSAGE_TEXT
+        FROM QSYS2.MESSAGE_QUEUE_INFO
+    </statement>
+
+    <statement id="job.msgw.list">
+        SELECT JOB_NAME, JOB_USER, JOB_NUMBER, MESSAGE_ID, MESSAGE_TEXT,
+               MESSAGE_TYPE, SENDING_PROGRAM_NAME, DATE_SENT, TIME_SENT
+        FROM QSYS2.MESSAGE_QUEUE_INFO
+        WHERE MESSAGE_STATUS = 'READY' AND MESSAGE_TYPE IN ('ESCAPE', 'INQUIRY')
+    </statement>
+
+    <!-- ==================== Auth ==================== -->
+    <statement id="auth.user.query">
+        SELECT USER_NAME, GROUP_PROFILE, STATUS
+        FROM QSYS2.USER_INFO
+        WHERE USER_NAME = ?
+    </statement>
+
+    <statement id="auth.user.list.paged">
+        SELECT USER_NAME, STATUS, GROUP_PROFILE, TEXT_DESCRIPTION, LAST_USED_DATE
+        FROM QSYS2.USER_INFO ORDER BY USER_NAME FETCH FIRST 200 ROWS ONLY
+    </statement>
+
+    <statement id="auth.user.detail">
+        SELECT USER_NAME, STATUS, GROUP_PROFILE, TEXT_DESCRIPTION, LAST_USED_DATE,
+               PASSWORD_EXPIRE_DATE
+        FROM QSYS2.USER_INFO
+        WHERE USER_NAME = ?
+    </statement>
+
+    <statement id="auth.user.list.all">
+        SELECT AUTHORIZATION_NAME, GROUP_PROFILE_NAME
+        FROM QSYS2.USER_INFO
+        ORDER BY AUTHORIZATION_NAME
+    </statement>
+
+    <!-- ==================== Source ==================== -->
+    <statement id="source.library.list">
+        SELECT DISTINCT TABLE_SCHEMA FROM QSYS2.SYSTABLES
+        WHERE FILE_TYPE = 'S'
+        AND TABLE_SCHEMA NOT IN ('QSYS2','QTEMP','QSYS','QGPL')
+        ORDER BY TABLE_SCHEMA
+    </statement>
+
+    <statement id="source.file.list">
+        SELECT TABLE_NAME FROM QSYS2.SYSTABLES
+        WHERE TABLE_SCHEMA = ? AND FILE_TYPE = 'S'
+        ORDER BY TABLE_NAME
+    </statement>
+
+    <statement id="source.member.list">
+        SELECT MEMBER_NAME FROM QSYS2.SYSMEMBER
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+        ORDER BY MEMBER_NAME
+    </statement>
+
+    <statement id="source.member.content">
+        SELECT MEMBER_DEFINITION FROM QSYS2.SYSMEMBER
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND MEMBER_NAME = ?
+    </statement>
+
+    <!-- ==================== Object ==================== -->
+    <statement id="object.search.base">
+        SELECT OBJECT_NAME, OBJECT_TYPE, OBJECT_LIBRARY, OBJECT_SIZE, OBJECT_CREATION_TIMESTAMP
+        FROM QSYS2.OBJECT_STATISTICS WHERE OBJECT_LIBRARY = ?
+    </statement>
+
+    <statement id="object.detail">
+        SELECT OBJECT_NAME, OBJECT_TYPE, OBJECT_LIBRARY, OBJECT_SIZE,
+               OBJECT_CREATION_TIMESTAMP, OBJECT_CHANGE_TIMESTAMP, OBJECT_TEXT_DESCRIPTION,
+               OBJECT_OWNER, ASP_NAME
+        FROM QSYS2.OBJECT_STATISTICS
+        WHERE OBJECT_LIBRARY = ? AND OBJECT_NAME = ?
+    </statement>
+
+    <statement id="object.refs.outbound">
+        SELECT OBJECT_LIBRARY, OBJECT_NAME, OBJECT_TYPE, REF_OBJ_LIBRARY, REF_OBJ_NAME, REF_OBJ_TYPE
+        FROM QSYS2.OBJECT_STATISTICS
+        WHERE OBJECT_LIBRARY = ? AND OBJECT_NAME = ?
+        AND REF_OBJ_NAME IS NOT NULL FETCH FIRST 200 ROWS ONLY
+    </statement>
+
+    <statement id="object.refs.inbound">
+        SELECT OBJECT_LIBRARY, OBJECT_NAME, OBJECT_TYPE, REF_OBJ_LIBRARY, REF_OBJ_NAME, REF_OBJ_TYPE
+        FROM QSYS2.OBJECT_STATISTICS
+        WHERE REF_OBJ_LIBRARY = ? AND REF_OBJ_NAME = ?
+        FETCH FIRST 200 ROWS ONLY
+    </statement>
+
+    <statement id="object.authority.list">
+        SELECT AUTHORITY_HOLDER, AUTHORITY_HOLDER_TYPE, AUTHORITY
+        FROM QSYS2.OBJECT_PRIVILEGES
+        WHERE OBJECT_SCHEMA = ? AND OBJECT_NAME = ?
+    </statement>
+
+    <statement id="object.iff.list">
+        SELECT OBJECT_LIBRARY, OBJECT_NAME, OBJECT_TYPE, OBJECT_SIZE, OBJECT_CREATION_TIMESTAMP
+        FROM QSYS2.OBJECT_STATISTICS
+        WHERE OBJECT_LIBRARY = ? AND OBJECT_TYPE = '*STMF'
+    </statement>
+
+    <!-- ==================== Physical File ==================== -->
+    <statement id="pf.table.list">
+        SELECT TABLE_NAME, TABLE_SCHEMA, TABLE_TEXT
+        FROM QSYS2.SYSTABLES
+        WHERE TABLE_SCHEMA = ? AND FILE_TYPE = 'D' AND TABLE_TYPE = 'T'
+        ORDER BY TABLE_NAME
+    </statement>
+
+    <statement id="pf.column.list">
+        SELECT COLUMN_NAME, COLUMN_TYPE, LENGTH, NULLABLE
+        FROM QSYS2.SYSCOLUMNS
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+        ORDER BY ORDINAL_POSITION
+    </statement>
+
+    <statement id="pf.data.read">
+        SELECT * FROM {lib}.{tbl}
+    </statement>
+
+    <statement id="pf.count">
+        SELECT COUNT(*) AS CNT FROM {lib}.{tbl}
+    </statement>
+
+    <statement id="pf.storage.info">
+        SELECT DATA_SPACE_SIZE, NUMBER_MEMBERS FROM QSYS2.SYSTABLES
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+    </statement>
+
+    <statement id="pf.index.list">
+        SELECT INDEX_NAME FROM QSYS2.SYSINDEXES
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+    </statement>
+
+    <statement id="pf.member.count">
+        SELECT NUMBER_MEMBERS FROM QSYS2.SYSTABLES
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+    </statement>
+
+    <!-- ==================== DataArea ==================== -->
+    <statement id="dataarea.list">
+        SELECT DATA_AREA_LIBRARY, DATA_AREA_NAME, DATA_AREA_TYPE,
+               DATA_AREA_LENGTH, DATA_AREA_VALUE, DATA_AREA_DESCRIPTION
+        FROM QSYS2.DATA_AREA_INFO
+        WHERE DATA_AREA_LIBRARY = ?
+        FETCH FIRST 200 ROWS ONLY
+    </statement>
+
+    <statement id="dataarea.detail">
+        SELECT DATA_AREA_LIBRARY, DATA_AREA_NAME, DATA_AREA_TYPE,
+               DATA_AREA_LENGTH, DATA_AREA_VALUE, DATA_AREA_DESCRIPTION
+        FROM QSYS2.DATA_AREA_INFO
+        WHERE DATA_AREA_LIBRARY = ? AND DATA_AREA_NAME = ?
+    </statement>
+
+    <!-- ==================== Subsystem ==================== -->
+    <statement id="subsystem.list">
+        SELECT SUBSYSTEM_NAME, SUBSYSTEM_DESCRIPTION, STATUS,
+               ACTIVE_JOBS, MAX_ACTIVE_JOBS
+        FROM QSYS2.SUBSYSTEM_INFO
+    </statement>
+
+    <statement id="subsystem.list.detail">
+        SELECT SUBSYSTEM_NAME, SUBSYSTEM_DESCRIPTION, STATUS,
+               NUMBER_OF_ACTIVE_JOBS, MAXIMUM_ACTIVE_JOBS, SUBSYSTEM_LIBRARY
+        FROM QSYS2.SUBSYSTEM_INFO
+    </statement>
+
+    <!-- ==================== System Value ==================== -->
+    <statement id="sysval.list">
+        SELECT SYSTEM_VALUE_NAME, CURRENT_VALUE, VALUE_DESCRIPTION, SYSTEM_VALUE_TYPE
+        FROM QSYS2.SYSTEM_VALUE_INFO
+    </statement>
+
+    <!-- ==================== Message File ==================== -->
+    <statement id="msgfile.list.paged">
+        SELECT MESSAGE_FILE_NAME, MESSAGE_FILE_LIBRARY, NUMBER_OF_MESSAGES, MESSAGE_FILE_TEXT
+        FROM QSYS2.MESSAGE_FILE_INFO WHERE MESSAGE_FILE_LIBRARY = ?
+        FETCH FIRST 200 ROWS ONLY
+    </statement>
+
+    <statement id="msgfile.messages.desc">
+        SELECT MESSAGE_ID, MESSAGE_TEXT, SECOND_LEVEL_TEXT, SEVERITY
+        FROM QSYS2.MESSAGE_DESCRIPTION_INFO
+        WHERE MESSAGE_FILE_LIBRARY = ? AND MESSAGE_FILE_NAME = ?
+    </statement>
+
+    <!-- ==================== Object Graph ==================== -->
+    <statement id="object.graph">
+        SELECT OBJECT_LIBRARY, OBJECT_NAME, OBJECT_TYPE,
+               REF_OBJ_LIBRARY, REF_OBJ_NAME, REF_OBJ_TYPE
+        FROM QSYS2.OBJECT_STATISTICS
+        WHERE OBJECT_LIBRARY = ? AND REF_OBJ_NAME IS NOT NULL
+        FETCH FIRST 500 ROWS ONLY
+    </statement>
+
+    <!-- ==================== Message File ==================== -->
+    <statement id="msgfile.list">
+        SELECT MESSAGE_FILE_NAME, MESSAGE_FILE_LIBRARY, NUMBER_OF_MESSAGES, MESSAGE_FILE_TEXT
+        FROM QSYS2.MESSAGE_FILE_INFO
+    </statement>
+
+    <statement id="msgfile.messages">
+        SELECT MESSAGE_ID, MESSAGE_TEXT, SECOND_LEVEL_TEXT, SEVERITY
+        FROM QSYS2.MESSAGE_FILE_ENTRY
+        WHERE MESSAGE_FILE_NAME = ? AND MESSAGE_FILE_LIBRARY = ?
+    </statement>
+
+    <!-- ==================== User Profile ==================== -->
+    <statement id="user.profile.list">
+        SELECT USER_NAME, STATUS, GROUP_PROFILE, TEXT_DESCRIPTION,
+               LAST_USED_DATE, PASSWORD_EXPIRE_DATE
+        FROM QSYS2.USER_INFO
+        WHERE 1=1
+    </statement>
+
+    <!-- ==================== Job Log Info ==================== -->
+    <statement id="job.log.info">
+        SELECT ORDINAL_POSITION, MESSAGE_ID, MESSAGE_TYPE, MESSAGE_TEXT, MESSAGE_TIMESTAMP
+        FROM TABLE(QSYS2.JOBLOG_INFO('JOB', ?, '*JOBLOG')) X
+        ORDER BY ORDINAL_POSITION
+    </statement>
+
+    <statement id="job.msgw.detail.msgw">
+        SELECT MESSAGE_ID, MESSAGE_TYPE, MESSAGE_TEXT, REPLY_STATUS
+        FROM TABLE(QSYS2.MESSAGE_QUEUE_INFO('*JOB', ?)) X
+        WHERE REPLY_STATUS = 'MSGW'
+    </statement>
+
+    <!-- ==================== Job Message Detail ==================== -->
+    <statement id="job.sla.executions">
+        SELECT JOB_NUMBER, JOB_NAME, JOB_USER,
+               MIN(MESSAGE_TIMESTAMP) AS START_TS, MAX(MESSAGE_TIMESTAMP) AS END_TS
+        FROM TABLE(QSYS2.JOB_LOG_INFO(JOB_NAME_FILTER => '*ALL', JOB_USER_FILTER => '*ALL',
+               JOB_NUMBER_FILTER => '*ALL')) X
+        GROUP BY JOB_NUMBER, JOB_NAME, JOB_USER ORDER BY END_TS DESC FETCH FIRST 50 ROWS ONLY
+    </statement>
+
+    <statement id="job.dependencies">
+        SELECT JOB_NUMBER, JOB_NAME, JOB_USER, MESSAGE_TEXT
+        FROM TABLE(QSYS2.JOB_LOG_INFO(JOB_NAME_FILTER => '*ALL', JOB_USER_FILTER => '*ALL',
+               JOB_NUMBER_FILTER => '*ALL', MESSAGE_ID_FILTER => 'CPF1124')) X
+        FETCH FIRST 200 ROWS ONLY
+    </statement>
+
+    <statement id="job.history.log">
+        SELECT JOB_NAME, JOB_USER, JOB_NUMBER, MESSAGE_ID, MESSAGE_TEXT,
+               MESSAGE_TIMESTAMP, SEVERITY_NUMBER
+        FROM TABLE(QSYS2.HISTORY_LOG_INFO(JOB_NAME_FILTER => '*ALL')) X
+        WHERE 1=1
+    </statement>
+
+    <statement id="job.message.detail">
+        SELECT ORDINAL_POSITION, MESSAGE_ID, MESSAGE_TYPE, MESSAGE_TEXT, MESSAGE_TIMESTAMP
+        FROM QSYS2.MESSAGE_QUEUE_INFO
+        WHERE MESSAGE_QUEUE_NAME = ? AND MESSAGE_QUEUE_LIBRARY = ?
+        ORDER BY ORDINAL_POSITION
+    </statement>
+
+    <statement id="job.msgw.detail">
+        SELECT MESSAGE_ID, MESSAGE_TYPE, MESSAGE_TEXT, REPLY_STATUS
+        FROM QSYS2.MESSAGE_QUEUE_INFO
+        WHERE MESSAGE_QUEUE_NAME = ? AND MESSAGE_QUEUE_LIBRARY = ?
+        AND MESSAGE_STATUS = 'READY'
+    </statement>
+
+    <!-- ==================== Business Service ==================== -->
+    <statement id="business.table.schema.list">
+        SELECT TABLE_SCHEMA, TABLE_NAME, TABLE_TEXT FROM QSYS2.SYSTABLES WHERE 1=1
+    </statement>
+
+    <statement id="business.column.list">
+        SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, LENGTH, SCALE, IS_NULLABLE,
+               CHARACTER_MAXIMUM_LENGTH, COLUMN_DEFAULT, COLUMN_TEXT
+        FROM QSYS2.SYSCOLUMNS
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+        ORDER BY ORDINAL_POSITION
+    </statement>
+
+    <statement id="business.table.count">
+        SELECT COUNT(*) AS CNT FROM {lib}.{tbl} WHERE 1=1
+    </statement>
+
+    <statement id="business.table.data">
+        SELECT * FROM {lib}.{tbl} WHERE 1=1
+    </statement>
+
+    <!-- ==================== Inspection ==================== -->
+    <statement id="inspection.asp.info">
+        SELECT * FROM QSYS2.ASP_INFO
+    </statement>
+
+    <!-- ==================== Monitor Collectors ==================== -->
+    <statement id="monitor.cpu.util">
+        SELECT CPU_UTILIZATION FROM QSYS2.SYSTEM_STATUS_INFO
+    </statement>
+
+    <statement id="monitor.disk.asp">
+        SELECT ASP_NAME, TOTAL_SPACE, USED_SPACE FROM QSYS2.ASP_INFO
+    </statement>
+
+    <statement id="monitor.memory.util">
+        SELECT MAIN_STORAGE_USED_PERCENT FROM QSYS2.SYSTEM_STATUS_INFO
+    </statement>
+
+    <statement id="monitor.network.connections">
+        SELECT LOCAL_ADDRESS, REMOTE_ADDRESS, STATE FROM QSYS2.NETSTAT_INFO
+    </statement>
+
+    <statement id="monitor.printer.spool">
+        SELECT OUTPUT_QUEUE, OUTPUT_QUEUE_LIBRARY, SPOOLED_FILE_STATUS
+        FROM QSYS2.OUTPUT_QUEUE_INFO
+    </statement>
+
+    <statement id="monitor.active.job.count">
+        SELECT JOB_NAME FROM TABLE(QSYS2.ACTIVE_JOB_INFO()) X
+    </statement>
+
+    <statement id="monitor.msgw.count">
+        SELECT JOB_NAME FROM TABLE(QSYS2.ACTIVE_JOB_INFO()) X WHERE JOB_STATUS = 'MSGW'
+    </statement>
+
+    <statement id="monitor.lckw.count">
+        SELECT JOB_NAME FROM TABLE(QSYS2.ACTIVE_JOB_INFO()) X WHERE JOB_STATUS = 'LCKW'
+    </statement>
+
+    <statement id="monitor.asp.usage">
+        SELECT ASP_NAME, TOTAL_SPACE, USED_SPACE, AVAILABLE_SPACE
+        FROM QSYS2.ASP_INFO
+    </statement>
+</statements>

@@ -24,8 +24,8 @@ public class JwtProperties {
      */
     private String secret = "";
 
-    /** access token 有效期（毫秒），默认 24h */
-    private long expireMs = 86400000L;
+    /** access token 有效期（毫秒），默认 2h（P2-17：原 24h 偏长） */
+    private long expireMs = 7200000L;
 
     /** P2: Refresh token 有效期（毫秒），默认 7 天 */
     private long refreshExpireMs = 604800000L;

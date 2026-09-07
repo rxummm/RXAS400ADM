@@ -3,6 +3,7 @@ package com.rxas400adm.as400;
 import com.rxas400adm.as400.model.MessageDescriptor;
 import com.rxas400adm.as400.model.MessageFileRow;
 import com.rxas400adm.as400.model.MessageRow;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,9 +26,7 @@ class JTOpenMessageFileClient implements MessageFileClient {
     @Override
     public List<MessageFileRow> listMessageFiles(String library) {
         String lib = library == null || library.isBlank() ? "QSYS" : library.trim().toUpperCase();
-        return sqlClient.queryList("SELECT MESSAGE_FILE_NAME, MESSAGE_FILE_LIBRARY, NUMBER_OF_MESSAGES, MESSAGE_FILE_TEXT "
-                + "FROM QSYS2.MESSAGE_FILE_INFO WHERE MESSAGE_FILE_LIBRARY = ? "
-                + "FETCH FIRST 200 ROWS ONLY", lib).stream()
+        return sqlClient.queryList(SqlStatementRegistry.of("msgfile.list.paged"), lib).stream()
                 .map(r -> new MessageFileRow(str(r, "MESSAGE_FILE_NAME"), str(r, "MESSAGE_FILE_LIBRARY"),
                         lng(r, "NUMBER_OF_MESSAGES"), str(r, "MESSAGE_FILE_TEXT")))
                 .toList();
@@ -39,9 +38,7 @@ class JTOpenMessageFileClient implements MessageFileClient {
             return List.of();
         }
         String lib = library == null || library.isBlank() ? "QSYS" : library.trim().toUpperCase();
-        StringBuilder sql = new StringBuilder("SELECT MESSAGE_ID, MESSAGE_TEXT, SECOND_LEVEL_TEXT, SEVERITY ")
-                .append("FROM QSYS2.MESSAGE_DESCRIPTION_INFO ")
-                .append("WHERE MESSAGE_FILE_LIBRARY = ? AND MESSAGE_FILE_NAME = ?");
+        StringBuilder sql = new StringBuilder(SqlStatementRegistry.of("msgfile.messages.desc"));
         List<Object> params = new ArrayList<>();
         params.add(lib);
         params.add(file.trim().toUpperCase());

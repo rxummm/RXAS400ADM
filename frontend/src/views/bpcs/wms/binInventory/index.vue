@@ -28,6 +28,9 @@
 </template>
 
 <script setup lang="ts">
+//noinspection JSUnusedGlobalSymbols
+defineOptions({ name: 'WmsBinInventory' })
+
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { searchBinInventory, type BinInventory } from '@/api/wms'

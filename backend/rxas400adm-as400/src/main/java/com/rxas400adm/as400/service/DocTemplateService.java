@@ -52,7 +52,7 @@ public class DocTemplateService {
     public void updateTemplate(Long id, DocTemplateDTO dto, String operator) {
         DocTemplate template = templateMapper.selectById(id);
         if (template == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "文档模板不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Document template not found");
         }
         if (StringUtils.hasText(dto.getName())) {
             template.setName(dto.getName().trim());
@@ -71,6 +71,9 @@ public class DocTemplateService {
     }
 
     public void deleteTemplate(Long id) {
+        if (templateMapper.selectById(id) == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Doc template not found: " + id);
+        }
         templateMapper.deleteById(id);
     }
 

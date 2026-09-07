@@ -58,21 +58,21 @@ public class WebhookController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('WEBHOOK_MANAGE')")
-    @OperateLog(module = "Webhook", operation = "新增 Webhook")
+    @OperateLog(module = "Webhook", operation = "Create Webhook")
     public ApiResponse<WebhookConfigVO> create(@Valid @RequestBody WebhookConfigDTO config) {
         return ApiResponse.success(WebhookConfigVO.from(webhookService.create(config, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('WEBHOOK_MANAGE')")
-    @OperateLog(module = "Webhook", operation = "修改 Webhook")
+    @OperateLog(module = "Webhook", operation = "Update Webhook")
     public ApiResponse<WebhookConfigVO> update(@PathVariable Long id, @Valid @RequestBody WebhookConfigDTO dto) {
         return ApiResponse.success(WebhookConfigVO.from(webhookService.update(id, dto)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('WEBHOOK_MANAGE')")
-    @OperateLog(module = "Webhook", operation = "删除 Webhook")
+    @OperateLog(module = "Webhook", operation = "Delete Webhook")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         webhookService.delete(id);
         return ApiResponse.success(null);
@@ -80,7 +80,7 @@ public class WebhookController {
 
     @PutMapping("/{id}/enabled")
     @PreAuthorize("hasAuthority('WEBHOOK_MANAGE')")
-    @OperateLog(module = "Webhook", operation = "启停 Webhook")
+    @OperateLog(module = "Webhook", operation = "Toggle Webhook")
     public ApiResponse<WebhookConfigVO> toggle(@PathVariable Long id, @RequestParam Integer enabled) {
         return ApiResponse.success(WebhookConfigVO.from(webhookService.toggleEnabled(id, enabled)));
     }
@@ -88,10 +88,10 @@ public class WebhookController {
     /** 测试推送（不落发送日志） */
     @PostMapping("/{id}/test")
     @PreAuthorize("hasAuthority('WEBHOOK_MANAGE')")
-    @OperateLog(module = "Webhook", operation = "测试 Webhook")
+    @OperateLog(module = "Webhook", operation = "Test Webhook")
     public ApiResponse<WebhookTestResultVO> test(@PathVariable Long id,
-                                                  @RequestParam(defaultValue = "RXAS400 测试通知") String title,
-                                                  @RequestParam(defaultValue = "这是一条来自 RXAS400 平台的测试消息") String content) {
+                                                  @RequestParam(defaultValue = "RXAS400 Test Notification") String title,
+                                                  @RequestParam(defaultValue = "This is a test message from RXAS400 platform") String content) {
         boolean ok = webhookService.test(id, title, content);
         return ApiResponse.success(new WebhookTestResultVO(ok));
     }
@@ -99,7 +99,7 @@ public class WebhookController {
     /** 手动清理发送日志（保留最近 keepDays 天） */
     @DeleteMapping("/logs")
     @PreAuthorize("hasAuthority('WEBHOOK_MANAGE')")
-    @OperateLog(module = "Webhook", operation = "清理发送日志")
+    @OperateLog(module = "Webhook", operation = "Clean webhook logs")
     public ApiResponse<BatchDeleteResultVO> cleanLogs(@RequestParam(defaultValue = "30") int keepDays) {
         int deleted = webhookService.cleanLogs(keepDays);
         return ApiResponse.success(new BatchDeleteResultVO(deleted));

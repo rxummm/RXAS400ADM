@@ -5,9 +5,9 @@
         {{ $t('bpcs.cycleCount.createPlan') }}
       </el-button>
       <el-select v-model="statusFilter" class="w-120" :placeholder="$t('common.status')" clearable @change="loadPlans">
-        <el-option label="PENDING" value="PENDING" />
-        <el-option label="IN_PROGRESS" value="IN_PROGRESS" />
-        <el-option label="COMPLETED" value="COMPLETED" />
+        <el-option :label="$t('bpcs.cycleCount.statusPending')" value="PENDING" />
+        <el-option :label="$t('bpcs.cycleCount.statusInProgress')" value="IN_PROGRESS" />
+        <el-option :label="$t('bpcs.cycleCount.statusCompleted')" value="COMPLETED" />
       </el-select>
       <el-button @click="loadPlans">{{ $t('common.search') }}</el-button>
     </div>
@@ -56,9 +56,9 @@
         </el-form-item>
         <el-form-item :label="$t('bpcs.abcXyz.abcClass')">
           <el-select v-model="createForm.abcClass" clearable>
-            <el-option label="A" value="A" />
-            <el-option label="B" value="B" />
-            <el-option label="C" value="C" />
+            <el-option :label="$t('bpcs.abcXyz.classA')" value="A" />
+            <el-option :label="$t('bpcs.abcXyz.classB')" value="B" />
+            <el-option :label="$t('bpcs.abcXyz.classC')" value="C" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -91,7 +91,7 @@
 
 <script setup lang="ts">
 //noinspection JSUnusedGlobalSymbols
-defineOptions({ name: 'CycleCount' })
+defineOptions({ name: 'BpcsCycleCount' })
 
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'

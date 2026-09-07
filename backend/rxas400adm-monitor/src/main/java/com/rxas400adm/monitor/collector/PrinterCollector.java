@@ -2,6 +2,7 @@ package com.rxas400adm.monitor.collector;
 
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.monitor.domain.Metric;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +31,7 @@ public class PrinterCollector implements MetricCollector {
     public Metric collect(Long instanceId) {
         AS400Client client = clientProvider.forServer(instanceId);
         List<Map<String, Object>> rows = client.queryList(
-                "SELECT OUTPUT_QUEUE, OUTPUT_QUEUE_LIBRARY, SPOOLED_FILE_STATUS " +
-                        "FROM QSYS2.OUTPUT_QUEUE_INFO");
+                SqlStatementRegistry.of("monitor.printer.spool"));
         return Metric.builder()
                 .instanceId(instanceId)
                 .metricType("SYSTEM")

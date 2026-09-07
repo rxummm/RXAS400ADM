@@ -17,8 +17,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
+import com.rxas400adm.common.exception.BusinessException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -111,7 +113,7 @@ class MenuTreeServiceTest {
         assertEquals("tab", vos.get(0).children().get(0).title());
 
         when(userMapper.selectOne(any())).thenReturn(null);
-        assertEquals(0, service.userMenuTree("ghost").size());
+        assertThrows(BusinessException.class, () -> service.userMenuTree("ghost"));
     }
 
     @Test

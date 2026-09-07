@@ -195,7 +195,7 @@ async function handleSave() {
     } else {
       await createOpTemplate(form.value)
     }
-    ElMessage.success(t('common.save') + ' OK')
+    ElMessage.success(t('common.saveSuccess'))
     dialogVisible.value = false
     forceSearch()
   } catch {

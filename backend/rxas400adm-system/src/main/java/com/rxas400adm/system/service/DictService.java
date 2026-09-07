@@ -44,7 +44,7 @@ public class DictService implements IDictService {
         long exists = typeMapper.selectCount(new LambdaQueryWrapper<DictType>()
                 .eq(DictType::getCode, type.getCode()));
         if (exists > 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "字典编码已存在: " + type.getCode());
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Dict type code already exists: " + type.getCode());
         }
         if (type.getSort() == null) type.setSort(0);
         if (type.getStatus() == null) type.setStatus(1);
@@ -59,7 +59,7 @@ public class DictService implements IDictService {
     public DictType updateType(Long id, DictTypeDTO dto) {
         DictType type = typeMapper.selectById(id);
         if (type == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "字典类型不存在: " + id);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Dict type not found: " + id);
         }
         if (dto.getName() != null) type.setName(dto.getName());
         if (dto.getRemark() != null) type.setRemark(dto.getRemark());
@@ -74,7 +74,7 @@ public class DictService implements IDictService {
     public void deleteType(Long id) {
         DictType type = typeMapper.selectById(id);
         if (type == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "字典类型不存在: " + id);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Dict type not found: " + id);
         }
         itemMapper.delete(new LambdaQueryWrapper<DictItem>().eq(DictItem::getTypeCode, type.getCode()));
         typeMapper.deleteById(id);
@@ -107,7 +107,7 @@ public class DictService implements IDictService {
                 .eq(DictItem::getTypeCode, item.getTypeCode())
                 .eq(DictItem::getItemKey, item.getItemKey()));
         if (exists > 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "字典项已存在: " + item.getItemKey());
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Dict item already exists: " + item.getItemKey());
         }
         if (item.getSort() == null) item.setSort(0);
         if (item.getStatus() == null) item.setStatus(1);
@@ -122,7 +122,7 @@ public class DictService implements IDictService {
     public DictItem updateItem(Long id, DictItemDTO dto) {
         DictItem item = itemMapper.selectById(id);
         if (item == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "字典项不存在: " + id);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Dict item not found: " + id);
         }
         if (dto.getItemValue() != null) item.setItemValue(dto.getItemValue());
         if (dto.getSort() != null) item.setSort(dto.getSort());
@@ -134,6 +134,9 @@ public class DictService implements IDictService {
 
     
     public void deleteItem(Long id) {
+        if (itemMapper.selectById(id) == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Dict item not found: " + id);
+        }
         itemMapper.deleteById(id);
     }
 }

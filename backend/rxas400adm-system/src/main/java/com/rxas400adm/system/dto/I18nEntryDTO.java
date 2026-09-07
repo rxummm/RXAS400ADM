@@ -11,14 +11,17 @@ import lombok.Data;
 public class I18nEntryDTO {
 
     @NotBlank(message = "{validation.notBlank}")
-    @Schema(description = "国际化键", example = "menu.system")
+    @Schema(description = "i18n key", example = "menu.system")
     private String i18nKey;
 
     @NotBlank(message = "{validation.notBlank}")
-    @Schema(description = "语言", example = "zh-CN")
+    @Schema(description = "Language", example = "zh-CN")
     private String lang;
 
     @NotBlank(message = "{validation.notBlank}")
-    @Schema(description = "翻译文本", example = "系统管理")
+    @Schema(description = "Translation text", example = "System Management")
     private String text;
+
+    @Schema(description = "Module", example = "menu")
+    private String module;
 }

@@ -6,6 +6,7 @@ import com.rxas400adm.as400.entity.OrderSchedule;
 import com.rxas400adm.as400.mapper.OrderScheduleMapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.util.EntityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +40,7 @@ public class OrderScheduleServiceImpl implements IOrderScheduleService {
     public OrderSchedule get(Long id) {
         OrderSchedule s = mapper.selectById(id);
         if (s == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "排程不存在: " + id);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Schedule not found: " + id);
         }
         return s;
     }
@@ -63,14 +64,14 @@ public class OrderScheduleServiceImpl implements IOrderScheduleService {
     @Override
     public OrderSchedule update(OrderScheduleDTO dto) {
         if (dto.getOrno() == null) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "订单号不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Order number is required");
         }
         LambdaQueryWrapper<OrderSchedule> qw = new LambdaQueryWrapper<>();
         qw.eq(OrderSchedule::getCono, dto.getCono() != null ? dto.getCono() : "001");
         qw.eq(OrderSchedule::getOrno, dto.getOrno());
         OrderSchedule s = mapper.selectOne(qw);
         if (s == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "排程不存在: " + dto.getOrno());
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Schedule not found: " + dto.getOrno());
         }
         if (dto.getStartDate() != null) s.setStartDate(dto.getStartDate());
         if (dto.getEndDate() != null) s.setEndDate(dto.getEndDate());
@@ -83,6 +84,7 @@ public class OrderScheduleServiceImpl implements IOrderScheduleService {
 
     @Override
     public void delete(Long id) {
+        EntityUtil.require(id, "Order Schedule", mapper::selectById);
         mapper.deleteById(id);
     }
 }

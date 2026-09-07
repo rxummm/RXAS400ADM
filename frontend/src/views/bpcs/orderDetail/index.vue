@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
 //noinspection JSUnusedGlobalSymbols
-defineOptions({ name: 'OrderDetailEnhanced' })
+defineOptions({ name: 'BpcsOrderDetail' })
 
 import { ref } from 'vue'
 import { getOrderLineDetails, getOrderTimeline, type OrderLineDetail, type OrderTimelineEvent } from '@/api/bpcs'

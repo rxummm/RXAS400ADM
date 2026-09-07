@@ -39,11 +39,12 @@ class JTOpenConnectionState {
      * P1：连接池参数默认值（对应约定 rxas400.as400.pool.max-size 等）。
      * 本类由 new JTOpenConnectionState(host,user,password) 构造（非 Spring bean，无注入通道，
      * 上游构造链在 JTOpenAS400Client/AS400ClientProviderImpl），暂以常量承载默认值。
+     * 可通过 JVM 系统属性覆盖（如 -Drxas400.pool.max-size=16）。
      */
-    private static final int POOL_MAX_SIZE = 8;
-    private static final int POOL_MIN_IDLE = 2;
-    private static final long POOL_CONNECTION_TIMEOUT_MS = 30_000L;
-    private static final long POOL_MAX_LIFETIME_MS = 25 * 60 * 1000L;
+    private static final int POOL_MAX_SIZE = Integer.getInteger("rxas400.pool.max-size", 8);
+    private static final int POOL_MIN_IDLE = Integer.getInteger("rxas400.pool.min-idle", 2);
+    private static final long POOL_CONNECTION_TIMEOUT_MS = Long.getLong("rxas400.pool.connection-timeout-ms", 30_000L);
+    private static final long POOL_MAX_LIFETIME_MS = Long.getLong("rxas400.pool.max-lifetime-ms", 25 * 60 * 1000L);
 
     /** P1：按实例惰性创建的 JDBC 连接池——替代「每次 getConnection 物理新建连接（TCP+signon 握手）」 */
     private volatile HikariDataSource pooledDataSource;
@@ -60,7 +61,7 @@ class JTOpenConnectionState {
 
     AS400 connect() {
         if (host == null || host.isBlank()) {
-            throw new BusinessException(ErrorCode.AS400_HOST_NOT_CONFIGURED, "未配置 IBM i 主机地址");
+            throw new BusinessException(ErrorCode.AS400_HOST_NOT_CONFIGURED, "IBM i host address not configured");
         }
         AS400 cached = shared;
         if (cached != null && cached.isConnected(AS400.COMMAND)) {
@@ -82,7 +83,8 @@ class JTOpenConnectionState {
             } catch (Exception e) {
                 try {
                     fresh.disconnectAllServices();
-                } catch (Exception ignored) {
+                } catch (Exception e2) {
+                    log.debug("Disconnect during connect cleanup failed: {}", e2.getMessage());
                 }
                 shared = null;
                 throw new BusinessException(ErrorCode.AS400_CONNECTION_FAILED,
@@ -100,7 +102,8 @@ class JTOpenConnectionState {
             if (system != null) {
                 try {
                     system.disconnectAllServices();
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    log.debug("Disconnect during invalidate failed: {}", e.getMessage());
                 }
             }
         }
@@ -116,7 +119,8 @@ class JTOpenConnectionState {
             if (shared != null) {
                 try {
                     shared.disconnectAllServices();
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    log.debug("Disconnect during disconnect failed: {}", e.getMessage());
                 }
                 shared = null;
             }
@@ -244,7 +248,7 @@ class JTOpenConnectionState {
         String v = value == null ? "" : value.trim().toUpperCase();
         if (!IDENTIFIER.matcher(v).matches()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST,
-                    label + " 只能是字母/数字/下划线/$/#/@ 等合法标识符");
+                    label + " must be a valid identifier (letters/digits/underscore/$/#/@)");
         }
         return v;
     }

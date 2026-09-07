@@ -5,6 +5,13 @@ import { useUserStore, type MenuItem } from '@/stores/user'
 import Layout from '@/layout/index.vue'
 import i18n from '@/i18n'
 
+import monitorRoutes from './modules/monitor'
+import jobRoutes from './modules/job'
+import as400Routes from './modules/as400'
+import bpcsRoutes from './modules/bpcs'
+import systemRoutes from './modules/system'
+import toolRoutes from './modules/tool'
+
 NProgress.configure({
   showSpinner: false,
   speed: 400,
@@ -38,684 +45,12 @@ const router = createRouter({
       component: Layout,
       redirect: '/dashboard',
       children: [
-        {
-          path: 'dashboard',
-          name: 'Dashboard',
-          component: () => import('@/views/Dashboard.vue'),
-          meta: { title: 'menu.dashboard' },
-        },
-        {
-          path: 'monitor',
-          name: 'Monitor',
-          component: () => import('@/views/Monitor.vue'),
-          meta: { title: 'menu.monitor', cached: true },
-        },
-        {
-          path: 'monitor/alert-rules',
-          name: 'AlertRules',
-          component: () => import('@/views/monitor/alertRules/index.vue'),
-          meta: { title: 'menu.alertRules', cached: true },
-        },
-        {
-          path: 'jobs',
-          name: 'Jobs',
-          component: () => import('@/views/job/index.vue'),
-          meta: { title: 'menu.jobs', cached: true },
-        },
-        {
-          path: 'query',
-          name: 'Query',
-          component: () => import('@/views/query/index.vue'),
-          meta: { title: 'menu.query', cached: true },
-        },
-        {
-          path: 'assets',
-          name: 'Assets',
-          component: () => import('@/views/assets/index.vue'),
-          meta: { title: 'menu.assets', cached: true },
-        },
-        {
-          path: 'objects',
-          name: 'Objects',
-          component: () => import('@/views/objects/index.vue'),
-          meta: { title: 'menu.objects', cached: true },
-        },
-        {
-          path: 'schedules',
-          name: 'Schedules',
-          component: () => import('@/views/schedule/index.vue'),
-          meta: { title: 'menu.schedules', cached: true },
-        },
-        {
-          path: 'scripts',
-          name: 'Scripts',
-          component: () => import('@/views/scripts/index.vue'),
-          meta: { title: 'menu.scripts', cached: true },
-        },
-        {
-          path: 'ifs',
-          name: 'Ifs',
-          component: () => import('@/views/ifs/index.vue'),
-          meta: { title: 'menu.ifs', cached: true },
-        },
-        {
-          path: 'subsystems',
-          name: 'Subsystems',
-          component: () => import('@/views/subsystems/index.vue'),
-          meta: { title: 'menu.subsystems', cached: true },
-        },
-        {
-          path: 'executions',
-          name: 'Executions',
-          component: () => import('@/views/executions/index.vue'),
-          meta: { title: 'menu.executions', cached: true },
-        },
-        {
-          path: 'pf',
-          name: 'Pf',
-          component: () => import('@/views/pf/index.vue'),
-          meta: { title: 'menu.pf', cached: true },
-        },
-        {
-          path: 'audit',
-          name: 'Audit',
-          component: () => import('@/views/audit/index.vue'),
-          meta: { title: 'menu.audit', cached: true },
-        },
-        {
-          path: 'health',
-          name: 'Health',
-          component: () => import('@/views/health/index.vue'),
-          meta: { title: 'menu.health', cached: true },
-        },
-        {
-          path: 'topology',
-          name: 'Topology',
-          component: () => import('@/views/topology/index.vue'),
-          meta: { title: 'menu.topology', cached: true },
-        },
-        {
-          path: 'table-fields',
-          name: 'TableFields',
-          component: () => import('@/views/data/tableFields/index.vue'),
-          meta: { title: 'menu.tableFields', cached: true },
-        },
-        {
-          path: 'message-files',
-          name: 'MessageFiles',
-          component: () => import('@/views/data/messageFiles/index.vue'),
-          meta: { title: 'menu.messageFiles', cached: true },
-        },
-        {
-          path: 'sysvals',
-          name: 'Sysvals',
-          component: () => import('@/views/data/sysvals/index.vue'),
-          meta: { title: 'menu.sysvals', cached: true },
-        },
-        {
-          path: 'data-areas',
-          name: 'DataAreas',
-          component: () => import('@/views/data/dataAreas/index.vue'),
-          meta: { title: 'menu.dataAreas', cached: true },
-        },
-        {
-          path: 'server-compare',
-          name: 'ServerCompare',
-          component: () => import('@/views/monitor/serverCompare/index.vue'),
-          meta: { title: 'menu.serverCompare', cached: true },
-        },
-        {
-          path: 'inspection',
-          name: 'Inspection',
-          component: () => import('@/views/monitor/inspection/index.vue'),
-          meta: { title: 'menu.inspection', cached: true },
-        },
-        {
-          path: 'metrics',
-          name: 'Metrics',
-          component: () => import('@/views/monitor/metrics/index.vue'),
-          meta: { title: 'menu.metrics', cached: true },
-        },
-        {
-          path: 'job-sla',
-          name: 'JobSla',
-          component: () => import('@/views/job/sla/index.vue'),
-          meta: { title: 'menu.jobSla', cached: true },
-        },
-        {
-          path: 'job-dependency',
-          name: 'JobDependency',
-          component: () => import('@/views/job/dependency/index.vue'),
-          meta: { title: 'menu.jobDependency', cached: true },
-        },
-        {
-          // 【第六章·P1】BPCS 客户订单时间轴（AS400 业务增强首期）
-          path: 'bpcs-order',
-          name: 'BpcsOrder',
-          component: () => import('@/views/bpcs/order/index.vue'),
-          meta: { title: 'menu.bpcsOrder', cached: true },
-        },
-        {
-          // 【P2】BPCS 客户档案（Master-Detail 分栏布局）
-          path: 'bpcs-customer',
-          name: 'BpcsCustomer',
-          component: () => import('@/views/bpcs/customer/index.vue'),
-          meta: { title: 'menu.bpcsCustomer', cached: true },
-        },
-        {
-          // 【P2】BPCS 库存可用量（汇总卡片 + 可展开表格）
-          path: 'bpcs-inventory',
-          name: 'BpcsInventory',
-          component: () => import('@/views/bpcs/inventory/index.vue'),
-          meta: { title: 'menu.bpcsInventory', cached: true },
-        },
-        {
-          // 【P2】BPCS 发运看板（四列 Kanban）
-          path: 'bpcs-shipping',
-          name: 'BpcsShipping',
-          component: () => import('@/views/bpcs/shipping/index.vue'),
-          meta: { title: 'menu.bpcsShipping', cached: true },
-        },
-        {
-          // 【P2】BPCS 发票轨迹（Timeline + Tab）
-          path: 'bpcs-invoice',
-          name: 'BpcsInvoice',
-          component: () => import('@/views/bpcs/invoice/index.vue'),
-          meta: { title: 'menu.bpcsInvoice', cached: true },
-        },
-        {
-          // 【P2】BPCS 销售趋势（ECharts 柱线混合）
-          path: 'bpcs-sales',
-          name: 'BpcsSales',
-          component: () => import('@/views/bpcs/sales/index.vue'),
-          meta: { title: 'menu.bpcsSales', cached: true },
-        },
-        {
-          // 【P2】BPCS 采购订单（标准搜索表格）
-          path: 'bpcs-purchase',
-          name: 'BpcsPurchase',
-          component: () => import('@/views/bpcs/purchase/index.vue'),
-          meta: { title: 'menu.bpcsPurchase', cached: true },
-        },
-        {
-          // 【P2】BPCS 物料主档（左侧列表 + 右侧多 Tab 详情）
-          path: 'bpcs-item',
-          name: 'BpcsItem',
-          component: () => import('@/views/bpcs/item/index.vue'),
-          meta: { title: 'menu.bpcsItem', cached: true },
-        },
-        {
-          // 供应链增强：订单列表搜索
-          path: 'bpcs-order-list',
-          name: 'BpcsOrderList',
-          component: () => import('@/views/bpcs/orderList/index.vue'),
-          meta: { title: 'menu.bpcsOrderList', cached: true },
-        },
-        {
-          // 供应链增强：库存预警
-          path: 'bpcs-inventory-alert',
-          name: 'BpcsInventoryAlert',
-          component: () => import('@/views/bpcs/inventoryAlert/index.vue'),
-          meta: { title: 'menu.bpcsInventoryAlert', cached: true },
-        },
-        {
-          path: 'bpcs-sales-analysis',
-          name: 'BpcsSalesAnalysis',
-          component: () => import('@/views/bpcs/salesAnalysis/index.vue'),
-          meta: { title: 'menu.bpcsSalesAnalysis', cached: true },
-        },
-        {
-          path: 'bpcs-inventory-history',
-          name: 'BpcsInventoryHistory',
-          component: () => import('@/views/bpcs/inventoryHistory/index.vue'),
-          meta: { title: 'menu.bpcsInventoryHistory', cached: true },
-        },
-        {
-          path: 'bpcs-purchase-receiving',
-          name: 'BpcsPurchaseReceiving',
-          component: () => import('@/views/bpcs/purchaseReceiving/index.vue'),
-          meta: { title: 'menu.bpcsPurchaseReceiving', cached: true },
-        },
-        {
-          path: 'bpcs-shipping-list',
-          name: 'BpcsShippingList',
-          component: () => import('@/views/bpcs/shippingList/index.vue'),
-          meta: { title: 'menu.bpcsShippingList', cached: true },
-        },
-        {
-          path: 'bpcs-abc-analysis',
-          name: 'BpcsAbcAnalysis',
-          component: () => import('@/views/bpcs/abcAnalysis/index.vue'),
-          meta: { title: 'menu.bpcsAbcAnalysis', cached: true },
-        },
-        {
-          path: 'bpcs-supplier-perf',
-          name: 'BpcsSupplierPerf',
-          component: () => import('@/views/bpcs/supplierPerf/index.vue'),
-          meta: { title: 'menu.bpcsSupplierPerf', cached: true },
-        },
-        {
-          path: 'bpcs-kpi',
-          name: 'BpcsKpi',
-          component: () => import('@/views/bpcs/kpi/index.vue'),
-          meta: { title: 'menu.bpcsKpi', cached: true },
-        },
-        {
-          path: 'bpcs-order-tracking',
-          name: 'BpcsOrderTracking',
-          component: () => import('@/views/bpcs/orderTracking/index.vue'),
-          meta: { title: 'menu.bpcsOrderTracking', cached: true },
-        },
-        // ===== ㊲ ABC/XYZ 矩阵 =====
-        {
-          path: 'bpcs-abc-xyz',
-          name: 'BpcsAbcXyz',
-          component: () => import('@/views/bpcs/abcXyz/index.vue'),
-          meta: { title: 'menu.bpcsAbcXyz', cached: true },
-        },
-        // ===== ⑳ 客户 360° 视图 =====
-        {
-          path: 'bpcs-customer-overview',
-          name: 'BpcsCustomerOverview',
-          component: () => import('@/views/bpcs/customerOverview/index.vue'),
-          meta: { title: 'menu.bpcsCustomerOverview', cached: true },
-        },
-        // ===== ㉙ 循环盘点 =====
-        {
-          path: 'bpcs-cycle-count',
-          name: 'BpcsCycleCount',
-          component: () => import('@/views/bpcs/cycleCount/index.vue'),
-          meta: { title: 'menu.bpcsCycleCount', cached: true },
-        },
-        // ===== ⑩⑬ 订单分析（履行率+OTD） =====
-        {
-          path: 'bpcs-order-analytics',
-          name: 'BpcsOrderAnalytics',
-          component: () => import('@/views/bpcs/orderAnalytics/index.vue'),
-          meta: { title: 'menu.bpcsOrderAnalytics', cached: true },
-        },
-        // ===== ⑰ 订单详情增强 =====
-        {
-          path: 'bpcs-order-detail',
-          name: 'BpcsOrderDetail',
-          component: () => import('@/views/bpcs/orderDetail/index.vue'),
-          meta: { title: 'menu.bpcsOrderDetail', cached: true },
-        },
-        // ===== ⑥ 预测补货看板 =====
-        {
-          path: 'bpcs-forecast',
-          name: 'BpcsForecast',
-          component: () => import('@/views/bpcs/forecast/index.vue'),
-          meta: { title: 'menu.bpcsForecast', cached: true },
-        },
-        // ===== Batch 2: 核心能力建设 =====
-        {
-          path: 'bpcs-anomaly',
-          name: 'BpcsAnomaly',
-          component: () => import('@/views/bpcs/anomaly/index.vue'),
-          meta: { title: 'menu.bpcsAnomaly', cached: true },
-        },
-        {
-          path: 'bpcs-bom',
-          name: 'BpcsBom',
-          component: () => import('@/views/bpcs/bom/index.vue'),
-          meta: { title: 'menu.bpcsBom', cached: true },
-        },
-        {
-          path: 'bpcs-shipment-mgmt',
-          name: 'BpcsShipmentMgmt',
-          component: () => import('@/views/bpcs/shipmentMgmt/index.vue'),
-          meta: { title: 'menu.bpcsShipmentMgmt', cached: true },
-        },
-        {
-          path: 'bpcs-rcmx',
-          name: 'BpcsRcmx',
-          component: () => import('@/views/bpcs/rcmx/index.vue'),
-          meta: { title: 'menu.bpcsRcmx', cached: true },
-        },
-        // ===== Batch 3: 深度优化 =====
-        {
-          path: 'bpcs-wabp',
-          name: 'BpcsWabp',
-          component: () => import('@/views/bpcs/wabp/index.vue'),
-          meta: { title: 'menu.bpcsWabp', cached: true },
-        },
-        {
-          path: 'bpcs-location-inv',
-          name: 'BpcsLocationInv',
-          component: () => import('@/views/bpcs/locationInv/index.vue'),
-          meta: { title: 'menu.bpcsLocationInv', cached: true },
-        },
-        {
-          path: 'bpcs-replenishment',
-          name: 'BpcsReplenishment',
-          component: () => import('@/views/bpcs/replenishment/index.vue'),
-          meta: { title: 'menu.bpcsReplenishment', cached: true },
-        },
-        {
-          path: 'bpcs-alert-engine',
-          name: 'BpcsAlertEngine',
-          component: () => import('@/views/bpcs/alertEngine/index.vue'),
-          meta: { title: 'menu.bpcsAlertEngine', cached: true },
-        },
-        {
-          path: 'bpcs-stock-value',
-          name: 'BpcsStockValue',
-          component: () => import('@/views/bpcs/stockValue/index.vue'),
-          meta: { title: 'menu.bpcsStockValue', cached: true },
-        },
-        // ===== Batch 4: 扩展功能 =====
-        {
-          path: 'bpcs-supplier-score',
-          name: 'BpcsSupplierScore',
-          component: () => import('@/views/bpcs/supplierScore/index.vue'),
-          meta: { title: 'menu.bpcsSupplierScore', cached: true },
-        },
-        {
-          path: 'bpcs-po-lifecycle',
-          name: 'BpcsPoLifecycle',
-          component: () => import('@/views/bpcs/poLifecycle/index.vue'),
-          meta: { title: 'menu.bpcsPoLifecycle', cached: true },
-        },
-        {
-          path: 'bpcs-credit-hold',
-          name: 'BpcsCreditHold',
-          component: () => import('@/views/bpcs/creditHold/index.vue'),
-          meta: { title: 'menu.bpcsCreditHold', cached: true },
-        },
-        {
-          path: 'bpcs-kanban',
-          name: 'BpcsKanban',
-          component: () => import('@/views/bpcs/kanban/index.vue'),
-          meta: { title: 'menu.bpcsKanban', cached: true },
-        },
-        {
-          path: 'bpcs-transport-dashboard',
-          name: 'BpcsTransportDashboard',
-          component: () => import('@/views/bpcs/transportDashboard/index.vue'),
-          meta: { title: 'menu.bpcsTransportDashboard', cached: true },
-        },
-        // ===== Batch 5: 长期规划 =====
-        {
-          path: 'bpcs-order-template',
-          name: 'BpcsOrderTemplate',
-          component: () => import('@/views/bpcs/orderTemplate/index.vue'),
-          meta: { title: 'menu.bpcsOrderTemplate', cached: true },
-        },
-        {
-          path: 'bpcs-order-copy',
-          name: 'BpcsOrderCopy',
-          component: () => import('@/views/bpcs/orderCopy/index.vue'),
-          meta: { title: 'menu.bpcsOrderCopy', cached: true },
-        },
-        {
-          path: 'bpcs-order-change',
-          name: 'BpcsOrderChange',
-          component: () => import('@/views/bpcs/orderChange/index.vue'),
-          meta: { title: 'menu.bpcsOrderChange', cached: true },
-        },
-        {
-          path: 'bpcs-order-report',
-          name: 'BpcsOrderReport',
-          component: () => import('@/views/bpcs/orderReport/index.vue'),
-          meta: { title: 'menu.bpcsOrderReport', cached: true },
-        },
-        {
-          path: 'bpcs-rma',
-          name: 'BpcsRma',
-          component: () => import('@/views/bpcs/rma/index.vue'),
-          meta: { title: 'menu.bpcsRma', cached: true },
-        },
-        {
-          path: 'bpcs-order-schedule',
-          name: 'BpcsOrderSchedule',
-          component: () => import('@/views/bpcs/orderSchedule/index.vue'),
-          meta: { title: 'menu.bpcsOrderSchedule', cached: true },
-        },
-        // ===== Batch 6: 运费核算 / 库存模拟 / 订单协同 =====
-        {
-          path: 'bpcs-freight-cost',
-          name: 'BpcsFreightCost',
-          component: () => import('@/views/bpcs/freightCost/index.vue'),
-          meta: { title: 'menu.bpcsFreightCost', cached: true },
-        },
-        {
-          path: 'bpcs-inventory-sim',
-          name: 'BpcsInventorySim',
-          component: () => import('@/views/bpcs/inventorySim/index.vue'),
-          meta: { title: 'menu.bpcsInventorySim', cached: true },
-        },
-        {
-          path: 'bpcs-order-collab',
-          name: 'BpcsOrderCollab',
-          component: () => import('@/views/bpcs/orderCollab/index.vue'),
-          meta: { title: 'menu.bpcsOrderCollab', cached: true },
-        },
-        {
-          path: 'bpcs-wh-replenish',
-          name: 'BpcsWhReplenish',
-          component: () => import('@/views/bpcs/warehouseReplenish/index.vue'),
-          meta: { title: 'menu.bpcsWhReplenish', cached: true },
-        },
-        {
-          path: 'bpcs/wms/overview',
-          name: 'WmsOverview',
-          component: () => import('@/views/bpcs/wms/overview/index.vue'),
-          meta: { title: 'menu.wmsOverview', cached: true },
-        },
-        {
-          path: 'bpcs/wms/binInventory',
-          name: 'WmsBinInventory',
-          component: () => import('@/views/bpcs/wms/binInventory/index.vue'),
-          meta: { title: 'menu.wmsBinInventory', cached: true },
-        },
-        {
-          path: 'bpcs/wms/pickPath',
-          name: 'WmsPickPath',
-          component: () => import('@/views/bpcs/wms/pickPath/index.vue'),
-          meta: { title: 'menu.wmsPickPath', cached: true },
-        },
-        {
-          path: 'bpcs/wms/batchTracking',
-          name: 'WmsBatchTracking',
-          component: () => import('@/views/bpcs/wms/batchTracking/index.vue'),
-          meta: { title: 'menu.wmsBatchTracking', cached: true },
-        },
-        {
-          path: 'bpcs/wms/movementHistory',
-          name: 'WmsMovementHistory',
-          component: () => import('@/views/bpcs/wms/movementHistory/index.vue'),
-          meta: { title: 'menu.wmsMovementHistory', cached: true },
-        },
-        {
-          path: 'reports',
-          name: 'Reports',
-          component: () => import('@/views/report/index.vue'),
-          meta: { title: 'menu.reports', cached: true },
-        },
-        {
-          path: 'report/builder',
-          name: 'ReportBuilder',
-          component: () => import('@/views/report/ReportBuilder.vue'),
-          meta: { title: 'menu.reportBuilder', cached: true },
-        },
-        {
-          path: 'docs',
-          name: 'Docs',
-          component: () => import('@/views/docs/index.vue'),
-          meta: { title: 'menu.docs', cached: true },
-        },
-        {
-          path: 'flowcharts',
-          name: 'Flowcharts',
-          component: () => import('@/views/flowcharts/index.vue'),
-          meta: { title: 'menu.flowcharts', cached: true },
-        },
-        {
-          path: 'source',
-          name: 'Source',
-          component: () => import('@/views/Source.vue'),
-          meta: { title: 'menu.source', cached: true, cacheName: 'SourceManager' },
-        },
-        {
-          path: 'users',
-          name: 'Users',
-          component: () => import('@/views/system/Users.vue'),
-          meta: { title: 'menu.users', cached: true },
-        },
-        {
-          path: 'user-profiles',
-          name: 'UserProfiles',
-          component: () => import('@/views/system/userProfiles/index.vue'),
-          meta: { title: 'menu.userProfiles', cached: true },
-        },
-        {
-          path: 'as400/user-profiles',
-          name: 'UserProfileManagement',
-          component: () => import('@/views/as400/userProfiles/index.vue'),
-          meta: { title: 'menu.userProfileManagement', cached: true },
-        },
-        {
-          path: 'roles',
-          name: 'Roles',
-          component: () => import('@/views/system/roles/index.vue'),
-          meta: { title: 'menu.roles', cached: true },
-        },
-        {
-          path: 'menus',
-          name: 'Menus',
-          component: () => import('@/views/system/menus/index.vue'),
-          meta: { title: 'menu.menus', cached: true },
-        },
-        {
-          path: 'system/config',
-          name: 'SysConfig',
-          component: () => import('@/views/system/config/index.vue'),
-          meta: { title: 'menu.config', cached: true },
-        },
-        {
-          path: 'system/i18n',
-          name: 'SysI18n',
-          component: () => import('@/views/system/i18n/index.vue'),
-          meta: { title: 'menu.i18n', cached: true },
-        },
-        {
-          path: 'system/login-log',
-          name: 'LoginLog',
-          component: () => import('@/views/system/loginLog/index.vue'),
-          meta: { title: 'menu.loginLog', cached: true },
-        },
-        {
-          path: 'system/cache',
-          name: 'SysCache',
-          component: () => import('@/views/system/cache/index.vue'),
-          meta: { title: 'menu.cache', cached: true },
-        },
-        {
-          path: 'system/tasks',
-          name: 'SysTasks',
-          component: () => import('@/views/system/tasks/index.vue'),
-          meta: { title: 'menu.tasks', cached: true },
-        },
-        {
-          path: 'system/ip-rules',
-          name: 'IpRules',
-          component: () => import('@/views/system/ipRules/index.vue'),
-          meta: { title: 'menu.ipRules', cached: true },
-        },
-        {
-          path: 'system/webhooks',
-          name: 'Webhooks',
-          component: () => import('@/views/system/webhooks/index.vue'),
-          meta: { title: 'menu.webhooks', cached: true },
-        },
-        {
-          path: 'sys-docs',
-          name: 'SysDocs',
-          component: () => import('@/views/sysDocs/index.vue'),
-          meta: { title: 'menu.sysDocs', cached: true },
-        },
-        {
-          path: 'system/permission-request',
-          name: 'PermissionRequest',
-          component: () => import('@/views/system/permissionRequest/index.vue'),
-          meta: { title: 'menu.permissionRequest', cached: true },
-        },
-        {
-          path: 'system/notices',
-          name: 'Notice',
-          component: () => import('@/views/system/notice/index.vue'),
-          meta: { title: 'menu.notices', cached: true },
-        },
-        {
-          path: 'system/notifications',
-          name: 'Notifications',
-          component: () => import('@/views/system/notifications/index.vue'),
-          meta: { title: 'menu.notifications', cached: true },
-        },
-        {
-          path: 'system/permissions',
-          name: 'SysPermissions',
-          component: () => import('@/views/system/permissions/index.vue'),
-          // P3-1：cacheName 与组件 defineOptions.name('Permissions') 对齐，否则 keep-alive 缓存静默失效
-          meta: { title: 'menu.permissions', cached: true, cacheName: 'Permissions' },
-        },
-        {
-          path: 'system/dict',
-          name: 'SysDict',
-          component: () => import('@/views/system/dict/index.vue'),
-          // P2-24：cacheName 与组件 defineOptions.name('DictManage') 对齐，否则 keep-alive 缓存静默失效
-          meta: { title: 'menu.dict', cached: true, cacheName: 'DictManage' },
-        },
-        {
-          path: 'system/params',
-          name: 'SysParams',
-          component: () => import('@/views/system/params/index.vue'),
-          // P2-24：cacheName 与组件 defineOptions.name('Params') 对齐
-          meta: { title: 'menu.params', cached: true, cacheName: 'Params' },
-        },
-        {
-          path: 'system/email-config',
-          name: 'EmailConfig',
-          component: () => import('@/views/system/emailConfig/index.vue'),
-          meta: { title: 'menu.emailConfig', cached: true },
-        },
-        {
-          path: 'system/email-groups',
-          name: 'EmailGroups',
-          component: () => import('@/views/system/emailGroups/index.vue'),
-          meta: { title: 'menu.emailGroups', cached: true },
-        },
-        {
-          path: 'system/email-log',
-          name: 'EmailLog',
-          component: () => import('@/views/system/emailLog/index.vue'),
-          meta: { title: 'menu.emailLog', cached: true },
-        },
-        {
-          path: 'mail/compose',
-          name: 'Compose',
-          component: () => import('@/views/mail/compose.vue'),
-          meta: { title: 'menu.compose', cached: true },
-        },
-        {
-          path: 'region',
-          name: 'Region',
-          component: () => import('@/views/tool/region/index.vue'),
-          meta: { title: 'menu.region', cached: true, cacheName: 'RegionManage' },
-        },
-        {
-          path: 'calendar',
-          name: 'Calendar',
-          component: () => import('@/views/calendar/index.vue'),
-          meta: { title: 'menu.calendar', cached: true },
-        },
-        {
-          path: 'biz-data',
-          name: 'BizData',
-          component: () => import('@/views/biz/data/index.vue'),
-          meta: { title: 'menu.bizData', cached: true },
-        },
+        ...monitorRoutes,
+        ...jobRoutes,
+        ...as400Routes,
+        ...bpcsRoutes,
+        ...systemRoutes,
+        ...toolRoutes,
       ],
     },
     {
@@ -734,6 +69,38 @@ const PROTECTED_PATHS = new Set(
     .map(r => r.path)
 )
 
+/**
+ * Phase 3b：从后端菜单树收集 path → { cached, cacheName } 映射，
+ * 合并到前端路由 meta，使 TagsView / keep-alive 可读取后端配置。
+ * 首次 fetchMenus 后执行一次，后续导航复用缓存。
+ */
+let menuMetaMerged = false
+function mergeMenuMeta(menus: MenuItem[]) {
+  if (menuMetaMerged) return
+  const metaMap = new Map<string, { cached?: boolean; cacheName?: string }>()
+  const walk = (list: MenuItem[]) => {
+    for (const m of list || []) {
+      if (m?.path) {
+        metaMap.set(m.path, { cached: m.cached, cacheName: m.cacheName })
+      }
+      if (m?.children?.length) walk(m.children)
+    }
+  }
+  walk(menus)
+  for (const route of router.getRoutes()) {
+    const override = metaMap.get(route.path)
+    if (override) {
+      if (override.cached !== undefined) {
+        route.meta.cached = override.cached
+      }
+      if (override.cacheName) {
+        route.meta.cacheName = override.cacheName
+      }
+    }
+  }
+  menuMetaMerged = true
+}
+
 router.beforeEach(async (to) => {
   NProgress.start()
   const userStore = useUserStore()
@@ -751,6 +118,16 @@ router.beforeEach(async (to) => {
       } catch {
         /* 菜单加载失败（如 token 失效）：放行交由 401 拦截器处理 */
       }
+    }
+    // 确保 DB 翻译已加载，避免布局组件渲染时 $t() 解析到 key 原文触发 console warning
+    try {
+      await userStore.loadDbTranslations()
+    } catch {
+      /* 翻译加载失败不阻断导航 */
+    }
+    // Phase 3b：合并后端菜单 cached/cacheName 到路由 meta
+    if (userStore.menus.length) {
+      mergeMenuMeta(userStore.menus)
     }
     const menuPaths = collectMenuPaths(userStore.menus)
     const authorized = new Set(menuPaths)

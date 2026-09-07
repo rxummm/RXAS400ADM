@@ -48,12 +48,12 @@ public class BpcsOrderAnalyticsServiceImpl implements IBpcsOrderAnalyticsService
             return new BpcsOrderFulfillmentStatsVO(0, 0, BigDecimal.ZERO, 0, 0, BigDecimal.ZERO, 0, 0);
         }
         Map<String, Object> row = rows.get(0);
-        int total = BpcsRowUtil.intOrNull(row, "TOTAL_LINES");
-        int filled = BpcsRowUtil.intOrNull(row, "FILLED_LINES");
-        int totalOrdered = BpcsRowUtil.intOrNull(row, "TOTAL_ORDERED");
-        int totalShipped = BpcsRowUtil.intOrNull(row, "TOTAL_SHIPPED");
-        int boLines = BpcsRowUtil.intOrNull(row, "BACKORDER_LINES");
-        int boQty = BpcsRowUtil.intOrNull(row, "BACKORDER_QTY");
+        int total = BpcsRowUtil.intVal(row, "TOTAL_LINES");
+        int filled = BpcsRowUtil.intVal(row, "FILLED_LINES");
+        int totalOrdered = BpcsRowUtil.intVal(row, "TOTAL_ORDERED");
+        int totalShipped = BpcsRowUtil.intVal(row, "TOTAL_SHIPPED");
+        int boLines = BpcsRowUtil.intVal(row, "BACKORDER_LINES");
+        int boQty = BpcsRowUtil.intVal(row, "BACKORDER_QTY");
 
         BigDecimal lineRate = total > 0
                 ? BigDecimal.valueOf(filled).multiply(BigDecimal.valueOf(100)).divide(BigDecimal.valueOf(total), 1, RoundingMode.HALF_UP)
@@ -86,10 +86,10 @@ public class BpcsOrderAnalyticsServiceImpl implements IBpcsOrderAnalyticsService
                     pickStr(row, "ORLN"),
                     item,
                     pickStr(row, "ITDSC"),
-                    BpcsRowUtil.intOrNull(row, "QTORD"),
-                    BpcsRowUtil.intOrNull(row, "QTSHP"),
-                    BpcsRowUtil.intOrNull(row, "QTYALC"),
-                    BpcsRowUtil.intOrNull(row, "QTYOPEN"),
+                    BpcsRowUtil.intVal(row, "QTORD"),
+                    BpcsRowUtil.intVal(row, "QTSHP"),
+                    BpcsRowUtil.intVal(row, "QTYALC"),
+                    BpcsRowUtil.intVal(row, "QTYOPEN"),
                     pickStr(row, "CUST"),
                     pickStr(row, "REQDTE"),
                     pickStr(row, "HSTAT")
@@ -111,8 +111,8 @@ public class BpcsOrderAnalyticsServiceImpl implements IBpcsOrderAnalyticsService
             result.add(new BpcsOrderBackorderByItemVO(
                     pickStr(row, "ITEM"),
                     pickStr(row, "ITDSC"),
-                    BpcsRowUtil.intOrNull(row, "BO_COUNT"),
-                    BpcsRowUtil.intOrNull(row, "TOTAL_BO_QTY")
+                    BpcsRowUtil.intVal(row, "BO_COUNT"),
+                    BpcsRowUtil.intVal(row, "TOTAL_BO_QTY")
             ));
         }
         return result;
@@ -130,10 +130,10 @@ public class BpcsOrderAnalyticsServiceImpl implements IBpcsOrderAnalyticsService
             return new BpcsOrderOtdStatsVO(0, 0, 0, 0, BigDecimal.ZERO, BigDecimal.ZERO);
         }
         Map<String, Object> row = rows.get(0);
-        int total = BpcsRowUtil.intOrNull(row, "TOTAL_DELIVERED");
-        int onTime = BpcsRowUtil.intOrNull(row, "ON_TIME");
-        int early = BpcsRowUtil.intOrNull(row, "EARLY");
-        int late = BpcsRowUtil.intOrNull(row, "LATE");
+        int total = BpcsRowUtil.intVal(row, "TOTAL_DELIVERED");
+        int onTime = BpcsRowUtil.intVal(row, "ON_TIME");
+        int early = BpcsRowUtil.intVal(row, "EARLY");
+        int late = BpcsRowUtil.intVal(row, "LATE");
         BigDecimal avgLate = BpcsRowUtil.decOrNull(row, "AVG_LATE_DAYS");
         if (avgLate == null) avgLate = BigDecimal.ZERO;
 
@@ -157,8 +157,8 @@ public class BpcsOrderAnalyticsServiceImpl implements IBpcsOrderAnalyticsService
             result.add(new BpcsOrderOtdByCustomerVO(
                     pickStr(row, "CUST"),
                     pickStr(row, "CUNAME"),
-                    BpcsRowUtil.intOrNull(row, "TOTAL"),
-                    BpcsRowUtil.intOrNull(row, "ON_TIME"),
+                    BpcsRowUtil.intVal(row, "TOTAL"),
+                    BpcsRowUtil.intVal(row, "ON_TIME"),
                     BpcsRowUtil.decOrNull(row, "OTD_PCT")
             ));
         }
@@ -214,7 +214,7 @@ public class BpcsOrderAnalyticsServiceImpl implements IBpcsOrderAnalyticsService
             cono = "001"; // 默认公司码
         }
         if (!As400Identifiers.IDENTIFIER.matcher(cono.toUpperCase()).matches()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "无效的公司码: " + cono);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Invalid company code: " + cono);
         }
     }
 }

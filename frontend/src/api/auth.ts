@@ -29,6 +29,8 @@ export interface MenuNode {
   path: string
   title: string
   icon?: string
+  cached?: boolean
+  cacheName?: string
   children?: MenuNode[]
 }
 

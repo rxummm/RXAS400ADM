@@ -20,7 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bpcs/orders/analytics")
 @RequiredArgsConstructor
-@Tag(name = "BPCS订单分析")
+@Tag(name = "BPCS Order Analytics")
 public class BpcsOrderAnalyticsController {
 
     private final IBpcsOrderAnalyticsService analyticsService;

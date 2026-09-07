@@ -21,7 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bpcs/inventory/analytics")
 @RequiredArgsConstructor
-@Tag(name = "BPCS库存分析")
+@Tag(name = "BPCS Inventory Analytics")
 public class BpcsInventoryAnalyticsController {
 
     private final IBpcsInventoryAnalyticsService analyticsService;

@@ -10,6 +10,10 @@ import com.rxas400adm.as400.vo.BpcsOrderListVO;
 import com.rxas400adm.as400.vo.BpcsOrderTrackingVO;
 import com.rxas400adm.as400.vo.BpcsPurchaseReceivingVO;
 import com.rxas400adm.as400.vo.BpcsSalesAnalysisVO;
+import com.rxas400adm.as400.vo.BpcsCrossNodeInventoryVO;
+import com.rxas400adm.as400.vo.BpcsDisruptionAlertVO;
+import com.rxas400adm.as400.vo.BpcsAtpVO;
+import com.rxas400adm.as400.vo.BpcsOtifVO;
 import com.rxas400adm.as400.vo.BpcsSupplierPerfVO;
 
 import java.util.List;
@@ -48,4 +52,23 @@ public interface IBpcsSupplyChainService {
 
     /** Phase 4: 订单全链路追踪 */
     BpcsOrderTrackingVO orderTracking(String cono, String orno);
+
+    // ==================== Phase 5: Control Tower 2.0 ====================
+
+    /** OTIF 准时足量交付率追踪 */
+    BpcsOtifVO otifTracking(String cono, int months);
+
+    /** 供应链中断预警 */
+    BpcsDisruptionAlertVO disruptionAlerts(String cono, int limit);
+
+    /** 跨节点库存可视化 */
+    BpcsCrossNodeInventoryVO crossNodeInventory(String cono);
+
+    // ==================== Phase 6: ATP ====================
+
+    /** ATP 汇总 + 时序 + 订单行承诺 */
+    BpcsAtpVO atpOverview(String cono, int weeks);
+
+    /** ATP-OTIF 偏差分析 */
+    List<BpcsAtpVO.AtpDeviation> atpDeviation(String cono);
 }

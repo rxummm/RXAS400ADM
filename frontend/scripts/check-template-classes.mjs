@@ -98,6 +98,9 @@ export function extractTemplateClasses(content) {
       const before = expr.slice(0, s.index).trimEnd().slice(-1)
       // 排除函数实参（如 startsWith('FAILED')）与动态模板串（${} / 拼接）
       if (before === '(') continue
+      // 排除比较运算符右侧的字符串（如 isActive === 'history'）——这是 JS 值，非 class
+      const beforeCtx = expr.slice(Math.max(0, s.index - 4), s.index)
+      if (/===?|!==?|&&|\|\||\?/.test(beforeCtx)) continue
       if (s[1].includes('${') || s[1].includes('+')) continue
       add(s[1], line)
     }

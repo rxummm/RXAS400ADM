@@ -13,6 +13,7 @@ import com.rxas400adm.as400.vo.IbmiSystemVO;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.security.DangerousClCommandValidator;
+import com.rxas400adm.common.security.SecretMasker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -102,6 +103,9 @@ public class IbmiSystemService implements IIbmiSystemService {
     }
 
     public void delete(Long id) {
+        if (systemMapper.selectById(id) == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "IBM i system not found: " + id);
+        }
         systemMapper.deleteById(id);
         clientProvider.evict(id);
     }
@@ -139,7 +143,7 @@ public class IbmiSystemService implements IIbmiSystemService {
             wrapper.ne(IbmiSystem::getId, excludeId);
         }
         if (systemMapper.selectCount(wrapper) > 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "服务器名称已存在：" + name.trim());
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Server name already exists: " + name.trim());
         }
     }
 
@@ -157,11 +161,11 @@ public class IbmiSystemService implements IIbmiSystemService {
     /** 在指定服务器上执行 CL 命令 */
     public CommandResult executeCommand(Long id, String command) {
         if (!StringUtils.hasText(command)) {
-            throw new BusinessException(ErrorCode.NAME_REQUIRED, "命令不能为空");
+            throw new BusinessException(ErrorCode.NAME_REQUIRED, "Command is required");
         }
         // S4：该入口需 AS400_MANAGE 权限（管理员通道），仍执行黑名单兜底，通过后留审计日志注明通道
         clValidator.assertAllowed(command);
-        log.info("[IBMi系统] 管理员通道执行 CL 命令: serverId={}, command={}", id, command);
+        log.info("[IBMi系统] 管理员通道执行 CL 命令: serverId={}, command={}", id, SecretMasker.maskClCommand(command));
         AS400Client client = clientProvider.forServer(id);
         return client.execute(command);
     }

@@ -206,7 +206,7 @@ async function load() {
     if (query.customerCode) params.customerCode = query.customerCode
     if (query.status) params.status = query.status
     if (query.priority) params.priority = query.priority
-    const res = await listCollaborations(params) as unknown as { records: OrderCollaborationVO[]; total: number }
+    const res = await listCollaborations(params)
     rows.value = res.records
     total.value = res.total
   } finally { loading.value = false }
@@ -233,21 +233,21 @@ async function handleCreate() {
   try {
     await createCollaboration(createForm)
     createDialogVisible.value = false
-    ElMessage.success('OK')
+    ElMessage.success(t('common.success'))
     load()
   } finally { createSaving.value = false }
 }
 
 async function handleStatusChange(row: OrderCollaborationVO, status: string) {
   await updateCollabStatus(row.id, status)
-  ElMessage.success('OK')
+  ElMessage.success(t('common.success'))
   load()
 }
 
 async function handleDelete(row: OrderCollaborationVO) {
-  await ElMessageBox.confirm(`Delete collaboration "${row.orderNo}"?`, '', { type: 'warning' })
+  await ElMessageBox.confirm(t('common.confirm.deleteCollaboration', { name: row.orderNo }), '', { type: 'warning' })
   await deleteCollaboration(row.id)
-  ElMessage.success('OK')
+  ElMessage.success(t('common.success'))
   load()
 }
 
@@ -261,7 +261,7 @@ async function handleSendNotify() {
   try {
     await sendCollabNotification(notifyForm)
     notifyDialogVisible.value = false
-    ElMessage.success('OK')
+    ElMessage.success(t('common.success'))
   } finally { notifySaving.value = false }
 }
 

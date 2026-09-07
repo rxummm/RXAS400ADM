@@ -14,15 +14,19 @@
       </el-button>
     </div>
 
-    <!-- ── Tab 切换（在制/历史） ────────────────────────── -->
-    <div class="table-wrapper">
-      <el-tabs v-model="activeTab" @tab-change="search">
-        <el-tab-pane :label="$t('bpcs.invoice.activeTab')" name="active" />
-        <el-tab-pane :label="$t('bpcs.invoice.historyTab')" name="history" />
-      </el-tabs>
+    <!-- ── Tab 切换（在制/历史） + 内容 ───────────────── -->
+    <div class="invoice-tab-bar">
+      <div class="invoice-tab-item" :class="{ 'is-active': activeTab === 'active' }" @click="switchTab('active')">
+        {{ $t('bpcs.invoice.activeTab') }}
+      </div>
+      <div class="invoice-tab-item" :class="{ 'is-active': activeTab === 'history' }" @click="switchTab('history')">
+        {{ $t('bpcs.invoice.historyTab') }}
+      </div>
+    </div>
 
+    <div class="table-wrapper invoice-content">
       <!-- 汇总卡片 -->
-      <div v-if="invoices.length" class="summary-row mb16">
+      <div v-if="invoices.length" class="summary-row">
         <div class="summary-item">
           <span class="summary-value">{{ invoices.length }}</span>
           <span class="summary-label">{{ $t('bpcs.invoice.invoiceCount') }}</span>
@@ -76,7 +80,7 @@
       v-model="detailVisible"
       :title="$t('bpcs.invoice.detailTitle') + ' · ' + (detailInv?.invNo || '')"
       size="560px"
-      :close-on-click-modal="false"
+      :close-on-click-modal="true"
     >
       <template v-if="detailInv">
         <el-descriptions :column="2" size="small" border>
@@ -132,6 +136,11 @@ const detailInv = ref<BpcsInvoice | null>(null)
 const grandTotal = computed(() => invoices.value.reduce((s, i) => s + (i.totalAmount ?? 0), 0))
 const grandTax = computed(() => invoices.value.reduce((s, i) => s + (i.taxAmount ?? 0), 0))
 
+function switchTab(tab: string) {
+  activeTab.value = tab
+  search()
+}
+
 function search() {
   loading.value = true
   const params: Record<string, string | number> = { tab: activeTab.value, current: current.value, size: size.value }
@@ -163,9 +172,41 @@ function statusTagType(status: string | null): 'success' | 'danger' | 'primary' 
 </script>
 
 <style scoped>
+/* Tab 栏 */
+.invoice-tab-bar {
+  display: flex;
+  gap: 0;
+  background: var(--bg-page);
+  border-bottom: 2px solid var(--border-lighter);
+  margin-bottom: 0;
+}
+.invoice-tab-item {
+  padding: 8px 20px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.invoice-tab-item:hover {
+  color: var(--color-primary);
+}
+.invoice-tab-item.is-active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* 内容区 — 不使用 el-tabs 的 flex 布局 */
+.invoice-content {
+  flex-direction: column !important;
+}
+
 .summary-row {
   display: flex;
   gap: 24px;
+  margin-bottom: 12px;
 }
 .summary-item {
   display: flex;

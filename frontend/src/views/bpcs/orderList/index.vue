@@ -21,20 +21,19 @@
         <el-table-column prop="cono" :label="$t('bpcs.label.cono')" width="80" />
         <el-table-column prop="orno" :label="$t('bpcs.label.orderNo')" min-width="120">
           <template #default="{ row }">
-            <el-button link type="primary" @click="goToOrder(row as OrderListItem)">{{ row.orno }}</el-button>
+            <el-button link type="primary" @click="goToOrder(row as BpcsOrderHeader)">{{ row.orno }}</el-button>
           </template>
         </el-table-column>
-        <el-table-column prop="custNo" :label="$t('bpcs.label.customer')" width="90" />
-        <el-table-column prop="custName" :label="$t('bpcs.customer.shipName')" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="customerNo" :label="$t('bpcs.label.customer')" width="90" />
         <el-table-column prop="orderDate" :label="$t('bpcs.label.orderDate')" width="110" />
         <el-table-column prop="reqDate" :label="$t('bpcs.label.reqDate')" width="110" />
         <el-table-column prop="lineCount" :label="$t('bpcs.sales.lineCount')" width="60" align="center" />
         <el-table-column :label="$t('bpcs.shipping.status')" width="100">
           <template #default="{ row }">
-            <el-tag size="small" :type="stageTagType(row.currentStageIndex)">{{ row.statusLabel }}</el-tag>
+            <el-tag size="small" :type="stageTagType(row.currentStageIndex)">{{ row.timeline.find((t: TimelineNode) => t.current)?.nameKey || row.currentStageIndex }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="rawChsts" label="CHSTS" width="80" />
+        <el-table-column prop="raw.chsts" :label="$t('col.chsts')" width="80" />
       </el-table>
       <el-empty v-if="!loading && orders.length === 0" :description="$t('common.noData')" />
     </div>
@@ -46,41 +45,39 @@
 defineOptions({ name: 'BpcsOrderList' })
 
 import { reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { searchOrders, type OrderListItem } from '@/api/supplyChain'
+import { getOrderHeader, type BpcsOrderHeader, type TimelineNode } from '@/api/bpcs'
 import { BPCS_EXPORT } from '@/api/bpcs'
 import ExportDropdown from '@/components/ExportDropdown.vue'
 import type { ExportColumn } from '@/components/ExportButton.vue'
 
 const router = useRouter()
+const { t } = useI18n()
 const loading = ref(false)
-const orders = ref<OrderListItem[]>([])
+const orders = ref<BpcsOrderHeader[]>([])
 const query = reactive({ cono: '001', orno: '', cust: '', fromDate: '', toDate: '' })
 
 const exportColumns: ExportColumn[] = [
-  { key: 'cono', label: '公司' },
-  { key: 'orno', label: '订单号' },
-  { key: 'custNo', label: '客户号' },
-  { key: 'custName', label: '客户名称' },
-  { key: 'orderDate', label: '订单日期' },
-  { key: 'reqDate', label: '要求日期' },
-  { key: 'lineCount', label: '行数' },
-  { key: 'statusLabel', label: '状态' },
+  { key: 'cono', label: t('bpcs.common.companyCode') },
+  { key: 'orno', label: t('bpcs.common.orderNo') },
+  { key: 'custNo', label: t('bpcs.common.customerCode') },
+  { key: 'custName', label: t('bpcs.common.customerName') },
+  { key: 'orderDate', label: t('bpcs.common.orderDate') },
+  { key: 'reqDate', label: t('bpcs.common.reqDate') },
+  { key: 'lineCount', label: t('bpcs.common.lineCount') },
+  { key: 'statusLabel', label: t('bpcs.common.status') },
 ]
 
 function search() {
+  if (!query.orno) return
   loading.value = true
-  const params: Record<string, string | number> = { cono: query.cono || '001' }
-  if (query.orno) params.orno = query.orno
-  if (query.cust) params.cust = query.cust
-  if (query.fromDate) params.fromDate = query.fromDate
-  if (query.toDate) params.toDate = query.toDate
-  searchOrders(params)
-    .then(data => { orders.value = data })
+  getOrderHeader(query.cono || '001', query.orno)
+    .then(data => { orders.value = data ? [data] : [] })
     .finally(() => { loading.value = false })
 }
 
-function goToOrder(row: OrderListItem) {
+function goToOrder(row: BpcsOrderHeader) {
   router.push({ path: '/bpcs-order', query: { cono: row.cono, orno: row.orno } })
 }
 

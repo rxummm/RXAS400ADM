@@ -7,7 +7,7 @@
       <pre v-else class="content">{{ content }}</pre>
     </template>
     <template v-else-if="isBinaryType">
-      <iframe v-if="docType === 'PDF' && fileUrl" class="doc-iframe" :src="fileUrl" :title="t('docs.preview')"></iframe>
+      <iframe v-if="docType === 'PDF' && fileUrl" class="doc-iframe" :src="fileUrl" :title="t('docs.preview')" sandbox="allow-same-origin allow-scripts"></iframe>
       <img v-else-if="docType === 'IMAGE' && fileUrl" class="doc-image" :src="fileUrl" :alt="t('docs.preview')" />
       <el-empty v-else :description="t('docs.fileUnavailable')" />
     </template>

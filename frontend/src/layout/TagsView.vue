@@ -11,6 +11,12 @@
           @click="handleTagClick($event, tag)"
           @contextmenu.prevent="openContextMenu($event, tag)"
         >
+          <template v-if="tag.icon && tagIconInfo(tag)">
+            <el-icon v-if="tagIconInfo(tag)!.kind === 'ep'" :size="12">
+              <component :is="tagIconInfo(tag)!.value" />
+            </el-icon>
+            <FontAwesomeIcon v-else-if="tagIconInfo(tag)!.kind === 'fa'" :icon="tagIconInfo(tag)!.value" class="tag-fa-icon" />
+          </template>
           <span class="tag-title">{{ $t(tag.title || '') }}</span>
           <el-icon
             v-if="!isAffix(tag)"
@@ -60,11 +66,15 @@ import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { CircleClose, Close, Refresh, Remove } from '@element-plus/icons-vue'
 import { useTagsStore, type TagView } from '@/stores/tags'
+import { useUserStore } from '@/stores/user'
+import { resolveIcon, FontAwesomeIcon } from '@/icons'
+import type { MenuItem } from '@/stores/user'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const tagsStore = useTagsStore()
+const userStore = useUserStore()
 
 const { visitedViews } = storeToRefs(tagsStore)
 const tagsWrapperRef = ref<HTMLElement | null>(null)
@@ -87,14 +97,31 @@ const selectedTag = ref<TagView>({ path: '', title: '' })
 
 const isActive = (path: string) => route.path === path
 const isAffix = (tag: TagView) => !!tag.affix
+const tagIconInfo = (tag: TagView) => resolveIcon(tag.icon)
+
+/** 从菜单树中按 path 查找对应图标的递归函数 */
+const findMenuIcon = (menus: MenuItem[], targetPath: string): string | undefined => {
+  for (const m of menus) {
+    if (m.path === targetPath && m.icon) return m.icon
+    if (m.children) {
+      const found = findMenuIcon(m.children, targetPath)
+      if (found) return found
+    }
+  }
+  return undefined
+}
 
 const addTag = () => {
   const { path, meta } = route
   const title = (meta.title as string) || ''
   if (!title) return
+  // 从菜单树中查找对应 path 的图标
+  const icon = findMenuIcon(userStore.menus, path)
   // cacheName：仅在路由声明 cached 时启用 keep-alive 缓存（组件 name 与路由 name 对齐）
   const cacheName = meta.cached ? (meta.cacheName as string) || (route.name as string) || undefined : undefined
-  tagsStore.addView({ path, title, affix: path === '/dashboard', cacheName })
+  // Phase 3b：affix 优先从后端菜单配置读取，fallback 到 /dashboard
+  const affix = (meta.affix as boolean) || path === '/dashboard'
+  tagsStore.addView({ path, title, icon, affix, cacheName })
 }
 
 // ==================== 右键菜单 ====================
@@ -259,6 +286,10 @@ onUnmounted(() => {
   color: var(--bg-container);
   background: var(--color-primary);
   border-color: var(--color-primary);
+}
+.tag-fa-icon {
+  font-size: 11px;
+  margin-right: 2px;
 }
 .tag-title {
   margin-right: 4px;

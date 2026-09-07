@@ -4,6 +4,7 @@ import com.ibm.as400.access.AS400;
 import com.ibm.as400.access.CommandCall;
 import com.rxas400adm.as400.model.UserProfileListRow;
 import com.rxas400adm.as400.model.UserProfileRow;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ class JTOpenAuthClient implements AuthClient {
             return null;
         }
         Map<String, Object> row = new JTOpenSqlClient(state).queryList(
-                "SELECT USER_NAME, GROUP_PROFILE, STATUS FROM QSYS2.USER_INFO WHERE USER_NAME = ?",
+                SqlStatementRegistry.of("auth.user.query"),
                 username.toUpperCase()).stream().findFirst().orElse(null);
         if (row == null || row.isEmpty()) {
             return null;
@@ -62,8 +63,7 @@ class JTOpenAuthClient implements AuthClient {
     @Override
     public List<UserProfileListRow> listUserProfiles() {
         List<Map<String, Object>> rows = new JTOpenSqlClient(state).queryList(
-                "SELECT USER_NAME, STATUS, GROUP_PROFILE, TEXT_DESCRIPTION, LAST_USED_DATE "
-                        + "FROM QSYS2.USER_INFO ORDER BY USER_NAME FETCH FIRST 200 ROWS ONLY");
+                SqlStatementRegistry.of("auth.user.list.paged"));
         List<UserProfileListRow> result = new ArrayList<>();
         for (Map<String, Object> row : rows) {
             result.add(new UserProfileListRow(
@@ -78,9 +78,8 @@ class JTOpenAuthClient implements AuthClient {
 
     @Override
     public CommandResult switchUser(String targetUser) {
-        if (targetUser == null || targetUser.isBlank()) {
-            return CommandResult.fail("目标用户不能为空");
-        }
+        // AS400-010 修复：SWITCHUSR 参数必须经过 identifier 校验，防止 CL 命令注入
+        JTOpenConnectionState.requireIdentifier(targetUser, "targetUser");
         try {
             AS400 system = state.connect();
             CommandCall call = new CommandCall(system);

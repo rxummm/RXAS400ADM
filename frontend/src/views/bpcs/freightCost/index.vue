@@ -105,9 +105,9 @@
         </el-form-item>
         <el-form-item :label="$t('bpcs.freight.costType')" prop="costType">
           <el-select v-model="ruleForm.costType" class="w-full">
-            <el-option label="WEIGHT" value="WEIGHT" />
-            <el-option label="VOLUME" value="VOLUME" />
-            <el-option label="PIECE" value="PIECE" />
+            <el-option :label="$t('bpcs.freight.costTypeWeight')" value="WEIGHT" />
+            <el-option :label="$t('bpcs.freight.costTypeVolume')" value="VOLUME" />
+            <el-option :label="$t('bpcs.freight.costTypePiece')" value="PIECE" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('bpcs.freight.basePrice')" prop="basePrice">
@@ -204,7 +204,7 @@ const ruleRules = reactive<FormRules>({
 
 async function loadRules() {
   rulesLoading.value = true
-  try { rules.value = await listFreightRules() as unknown as FreightCostRuleVO[] }
+  try { rules.value = await listFreightRules() }
   finally { rulesLoading.value = false }
 }
 
@@ -224,15 +224,15 @@ async function saveRule() {
       await createFreightRule(ruleForm)
     }
     ruleDialogVisible.value = false
-    ElMessage.success('OK')
+    ElMessage.success(t('common.success'))
     loadRules()
   } finally { ruleSaving.value = false }
 }
 
 async function handleDeleteRule(row: FreightCostRuleVO) {
-  await ElMessageBox.confirm(`Delete rule "${row.ruleName}"?`, '', { type: 'warning' })
+  await ElMessageBox.confirm(t('common.confirm.deleteRule', { name: row.ruleName }), '', { type: 'warning' })
   await deleteFreightRule(row.id)
-  ElMessage.success('OK')
+  ElMessage.success(t('common.success'))
   loadRules()
 }
 
@@ -257,7 +257,7 @@ async function loadRecords() {
     const params: Record<string, string | number> = { current: recordPage.current, size: recordPage.size }
     if (recordQuery.orderNo) params.orderNo = recordQuery.orderNo
     if (recordQuery.carrier) params.carrier = recordQuery.carrier
-    const res = await listFreightRecords(params) as unknown as { records: FreightCostRecordVO[]; total: number }
+    const res = await listFreightRecords(params)
     records.value = res.records
     recordTotal.value = res.total
   } finally { recordsLoading.value = false }
@@ -282,15 +282,15 @@ async function saveRecord() {
   try {
     await createFreightRecord(recordForm)
     recordDialogVisible.value = false
-    ElMessage.success('OK')
+    ElMessage.success(t('common.success'))
     loadRecords()
   } finally { recordSaving.value = false }
 }
 
 async function handleDeleteRecord(row: FreightCostRecordVO) {
-  await ElMessageBox.confirm(`Delete record "${row.orderNo}"?`, '', { type: 'warning' })
+  await ElMessageBox.confirm(t('common.confirm.deleteRecord', { name: row.orderNo }), '', { type: 'warning' })
   await deleteFreightRecord(row.id)
-  ElMessage.success('OK')
+  ElMessage.success(t('common.success'))
   loadRecords()
 }
 
@@ -305,12 +305,12 @@ async function loadTrend() {
   try {
     const params: Record<string, string | number> = { months: 12 }
     if (trendCarrier.value) params.carrier = trendCarrier.value
-    trends.value = await getFreightTrend(params) as unknown as FreightCostTrendVO[]
+    trends.value = await getFreightTrend(params)
   } finally { trendLoading.value = false }
 }
 
 async function loadCarrierShare() {
-  const share = await getCarrierCostShare() as unknown as Record<string, number>
+  const share = await getCarrierCostShare()
   const total = Object.values(share).reduce((a, b) => a + (b as number), 0) as number
   carrierShareList.value = Object.entries(share).map(([carrier, cost]) => ({
     carrier,

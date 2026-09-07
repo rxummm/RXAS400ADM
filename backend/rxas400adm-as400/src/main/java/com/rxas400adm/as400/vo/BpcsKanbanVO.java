@@ -11,8 +11,8 @@ public record BpcsKanbanVO(
         String orderDate,
         String reqDate,
         String status,
-        int pendingLines,
-        int partialLines,
-        int shippedLines
+        Integer pendingLines,
+        Integer partialLines,
+        Integer shippedLines
 ) {
 }

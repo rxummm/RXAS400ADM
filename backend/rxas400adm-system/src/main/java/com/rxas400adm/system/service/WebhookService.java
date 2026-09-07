@@ -64,14 +64,14 @@ public class WebhookService implements IWebhookService {
         config.setEnabled(dto.getEnabled());
         config.setDescription(dto.getDescription());
         if (!StringUtils.hasText(config.getName()) || !StringUtils.hasText(config.getUrl())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "名称与推送地址必填");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Name and URL are required");
         }
         // L2：SSRF 防护——配置即校验，保存前拒绝内网/回环等不安全推送地址
         SsrfGuard.assertSafeUrl(config.getUrl());
         long exists = webhookMapper.selectCount(new LambdaQueryWrapper<WebhookConfig>()
                 .eq(WebhookConfig::getName, config.getName().trim()));
         if (exists > 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "Webhook 名称已存在: " + config.getName());
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Webhook name already exists: " + config.getName());
         }
         config.setId(null);
         config.setName(config.getName().trim());

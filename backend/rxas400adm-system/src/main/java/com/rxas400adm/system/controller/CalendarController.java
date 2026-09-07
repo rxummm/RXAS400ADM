@@ -4,7 +4,6 @@ import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.util.SecurityUtils;
 import com.rxas400adm.system.dto.CalendarEventDTO;
-import com.rxas400adm.system.entity.SysUser;
 import com.rxas400adm.system.service.ICalendarEventService;
 import com.rxas400adm.system.service.SysUserService;
 import com.rxas400adm.system.vo.CalendarEventVO;
@@ -72,7 +71,6 @@ public class CalendarController {
 
     private Long currentUserId() {
         String username = SecurityUtils.currentUsername();
-        SysUser user = userService.getByUsername(username);
-        return user == null ? -1L : user.getId();
+        return userService.requireByUsername(username).getId();
     }
 }

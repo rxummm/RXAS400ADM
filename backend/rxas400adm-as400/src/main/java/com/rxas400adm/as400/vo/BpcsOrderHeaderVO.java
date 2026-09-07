@@ -1,5 +1,6 @@
 package com.rxas400adm.as400.vo;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -13,7 +14,7 @@ public record BpcsOrderHeaderVO(
         String shipTo,
         String orderDate,
         String reqDate,
-        java.math.BigDecimal totalAmount,
+        BigDecimal totalAmount,
         int lineCount,
         /** 当前阶段下标（对应 timeline 数组最后一个 reached 节点） */
         int currentStageIndex,

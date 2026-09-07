@@ -111,8 +111,8 @@ final class ReportRenderer {
                 // close 异常仅忽略，不覆盖主流程结果/异常
                 try {
                     document.close();
-                } catch (Exception ignored) {
-                    // 忽略关闭异常
+                } catch (Exception e) {
+                    log.debug("PDF document close failed: {}", e.getMessage());
                 }
             }
             payload = out.toByteArray();
@@ -137,8 +137,8 @@ final class ReportRenderer {
                 } catch (Exception e) {
                     try {
                         return BaseFont.createFont(path, BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);
-                    } catch (Exception ignored) {
-                        // continue
+                    } catch (Exception e2) {
+                        log.debug("CJK font create (not embedded) failed for {}: {}", path, e2.getMessage());
                     }
                 }
             }

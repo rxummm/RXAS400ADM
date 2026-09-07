@@ -2,6 +2,7 @@ package com.rxas400adm.monitor.collector;
 
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.monitor.domain.Metric;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,7 @@ public class CpuCollector implements MetricCollector {
     public Metric collect(Long instanceId) {
         AS400Client client = clientProvider.forServer(instanceId);
         Map<String, Object> row = client.querySingle(
-                "SELECT CPU_UTILIZATION FROM QSYS2.SYSTEM_STATUS_INFO");
+                SqlStatementRegistry.of("monitor.cpu.util"));
         Double value = toDouble(row.get("CPU_UTILIZATION"));
         return Metric.builder()
                 .instanceId(instanceId)

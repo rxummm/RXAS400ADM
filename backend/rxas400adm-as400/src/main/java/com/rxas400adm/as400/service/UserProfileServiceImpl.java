@@ -3,6 +3,7 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.CommandResult;
+import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.as400.dto.UserProfileCreateDTO;
 import com.rxas400adm.as400.dto.UserProfileUpdateDTO;
 import com.rxas400adm.as400.entity.UserProfileLog;
@@ -13,9 +14,13 @@ import com.rxas400adm.as400.vo.UserProfileDetailVO;
 import com.rxas400adm.common.constants.As400Identifiers;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.security.SecretMasker;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -45,14 +50,11 @@ public class UserProfileServiceImpl implements IUserProfileService {
         AS400Client client = clientProvider.current();
         
         // 查询用户详情（参数化查询防SQL注入）
-        String sql = "SELECT USER_NAME, STATUS, GROUP_PROFILE, TEXT_DESCRIPTION, " +
-                     "LAST_USED_DATE, PASSWORD_EXPIRE_DATE " +
-                     "FROM QSYS2.USER_INFO " +
-                     "WHERE USER_NAME = ?";
+        String sql = SqlStatementRegistry.of("auth.user.detail");
         
         List<Map<String, Object>> results = client.queryListChecked(sql, userName.toUpperCase());
         if (results.isEmpty()) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在: " + userName);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "User not found: " + userName);
         }
         
         Map<String, Object> row = results.get(0);
@@ -73,10 +75,13 @@ public class UserProfileServiceImpl implements IUserProfileService {
         requireValidIdentifier(dto.getUserName());
         AS400Client client = clientProvider.current();
         
+        // S-7 修复：*ALLOBJ/*SECADM 仅限 ADMIN 角色
+        requireAdminForCriticalAuth(dto.getSpecialAuthorities(), operator);
+        
         // 构建CRTUSRPRF命令
         String command = buildCreateCommand(dto);
         
-        log.info("执行创建用户Profile命令: {}, 操作人: {}", command, operator);
+        log.info("执行创建用户Profile命令: {}, 操作人: {}", SecretMasker.maskClCommand(command), operator);
         
         // 执行命令
         CommandResult result = client.execute(command);
@@ -101,10 +106,13 @@ public class UserProfileServiceImpl implements IUserProfileService {
         requireValidIdentifier(userName);
         AS400Client client = clientProvider.current();
         
+        // S-7 修复：*ALLOBJ/*SECADM 仅限 ADMIN 角色
+        requireAdminForCriticalAuth(dto.getSpecialAuthorities(), operator);
+        
         // 构建CHGUSRPRF命令
         String command = buildUpdateCommand(userName, dto);
         
-        log.info("执行更新用户Profile命令: {}, 操作人: {}", command, operator);
+        log.info("执行更新用户Profile命令: {}, 操作人: {}", SecretMasker.maskClCommand(command), operator);
         
         // 执行命令
         CommandResult result = client.execute(command);
@@ -128,7 +136,7 @@ public class UserProfileServiceImpl implements IUserProfileService {
         // 构建DLTUSRPRF命令
         String command = "DLTUSRPRF USRPRF(" + userName.toUpperCase() + ")";
         
-        log.info("执行删除用户Profile命令: {}, 操作人: {}", command, operator);
+        log.info("执行删除用户Profile命令: {}, 操作人: {}", SecretMasker.maskClCommand(command), operator);
         
         // 执行命令
         CommandResult result = client.execute(command);
@@ -147,23 +155,28 @@ public class UserProfileServiceImpl implements IUserProfileService {
     private String buildCreateCommand(UserProfileCreateDTO dto) {
         StringBuilder cmd = new StringBuilder("CRTUSRPRF");
         cmd.append(" USRPRF(").append(dto.getUserName().toUpperCase()).append(")");
-        cmd.append(" PASSWORD(").append(dto.getPassword()).append(")");
+        cmd.append(" PASSWORD(").append(escapeClString(dto.getPassword())).append(")");
         
         if (dto.getDescription() != null && !dto.getDescription().isBlank()) {
-            cmd.append(" TEXT('").append(dto.getDescription()).append("')");
+            cmd.append(" TEXT('").append(escapeClString(dto.getDescription())).append("')");
         }
         
         if (dto.getGroupProfile() != null && !dto.getGroupProfile().isBlank()) {
+            requireValidIdentifier(dto.getGroupProfile());
             cmd.append(" GRPPRF(").append(dto.getGroupProfile().toUpperCase()).append(")");
         }
         
         if (dto.getInitialMenu() != null && !dto.getInitialMenu().isBlank()) {
+            requireValidIdentifier(dto.getInitialMenu());
             cmd.append(" INLMNU(").append(dto.getInitialMenu().toUpperCase()).append(")");
         }
         
         if (dto.getSpecialAuthorities() != null && !dto.getSpecialAuthorities().isEmpty()) {
             StringJoiner joiner = new StringJoiner(" ");
-            dto.getSpecialAuthorities().forEach(joiner::add);
+            dto.getSpecialAuthorities().forEach(auth -> {
+                requireValidIdentifier(auth);
+                joiner.add(auth.toUpperCase());
+            });
             cmd.append(" SPCAUT(").append(joiner).append(")");
         }
         
@@ -175,29 +188,40 @@ public class UserProfileServiceImpl implements IUserProfileService {
         cmd.append(" USRPRF(").append(userName.toUpperCase()).append(")");
         
         if (dto.getDescription() != null) {
-            cmd.append(" TEXT('").append(dto.getDescription()).append("')");
+            cmd.append(" TEXT('").append(escapeClString(dto.getDescription())).append("')");
         }
         
         if (dto.getGroupProfile() != null) {
+            requireValidIdentifier(dto.getGroupProfile());
             cmd.append(" GRPPRF(").append(dto.getGroupProfile().toUpperCase()).append(")");
         }
         
         if (dto.getStatus() != null) {
-            cmd.append(" STATUS(").append(dto.getStatus().toUpperCase()).append(")");
+            // AS400-014 修复：STATUS 必须是白名单值，防止任意字符串进入 CL 命令
+            String statusVal = dto.getStatus().toUpperCase();
+            if (!"*ENABLED".equals(statusVal) && !"*DISABLED".equals(statusVal)) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST,
+                        "Invalid STATUS value: " + statusVal + ". Allowed: *ENABLED, *DISABLED");
+            }
+            cmd.append(" STATUS(").append(statusVal).append(")");
         }
         
         if (dto.getInitialMenu() != null) {
+            requireValidIdentifier(dto.getInitialMenu());
             cmd.append(" INLMNU(").append(dto.getInitialMenu().toUpperCase()).append(")");
         }
         
-        if (dto.getSpecialAuthorities() != null) {
+        if (dto.getSpecialAuthorities() != null && !dto.getSpecialAuthorities().isEmpty()) {
             StringJoiner joiner = new StringJoiner(" ");
-            dto.getSpecialAuthorities().forEach(joiner::add);
+            dto.getSpecialAuthorities().forEach(auth -> {
+                requireValidIdentifier(auth);
+                joiner.add(auth.toUpperCase());
+            });
             cmd.append(" SPCAUT(").append(joiner).append(")");
         }
         
         if (dto.getNewPassword() != null && !dto.getNewPassword().isBlank()) {
-            cmd.append(" PASSWORD(").append(dto.getNewPassword()).append(")");
+            cmd.append(" PASSWORD(").append(escapeClString(dto.getNewPassword())).append(")");
         }
         
         return cmd.toString();
@@ -205,8 +229,34 @@ public class UserProfileServiceImpl implements IUserProfileService {
 
     private void requireValidIdentifier(String value) {
         if (value == null || !As400Identifiers.IDENTIFIER.matcher(value.toUpperCase()).matches()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "无效的IBM i标识符: " + value);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Invalid IBM i identifier: " + value);
         }
+    }
+
+    /** S-7 修复：*ALLOBJ/*SECADM 仅限 ADMIN 角色操作 */
+    private void requireAdminForCriticalAuth(List<String> specialAuthorities, String operator) {
+        if (specialAuthorities == null || specialAuthorities.isEmpty()) return;
+        boolean hasCritical = specialAuthorities.stream()
+                .anyMatch(a -> "*ALLOBJ".equalsIgnoreCase(a) || "*SECADM".equalsIgnoreCase(a));
+        if (hasCritical && !isCurrentUserAdmin()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN,
+                    "Special authorities *ALLOBJ/*SECADM require ADMIN role");
+        }
+    }
+
+    /** 从 Spring Security 上下文判断当前用户是否拥有 ADMIN 角色（JWT token 中已包含 ROLE_xxx 权限） */
+    private boolean isCurrentUserAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        return auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(a -> "ROLE_ADMIN".equals(a) || "ADMIN".equals(a));
+    }
+
+    /** CL 字符串转义：单引号加倍，防止 CL 命令注入 */
+    private String escapeClString(String value) {
+        if (value == null) return "";
+        return value.replace("'", "''");
     }
 
     private void saveLog(String userName, String action, String operator, String detail) {

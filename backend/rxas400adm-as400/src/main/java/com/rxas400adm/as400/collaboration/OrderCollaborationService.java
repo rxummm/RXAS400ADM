@@ -2,6 +2,9 @@ package com.rxas400adm.as400.collaboration;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.rxas400adm.as400.collaboration.mapper.CollaborationNotificationMapper;
+import com.rxas400adm.as400.collaboration.mapper.OrderCollaborationMapper;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.util.EntityUtil;
@@ -51,9 +54,9 @@ public class OrderCollaborationService {
     }
 
     public OrderCollaboration updateStatus(Long id, String status) {
-        OrderCollaboration collab = EntityUtil.require(id, "订单协同", collabMapper::selectById);
+        OrderCollaboration collab = EntityUtil.require(id, "Order Collaboration", collabMapper::selectById);
         if (!List.of("PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED").contains(status)) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "非法状态: " + status);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Invalid status: " + status);
         }
         collab.setStatus(status);
         collabMapper.updateById(collab);
@@ -61,14 +64,14 @@ public class OrderCollaborationService {
     }
 
     public OrderCollaboration assign(Long id, String assignedTo) {
-        OrderCollaboration collab = EntityUtil.require(id, "订单协同", collabMapper::selectById);
+        OrderCollaboration collab = EntityUtil.require(id, "Order Collaboration", collabMapper::selectById);
         collab.setAssignedTo(assignedTo);
         collabMapper.updateById(collab);
         return collab;
     }
 
     public void delete(Long id) {
-        EntityUtil.require(id, "订单协同", collabMapper::selectById);
+        EntityUtil.require(id, "Order Collaboration", collabMapper::selectById);
         notificationMapper.delete(new LambdaQueryWrapper<CollaborationNotification>()
                 .eq(CollaborationNotification::getCollaborationId, id));
         collabMapper.deleteById(id);
@@ -99,11 +102,11 @@ public class OrderCollaborationService {
         return notificationMapper.selectList(new LambdaQueryWrapper<CollaborationNotification>()
                 .eq(CollaborationNotification::getRecipient, recipient)
                 .orderByDesc(CollaborationNotification::getCreatedTime)
-                .last("LIMIT 50"));
+                .last(PageConstants.limitClause(50)));
     }
 
     public void markAsRead(Long notificationId) {
-        CollaborationNotification notif = EntityUtil.require(notificationId, "协同通知", notificationMapper::selectById);
+        CollaborationNotification notif = EntityUtil.require(notificationId, "Collaboration Notification", notificationMapper::selectById);
         notif.setIsRead(true);
         notificationMapper.updateById(notif);
     }

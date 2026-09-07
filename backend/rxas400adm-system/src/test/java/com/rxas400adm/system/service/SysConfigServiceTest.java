@@ -2,6 +2,7 @@ package com.rxas400adm.system.service;
 
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
+import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.system.dto.SysConfigDTO;
 import com.rxas400adm.system.entity.SysConfig;
 import com.rxas400adm.system.mapper.SysConfigMapper;
@@ -116,7 +117,17 @@ class SysConfigServiceTest {
     @Test
     @DisplayName("delete → 删除配置")
     void delete_shouldCallMapper() {
+        SysConfig existing = new SysConfig();
+        existing.setConfigKey("key");
+        when(configMapper.selectById("key")).thenReturn(existing);
         service.delete("key");
         verify(configMapper).deleteById("key");
+    }
+
+    @Test
+    @DisplayName("delete → 不存在抛 NOT_FOUND")
+    void delete_notFound_shouldThrow() {
+        when(configMapper.selectById("missing")).thenReturn(null);
+        assertThrows(BusinessException.class, () -> service.delete("missing"));
     }
 }

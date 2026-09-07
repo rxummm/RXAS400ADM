@@ -5,13 +5,13 @@ import lombok.Data;
 
 @Data
 public class BpcsRcmxConfigDTO {
-    @NotBlank(message = "客户代码不能为空")
+    @NotBlank(message = "customer code is required")
     private String cust;
 
-    @NotBlank(message = "CSR 工号不能为空")
+    @NotBlank(message = "CSR ID is required")
     private String csrId;
 
-    @NotBlank(message = "状态不能为空")
+    @NotBlank(message = "status is required")
     private String active;
 
     private String maintUser;

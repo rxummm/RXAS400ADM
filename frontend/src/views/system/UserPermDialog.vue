@@ -19,7 +19,7 @@
             :data="currentPermTree"
             show-checkbox
             node-key="id"
-            default-expand-all
+            :default-expand-all="true"
             :props="{ label: 'menuName', children: 'children' }"
             @check="handleCurrentPermCheck"
           >
@@ -59,7 +59,7 @@
             :data="assignPermTree"
             show-checkbox
             node-key="id"
-            default-expand-all
+            :default-expand-all="true"
             :props="{ label: 'menuName', children: 'children' }"
           >
             <template #default="{ data }">

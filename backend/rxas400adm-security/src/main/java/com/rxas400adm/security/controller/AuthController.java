@@ -1,17 +1,16 @@
 package com.rxas400adm.security.controller;
+import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.constants.SecurityConstants;
-import com.rxas400adm.common.exception.BusinessException;
-import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.security.dto.As400LoginRequest;
 import com.rxas400adm.security.dto.ChangePasswordDTO;
 import com.rxas400adm.security.dto.LoginRequest;
 import com.rxas400adm.security.dto.LoginResponse;
 import com.rxas400adm.security.dto.RefreshTokenDTO;
-import com.rxas400adm.security.config.ProxyProperties;
+import com.rxas400adm.common.util.ClientIpResolver;
 import com.rxas400adm.security.vo.LoginAttemptIpStatsVO;
 import com.rxas400adm.security.vo.LoginAttemptVO;
 import com.rxas400adm.security.vo.MenuDataResponseVO;
@@ -22,18 +21,15 @@ import com.rxas400adm.security.service.ILoginAttemptService;
 import com.rxas400adm.security.service.IPermissionService;
 import com.rxas400adm.security.service.AuthService;
 import com.rxas400adm.security.service.ITokenBlacklistService;
-import com.rxas400adm.system.entity.SysUser;
 import com.rxas400adm.system.service.IAuditLogService;
 import com.rxas400adm.system.service.IMenuService;
 import com.rxas400adm.system.service.LoginAuditContext;
-import com.rxas400adm.system.service.SysUserService;
 import com.rxas400adm.system.vo.UserMenuDataVO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -46,7 +42,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,11 +53,9 @@ import com.rxas400adm.security.vo.ProfileVO;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "认证授权", description = "登录 / 登出 / Token 刷新 / 动态菜单 / 密码修改")
+@Tag(name = "Auth", description = "Login / Logout / Token Refresh / Dynamic Menu / Password Change")
 public class AuthController {
 
-    private final SysUserService userService;
-    private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final IPermissionService permissionService;
     private final IAs400LoginService as400LoginService;
@@ -72,9 +65,7 @@ public class AuthController {
     private final IMenuService menuService;
     private final ITokenBlacklistService tokenBlacklistService;
     private final AuthService authService;
-
-    // R7：trusted-proxies @Value 收敛为 ProxyProperties 单点绑定（与 RateLimitFilter 同键同源）
-    private final ProxyProperties proxyProperties;
+    private final ClientIpResolver clientIpResolver;
 
     /**
      * 登出（P2-1 JWT 吊销）：将当前 token 的 jti 加入吊销名单，
@@ -105,24 +96,10 @@ public class AuthController {
         loginAttemptService.checkIpRate(ip);
         loginAttemptService.checkUsernameLock(request.getUsername(), null);
 
-        SysUser user = userService.getByUsername(request.getUsername());
-        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            loginAttemptService.registerFailure(request.getUsername(), null, ip);
-            auditLogin("LOGIN_FAILED", request.getUsername(), ip, "PLATFORM", null, "用户名或密码错误");
-            throw new BusinessException(ErrorCode.LOGIN_FAILED, "用户名或密码错误");
-        }
-        if (!"ACTIVE".equals(user.getStatus())) {
-            auditLogin("LOGIN_FAILED", request.getUsername(), ip, "PLATFORM", null, "用户已被禁用");
-            throw new BusinessException(ErrorCode.FORBIDDEN, "用户已被禁用");
-        }
+        LoginResponse response = authService.login(request, ip);
         loginAttemptService.clearFailure(request.getUsername(), null);
-        // 登录成功刷新权限缓存（角色变更立即在新会话体现，2.5.1）
-        // 传入已查询的 user 对象，避免 loadFromDb 重复 getByUsername
-        List<String> permissions = permissionService.refresh(user);
-        String token = jwtUtil.generateToken(user.getUsername(), permissions);
-        String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
-        auditLogin("LOGIN_SUCCESS", user.getUsername(), ip, "PLATFORM", null, "平台账号登录成功");
-        return ApiResponse.success(new LoginResponse(token, refreshToken, jwtUtil.getExpireMs(), user.getUsername(), permissions));
+        auditLogin("LOGIN_SUCCESS", request.getUsername(), ip, "PLATFORM", null, "Platform login successful");
+        return ApiResponse.success(response);
     }
 
     /**
@@ -140,7 +117,7 @@ public class AuthController {
             LoginResponse response = as400LoginService.login(request);
             loginAttemptService.clearFailure(request.getUsername(), request.getServerId());
             auditLogin("AS400_LOGIN_SUCCESS", response.getUsername(), ip, "AS400",
-                    request.getServerId(), "AS400 账号登录成功");
+                    request.getServerId(), "AS400 login successful");
             return ApiResponse.success(response);
         } catch (BusinessException e) {
             loginAttemptService.registerFailure(request.getUsername(), request.getServerId(), ip);
@@ -172,7 +149,7 @@ public class AuthController {
     /** 手动解锁（清除该用户名在指定服务器上的失败记录；serverId 缺省为平台） */
     @DeleteMapping("/login-attempts/{username}")
     @PreAuthorize("hasAuthority('USER_MANAGE')")
-    @OperateLog(module = "登录安全", operation = "手动解锁账号")
+    @OperateLog(module = "Login Security", operation = "Manual unlock account")
     public ApiResponse<Void> unlock(@PathVariable String username,
                                     @RequestParam(required = false) Long serverId) {
         loginAttemptService.clearFailure(username, serverId);
@@ -184,12 +161,13 @@ public class AuthController {
      * 校验旧密码正确后加密覆盖；新密码至少 8 位。
      */
     @PostMapping("/change-password")
-    @OperateLog(module = "登录安全", operation = "修改密码")
+    @PreAuthorize("isAuthenticated()")
+    @OperateLog(module = "Login Security", operation = "修改密码")
     public ApiResponse<Void> changePassword(@Valid @RequestBody ChangePasswordDTO dto,
                                             HttpServletRequest httpRequest) {
         String username = SecurityUtils.currentUsername();
-        userService.changePassword(username, dto.getOldPassword(), dto.getNewPassword());
-        auditLogin("PASSWORD_CHANGE", username, clientIp(httpRequest), "PLATFORM", null, "修改登录密码");
+        authService.changePassword(username, dto.getOldPassword(), dto.getNewPassword());
+        auditLogin("PASSWORD_CHANGE", username, clientIp(httpRequest), "PLATFORM", null, "Password changed");
         return ApiResponse.success(null);
     }
 
@@ -235,30 +213,8 @@ public class AuthController {
                 action, username, ip, source, serverId, detail));
     }
 
-    /**
-     * S3：仅当请求直接来自可信反向代理时才信任 X-Forwarded-For，
-     * 否则攻击者直连伪造 XFF 即可绕过 IP 限流/黑白名单/失败锁定。
-     */
     private String clientIp(HttpServletRequest request) {
-        String remote = request.getRemoteAddr();
-        if (isTrustedProxy(remote)) {
-            String xff = request.getHeader("X-Forwarded-For");
-            if (xff != null && !xff.isBlank()) {
-                return xff.split(",")[0].trim();
-            }
-        }
-        return remote;
-    }
-
-    private boolean isTrustedProxy(String remoteAddr) {
-        String trustedProxies = proxyProperties.getTrustedProxies();
-        if (remoteAddr == null || !StringUtils.hasText(trustedProxies)) {
-            return false;
-        }
-        return Arrays.stream(trustedProxies.split(","))
-                .map(String::trim)
-                .filter(p -> !p.isBlank())
-                .anyMatch(p -> "*".equals(p) || p.equalsIgnoreCase(remoteAddr));
+        return clientIpResolver.resolve(request);
     }
 
 }

@@ -242,9 +242,13 @@ const resultClass = (status: string) => (status === 'FAILED' ? 'text-danger' : '
 const load = () => fetchData({}, true)
 
 const toggle = async (row: JobSchedule, v: boolean) => {
-  await toggleSchedule(row.id, v)
-  ElMessage.success(v ? t('schedule.enabledOn') : t('schedule.enabledOff'))
-  await load()
+  try {
+    await toggleSchedule(row.id, v)
+    ElMessage.success(v ? t('schedule.enabledOn') : t('schedule.enabledOff'))
+    await load()
+  } catch {
+    ElMessage.error(t('common.requestFailed'))
+  }
 }
 
 const run = async (row: JobSchedule) => {
@@ -276,8 +280,12 @@ const showHistory = async (row: JobSchedule) => {
 }
 
 onMounted(async () => {
-  servers.value = await as400Store.fetchServers()
-  await load()
+  try {
+    servers.value = await as400Store.fetchServers()
+    await load()
+  } catch (e: unknown) {
+    ElMessage.error((e instanceof Error ? e.message : null) || t('common.loadFailed'))
+  }
 })
 </script>
 

@@ -12,8 +12,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+
 
 /**
  * 收件人分组管理：CRUD + 成员管理。
@@ -21,6 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/email/groups")
 @RequiredArgsConstructor
+@Tag(name = "Email Groups", description = "Recipient group management")
 public class EmailGroupController {
 
     private final IEmailGroupService emailGroupService;

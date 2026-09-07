@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/bpcs/invoices")
 @RequiredArgsConstructor
-@Tag(name = "BPCS发票轨迹")
+@Tag(name = "BPCS Invoice Trail")
 public class BpcsInvoiceController {
 
     private final IBpcsInvoiceService invoiceService;

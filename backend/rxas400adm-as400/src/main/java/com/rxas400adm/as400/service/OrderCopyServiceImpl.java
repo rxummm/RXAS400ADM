@@ -36,7 +36,7 @@ public class OrderCopyServiceImpl implements IOrderCopyService {
         String sql = statements.get("bpcs.order.header");
         List<Map<String, Object>> rows = clientProvider.current().queryListCheckedBounded(sql, 2, cono, sourceOrno);
         if (rows.isEmpty()) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "源订单不存在: " + cono + "/" + sourceOrno);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "Source order not found: " + cono + "/" + sourceOrno);
         }
         // 实际生产环境需要调用 BPCS 订单创建命令，此处返回提示
         return ApiResponse.success("MO-" + (System.currentTimeMillis() % 1000000));

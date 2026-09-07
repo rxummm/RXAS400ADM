@@ -22,6 +22,7 @@ import com.rxas400adm.system.mapper.SysRoleMapper;
 import com.rxas400adm.system.mapper.SysRolePermissionMapper;
 import com.rxas400adm.system.mapper.SysUserMapper;
 import com.rxas400adm.system.mapper.SysUserRoleMapper;
+import com.rxas400adm.system.vo.SysRoleVO;
 import com.rxas400adm.system.vo.UserVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -56,6 +57,15 @@ public class SysUserServiceImpl implements SysUserService {
     }
 
     @Override
+    public SysUser requireByUsername(String username) {
+        SysUser user = getByUsername(username);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND, "User not found: " + username);
+        }
+        return user;
+    }
+
+    @Override
     public PageResult<UserVO> page(long current, long size, String keyword) {
         LambdaQueryWrapper<SysUser> qw = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(keyword)) {
@@ -77,7 +87,7 @@ public class SysUserServiceImpl implements SysUserService {
     
     public UserVO create(UserDTO dto) {
         if (getByUsername(dto.getUsername()) != null) {
-            throw new BusinessException(ErrorCode.USERNAME_EXISTS, "用户名已存在: " + dto.getUsername());
+            throw new BusinessException(ErrorCode.USERNAME_EXISTS, "Username already exists: " + dto.getUsername());
         }
         SysUser user = new SysUser();
         user.setUsername(dto.getUsername());
@@ -106,7 +116,7 @@ public class SysUserServiceImpl implements SysUserService {
     public UserVO update(Long id, UserUpdateDTO dto) {
         SysUser user = userMapper.selectById(id);
         if (user == null) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND, "用户不存在");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND, "User not found");
         }
         // 重置密码：dto.password 非空即覆盖（P2-3 统一强度校验）
         if (StringUtils.hasText(dto.getPassword())) {
@@ -162,13 +172,13 @@ public class SysUserServiceImpl implements SysUserService {
         PasswordPolicy.validate(newPassword);
         SysUser user = getByUsername(username);
         if (user == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "User not found");
         }
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new BusinessException(ErrorCode.LOGIN_FAILED, "旧密码不正确");
+            throw new BusinessException(ErrorCode.LOGIN_FAILED, "Old password is incorrect");
         }
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "新密码不能与旧密码相同");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "New password must differ from old password");
         }
         updatePassword(username, passwordEncoder.encode(newPassword));
     }
@@ -218,7 +228,7 @@ public class SysUserServiceImpl implements SysUserService {
         List<String> found = roles.stream().map(SysRole::getRoleCode).toList();
         List<String> missing = codes.stream().filter(c -> !found.contains(c)).toList();
         if (!missing.isEmpty()) {
-            throw new BusinessException(ErrorCode.ROLE_NOT_FOUND, "角色不存在: " + String.join(", ", missing));
+            throw new BusinessException(ErrorCode.ROLE_NOT_FOUND, "Role not found: " + String.join(", ", missing));
         }
         return roles.stream().map(SysRole::getId).toList();
     }
@@ -233,10 +243,10 @@ public class SysUserServiceImpl implements SysUserService {
             return;
         }
         Map<Long, SysRole> existingRoles = roleMapper.selectBatchIds(distinctIds).stream()
-                .collect(Collectors.toMap(SysRole::getId, r -> r));
+                .collect(Collectors.toMap(SysRole::getId, r -> r, (a, b) -> b));
         List<Long> missing = distinctIds.stream().filter(id -> !existingRoles.containsKey(id)).toList();
         if (!missing.isEmpty()) {
-            throw new BusinessException(ErrorCode.ROLE_NOT_FOUND, "角色不存在: " + missing.stream().map(String::valueOf).collect(Collectors.joining(", ")));
+            throw new BusinessException(ErrorCode.ROLE_NOT_FOUND, "Role not found: " + missing.stream().map(String::valueOf).collect(Collectors.joining(", ")));
         }
         List<SysUserRole> userRoles = distinctIds.stream().map(roleId -> {
             SysUserRole ur = new SysUserRole();
@@ -260,7 +270,7 @@ public class SysUserServiceImpl implements SysUserService {
         }
         List<Long> roleIds = userRoles.stream().map(SysUserRole::getRoleId).distinct().toList();
         Map<Long, SysRole> roleMap = roleMapper.selectBatchIds(roleIds).stream()
-                .collect(Collectors.toMap(SysRole::getId, r -> r));
+                .collect(Collectors.toMap(SysRole::getId, r -> r, (a, b) -> b));
         /* B11：孤儿 role_id（角色已被删）过滤，避免 VO.roles 出现 null 元素 */
         return userRoles.stream().collect(Collectors.groupingBy(
                 SysUserRole::getUserId,
@@ -281,6 +291,8 @@ public class SysUserServiceImpl implements SysUserService {
     }
 
     private UserVO toVO(SysUser user, List<SysRole> roles) {
+        List<SysRoleVO> roleVOs = roles == null ? Collections.emptyList()
+                : roles.stream().map(SysRoleVO::from).toList();
         return UserVO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -288,7 +300,7 @@ public class SysUserServiceImpl implements SysUserService {
                 .status(user.getStatus())
                 .loginSource(user.getLoginSource())
                 .as400ServerId(user.getAs400ServerId())
-                .roles(roles == null ? Collections.emptyList() : roles)
+                .roles(roleVOs)
                 .createdTime(user.getCreatedTime())
                 .build();
     }

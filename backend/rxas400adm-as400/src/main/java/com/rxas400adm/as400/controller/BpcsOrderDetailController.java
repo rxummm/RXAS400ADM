@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bpcs/orders/detail")
 @RequiredArgsConstructor
-@Tag(name = "BPCS订单详情增强")
+@Tag(name = "BPCS Order Detail Enhanced")
 public class BpcsOrderDetailController {
 
     private final IBpcsOrderDetailService detailService;

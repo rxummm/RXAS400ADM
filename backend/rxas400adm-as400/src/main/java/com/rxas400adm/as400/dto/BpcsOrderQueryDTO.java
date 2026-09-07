@@ -8,12 +8,12 @@ import jakarta.validation.constraints.Size;
  */
 public class BpcsOrderQueryDTO {
 
-    @NotBlank(message = "公司码不能为空")
-    @Size(max = 3, message = "公司码最长 3 位")
+    @NotBlank(message = "company code is required")
+    @Size(max = 3, message = "max length is 3")
     private String cono;
 
-    @NotBlank(message = "订单号不能为空")
-    @Size(max = 16, message = "订单号最长 16 位")
+    @NotBlank(message = "order number is required")
+    @Size(max = 16, message = "max length is 16")
     private String orno;
 
     public String getCono() {

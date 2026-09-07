@@ -38,10 +38,14 @@ public class SqlStatementRegistry {
 
     private static final String LOCATION_PATTERN = "classpath:sql/as400-*.xml";
 
+    /** 静态单例：供非 Spring 管理的 JTOpen*Client 类使用 */
+    private static volatile SqlStatementRegistry instance;
+
     private final Map<String, String> statements = new ConcurrentHashMap<>();
 
     @PostConstruct
     void load() {
+        instance = this;
         try {
             ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             for (Resource resource : resolver.getResources(LOCATION_PATTERN)) {
@@ -60,6 +64,14 @@ public class SqlStatementRegistry {
             throw new IllegalStateException("未注册的 AS400 SQL 语句: " + id);
         }
         return sql;
+    }
+
+    /** 静态访问方法：供非 Spring 管理的类使用（如 JTOpen*Client） */
+    public static String of(String id) {
+        if (instance == null) {
+            throw new IllegalStateException("SqlStatementRegistry 尚未初始化");
+        }
+        return instance.get(id);
     }
 
     private void parse(Resource resource) {

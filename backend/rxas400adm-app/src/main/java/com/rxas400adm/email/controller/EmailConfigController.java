@@ -8,9 +8,11 @@ import com.rxas400adm.email.vo.EmailConfigVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 import java.util.List;
+
 
 /**
  * 邮件配置管理（rx_email_config）：SMTP 设置 + 测试发送。
@@ -18,6 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/email/config")
 @RequiredArgsConstructor
+@Tag(name = "Email Configuration", description = "SMTP settings and test send")
 public class EmailConfigController {
 
     private final IEmailService emailService;

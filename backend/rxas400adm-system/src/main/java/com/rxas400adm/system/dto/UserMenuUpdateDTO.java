@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 public class UserMenuUpdateDTO {
 
-    @Size(max = 500, message = "菜单数量不能超过 500")
+    @Size(max = 500, message = "menu count must not exceed 500")
     @Schema(description = "菜单ID列表", example = "[1, 2, 3]")
     private List<Long> menuIds;
 }
