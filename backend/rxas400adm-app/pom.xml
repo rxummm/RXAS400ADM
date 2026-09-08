@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.rxas400adm</groupId>
         <artifactId>rxas400adm-backend</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version> 
     </parent>
 
     <artifactId>rxas400adm-app</artifactId>
@@ -41,6 +41,10 @@
         <dependency>
             <groupId>com.rxas400adm</groupId>
             <artifactId>rxas400adm-monitor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.rxas400adm</groupId>
+            <artifactId>rxas400adm-operation</artifactId>
         </dependency>
 
         <dependency>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rxas400adm.operation.mapper.DesiredStateMapper">
+
+    <update id="upsert">
+        INSERT INTO rx_desired_state (target_type, target_name, state_data, version, created_by, created_at, updated_at)
+        VALUES (#{targetType}, #{targetName}, #{stateData}, 1, #{createdBy}, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE
+            state_data = #{stateData},
+            version = version + 1,
+            updated_at = NOW()
+    </update>
+
+    <update id="casUpdate">
+        UPDATE rx_desired_state
+        SET state_data = #{stateData}, version = version + 1, updated_at = NOW()
+        WHERE target_type = #{targetType} AND target_name = #{targetName} AND version = #{currentVersion}
+    </update>
+
+</mapper>

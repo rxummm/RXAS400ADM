@@ -100,14 +100,17 @@ class JTOpenJobClient implements JobClient {
                 return null;
             }
             IFSFileInputStream in = new IFSFileInputStream(system, tempPath);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            byte[] buf = new byte[8192];
-            int n;
-            while ((n = in.read(buf)) != -1) {
-                baos.write(buf, 0, n);
+            try {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buf = new byte[8192];
+                int n;
+                while ((n = in.read(buf)) != -1) {
+                    baos.write(buf, 0, n);
+                }
+                return new ByteArrayInputStream(baos.toByteArray());
+            } finally {
+                in.close();
             }
-            in.close();
-            return new ByteArrayInputStream(baos.toByteArray());
         } catch (Exception e) {
             log.warn("读取 SPOOL 文件内容失败(host={}, spool={}): {}",
                     state.host, spoolName, state.redact(e.getMessage()));

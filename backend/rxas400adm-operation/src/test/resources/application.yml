@@ -1,0 +1,10 @@
+rxas400:
+  operation:
+    enabled: true
+    max-retry: 3
+    cleanup-interval-ms: 1000
+    stuck-threshold-minutes: 10
+    timeouts:
+      USER_CREATE: 300000
+      END_JOB: 120000
+      RAW_CL: 60000

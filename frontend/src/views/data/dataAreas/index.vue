@@ -138,6 +138,7 @@ function load() {
   loading.value = true
   fetchDataAreas(library.value || undefined)
     .then(data => { areas.value = data })
+    .catch(() => {})
     .finally(() => { loading.value = false })
 }
 

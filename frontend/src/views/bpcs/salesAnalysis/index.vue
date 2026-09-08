@@ -69,6 +69,7 @@ function load() {
   loading.value = true
   getSalesTopN({ cono: cono.value || '001', topN: topN.value })
     .then(data => { analysis.value = data })
+    .catch(() => {})
     .finally(() => { loading.value = false })
 }
 

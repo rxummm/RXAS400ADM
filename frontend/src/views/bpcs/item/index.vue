@@ -208,6 +208,7 @@ function selectItem(item: BpcsItem) {
   loading.value = true
   getItemDetail(item.item)
     .then(d => { detail.value = d })
+    .catch(() => {})
     .finally(() => { loading.value = false })
 }
 

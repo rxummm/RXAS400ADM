@@ -62,6 +62,6 @@ function load() {
   if (query.item) p.item = query.item
   if (query.fromDate) p.fromDate = query.fromDate
   if (query.toDate) p.toDate = query.toDate
-  getInventoryHistory(p).then(d => { rows.value = d }).finally(() => { loading.value = false })
+  getInventoryHistory(p).then(d => { rows.value = d }).catch(() => {}).finally(() => { loading.value = false })
 }
 </script>

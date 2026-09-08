@@ -340,6 +340,7 @@
   "menu.groupJob": "Jobs & Tasks",
   "menu.groupData": "Data & Objects",
   "menu.groupAs400": "AS400 Ops",
+  "menu.as400ManagementGroup": "AS400 Management",
   "menu.groupReport": "Reports & Docs",
   "menu.groupRelease": "Release & Code",
   "menu.groupTools": "Tools",
@@ -347,6 +348,7 @@
   "menu.system": "System",
   "menu.monitor": "Monitor",
   "menu.jobs": "Job Center",
+  "menu.operation": "Operations",
   "menu.query": "Query",
   "menu.assets": "Servers",
   "menu.alertRules": "Alert Rules",
@@ -493,5 +495,14 @@
   "menuType.menu": "Menu",
   "menuType.button": "Button",
   "menuType.tab": "Tab",
-  "menuType.default": "Default"
+  "menuType.default": "Default",
+  "operation.type": "Operation Type",
+  "operation.status": "Status",
+  "operation.currentStep": "Current Step",
+  "operation.riskLevel": "Risk Level",
+  "operation.requestedBy": "Requested By",
+  "operation.requestedAt": "Requested At",
+  "operation.detail": "Operation Detail",
+  "operation.cancel": "Cancel",
+  "operation.retry": "Retry"
 }

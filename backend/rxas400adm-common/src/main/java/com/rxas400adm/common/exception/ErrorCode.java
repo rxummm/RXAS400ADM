@@ -79,7 +79,20 @@ public enum ErrorCode {
     EMAIL_SMTP_NOT_CONFIGURED(130001, "SMTP server not configured"),
     EMAIL_SEND_FAILED(130002, "Email sending failed"),
     EMAIL_GROUP_NOT_FOUND(130003, "Email group not found"),
-    EMAIL_RECIPIENT_EXISTS(130004, "Email address already in group");
+    EMAIL_RECIPIENT_EXISTS(130004, "Email address already in group"),
+
+    // ---------- Operation (140000+) ----------
+    OPERATION_NOT_FOUND(140001, "Operation not found"),
+    OPERATION_TYPE_UNKNOWN(140002, "Unknown operation type"),
+    OPERATION_STATUS_CONFLICT(140003, "Operation status conflict, please refresh and retry"),
+    OPERATION_STEP_FAILED(140004, "Operation step failed"),
+    OPERATION_TIMEOUT(140005, "Operation timed out"),
+    OPERATION_MAX_RETRY(140006, "Operation reached maximum retry count"),
+    OPERATION_CANCELLED(140007, "Operation has been cancelled"),
+    OPERATION_FORBIDDEN(140008, "Operation not allowed"),
+    OPERATION_CONFIRMATION_REQUIRED(140009, "Confirmation required for this operation"),
+    SERVICE_UNAVAILABLE(140010, "Service temporarily unavailable, please try again later"),
+    CONFLICT(140011, "Resource conflict, please refresh and retry");
 
     private final int code;
     private final String message;

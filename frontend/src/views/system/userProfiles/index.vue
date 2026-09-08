@@ -68,6 +68,7 @@ function load() {
   loading.value = true
   fetchUserProfiles()
     .then(data => { profiles.value = data })
+    .catch(() => {})
     .finally(() => { loading.value = false })
 }
 

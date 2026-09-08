@@ -43,7 +43,7 @@ function load() {
   const p: Record<string, string | number> = { cono: query.cono || '001', current: 1, size: 200 }
   if (query.lhno) p.lhno = query.lhno
   if (query.carrier) p.carrier = query.carrier
-  searchLoads(p).then(d => { rows.value = d.records }).finally(() => { loading.value = false })
+  searchLoads(p).then(d => { rows.value = d.records }).catch(() => {}).finally(() => { loading.value = false })
 }
 const statusLabel = (s: number) => {
   const keys = ['bpcs.shippingList.statusPlanned', 'bpcs.shippingList.statusFirmed', 'bpcs.shippingList.statusReleased', 'bpcs.shippingList.statusDispatched']

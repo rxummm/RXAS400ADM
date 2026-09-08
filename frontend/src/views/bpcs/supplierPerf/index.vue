@@ -51,6 +51,6 @@ const exportColumns: ExportColumn[] = [
 ]
 function load() {
   loading.value = true
-  listSupplierScores(cono.value || '001', 50).then(d => { rows.value = d }).finally(() => { loading.value = false })
+  listSupplierScores(cono.value || '001', 50).then(d => { rows.value = d }).catch(() => {}).finally(() => { loading.value = false })
 }
 </script>

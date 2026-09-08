@@ -1,5 +1,6 @@
 import common from './common'
 import menu from './menu'
+import operation from './operation'
 
 /**
  * 精简后的静态翻译：仅保留 login/layout/theme/tokenRefresh/status/connection/error/common/menu
@@ -8,4 +9,5 @@ import menu from './menu'
 export default {
   ...common,
   ...menu,
+  ...operation,
 }

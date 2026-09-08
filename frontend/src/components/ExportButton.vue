@@ -7,6 +7,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Download } from '@element-plus/icons-vue'
+import { triggerBlobDownload } from '@/api/blobClient'
 
 /**
  * 通用 CSV 导出按钮（前端生成 UTF-8 BOM，Excel 中文不乱码）。
@@ -44,13 +45,8 @@ function handleExport() {
     )
     const csv = '\uFEFF' + [header.join(','), ...lines].join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
     const name = props.title || 'export'
-    a.download = `${name}-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    triggerBlobDownload(blob, `${name}-${new Date().toISOString().slice(0, 10)}.csv`)
   } finally {
     loading.value = false
   }

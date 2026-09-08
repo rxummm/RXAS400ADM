@@ -222,6 +222,7 @@ import { useUserStore } from '@/stores/user'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 import { normalizeJobIdentity } from '@/utils/jobIdentity'
+import { triggerBlobDownload } from '@/api/blobClient'
 import {
   endJob,
   batchEndJobs,
@@ -385,12 +386,7 @@ const handleSpoolDownload = async (row: SpoolFile) => {
       spoolName: row.SPOOLED_FILE_NAME,
       outputQueue: row.OUTPUT_QUEUE,
     })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${row.SPOOLED_FILE_NAME}.txt`
-    a.click()
-    URL.revokeObjectURL(url)
+    triggerBlobDownload(blob, `${row.SPOOLED_FILE_NAME}.txt`)
   } catch {
     /* 错误已由拦截器提示 */
   }

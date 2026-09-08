@@ -1,4 +1,7 @@
+import axios from 'axios'
 import request from './request'
+
+const actuator = axios.create({ baseURL: '/actuator' })
 
 /** Actuator /actuator/metrics 单指标响应（H5：替换调用处的 any） */
 export interface MetricMeasurement {
@@ -34,14 +37,14 @@ export interface MetricHistory {
  * 获取 Actuator 健康信息
  */
 export function fetchHealth(): Promise<ActuatorHealth> {
-  return request.get('/actuator/health')
+  return actuator.get('/health').then(r => r.data)
 }
 
 /**
  * 获取单个指标详情
  */
 export function fetchMetricDetail(name: string): Promise<MetricDetail> {
-  return request.get(`/actuator/metrics/${name}`)
+  return actuator.get(`/metrics/${name}`).then(r => r.data)
 }
 
 /**

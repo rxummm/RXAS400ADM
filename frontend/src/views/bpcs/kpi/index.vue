@@ -45,7 +45,7 @@ const kpi = ref<SupplyChainKpi | null>(null)
 const fmtMoney = (v: number) => formatMoney(v, 0)
 function load() {
   loading.value = true
-  getSupplyChainKpi({ cono: cono.value || '001' }).then(d => { kpi.value = d }).finally(() => { loading.value = false })
+  getSupplyChainKpi({ cono: cono.value || '001' }).then(d => { kpi.value = d }).catch(() => {}).finally(() => { loading.value = false })
 }
 load()
 </script>

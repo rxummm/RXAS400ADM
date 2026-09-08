@@ -34,7 +34,8 @@ import java.util.List;
  *   token 内嵌声明。
  * - SUBSCRIBE：按目的地鉴权——
  *   · /topic/monitor/** → 需要 MONITOR_VIEW（实时监控数据不外泄）
- *   · /topic/** 其它目的地 → 拒绝（当前服务端仅发布 /topic/monitor/**）
+ *   · /topic/operations/** → 需要 OPERATION_VIEW（Operation 步骤实时推送）
+ *   · /topic/** 其它目的地 → 拒绝（当前服务端仅发布 /topic/monitor/** 和 /topic/operations/**）
  *   · /user/queue/**（个人通知）→ 已登录即可
  */
 @Slf4j
@@ -136,8 +137,15 @@ public class WsAuthChannelInterceptor implements ChannelInterceptor {
                 log.warn("[WS] 用户 {} 订阅的服务器不存在或已禁用: id={}", authentication.getName(), instanceId);
                 throw new AccessDeniedException("Monitoring server not found or disabled");
             }
+        } else if (destination.startsWith("/topic/operations/")) {
+            boolean hasOperationView = authentication.getAuthorities().stream()
+                    .anyMatch(a -> "OPERATION_VIEW".equals(a.getAuthority()));
+            if (!hasOperationView) {
+                log.warn("[WS] 用户 {} 无 OPERATION_VIEW，拒绝订阅 {}", authentication.getName(), destination);
+                throw new AccessDeniedException("No permission to access operation real-time updates");
+            }
         } else if (destination.startsWith("/topic/")) {
-            // 当前服务端仅向 /topic/monitor/** 发布；其余公开 topic 一律拒绝
+            // 当前服务端仅向 /topic/monitor/** 和 /topic/operations/** 发布；其余公开 topic 一律拒绝
             log.warn("[WS] 用户 {} 订阅未授权目的地 {}", authentication.getName(), destination);
             throw new AccessDeniedException("No permission to subscribe to this destination");
         }

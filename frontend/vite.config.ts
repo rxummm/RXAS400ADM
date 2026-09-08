@@ -51,6 +51,10 @@ export default defineConfig(({ mode }) => {
           target,
           changeOrigin: true,
         },
+        '/actuator': {
+          target,
+          changeOrigin: true,
+        },
         '/ws': {
           target: wsTarget,
           ws: true,

@@ -11,6 +11,7 @@ import as400Routes from './modules/as400'
 import bpcsRoutes from './modules/bpcs'
 import systemRoutes from './modules/system'
 import toolRoutes from './modules/tool'
+import operationRoutes from './modules/operation'
 
 NProgress.configure({
   showSpinner: false,
@@ -51,6 +52,7 @@ const router = createRouter({
         ...bpcsRoutes,
         ...systemRoutes,
         ...toolRoutes,
+        ...operationRoutes,
       ],
     },
     {

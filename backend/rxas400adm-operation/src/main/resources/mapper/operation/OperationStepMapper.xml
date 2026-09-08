@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rxas400adm.operation.mapper.OperationStepMapper">
+
+    <update id="updateStatus">
+        UPDATE rx_operation_step
+        SET status = #{status},
+            started_at = CASE WHEN #{status} = 'RUNNING' THEN NOW() ELSE started_at END,
+            version = version + 1
+        WHERE operation_id = #{operationId} AND step_code = #{stepCode} AND version = #{version}
+    </update>
+
+    <update id="updateResult">
+        UPDATE rx_operation_step
+        SET status = #{status}, ibmi_return_code = #{ibmiReturnCode}, ibmi_message = #{ibmiMessage},
+            error_detail = #{errorDetail}, duration_ms = #{durationMs}, completed_at = #{completedAt},
+            version = version + 1
+        WHERE operation_id = #{operationId} AND step_code = #{stepCode} AND version = #{version}
+    </update>
+
+</mapper>

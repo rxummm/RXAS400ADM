@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rxas400adm.operation.mapper.OperationMapper">
+
+    <update id="casUpdateStatus">
+        UPDATE rx_operation
+        SET status = #{targetStatus}, version = version + 1, updated_at = NOW()
+        WHERE id = #{id} AND version = #{currentVersion}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE rx_operation
+        SET status = #{targetStatus}, error_code = #{errorCode}, error_message = #{errorMessage},
+            version = version + 1, updated_at = NOW()
+        WHERE id = #{id} AND version = #{currentVersion}
+    </update>
+
+    <update id="incrementRetry">
+        UPDATE rx_operation
+        SET retry_count = retry_count + 1, status = 'RETRYING', updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStartedAt">
+        UPDATE rx_operation
+        SET started_at = #{startedAt}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateCurrentStep">
+        UPDATE rx_operation
+        SET current_step = #{currentStep}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateCompletedAt">
+        UPDATE rx_operation
+        SET completed_at = #{completedAt}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectByIdempotencyKey" resultType="com.rxas400adm.operation.domain.Operation">
+        SELECT * FROM rx_operation WHERE idempotency_key = #{idempotencyKey} LIMIT 1
+    </select>
+
+    <select id="findStuckOperations" resultType="com.rxas400adm.operation.domain.Operation">
+        SELECT * FROM rx_operation
+        WHERE status = 'RUNNING'
+          AND started_at IS NOT NULL
+          AND started_at &lt; #{threshold}
+        ORDER BY started_at ASC
+        LIMIT #{limit}
+    </select>
+
+    <update id="markFailed">
+        UPDATE rx_operation
+        SET status = 'FAILED', error_code = #{errorCode}, error_message = #{errorMessage},
+            version = version + 1, updated_at = NOW()
+        WHERE id = #{id} AND version = #{currentVersion}
+    </update>
+
+</mapper>

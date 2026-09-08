@@ -118,6 +118,7 @@ function load() {
   loading.value = true
   getInventoryAlerts({ cono: cono.value || '001', limit: 100 })
     .then(data => { alerts.value = data })
+    .catch(() => {})
     .finally(() => { loading.value = false })
 }
 </script>

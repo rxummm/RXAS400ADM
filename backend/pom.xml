@@ -23,6 +23,7 @@
         <module>rxas400adm-system</module>
         <module>rxas400adm-security</module>
         <module>rxas400adm-as400</module>
+        <module>rxas400adm-operation</module>
         <module>rxas400adm-source</module>
         <module>rxas400adm-monitor</module>
         <module>rxas400adm-app</module>
@@ -66,6 +67,11 @@
             <dependency>
                 <groupId>com.rxas400adm</groupId>
                 <artifactId>rxas400adm-monitor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.rxas400adm</groupId>
+                <artifactId>rxas400adm-operation</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

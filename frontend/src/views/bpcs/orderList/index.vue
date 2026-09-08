@@ -74,6 +74,7 @@ function search() {
   loading.value = true
   getOrderHeader(query.cono || '001', query.orno)
     .then(data => { orders.value = data ? [data] : [] })
+    .catch(() => {})
     .finally(() => { loading.value = false })
 }
 

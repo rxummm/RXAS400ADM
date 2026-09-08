@@ -285,6 +285,7 @@ function load() {
   loading.value = true
   fetchUserProfileList()
     .then(data => { profiles.value = data })
+    .catch(() => {})
     .finally(() => { loading.value = false })
 }
 

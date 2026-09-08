@@ -40,6 +40,7 @@ defineOptions({ name: 'BpcsShipmentMgmt' })
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { listShipments, exportShipmentPdf, type ShipmentVO } from '@/api/bpcs'
+import { triggerBlobDownload } from '@/api/blobClient'
 import { ElMessage } from 'element-plus'
 
 const { t } = useI18n()
@@ -48,6 +49,7 @@ const loading = ref(false)
 const rows = ref<ShipmentVO[]>([])
 const pdfVisible = ref(false)
 const pdfUrl = ref('')
+const pdfBlob = ref<Blob | null>(null)
 const currentWaybillNo = ref('')
 
 const load = async () => {
@@ -69,8 +71,8 @@ const handlePdf = async (row: ShipmentVO) => {
       items: [{ itemCode: 'N/A', description: row.orderNos, qty: row.lineCount, unit: 'PCS' }]
     }
     const blob = await exportShipmentPdf(cono.value, row.loadNo, params).then(r => r.data)
-    const url = URL.createObjectURL(blob)
-    pdfUrl.value = url
+    pdfBlob.value = blob
+    pdfUrl.value = URL.createObjectURL(blob)
     currentWaybillNo.value = row.loadNo
     pdfVisible.value = true
   } catch (e: unknown) {
@@ -80,13 +82,8 @@ const handlePdf = async (row: ShipmentVO) => {
 }
 
 const downloadPdf = () => {
-  if (!pdfUrl.value) return
-  const a = document.createElement('a')
-  a.href = pdfUrl.value
-  a.download = `waybill-${currentWaybillNo.value}.pdf`
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
+  if (!pdfBlob.value) return
+  triggerBlobDownload(pdfBlob.value, `waybill-${currentWaybillNo.value}.pdf`)
 }
 
 const printPdf = () => {

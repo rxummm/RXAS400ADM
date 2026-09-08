@@ -59,7 +59,7 @@ const exportColumns: ExportColumn[] = [
 const classCount = (c: string) => items.value.filter(i => i.abcClass === c).length
 function load() {
   loading.value = true
-  getAbcXyzMatrix({ cono: cono.value || '001', limit: 200 }).then(d => { items.value = d }).finally(() => { loading.value = false })
+  getAbcXyzMatrix({ cono: cono.value || '001', limit: 200 }).then(d => { items.value = d }).catch(() => {}).finally(() => { loading.value = false })
 }
 </script>
 <style scoped>

@@ -340,6 +340,7 @@
   "menu.groupJob": "作业与任务",
   "menu.groupData": "数据与对象",
   "menu.groupAs400": "AS400 运维",
+  "menu.as400ManagementGroup": "AS400 管理",
   "menu.groupReport": "报表与文档",
   "menu.groupRelease": "发布与代码",
   "menu.groupTools": "工具",
@@ -347,6 +348,7 @@
   "menu.system": "系统管理",
   "menu.monitor": "监控中心",
   "menu.jobs": "Job 中心",
+  "menu.operation": "操作中心",
   "menu.query": "数据查询",
   "menu.assets": "服务器管理",
   "menu.alertRules": "告警规则",
@@ -493,5 +495,14 @@
   "menuType.menu": "菜单",
   "menuType.button": "按钮",
   "menuType.tab": "Tab",
-  "menuType.default": "默认"
+  "menuType.default": "默认",
+  "operation.type": "操作类型",
+  "operation.status": "状态",
+  "operation.currentStep": "当前步骤",
+  "operation.riskLevel": "风险等级",
+  "operation.requestedBy": "发起人",
+  "operation.requestedAt": "发起时间",
+  "operation.detail": "操作详情",
+  "operation.cancel": "取消操作",
+  "operation.retry": "重试"
 }
