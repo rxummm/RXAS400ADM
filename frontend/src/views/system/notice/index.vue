@@ -35,7 +35,7 @@
         </el-table-column>
         <el-table-column prop="createdBy" :label="$t('notice.publisher')" width="110" />
         <el-table-column prop="publishedTime" :label="$t('notice.time')" width="170">
-          <template #default="{ row }">{{ formatTime(row.publishedTime || row.createdTime) }}</template>
+          <template #default="{ row }">{{ formatDate(row.publishedTime || row.createdTime) }}</template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="160" fixed="right">
           <template #default="{ row }">
@@ -96,6 +96,7 @@ import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { useFormDialog } from '@/composables/useFormDialog'
+import { formatDate } from '@/utils/format'
 
 defineOptions({ name: 'Notice' })
 
@@ -148,10 +149,6 @@ const {
 const previewVisible = ref(false)
 const previewTitle = ref('')
 const previewContent = ref('')
-
-function formatTime(time?: string) {
-  return time ? time.replace('T', ' ').slice(0, 19) : '-'
-}
 
 function onPreview(row: Notice) {
   previewTitle.value = row.title

@@ -7,6 +7,8 @@ import com.rxas400adm.as400.vo.EnabledServerVO;
 import com.rxas400adm.as400.vo.IbmiSystemDetailVO;
 import com.rxas400adm.as400.vo.IbmiSystemVO;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -58,21 +60,21 @@ public class As400Controller {
     // P3-8：维护类写操作补审计（create/update/test 原先无 @OperateLog）
     @PostMapping("/systems")
     @PreAuthorize("hasAuthority('AS400_MANAGE')")
-    @OperateLog(module = "AS400 管理", operation = "新增服务器")
+    @OperateLog(module = OperateLogModule.AS400_MANAGEMENT, operation = OperateLogOperation.CREATE_SERVER)
     public ApiResponse<IbmiSystemDetailVO> create(@Valid @RequestBody IbmiSystemDTO system) {
         return ApiResponse.success(IbmiSystemDetailVO.from(systemService.create(system)));
     }
 
     @PutMapping("/systems/{id}")
     @PreAuthorize("hasAuthority('AS400_MANAGE')")
-    @OperateLog(module = "AS400 管理", operation = "修改服务器")
+    @OperateLog(module = OperateLogModule.AS400_MANAGEMENT, operation = OperateLogOperation.UPDATE_SERVER)
     public ApiResponse<IbmiSystemDetailVO> update(@PathVariable Long id, @Valid @RequestBody IbmiSystemDTO system) {
         return ApiResponse.success(IbmiSystemDetailVO.from(systemService.update(id, system)));
     }
 
     @DeleteMapping("/systems/{id}")
     @PreAuthorize("hasAuthority('AS400_MANAGE')")
-    @OperateLog(module = "AS400 管理", operation = "删除服务器")
+    @OperateLog(module = OperateLogModule.AS400_MANAGEMENT, operation = OperateLogOperation.DELETE_SERVER)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         systemService.delete(id);
         return ApiResponse.success();
@@ -80,14 +82,14 @@ public class As400Controller {
 
     @PostMapping("/systems/{id}/test")
     @PreAuthorize("hasAuthority('AS400_MANAGE')")
-    @OperateLog(module = "AS400 管理", operation = "测试连接")
+    @OperateLog(module = OperateLogModule.AS400_MANAGEMENT, operation = OperateLogOperation.TEST_CONNECTION)
     public ApiResponse<CommandResult> test(@PathVariable Long id) {
         return ApiResponse.success(systemService.testConnection(id));
     }
 
     @PostMapping("/systems/{id}/command")
     @PreAuthorize("hasAuthority('AS400_MANAGE')")
-    @OperateLog(module = "AS400 管理", operation = "执行 CL 命令")
+    @OperateLog(module = OperateLogModule.AS400_MANAGEMENT, operation = OperateLogOperation.EXECUTE_CL)
     public ApiResponse<CommandResult> command(@PathVariable Long id, @RequestParam String command) {
         return ApiResponse.success(systemService.executeCommand(id, command));
     }

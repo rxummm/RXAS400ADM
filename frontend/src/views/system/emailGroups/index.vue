@@ -139,7 +139,11 @@ async function handleSave() {
 }
 
 async function handleDelete(row: EmailGroup) {
-  await ElMessageBox.confirm(t('emailGroups.deleteConfirm', { name: row.groupName }), t('common.confirm'), { type: 'warning' })
+  try {
+    await ElMessageBox.confirm(t('emailGroups.deleteConfirm', { name: row.groupName }), t('common.confirm'), { type: 'warning' })
+  } catch {
+    return
+  }
   await deleteEmailGroup(row.id)
   ElMessage.success(t('common.operationSuccess'))
   load()

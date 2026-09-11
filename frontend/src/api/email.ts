@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 export interface EmailConfig {
   configKey: string
@@ -35,10 +36,8 @@ export interface EmailLog {
   createdTime?: string
 }
 
-export interface PageResult<T> {
-  total: number
-  records: T[]
-}
+/** @deprecated 使用 PaginatedResult 代替 */
+export type PageResult<T> = PaginatedResult<T>
 
 // --- Config ---
 export const listEmailConfigs = () => request.get<EmailConfig[]>('/email/config')

@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 export interface ExecutionRecord {
   source: 'SCHEDULE' | 'SCRIPT'
@@ -30,6 +31,6 @@ export const listExecutions = (params: {
   current?: number
   size?: number
   limit?: number
-} = {}) => request.get<{ total: number; records: ExecutionRecord[] }>('/executions', { params })
+} = {}): Promise<PaginatedResult<ExecutionRecord>> => request.get('/executions', { params })
 
 export const getExecutionStats = (): Promise<ExecutionStats> => request.get('/executions/stats')

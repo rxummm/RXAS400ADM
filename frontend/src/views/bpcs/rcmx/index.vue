@@ -164,7 +164,7 @@ const confirmDelete = (row: RcmxAssignment) => {
         await deleteRcmx('001', row.cust)
         ElMessage.success(t('common.deleteSuccess'))
         load()
-      } catch (e: unknown) {
+  } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         ElMessage.error(msg)
       }
@@ -209,7 +209,7 @@ const handleExport = async () => {
     const ws = XLSX.utils.aoa_to_sheet(wsData)
     XLSX.utils.book_append_sheet(wb, ws, 'RCMX')
     XLSX.writeFile(wb, 'RCMX.xlsx')
-  } catch (e: unknown) {
+  } catch {
     ElMessage.error(t('common.exportFailed'))
   }
 }

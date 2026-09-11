@@ -1,5 +1,6 @@
 package com.rxas400adm.as400.dto;
 
+import com.rxas400adm.common.constants.PageConstants;
 import lombok.Data;
 
 /**
@@ -21,4 +22,12 @@ public class BpcsOrderListQueryDTO {
     private int current = 1;
     /** 每页条数 */
     private int size = 20;
+
+    public int getCurrent() {
+        return (int) PageConstants.clampNum(current);
+    }
+
+    public int getSize() {
+        return (int) PageConstants.clampSize(size);
+    }
 }

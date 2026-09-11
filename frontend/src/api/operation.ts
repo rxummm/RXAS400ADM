@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 export interface CreateOperationReq {
   operationType: string
@@ -38,8 +39,8 @@ export function getOperation(id: number): Promise<OperationVO> {
   return request.get(`/operations/${id}`)
 }
 
-export function listOperations(pageNum: number, pageSize: number): Promise<{ total: number; records: OperationVO[] }> {
-  return request.get('/operations', { params: { pageNum, pageSize } })
+export function listOperations(current: number, size: number): Promise<PaginatedResult<OperationVO>> {
+  return request.get('/operations', { params: { current, size } })
 }
 
 export function retryOperation(id: number): Promise<OperationVO> {

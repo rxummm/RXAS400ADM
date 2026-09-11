@@ -6,6 +6,8 @@ import com.rxas400adm.as400.model.MessageDescriptor;
 import com.rxas400adm.as400.model.MessageFileRow;
 import com.rxas400adm.as400.model.MessageRow;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -56,7 +58,7 @@ public class MessageFileController {
     /** 新增消息描述（ADDMSGD） */
     @PostMapping("/messages")
     @PreAuthorize("hasAuthority('MSGF_ADD')")
-    @OperateLog(module = "消息文件", operation = "新增消息描述")
+    @OperateLog(module = OperateLogModule.MESSAGE_FILE, operation = OperateLogOperation.CREATE_MESSAGE_DESCRIPTION)
     public ApiResponse<CommandResult> add(@Valid @RequestBody MessageRequest request) {
         return ApiResponse.success(clientProvider.current().addMessage(new MessageDescriptor(
                 request.getLibrary(), request.getFile(), request.getId(),
@@ -66,7 +68,7 @@ public class MessageFileController {
     /** 修改消息描述（CHGMSGD） */
     @PutMapping("/messages")
     @PreAuthorize("hasAuthority('MSGF_EDIT')")
-    @OperateLog(module = "消息文件", operation = "修改消息描述")
+    @OperateLog(module = OperateLogModule.MESSAGE_FILE, operation = OperateLogOperation.UPDATE_MESSAGE_DESCRIPTION)
     public ApiResponse<CommandResult> update(@Valid @RequestBody MessageRequest request) {
         return ApiResponse.success(clientProvider.current().updateMessage(new MessageDescriptor(
                 request.getLibrary(), request.getFile(), request.getId(),
@@ -76,7 +78,7 @@ public class MessageFileController {
     /** 删除消息描述（RMVMSGD） */
     @DeleteMapping("/messages")
     @PreAuthorize("hasAuthority('MSGF_DELETE')")
-    @OperateLog(module = "消息文件", operation = "删除消息描述")
+    @OperateLog(module = OperateLogModule.MESSAGE_FILE, operation = OperateLogOperation.DELETE_MESSAGE_DESCRIPTION)
     public ApiResponse<CommandResult> delete(@RequestParam(required = false) String library,
                                              @RequestParam String file,
                                              @RequestParam String id) {
@@ -87,7 +89,9 @@ public class MessageFileController {
     @Data
     public static class MessageRequest {
         private String library;
+        @jakarta.validation.constraints.NotBlank
         private String file;
+        @jakarta.validation.constraints.NotBlank
         private String id;
         private String text;
         private String secondLevel;

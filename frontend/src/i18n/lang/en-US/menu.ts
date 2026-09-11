@@ -119,6 +119,7 @@ export default {
     menus: 'Menus',
     region: 'Regions',
     calendar: 'Calendar',
+    opTemplate: 'Op Templates',
     config: 'Config',
     i18n: 'i18n',
     loginLog: 'Login Log',

@@ -38,10 +38,42 @@ export function formatSize(bytes: number | string | null | undefined): string {
 /**
  * 格式化时间为可读文本，如 "2026-08-12T09:00:00" -> "2026-08-12 09:00:00"
  * @param val 日期字符串（ISO 或含 T 分隔）
+ * @param format 格式类型：'datetime'（默认）| 'date' | 'time' | 'relative'
  */
-export function formatDate(val?: string | null): string {
+export function formatDate(val?: string | null, format: 'datetime' | 'date' | 'time' | 'relative' = 'datetime'): string {
   if (!val) return ''
-  return String(val).replace('T', ' ').substring(0, 19)
+  const str = String(val)
+  const date = new Date(str)
+  if (isNaN(date.getTime())) return str
+
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const y = date.getFullYear()
+  const m = pad(date.getMonth() + 1)
+  const d = pad(date.getDate())
+  const h = pad(date.getHours())
+  const min = pad(date.getMinutes())
+  const s = pad(date.getSeconds())
+
+  switch (format) {
+    case 'date':
+      return `${y}-${m}-${d}`
+    case 'time':
+      return `${h}:${min}:${s}`
+    case 'relative': {
+      const now = Date.now()
+      const diff = now - date.getTime()
+      const minutes = Math.floor(diff / 60000)
+      const hours = Math.floor(diff / 3600000)
+      const days = Math.floor(diff / 86400000)
+      if (minutes < 1) return '刚刚'
+      if (minutes < 60) return `${minutes}分钟前`
+      if (hours < 24) return `${hours}小时前`
+      if (days < 30) return `${days}天前`
+      return `${y}-${m}-${d}`
+    }
+    default:
+      return `${y}-${m}-${d} ${h}:${min}:${s}`
+  }
 }
 
 /**

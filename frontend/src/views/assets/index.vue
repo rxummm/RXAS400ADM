@@ -170,6 +170,7 @@ import {
   testSystem,
   updateSystem,
   type IbmiSystem,
+  type IbmiSystemDetail,
   type CommandResult,
 } from '@/api/as400'
 import RxSkeleton from '@/components/RxSkeleton.vue'
@@ -268,7 +269,7 @@ const {
     }],
   },
   saveApi: async (isEdit, data) => {
-    const payload: Partial<IbmiSystem> = { ...data }
+    const payload: Partial<IbmiSystemDetail> = { ...data }
     delete payload.id
     if (payload.password) {
       payload.passwordEncrypt = payload.password

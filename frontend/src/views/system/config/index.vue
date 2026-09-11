@@ -12,10 +12,6 @@
         <el-icon><Search /></el-icon> {{ $t('common.search') }}
       </el-button>
       <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
-      <div class="flex-1" />
-      <el-button v-has-perm="'SYS_CONFIG_MANAGE'" type="primary" @click="() => openCreate()">
-        <el-icon><Plus /></el-icon> {{ $t('common.create') }}
-      </el-button>
     </div>
 
     <div class="table-wrapper">
@@ -61,7 +57,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { Search } from '@element-plus/icons-vue'
 import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { listConfigs, updateConfig, deleteConfig, type SysConfig } from '@/api/config'
 import AppPagination from '@/components/AppPagination.vue'
@@ -101,7 +97,6 @@ const {
   isEdit,
   loading: saving,
   form,
-  openCreate,
   openEdit,
   onSubmit,
 } = useFormDialog<ConfigForm>({

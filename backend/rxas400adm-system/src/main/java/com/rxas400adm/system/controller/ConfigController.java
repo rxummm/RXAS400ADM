@@ -1,6 +1,8 @@
 package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.system.dto.SysConfigDTO;
 import com.rxas400adm.system.service.ISysConfigService;
@@ -40,14 +42,14 @@ public class ConfigController {
 
     @PutMapping("/{configKey}")
     @PreAuthorize("hasAuthority('SYS_CONFIG_MANAGE')")
-    @OperateLog(module = "系统配置", operation = "修改系统参数")
+    @OperateLog(module = OperateLogModule.CONFIG_MANAGEMENT, operation = OperateLogOperation.UPDATE_CONFIG)
     public ApiResponse<SysConfigVO> update(@PathVariable String configKey, @Valid @RequestBody SysConfigDTO dto) {
         return ApiResponse.success(SysConfigVO.from(configService.update(configKey, dto)));
     }
 
     @DeleteMapping("/{configKey}")
     @PreAuthorize("hasAuthority('SYS_CONFIG_MANAGE')")
-    @OperateLog(module = "系统配置", operation = "删除系统参数")
+    @OperateLog(module = OperateLogModule.CONFIG_MANAGEMENT, operation = OperateLogOperation.DELETE_CONFIG)
     public ApiResponse<Void> delete(@PathVariable String configKey) {
         configService.delete(configKey);
         return ApiResponse.success(null);

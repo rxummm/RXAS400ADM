@@ -35,11 +35,9 @@
 defineOptions({ name: 'BpcsRma' })
 
 import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { listRma } from '@/api/bpcs'
 import type { Rma } from '@/api/bpcs'
 
-const { t } = useI18n()
 const loading = ref(false)
 const rows = ref<Rma[]>([])
 const total = ref(0)

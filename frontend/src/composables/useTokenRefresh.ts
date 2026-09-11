@@ -30,8 +30,6 @@ function getChannel(): BroadcastChannel | null {
 
 function syncTokenFromStorage() {
   const newToken = tokenStore.get()
-  const newRefresh = refreshTokenStore.get()
-  const newExpiry = tokenExpiryStore.get()
   // 通知 Pinia store 更新（延迟导入避免循环依赖）
   import('@/stores/user').then(({ useUserStore }) => {
     const userStore = useUserStore()

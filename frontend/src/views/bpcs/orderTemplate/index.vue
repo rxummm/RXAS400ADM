@@ -113,7 +113,11 @@ const handleSubmit = async () => {
 }
 
 const handleDelete = async (row: OrderTemplate) => {
-  await ElMessageBox.confirm(t('common.confirmDelete'), t('common.warning'), { type: 'warning' })
+  try {
+    await ElMessageBox.confirm(t('common.confirmDelete'), t('common.warning'), { type: 'warning' })
+  } catch {
+    return
+  }
   await deleteOrderTemplate(row.id)
   ElMessage.success(t('common.deleteSuccess'))
   load()

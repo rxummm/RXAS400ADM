@@ -43,4 +43,10 @@ export default [
     component: () => import('@/views/calendar/index.vue'),
     meta: { title: 'menu.calendar', cached: true },
   },
+  {
+    path: 'op-templates',
+    name: 'OpTemplates',
+    component: () => import('@/views/opTemplate/index.vue'),
+    meta: { title: 'menu.opTemplate', cached: true },
+  },
 ] satisfies RouteRecordRaw[]

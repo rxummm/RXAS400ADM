@@ -62,16 +62,33 @@ public class MonitorService {
     private CompareResultVO compareOne(Long id) {
         try {
             IbmiSystem system = ibmiSystemService.get(id);
+            Map<String, Object> overview = metricService.overview(id);
             return new CompareResultVO(
                     id,
                     system == null ? "SERVER-" + id : system.getName(),
                     system == null ? "-" : system.getHost(),
                     system == null ? "-" : system.getEnvironment(),
                     system == null ? "-" : system.getStatus(),
-                    metricService.overview(id));
+                    toLong(overview.get("cpu")),
+                    toLong(overview.get("memory")),
+                    toLong(overview.get("disk")),
+                    toLong(overview.get("jobs")),
+                    toLong(overview.get("msgw")),
+                    toLong(overview.get("lckw")),
+                    overview);
         } catch (Exception e) {
             log.warn("[对比] 服务器 {} 指标获取失败，降级占位行", id, e);
-            return new CompareResultVO(id, "SERVER-" + id, "-", "-", "-", Map.of());
+            return new CompareResultVO(id, "SERVER-" + id, "-", "-", "-", null, null, null, null, null, null, Map.of());
+        }
+    }
+
+    private Long toLong(Object value) {
+        if (value == null) return null;
+        if (value instanceof Number n) return n.longValue();
+        try {
+            return Long.parseLong(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 }

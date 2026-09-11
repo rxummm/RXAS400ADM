@@ -2,6 +2,8 @@ package com.rxas400adm.system.controller;
 import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.service.INotificationService;
@@ -37,26 +39,30 @@ public class NotificationController {
     private final INotificationService notificationService;
 
     @GetMapping("/mine")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<PageResult<NotificationVO>> mine(@RequestParam(defaultValue = "1") int current,
-                                                      @RequestParam(defaultValue = "20") int size,
-                                                      @RequestParam(defaultValue = "false") boolean unreadOnly) {
+                                                       @RequestParam(defaultValue = "20") int size,
+                                                       @RequestParam(defaultValue = "false") boolean unreadOnly) {
         return ApiResponse.success(notificationService.mine(SecurityUtils.currentUsername(), current, size, unreadOnly));
     }
 
     @GetMapping("/unread-count")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<UnreadCountVO> unreadCount() {
         return ApiResponse.success(new UnreadCountVO(notificationService.unreadCount(SecurityUtils.currentUsername())));
     }
 
     @PostMapping("/{id}/read")
-    @OperateLog(module = "通知中心", operation = "标记已读")
+    @PreAuthorize("isAuthenticated()")
+    @OperateLog(module = OperateLogModule.NOTIFICATION_CENTER, operation = OperateLogOperation.MARK_READ)
     public ApiResponse<Void> markRead(@PathVariable Long id) {
         notificationService.markRead(id, SecurityUtils.currentUsername());
         return ApiResponse.success(null);
     }
 
     @PostMapping("/read-all")
-    @OperateLog(module = "通知中心", operation = "全部标记已读")
+    @PreAuthorize("isAuthenticated()")
+    @OperateLog(module = OperateLogModule.NOTIFICATION_CENTER, operation = OperateLogOperation.MARK_ALL_READ)
     public ApiResponse<Void> markAllRead() {
         notificationService.markAllRead(SecurityUtils.currentUsername());
         return ApiResponse.success(null);
@@ -65,7 +71,7 @@ public class NotificationController {
     /** 删除单条通知（仅限本人，需 NOTIFICATION_MANAGE） */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('NOTIFICATION_MANAGE')")
-    @OperateLog(module = "通知中心", operation = "删除通知")
+    @OperateLog(module = OperateLogModule.NOTIFICATION_CENTER, operation = OperateLogOperation.DELETE_NOTIFICATION)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         notificationService.delete(id, SecurityUtils.currentUsername());
         return ApiResponse.success(null);
@@ -74,7 +80,7 @@ public class NotificationController {
     /** 批量删除通知（仅限本人，需 NOTIFICATION_MANAGE） */
     @PostMapping("/batch-delete")
     @PreAuthorize("hasAuthority('NOTIFICATION_MANAGE')")
-    @OperateLog(module = "通知中心", operation = "批量删除通知")
+    @OperateLog(module = OperateLogModule.NOTIFICATION_CENTER, operation = OperateLogOperation.BATCH_DELETE_NOTIFICATIONS)
     public ApiResponse<BatchDeleteResultVO> batchDelete(@Valid @RequestBody BatchDeleteDTO body) {
         int deleted = notificationService.deleteBatch(body.getIds(), SecurityUtils.currentUsername());
         return ApiResponse.success(new BatchDeleteResultVO(deleted));

@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 /** 审计日志记录（rx_audit_log） */
 export interface AuditLog {
@@ -19,5 +20,5 @@ export const listAuditLogs = (params: {
   username?: string
   action?: string
   keyword?: string
-} = {}): Promise<{ total: number; records: AuditLog[] }> =>
+} = {}): Promise<PaginatedResult<AuditLog>> =>
   request.get('/audit-logs', { params })

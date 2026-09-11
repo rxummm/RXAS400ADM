@@ -2,6 +2,8 @@ package com.rxas400adm.system.controller;
 import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.system.service.IDashboardWidgetService;
 import com.rxas400adm.system.vo.DashboardWidgetVO;
@@ -37,7 +39,7 @@ public class DashboardWidgetController {
     // P3-8：显式声明仅登录可写 + 审计（写操作不允许裸奔到匿名链/无审计）
     @PutMapping("/{widgetKey}")
     @PreAuthorize("isAuthenticated()")
-    @OperateLog(module = "仪表盘", operation = "更新 Widget 显隐")
+    @OperateLog(module = OperateLogModule.DASHBOARD_WIDGET, operation = OperateLogOperation.UPDATE_WIDGET_VISIBILITY)
     public ApiResponse<DashboardWidgetVO> update(@PathVariable String widgetKey,
                                                @RequestParam boolean enabled) {
         return ApiResponse.success(DashboardWidgetVO.from(widgetService.update(SecurityUtils.currentUsername(), widgetKey, enabled)));

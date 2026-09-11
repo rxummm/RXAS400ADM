@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class BusinessService implements IBusinessService {
 
-    private static final int MAX_PAGE_SIZE = 100;
     private static final int MAX_TABLE_RESULTS = 500;
 
     /** IBM i 系统对象名：A-Z 0-9 _ $ # @（已按大写归一） */
@@ -65,8 +64,8 @@ public class BusinessService implements IBusinessService {
     public Map<String, Object> data(String library, String file, String keyword, int page, int size) {
         String lib = requireIdentifier(library, "库");
         String tbl = requireIdentifier(file, "文件");
-        int safePage = Math.max(1, page);
-        int safeSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
+        int safePage = (int) PageConstants.clampNum(page);
+        int safeSize = (int) PageConstants.clampSize(size);
 
         List<Map<String, Object>> columns = columns(lib, tbl);
         if (columns.isEmpty()) {

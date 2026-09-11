@@ -1,14 +1,11 @@
 import request, { withNoDedupe } from './request'
 
+/** AS400 服务器基础信息（普通列表接口返回） */
 export interface IbmiSystem {
   id: number
   name: string
   host: string
   port: number
-  /** N2：连接账号（QSECOFR 等）只在 AS400_MANAGE 的 detail 接口返回，普通列表不包含 */
-  username?: string
-  password?: string
-  passwordEncrypt?: string
   environment: string
   criticalLevel: string
   status: string
@@ -22,6 +19,13 @@ export interface IbmiSystem {
   defaultServer?: boolean
   sslEnabled?: boolean
   connectionStatus?: string
+}
+
+/** AS400 服务器详情（管理接口返回，包含连接凭据） */
+export interface IbmiSystemDetail extends IbmiSystem {
+  username?: string
+  password?: string
+  passwordEncrypt?: string
 }
 
 export interface CommandResult {

@@ -2,6 +2,8 @@ package com.rxas400adm.system.controller;
 import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.system.service.IFavoriteService;
 import com.rxas400adm.system.vo.FavoriteVO;
@@ -45,14 +47,14 @@ public class FavoriteController {
     }
 
     @PostMapping("/toggle")
-    @OperateLog(module = "快捷收藏", operation = "切换收藏")
+    @OperateLog(module = OperateLogModule.FAVORITE_MANAGEMENT, operation = OperateLogOperation.TOGGLE_FAVORITE)
     public ApiResponse<FavoriteToggleVO> toggle(@Valid @RequestBody FavoriteToggleDTO dto) {
         return ApiResponse.success(favoriteService.toggle(
                 SecurityUtils.currentUsername(), dto.getTitle(), dto.getPath(), dto.getIcon()));
     }
 
     @DeleteMapping
-    @OperateLog(module = "快捷收藏", operation = "取消收藏")
+    @OperateLog(module = OperateLogModule.FAVORITE_MANAGEMENT, operation = OperateLogOperation.CANCEL_FAVORITE)
     public ApiResponse<Void> remove(@RequestParam String path) {
         favoriteService.remove(SecurityUtils.currentUsername(), path);
         return ApiResponse.success(null);

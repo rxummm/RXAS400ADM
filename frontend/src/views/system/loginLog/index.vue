@@ -38,7 +38,7 @@
         <el-table-column prop="target" :label="$t('loginLog.target')" width="180" show-overflow-tooltip />
         <el-table-column prop="detail" :label="$t('loginLog.detail')" min-width="200" show-overflow-tooltip />
         <el-table-column prop="createdTime" :label="$t('loginLog.time')" width="170">
-          <template #default="{ row }">{{ formatTime(row.createdTime) }}</template>
+          <template #default="{ row }">{{ formatDate(row.createdTime) }}</template>
         </el-table-column>
       </el-table>
       </RxSkeleton>
@@ -55,6 +55,7 @@ import { listAuditLogs, type AuditLog } from '@/api/audit'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
+import { formatDate } from '@/utils/format'
 
 /**
  * P2-30：审计「模块」过滤值是后端数据值（@OperateLog(module="登录安全") 写入 rx_audit_log 的中文字段），
@@ -96,8 +97,4 @@ const {
 
 const actionTag = (a: string) =>
   a?.includes('SUCCESS') ? 'success' : a?.includes('FAILED') ? 'danger' : 'info'
-
-function formatTime(time?: string) {
-  return time ? time.replace('T', ' ').slice(0, 19) : '-'
-}
 </script>

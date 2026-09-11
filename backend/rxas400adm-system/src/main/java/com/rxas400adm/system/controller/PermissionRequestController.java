@@ -2,6 +2,8 @@ package com.rxas400adm.system.controller;
 import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.PermissionRequestCreateDTO;
@@ -39,7 +41,7 @@ public class PermissionRequestController {
      * 提交申请（登录即可）：支持菜单树模式 {menuIds, menuNames, reason} 与权限码模式 {permissionCode, reason}。
      */
     @PostMapping
-    @OperateLog(module = "权限申请", operation = "提交权限申请")
+    @OperateLog(module = OperateLogModule.PERMISSION_REQUEST, operation = OperateLogOperation.SUBMIT_PERMISSION_REQUEST)
     public ApiResponse<PermissionRequestVO> create(@Valid @RequestBody PermissionRequestCreateDTO dto) {
         return ApiResponse.success(PermissionRequestVO.from(requestService.create(
                 SecurityUtils.currentUsername(), dto.getPermissionCode(), dto.getMenuIds(), dto.getMenuNames(), dto.getReason())));
@@ -71,7 +73,7 @@ public class PermissionRequestController {
 
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasAuthority('SYS_PERMISSION_REQUEST')")
-    @OperateLog(module = "权限申请", operation = "审批通过权限申请")
+    @OperateLog(module = OperateLogModule.PERMISSION_REQUEST, operation = OperateLogOperation.APPROVE_PERMISSION_REQUEST)
     public ApiResponse<PermissionRequestVO> approve(@PathVariable Long id,
                                                     @RequestBody(required = false) PermissionRequestReviewDTO dto) {
         // R6：body 可选故 @Valid 不生效（既有设计），手动执行 DTO 上的长度约束
@@ -82,7 +84,7 @@ public class PermissionRequestController {
 
     @PostMapping("/{id}/reject")
     @PreAuthorize("hasAuthority('SYS_PERMISSION_REQUEST')")
-    @OperateLog(module = "权限申请", operation = "驳回权限申请")
+    @OperateLog(module = OperateLogModule.PERMISSION_REQUEST, operation = OperateLogOperation.REJECT_PERMISSION_REQUEST)
     public ApiResponse<PermissionRequestVO> reject(@PathVariable Long id,
                                                    @RequestBody(required = false) PermissionRequestReviewDTO dto) {
         validateComment(dto);

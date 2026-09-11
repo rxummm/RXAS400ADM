@@ -1,6 +1,8 @@
 package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.UserDTO;
@@ -46,21 +48,21 @@ public class SysUserController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('USER_MANAGE')")
-    @OperateLog(module = "用户管理", operation = "新增用户")
+    @OperateLog(module = OperateLogModule.USER_MANAGEMENT, operation = OperateLogOperation.CREATE_USER)
     public ApiResponse<UserVO> create(@Valid @RequestBody UserDTO dto) {
         return ApiResponse.success(userService.create(dto));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('USER_MANAGE')")
-    @OperateLog(module = "用户管理", operation = "修改用户")
+    @OperateLog(module = OperateLogModule.USER_MANAGEMENT, operation = OperateLogOperation.UPDATE_USER)
     public ApiResponse<UserVO> update(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO dto) {
         return ApiResponse.success(userService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('USER_MANAGE')")
-    @OperateLog(module = "用户管理", operation = "删除用户")
+    @OperateLog(module = OperateLogModule.USER_MANAGEMENT, operation = OperateLogOperation.DELETE_USER)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         userService.delete(id);
         return ApiResponse.success();
@@ -92,7 +94,7 @@ public class SysUserController {
     /** 勾选授权（追加，幂等） */
     @PostMapping("/{id}/menus/add")
     @PreAuthorize("hasAuthority('USER_MANAGE')")
-    @OperateLog(module = "用户管理", operation = "用户菜单授权")
+    @OperateLog(module = OperateLogModule.USER_MANAGEMENT, operation = OperateLogOperation.ASSIGN_MENU)
     public ApiResponse<Void> addUserMenus(@PathVariable Long id, @Valid @RequestBody UserMenuUpdateDTO body) {
         userMenuService.addUserMenus(id, body.getMenuIds());
         return ApiResponse.success(null);
@@ -101,7 +103,7 @@ public class SysUserController {
     /** 移除授权（目录/菜单页连带子孙） */
     @PostMapping("/{id}/menus/remove")
     @PreAuthorize("hasAuthority('USER_MANAGE')")
-    @OperateLog(module = "用户管理", operation = "移除用户菜单授权")
+    @OperateLog(module = OperateLogModule.USER_MANAGEMENT, operation = OperateLogOperation.REMOVE_MENU)
     public ApiResponse<Void> removeUserMenus(@PathVariable Long id, @Valid @RequestBody UserMenuUpdateDTO body) {
         userMenuService.removeUserMenus(id, body.getMenuIds());
         return ApiResponse.success(null);

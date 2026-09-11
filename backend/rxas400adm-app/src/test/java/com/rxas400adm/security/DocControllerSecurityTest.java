@@ -92,7 +92,7 @@ class DocControllerSecurityTest {
 
         ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
         org.mockito.Mockito.verify(auditLogMapper).insert(captor.capture());
-        org.junit.jupiter.api.Assertions.assertEquals("文档管理", captor.getValue().getModule());
+        org.junit.jupiter.api.Assertions.assertEquals("DOC_MANAGEMENT", captor.getValue().getModule());
         org.junit.jupiter.api.Assertions.assertEquals("admin", captor.getValue().getUserName());
     }
 

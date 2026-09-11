@@ -80,7 +80,7 @@ const barChartRef = ref<HTMLDivElement>()
 const pieChartRef = ref<HTMLDivElement>()
 const lineChartRef = ref<HTMLDivElement>()
 
-const barChart = useECharts(barChartRef, (): ECOption => ({
+const _barChart = useECharts(barChartRef, (): ECOption => ({
   tooltip: { trigger: 'axis' },
   xAxis: {
     type: 'category',
@@ -94,7 +94,7 @@ const barChart = useECharts(barChartRef, (): ECOption => ({
   }],
 }))
 
-const pieChart = useECharts(pieChartRef, (): ECOption => ({
+const _pieChart = useECharts(pieChartRef, (): ECOption => ({
   tooltip: { trigger: 'item' },
   legend: { bottom: 0 },
   series: [{
@@ -112,7 +112,7 @@ const pieChart = useECharts(pieChartRef, (): ECOption => ({
   }],
 }))
 
-const lineChart = useECharts(lineChartRef, (): ECOption => ({
+const _lineChart = useECharts(lineChartRef, (): ECOption => ({
   tooltip: { trigger: 'axis' },
   legend: { bottom: 0 },
   xAxis: {

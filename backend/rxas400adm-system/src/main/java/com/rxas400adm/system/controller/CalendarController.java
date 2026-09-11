@@ -1,6 +1,8 @@
 package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.util.SecurityUtils;
 import com.rxas400adm.system.dto.CalendarEventDTO;
@@ -49,21 +51,21 @@ public class CalendarController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('CALENDAR_MANAGE')")
-    @OperateLog(module = "日历", operation = "新增事件")
+    @OperateLog(module = OperateLogModule.CALENDAR_MANAGEMENT, operation = OperateLogOperation.CREATE_CALENDAR_EVENT)
     public ApiResponse<CalendarEventVO> create(@Valid @RequestBody CalendarEventDTO event) {
         return ApiResponse.success(CalendarEventVO.from(eventService.create(event, currentUserId())));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('CALENDAR_MANAGE')")
-    @OperateLog(module = "日历", operation = "修改事件")
+    @OperateLog(module = OperateLogModule.CALENDAR_MANAGEMENT, operation = OperateLogOperation.UPDATE_CALENDAR_EVENT)
     public ApiResponse<CalendarEventVO> update(@PathVariable Long id, @Valid @RequestBody CalendarEventDTO dto) {
         return ApiResponse.success(CalendarEventVO.from(eventService.update(id, dto, currentUserId())));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('CALENDAR_MANAGE')")
-    @OperateLog(module = "日历", operation = "删除事件")
+    @OperateLog(module = OperateLogModule.CALENDAR_MANAGEMENT, operation = OperateLogOperation.DELETE_CALENDAR_EVENT)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         eventService.delete(id, currentUserId());
         return ApiResponse.success(null);

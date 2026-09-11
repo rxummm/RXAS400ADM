@@ -2,6 +2,8 @@ package com.rxas400adm.system.controller;
 import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.NoticeDTO;
@@ -52,21 +54,21 @@ public class NoticeController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('NOTICE_MANAGE')")
-    @OperateLog(module = "通知公告", operation = "发布公告")
+    @OperateLog(module = OperateLogModule.NOTICE_MANAGEMENT, operation = OperateLogOperation.PUBLISH_NOTICE)
     public ApiResponse<NoticeVO> create(@Valid @RequestBody NoticeDTO notice) {
         return ApiResponse.success(NoticeVO.from(noticeService.create(notice, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('NOTICE_MANAGE')")
-    @OperateLog(module = "通知公告", operation = "修改公告")
+    @OperateLog(module = OperateLogModule.NOTICE_MANAGEMENT, operation = OperateLogOperation.UPDATE_NOTICE)
     public ApiResponse<NoticeVO> update(@PathVariable Long id, @Valid @RequestBody NoticeDTO dto) {
         return ApiResponse.success(NoticeVO.from(noticeService.update(id, dto)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('NOTICE_MANAGE')")
-    @OperateLog(module = "通知公告", operation = "删除公告")
+    @OperateLog(module = OperateLogModule.NOTICE_MANAGEMENT, operation = OperateLogOperation.DELETE_NOTICE)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         noticeService.delete(id);
         return ApiResponse.success(null);

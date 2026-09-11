@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 export interface PermissionRequest {
   id?: number
@@ -37,15 +38,15 @@ export const createPermissionRequest = (data: {
   reason?: string
 }) => request.post<PermissionRequest>('/permission-requests', data)
 
-export const listMyPermissionRequests = (params: { current?: number; size?: number } = {}) =>
-  request.get<{ total: number; records: PermissionRequest[] }>('/permission-requests/mine', { params })
+export const listMyPermissionRequests = (params: { current?: number; size?: number } = {}): Promise<PaginatedResult<PermissionRequest>> =>
+  request.get('/permission-requests/mine', { params })
 
 export const listPermissionRequests = (params: {
   current?: number
   size?: number
   status?: string
   keyword?: string
-} = {}) => request.get<{ total: number; records: PermissionRequest[] }>('/permission-requests', { params })
+} = {}): Promise<PaginatedResult<PermissionRequest>> => request.get('/permission-requests', { params })
 
 export const getPermissionRequestPendingCount = () =>
   request.get<{ count: number }>('/permission-requests/pending-count')
@@ -74,7 +75,7 @@ export const listPermissionCodes = (params: {
   size?: number
   keyword?: string
   module?: string
-} = {}) => request.get<{ total: number; records: PermissionCode[] }>('/permissions', { params })
+} = {}): Promise<PaginatedResult<PermissionCode>> => request.get('/permissions', { params })
 
 /** 全部权限码（下拉字典） */
 export const listAllPermissionCodes = () => request.get<PermissionCode[]>('/permissions/all')

@@ -54,7 +54,7 @@ import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useECharts, type ECOption } from '@/composables/useECharts'
 import { useI18n } from 'vue-i18n'
 import { CHART_COLORS } from '@/constants/chart'
-import { getForecast, getForecastItemOptions, type ForecastResult } from '@/api/bpcs'
+import { getForecast, getForecastItemOptions } from '@/api/bpcs'
 
 const { t } = useI18n()
 

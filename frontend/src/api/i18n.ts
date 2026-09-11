@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 export interface I18nEntry {
   i18nKey: string
@@ -19,7 +20,7 @@ export const listI18nEntries = (params: {
   lang?: string
   keyword?: string
   module?: string
-} = {}) => request.get<{ total: number; records: I18nEntry[] }>('/i18n/entries', { params })
+} = {}): Promise<PaginatedResult<I18nEntry>> => request.get('/i18n/entries', { params })
 
 export const saveI18nEntry = (data: I18nEntry) => request.post<I18nEntry>('/i18n/entry', data)
 

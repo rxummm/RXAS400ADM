@@ -7,6 +7,8 @@ import com.rxas400adm.as400.dto.DataAreaUpdateDTO;
 import com.rxas400adm.as400.model.DataAreaRow;
 import com.rxas400adm.as400.vo.DataAreaVO;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -48,7 +50,7 @@ public class DataAreaController {
 
     @PutMapping("/{name}")
     @PreAuthorize("hasAuthority('SYSVAL_EDIT')")
-    @OperateLog(module = "数据区域", operation = "修改数据区域")
+    @OperateLog(module = OperateLogModule.DATA_AREA, operation = OperateLogOperation.UPDATE_DATA_AREA)
     public ApiResponse<CommandResult> update(@PathVariable String name,
                                               @RequestParam String library,
                                               @Valid @RequestBody DataAreaUpdateDTO dto) {
@@ -57,14 +59,14 @@ public class DataAreaController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('SYSVAL_EDIT')")
-    @OperateLog(module = "数据区域", operation = "创建数据区域")
+    @OperateLog(module = OperateLogModule.DATA_AREA, operation = OperateLogOperation.CREATE_DATA_AREA)
     public ApiResponse<CommandResult> create(@Valid @RequestBody DataAreaCreateDTO dto) {
         return ApiResponse.success(clientProvider.current().createDataArea(dto.getLibrary(), dto.getName(), dto.getLength(), dto.getValue()));
     }
 
     @DeleteMapping("/{name}")
     @PreAuthorize("hasAuthority('SYSVAL_EDIT')")
-    @OperateLog(module = "数据区域", operation = "删除数据区域")
+    @OperateLog(module = OperateLogModule.DATA_AREA, operation = OperateLogOperation.DELETE_DATA_AREA)
     public ApiResponse<CommandResult> delete(@PathVariable String name,
                                               @RequestParam String library) {
         return ApiResponse.success(clientProvider.current().deleteDataArea(library, name));

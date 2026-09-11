@@ -98,7 +98,7 @@ class JTOpenSqlClient implements SqlClient {
     public Map<String, Object> querySingleChecked(String sql, Object... params) {
         List<Map<String, Object>> rows = queryList(sql, params);
         if (rows.isEmpty()) {
-            throw new IllegalStateException("查询结果为空: " + sql);
+            throw new BusinessException(ErrorCode.AS400_SQL_FAILED, "查询结果为空");
         }
         return rows.get(0);
     }

@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 export interface ObjectRow {
   OBJECT_NAME: string
@@ -47,7 +48,7 @@ export const searchObjects = (params: {
   keyword?: string
   current?: number
   size?: number
-} = {}): Promise<{ total: number; records: ObjectRow[] }> => request.get('/objects', { params })
+} = {}): Promise<PaginatedResult<ObjectRow>> => request.get('/objects', { params })
 
 export const objectDetail = (library: string, name: string): Promise<ObjectDetail> =>
   request.get(`/objects/${library}/${name}/detail`)

@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
-import { getOperation, cancelOperation, retryOperation, listOperations } from '@/api/operation'
+import { cancelOperation, retryOperation, listOperations } from '@/api/operation'
 import type { OperationVO } from '@/api/operation'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 import AppPagination from '@/components/AppPagination.vue'

@@ -111,8 +111,8 @@ class SysUserControllerSecurityTest {
 
         ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
         verify(auditLogMapper).insert(captor.capture());
-        assertEquals("用户管理", captor.getValue().getModule());
-        assertEquals("用户菜单授权", captor.getValue().getAction());
+        assertEquals("USER_MANAGEMENT", captor.getValue().getModule());
+        assertEquals("ASSIGN_MENU", captor.getValue().getAction());
         assertEquals("admin", captor.getValue().getUserName());
     }
 

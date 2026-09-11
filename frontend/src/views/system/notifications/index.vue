@@ -36,7 +36,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdTime" :label="$t('notification.time')" width="170">
-          <template #default="{ row }">{{ formatTime(row.createdTime) }}</template>
+          <template #default="{ row }">{{ formatDate(row.createdTime) }}</template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" :width="canDelete ? 150 : 100" fixed="right">
           <template #default="{ row }">
@@ -72,6 +72,7 @@ import {
 import { useUserStore } from '@/stores/user'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
+import { formatDate } from '@/utils/format'
 
 defineOptions({ name: 'Notifications' })
 
@@ -88,10 +89,6 @@ const unreadCount = ref(0)
 const selectedIds = ref<number[]>([])
 
 const canDelete = computed(() => userStore.hasPermission('NOTIFICATION_MANAGE'))
-
-function formatTime(time?: string) {
-  return time ? time.replace('T', ' ').slice(0, 19) : '-'
-}
 
 const typeTag = (type: string): 'danger' | 'success' | 'warning' | 'info' =>
   ({ ALERT: 'danger', NOTICE: 'success', PERMISSION: 'warning', SYSTEM: 'info' } as Record<string, 'danger' | 'success' | 'warning' | 'info'>)[type] || 'info'

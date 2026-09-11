@@ -1,5 +1,8 @@
 package com.rxas400adm.as400;
 
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
+
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +52,7 @@ public interface SqlClient {
     default Map<String, Object> querySingleChecked(String sql, Object... params) {
         List<Map<String, Object>> rows = queryList(sql, params);
         if (rows.isEmpty()) {
-            throw new IllegalStateException("查询结果为空: " + sql);
+            throw new BusinessException(ErrorCode.AS400_SQL_FAILED, "查询结果为空");
         }
         return rows.get(0);
     }

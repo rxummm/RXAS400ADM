@@ -1,6 +1,8 @@
 package com.rxas400adm.as400.freight;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +35,7 @@ public class FreightCostController {
 
     @PostMapping("/rules")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "运费规则", operation = "新增运费规则")
+    @OperateLog(module = OperateLogModule.FREIGHT_COST, operation = OperateLogOperation.CREATE_FREIGHT_RULE)
     @Operation(summary = "新增运费规则")
     public ApiResponse<FreightCostRuleVO> createRule(@Valid @RequestBody FreightCostRuleDTO dto) {
         return ApiResponse.success(FreightCostRuleVO.from(freightCostService.createRule(dto)));
@@ -41,7 +43,7 @@ public class FreightCostController {
 
     @PutMapping("/rules/{id}")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "运费规则", operation = "更新运费规则")
+    @OperateLog(module = OperateLogModule.FREIGHT_COST, operation = OperateLogOperation.UPDATE_FREIGHT_RULE)
     @Operation(summary = "更新运费规则")
     public ApiResponse<FreightCostRuleVO> updateRule(@PathVariable Long id, @Valid @RequestBody FreightCostRuleDTO dto) {
         return ApiResponse.success(FreightCostRuleVO.from(freightCostService.updateRule(id, dto)));
@@ -49,7 +51,7 @@ public class FreightCostController {
 
     @DeleteMapping("/rules/{id}")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "运费规则", operation = "删除运费规则")
+    @OperateLog(module = OperateLogModule.FREIGHT_COST, operation = OperateLogOperation.DELETE_FREIGHT_RULE)
     @Operation(summary = "删除运费规则")
     public ApiResponse<Void> deleteRule(@PathVariable Long id) {
         freightCostService.deleteRule(id);
@@ -58,7 +60,7 @@ public class FreightCostController {
 
     @PutMapping("/rules/{id}/toggle")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "运费规则", operation = "启停运费规则")
+    @OperateLog(module = OperateLogModule.FREIGHT_COST, operation = OperateLogOperation.TOGGLE_FREIGHT_RULE)
     @Operation(summary = "启停运费规则")
     public ApiResponse<FreightCostRuleVO> toggleRule(@PathVariable Long id, @RequestParam Boolean enabled) {
         return ApiResponse.success(FreightCostRuleVO.from(freightCostService.toggleRule(id, enabled)));
@@ -91,7 +93,7 @@ public class FreightCostController {
 
     @PostMapping("/records")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "运费记录", operation = "新增运费记录")
+    @OperateLog(module = OperateLogModule.FREIGHT_RECORD, operation = OperateLogOperation.CREATE_FREIGHT_RECORD)
     @Operation(summary = "新增运费记录")
     public ApiResponse<FreightCostRecordVO> createRecord(@Valid @RequestBody FreightCostRecordDTO dto) {
         return ApiResponse.success(FreightCostRecordVO.from(freightCostService.createRecord(dto)));
@@ -99,7 +101,7 @@ public class FreightCostController {
 
     @DeleteMapping("/records/{id}")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "运费记录", operation = "删除运费记录")
+    @OperateLog(module = OperateLogModule.FREIGHT_RECORD, operation = OperateLogOperation.DELETE_FREIGHT_RECORD)
     @Operation(summary = "删除运费记录")
     public ApiResponse<Void> deleteRecord(@PathVariable Long id) {
         freightCostService.deleteRecord(id);

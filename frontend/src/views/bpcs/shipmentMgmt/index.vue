@@ -38,12 +38,10 @@
 defineOptions({ name: 'BpcsShipmentMgmt' })
 
 import { ref, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { listShipments, exportShipmentPdf, type ShipmentVO } from '@/api/bpcs'
 import { triggerBlobDownload } from '@/api/blobClient'
 import { ElMessage } from 'element-plus'
 
-const { t } = useI18n()
 const cono = ref('001')
 const loading = ref(false)
 const rows = ref<ShipmentVO[]>([])

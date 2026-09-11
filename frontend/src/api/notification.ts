@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 export interface Notification {
   id?: number
@@ -14,7 +15,7 @@ export const listMyNotifications = (params: {
   current?: number
   size?: number
   unreadOnly?: boolean
-} = {}) => request.get<{ total: number; records: Notification[] }>('/notifications/mine', { params })
+} = {}): Promise<PaginatedResult<Notification>> => request.get('/notifications/mine', { params })
 
 export const getUnreadCount = () => request.get<{ count: number }>('/notifications/unread-count')
 

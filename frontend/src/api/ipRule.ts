@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 export interface IpRule {
   id?: number
@@ -15,7 +16,7 @@ export const listIpRules = (params: {
   size?: number
   type?: string
   keyword?: string
-} = {}) => request.get<{ total: number; records: IpRule[] }>('/ip-rules/page', { params })
+} = {}): Promise<PaginatedResult<IpRule>> => request.get('/ip-rules/page', { params })
 
 export const createIpRule = (data: IpRule) => request.post<IpRule>('/ip-rules', data)
 

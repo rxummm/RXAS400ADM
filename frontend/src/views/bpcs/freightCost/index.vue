@@ -215,7 +215,8 @@ function openRuleDialog(row?: FreightCostRuleVO) {
 
 async function saveRule() {
   if (!ruleFormRef.value) return
-  await ruleFormRef.value.validate()
+  const valid = await ruleFormRef.value.validate().catch(() => false)
+  if (!valid) return
   ruleSaving.value = true
   try {
     if (ruleForm.id) {
@@ -230,7 +231,11 @@ async function saveRule() {
 }
 
 async function handleDeleteRule(row: FreightCostRuleVO) {
-  await ElMessageBox.confirm(t('common.confirm.deleteRule', { name: row.ruleName }), '', { type: 'warning' })
+  try {
+    await ElMessageBox.confirm(t('common.confirm.deleteRule', { name: row.ruleName }), '', { type: 'warning' })
+  } catch {
+    return
+  }
   await deleteFreightRule(row.id)
   ElMessage.success(t('common.success'))
   loadRules()
@@ -277,7 +282,8 @@ function openRecordDialog() {
 
 async function saveRecord() {
   if (!recordFormRef.value) return
-  await recordFormRef.value.validate()
+  const valid = await recordFormRef.value.validate().catch(() => false)
+  if (!valid) return
   recordSaving.value = true
   try {
     await createFreightRecord(recordForm)
@@ -288,7 +294,11 @@ async function saveRecord() {
 }
 
 async function handleDeleteRecord(row: FreightCostRecordVO) {
-  await ElMessageBox.confirm(t('common.confirm.deleteRecord', { name: row.orderNo }), '', { type: 'warning' })
+  try {
+    await ElMessageBox.confirm(t('common.confirm.deleteRecord', { name: row.orderNo }), '', { type: 'warning' })
+  } catch {
+    return
+  }
   await deleteFreightRecord(row.id)
   ElMessage.success(t('common.success'))
   loadRecords()

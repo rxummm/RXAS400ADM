@@ -3,12 +3,10 @@
  */
 import request from './request'
 import blobClient from './blobClient'
+import type { PaginatedResult } from './types'
 
-/** 分页结果 */
-export interface PageResult<T> {
-  total: number
-  records: T[]
-}
+/** @deprecated 使用 PaginatedResult 代替 */
+export type PageResult<T> = PaginatedResult<T>
 
 /** 时间轴节点 */
 export interface TimelineNode {
@@ -846,8 +844,8 @@ export const toggleFreightRule = (id: number, enabled: boolean) =>
   request.put<FreightCostRuleVO>(`/bpcs/freight-cost/rules/${id}/toggle`, null, { params: { enabled } })
 export const calculateFreight = (carrier: string, costType: string, quantity: number) =>
   request.get<number>('/bpcs/freight-cost/calculate', { params: { carrier, costType, quantity } })
-export const listFreightRecords = (params: Record<string, string | number>) =>
-  request.get<{ records: FreightCostRecordVO[]; total: number }>('/bpcs/freight-cost/records', { params })
+export const listFreightRecords = (params: Record<string, string | number>): Promise<PaginatedResult<FreightCostRecordVO>> =>
+  request.get('/bpcs/freight-cost/records', { params })
 export const createFreightRecord = (data: Partial<FreightCostRecordVO>) =>
   request.post<FreightCostRecordVO>('/bpcs/freight-cost/records', data)
 export const deleteFreightRecord = (id: number) =>
@@ -874,8 +872,8 @@ export interface InventorySimulationVO {
   resultServiceLevel: number
   status: string
 }
-export const listSimulations = (params: Record<string, string | number>) =>
-  request.get<{ records: InventorySimulationVO[]; total: number }>('/bpcs/inventory-simulation', { params })
+export const listSimulations = (params: Record<string, string | number>): Promise<PaginatedResult<InventorySimulationVO>> =>
+  request.get('/bpcs/inventory-simulation', { params })
 export const createSimulation = (data: Partial<InventorySimulationVO>) =>
   request.post<InventorySimulationVO>('/bpcs/inventory-simulation', data)
 export const runSimulation = (id: number) =>
@@ -906,8 +904,8 @@ export interface CollaborationNotificationVO {
   isRead: boolean
   createdTime: string
 }
-export const listCollaborations = (params: Record<string, string | number>) =>
-  request.get<{ records: OrderCollaborationVO[]; total: number }>('/bpcs/order-collaboration', { params })
+export const listCollaborations = (params: Record<string, string | number>): Promise<PaginatedResult<OrderCollaborationVO>> =>
+  request.get('/bpcs/order-collaboration', { params })
 export const createCollaboration = (data: Partial<OrderCollaborationVO>) =>
   request.post<OrderCollaborationVO>('/bpcs/order-collaboration', data)
 export const updateCollabStatus = (id: number, status: string) =>

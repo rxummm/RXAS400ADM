@@ -60,7 +60,7 @@ const gaugeChartRef = ref<HTMLDivElement>()
 const barChartRef = ref<HTMLDivElement>()
 const lineChartRef = ref<HTMLDivElement>()
 
-const gaugeChart = useECharts(gaugeChartRef, (): ECOption => ({
+const _gaugeChart = useECharts(gaugeChartRef, (): ECOption => ({
   series: [{
     type: 'gauge',
     startAngle: 200,
@@ -84,7 +84,7 @@ const gaugeChart = useECharts(gaugeChartRef, (): ECOption => ({
   }],
 }))
 
-const barChart = useECharts(barChartRef, (): ECOption => ({
+const _barChart = useECharts(barChartRef, (): ECOption => ({
   tooltip: { trigger: 'axis' },
   xAxis: {
     type: 'category',
@@ -103,7 +103,7 @@ const barChart = useECharts(barChartRef, (): ECOption => ({
   }],
 }))
 
-const lineChart = useECharts(lineChartRef, (): ECOption => ({
+const _lineChart = useECharts(lineChartRef, (): ECOption => ({
   tooltip: { trigger: 'axis' },
   legend: { bottom: 0 },
   xAxis: {

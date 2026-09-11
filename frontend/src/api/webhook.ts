@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 export interface WebhookConfig {
   id?: number
@@ -31,7 +32,7 @@ export const listWebhookLogs = (params: {
   size?: number
   success?: number
   webhookName?: string
-} = {}) => request.get<{ total: number; records: WebhookLog[] }>('/webhooks/logs', { params })
+} = {}): Promise<PaginatedResult<WebhookLog>> => request.get('/webhooks/logs', { params })
 
 export const createWebhook = (data: WebhookConfig) => request.post<WebhookConfig>('/webhooks', data)
 

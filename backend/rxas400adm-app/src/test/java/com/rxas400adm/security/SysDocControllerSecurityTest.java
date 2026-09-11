@@ -88,7 +88,7 @@ class SysDocControllerSecurityTest {
 
         ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
         verify(auditLogMapper).insert(captor.capture());
-        assertEquals("知识库", captor.getValue().getModule());
+        assertEquals("SYS_DOC_MANAGEMENT", captor.getValue().getModule());
         assertEquals("admin", captor.getValue().getUserName());
     }
 

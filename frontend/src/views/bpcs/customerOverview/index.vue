@@ -67,7 +67,7 @@
           </el-table-column>
           <el-table-column prop="headerStatus" :label="$t('common.status')" width="80">
             <template #default="{ row }">
-              <el-tag :type="(row.headerStatus === '8' ? 'success' : row.headerStatus === '0' ? 'info' : 'info') as 'success' | 'info'" size="small">
+              <el-tag :type="row.headerStatus === '8' ? 'success' : 'info'" size="small">
                 {{ row.headerStatus === '8' ? $t('bpcs.stage.closed') : row.headerStatus === '0' ? $t('bpcs.stage.created') : row.headerStatus }}
               </el-tag>
             </template>

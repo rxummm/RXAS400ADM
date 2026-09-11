@@ -1,5 +1,6 @@
 import request from './request'
 import blobClient from './blobClient'
+import type { PaginatedResult } from './types'
 
 /** 文档类型（与后端 DocService.DOC_TYPE_* 一致） */
 export const DOC_TYPES = ['MARKDOWN', 'TEXT', 'HTML', 'PDF', 'IMAGE'] as const
@@ -50,7 +51,7 @@ export const listDocs = (params: {
   keyword?: string
   status?: string
   deleted?: number
-} = {}): Promise<{ total: number; records: DocItem[] }> => request.get('/docs', { params })
+} = {}): Promise<PaginatedResult<DocItem>> => request.get('/docs', { params })
 
 export const createDoc = (data: { title: string; templateId?: number; content: string; docType?: DocType }) =>
   request.post('/docs', data)

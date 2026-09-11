@@ -10,6 +10,8 @@ import com.rxas400adm.as400.vo.DocTemplateVO;
 import com.rxas400adm.as400.vo.DocVersionVO;
 import com.rxas400adm.as400.vo.DocVO;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.util.SecurityUtils;
@@ -57,14 +59,14 @@ public class DocController {
 
     @PostMapping("/doc-templates")
     @PreAuthorize("hasAuthority('DOC_MANAGE')")
-    @OperateLog(module = "文档管理", operation = "新建文档模板")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.CREATE_DOC_TEMPLATE)
     public ApiResponse<DocTemplateVO> createTemplate(@Valid @RequestBody DocTemplateDTO template) {
         return ApiResponse.success(DocTemplateVO.from(docService.createTemplate(template, currentUser())));
     }
 
     @PutMapping("/doc-templates/{id}")
     @PreAuthorize("hasAuthority('DOC_MANAGE')")
-    @OperateLog(module = "文档管理", operation = "编辑文档模板")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.UPDATE_DOC_TEMPLATE)
     public ApiResponse<Void> updateTemplate(@PathVariable Long id, @Valid @RequestBody DocTemplateDTO template) {
         docService.updateTemplate(id, template, currentUser());
         return ApiResponse.success(null);
@@ -72,7 +74,7 @@ public class DocController {
 
     @DeleteMapping("/doc-templates/{id}")
     @PreAuthorize("hasAuthority('DOC_MANAGE')")
-    @OperateLog(module = "文档管理", operation = "删除文档模板")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.DELETE_DOC_TEMPLATE)
     public ApiResponse<Void> deleteTemplate(@PathVariable Long id) {
         docService.deleteTemplate(id);
         return ApiResponse.success(null);
@@ -99,21 +101,21 @@ public class DocController {
 
     @PostMapping("/docs")
     @PreAuthorize("hasAuthority('DOC_MANAGE')")
-    @OperateLog(module = "文档管理", operation = "新建文档")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.CREATE_DOC)
     public ApiResponse<DocVO> create(@Valid @RequestBody DocDTO doc) {
         return ApiResponse.success(DocVO.from(docService.createDoc(doc, currentUser())));
     }
 
     @PutMapping("/docs/{id}")
     @PreAuthorize("hasAuthority('DOC_MANAGE')")
-    @OperateLog(module = "文档管理", operation = "编辑文档")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.UPDATE_DOC)
     public ApiResponse<DocVO> update(@PathVariable Long id, @Valid @RequestBody DocDTO doc) {
         return ApiResponse.success(DocVO.from(docService.updateDoc(id, doc, currentUser())));
     }
 
     @DeleteMapping("/docs/{id}")
     @PreAuthorize("hasAuthority('DOC_MANAGE')")
-    @OperateLog(module = "文档管理", operation = "删除文档")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.DELETE_DOC)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         docService.delete(id);
         return ApiResponse.success(null);
@@ -121,7 +123,7 @@ public class DocController {
 
     @PostMapping("/docs/{id}/restore")
     @PreAuthorize("hasAuthority('DOC_MANAGE')")
-    @OperateLog(module = "文档管理", operation = "恢复已删除文档")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.RESTORE_DOC)
     public ApiResponse<Void> restore(@PathVariable Long id) {
         docService.restore(id);
         return ApiResponse.success(null);
@@ -129,7 +131,7 @@ public class DocController {
 
     @DeleteMapping("/docs/{id}/purge")
     @PreAuthorize("hasAuthority('DOC_MANAGE')")
-    @OperateLog(module = "文档管理", operation = "永久删除文档")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.PERMANENTLY_DELETE_DOC)
     public ApiResponse<Void> purge(@PathVariable Long id) {
         docService.purge(id);
         return ApiResponse.success(null);
@@ -137,7 +139,7 @@ public class DocController {
 
     @PostMapping("/docs/{id}/submit")
     @PreAuthorize("hasAuthority('DOC_MANAGE')")
-    @OperateLog(module = "文档管理", operation = "提交审批")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.SUBMIT_FOR_APPROVAL)
     public ApiResponse<Void> submit(@PathVariable Long id) {
         docService.submit(id, currentUser());
         return ApiResponse.success(null);
@@ -145,7 +147,7 @@ public class DocController {
 
     @PostMapping("/docs/{id}/approve")
     @PreAuthorize("hasAuthority('DOC_APPROVE')")
-    @OperateLog(module = "文档管理", operation = "审批通过")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.APPROVE_DOC)
     public ApiResponse<Void> approve(@PathVariable Long id) {
         docService.approve(id, currentUser());
         return ApiResponse.success(null);
@@ -153,7 +155,7 @@ public class DocController {
 
     @PostMapping("/docs/{id}/reject")
     @PreAuthorize("hasAuthority('DOC_APPROVE')")
-    @OperateLog(module = "文档管理", operation = "审批驳回")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.REJECT_DOC)
     public ApiResponse<Void> reject(@PathVariable Long id, @RequestParam String reason) {
         docService.reject(id, reason, currentUser());
         return ApiResponse.success(null);
@@ -176,7 +178,7 @@ public class DocController {
 
     @PostMapping("/docs/{id}/rollback/{version}")
     @PreAuthorize("hasAuthority('DOC_MANAGE')")
-    @OperateLog(module = "文档管理", operation = "版本回滚")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.ROLLBACK_VERSION)
     public ApiResponse<Void> rollback(@PathVariable Long id, @PathVariable Integer version) {
         docService.rollback(id, version, currentUser());
         return ApiResponse.success(null);

@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 export interface Warehouse {
   cono: string
@@ -64,10 +65,8 @@ export interface WarehouseSummary {
   totalCapacity: number
 }
 
-export interface PageResult<T> {
-  total: number
-  records: T[]
-}
+/** @deprecated 使用 PaginatedResult 代替 */
+export type PageResult<T> = PaginatedResult<T>
 
 export const searchWarehouses = (params: Record<string, unknown>): Promise<PageResult<Warehouse>> =>
   request.get('/bpcs/wms/warehouses', { params })

@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 export interface Notice {
   id?: number
@@ -17,7 +18,7 @@ export const listNotices = (params: {
   size?: number
   keyword?: string
   status?: number
-} = {}) => request.get<{ total: number; records: Notice[] }>('/notices/page', { params })
+} = {}): Promise<PaginatedResult<Notice>> => request.get('/notices/page', { params })
 
 export const createNotice = (data: Notice) => request.post<Notice>('/notices', data)
 

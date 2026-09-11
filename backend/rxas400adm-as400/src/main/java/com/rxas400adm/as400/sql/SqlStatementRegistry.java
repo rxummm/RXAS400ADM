@@ -1,5 +1,7 @@
 package com.rxas400adm.as400.sql;
 
+import com.rxas400adm.common.exception.BusinessException;
+import com.rxas400adm.common.exception.ErrorCode;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
@@ -61,7 +63,7 @@ public class SqlStatementRegistry {
     public String get(String id) {
         String sql = statements.get(id);
         if (sql == null) {
-            throw new IllegalStateException("未注册的 AS400 SQL 语句: " + id);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "未注册的 AS400 SQL 语句: " + id);
         }
         return sql;
     }

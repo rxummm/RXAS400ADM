@@ -1,6 +1,8 @@
 package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.SysRoleDTO;
@@ -55,21 +57,21 @@ public class SysRoleController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
-    @OperateLog(module = "角色管理", operation = "新增角色")
+    @OperateLog(module = OperateLogModule.ROLE_MANAGEMENT, operation = OperateLogOperation.CREATE_ROLE)
     public ApiResponse<SysRoleVO> create(@Valid @RequestBody SysRoleDTO role) {
         return ApiResponse.success(SysRoleVO.from(roleService.create(role)));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
-    @OperateLog(module = "角色管理", operation = "修改角色")
+    @OperateLog(module = OperateLogModule.ROLE_MANAGEMENT, operation = OperateLogOperation.UPDATE_ROLE)
     public ApiResponse<SysRoleVO> update(@PathVariable Long id, @Valid @RequestBody SysRoleDTO role) {
         return ApiResponse.success(SysRoleVO.from(roleService.update(id, role)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
-    @OperateLog(module = "角色管理", operation = "删除角色")
+    @OperateLog(module = OperateLogModule.ROLE_MANAGEMENT, operation = OperateLogOperation.DELETE_ROLE)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         roleService.delete(id);
         return ApiResponse.success(null);
@@ -77,7 +79,7 @@ public class SysRoleController {
 
     @PostMapping("/batch-delete")
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
-    @OperateLog(module = "角色管理", operation = "批量删除角色")
+    @OperateLog(module = OperateLogModule.ROLE_MANAGEMENT, operation = OperateLogOperation.BATCH_DELETE_ROLES)
     public ApiResponse<Integer> batchDelete(@Valid @RequestBody List<Long> ids) {
         return ApiResponse.success(roleService.batchDelete(ids));
     }

@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 /** 知识库文档状态 */
 export type SysDocStatus = 'DRAFT' | 'PUBLISHED'
@@ -24,7 +25,7 @@ export const listSysDocs = (params: {
   keyword?: string
   status?: string
   category?: string
-} = {}): Promise<{ total: number; records: SysDocItem[] }> =>
+} = {}): Promise<PaginatedResult<SysDocItem>> =>
   request.get('/sys-docs', { params })
 
 /** 获取单个知识库文档 */

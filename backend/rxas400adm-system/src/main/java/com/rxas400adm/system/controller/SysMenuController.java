@@ -1,6 +1,8 @@
 package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.util.SecurityUtils;
 import com.rxas400adm.system.dto.SysMenuDTO;
@@ -51,14 +53,14 @@ public class SysMenuController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('MENU_MANAGE')")
-    @OperateLog(module = "菜单管理", operation = "新增菜单")
+    @OperateLog(module = OperateLogModule.MENU_MANAGEMENT, operation = OperateLogOperation.CREATE_MENU)
     public ApiResponse<SysMenuVO> create(@Valid @RequestBody SysMenuDTO menu) {
         return ApiResponse.success(SysMenuVO.from(menuService.create(menu)));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('MENU_MANAGE')")
-    @OperateLog(module = "菜单管理", operation = "修改菜单")
+    @OperateLog(module = OperateLogModule.MENU_MANAGEMENT, operation = OperateLogOperation.UPDATE_MENU)
     public ApiResponse<SysMenuVO> update(@PathVariable Long id, @Valid @RequestBody SysMenuDTO menu) {
         return ApiResponse.success(SysMenuVO.from(menuService.update(id, menu)));
     }
@@ -66,14 +68,14 @@ public class SysMenuController {
     /** 状态切换（显示·隐藏）：status=1 显示 / 0 隐藏 */
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAuthority('MENU_MANAGE')")
-    @OperateLog(module = "菜单管理", operation = "切换菜单状态")
+    @OperateLog(module = OperateLogModule.MENU_MANAGEMENT, operation = OperateLogOperation.TOGGLE_MENU_STATUS)
     public ApiResponse<SysMenuVO> toggleStatus(@PathVariable Long id, @RequestParam Integer status) {
         return ApiResponse.success(SysMenuVO.from(menuService.toggleStatus(id, status)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('MENU_MANAGE')")
-    @OperateLog(module = "菜单管理", operation = "删除菜单")
+    @OperateLog(module = OperateLogModule.MENU_MANAGEMENT, operation = OperateLogOperation.DELETE_MENU)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         menuService.delete(id);
         return ApiResponse.success(null);

@@ -80,7 +80,7 @@
               </template>
             </el-table-column>
             <el-table-column prop="createdTime" :label="$t('webhooks.logTime')" width="170">
-              <template #default="{ row }">{{ formatTime(row.createdTime) }}</template>
+              <template #default="{ row }">{{ formatDate(row.createdTime) }}</template>
             </el-table-column>
           </el-table>
           </RxSkeleton>
@@ -135,6 +135,7 @@ import {
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 import { useUserStore } from '@/stores/user'
+import { formatDate } from '@/utils/format'
 import { useFormDialog } from '@/composables/useFormDialog'
 
 defineOptions({ name: 'Webhooks' })
@@ -177,10 +178,6 @@ const {
   onSuccess: () => loadWebhooks(),
   i18nPrefix: 'webhooks',
 })
-
-function formatTime(time?: string) {
-  return time ? time.replace('T', ' ').slice(0, 19) : '-'
-}
 
 async function loadWebhooks() {
   loading.value = true

@@ -51,9 +51,11 @@ body,
 .mb16 { margin-bottom: 16px; }
 .ml8 { margin-left: 8px; }
 .mr6 { margin-right: 6px; }
+.mx8 { margin-left: 8px; margin-right: 8px; }
 .gap16 { gap: 16px; }
 .gap8 { gap: 8px; }
 .flex { display: flex; }
+.flex-row { display: flex; align-items: center; }
 
 /* ---- 页面工具栏（筛选 + 操作按钮行） ---- */
 .toolbar {
@@ -239,6 +241,11 @@ body,
 .hint {
   color: var(--text-secondary);
   font-size: 12px;
+}
+.cron-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 /* ---- 图表容器高度（ECharts ref 容器，替代 inline style="height: Npx"） ---- */

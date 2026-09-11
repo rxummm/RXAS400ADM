@@ -207,7 +207,7 @@ const confirmDelete = (row: WabpConfig) => {
         await deleteWabp('001', row.wh, row.dayOfWeek)
         ElMessage.success(t('common.deleteSuccess'))
         load()
-      } catch (e: unknown) {
+  } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         ElMessage.error(msg)
       }
@@ -252,7 +252,7 @@ const handleExport = async () => {
     const ws = XLSX.utils.aoa_to_sheet(wsData)
     XLSX.utils.book_append_sheet(wb, ws, 'WABP')
     XLSX.writeFile(wb, 'WABP.xlsx')
-  } catch (e: unknown) {
+  } catch {
     ElMessage.error(t('common.exportFailed'))
   }
 }

@@ -3,6 +3,8 @@ import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.constants.SecurityConstants;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.security.dto.As400LoginRequest;
@@ -74,7 +76,7 @@ public class AuthController {
      */
     @PostMapping("/logout")
     @PreAuthorize("isAuthenticated()")
-    @OperateLog(module = "认证", operation = "登出")
+    @OperateLog(module = OperateLogModule.AUTH, operation = OperateLogOperation.LOGOUT)
     public ApiResponse<Void> logout(@RequestHeader(
             value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         if (StringUtils.hasText(authHeader) && authHeader.startsWith(SecurityConstants.TOKEN_PREFIX)) {
@@ -162,7 +164,7 @@ public class AuthController {
      */
     @PostMapping("/change-password")
     @PreAuthorize("isAuthenticated()")
-    @OperateLog(module = "Login Security", operation = "修改密码")
+    @OperateLog(module = OperateLogModule.LOGIN_SECURITY, operation = OperateLogOperation.CHANGE_PASSWORD)
     public ApiResponse<Void> changePassword(@Valid @RequestBody ChangePasswordDTO dto,
                                             HttpServletRequest httpRequest) {
         String username = SecurityUtils.currentUsername();

@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 export interface SysRole {
   id?: number
@@ -12,8 +13,8 @@ export interface SysRole {
 
 export const fetchRoles = () => request.get<SysRole[]>('/roles')
 
-export const fetchRolePage = (params: { current?: number; size?: number; keyword?: string }) =>
-  request.get<{ total: number; records: SysRole[] }>('/roles/page', { params })
+export const fetchRolePage = (params: { current?: number; size?: number; keyword?: string }): Promise<PaginatedResult<SysRole>> =>
+  request.get('/roles/page', { params })
 
 export const createRole = (data: SysRole) => request.post<SysRole>('/roles', data)
 

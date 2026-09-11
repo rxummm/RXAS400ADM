@@ -1,6 +1,8 @@
 package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.util.SecurityUtils;
@@ -52,21 +54,21 @@ public class SysDocController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('SYS_DOC_MANAGE')")
-    @OperateLog(module = "知识库", operation = "新建知识库文档")
+    @OperateLog(module = OperateLogModule.SYS_DOC_MANAGEMENT, operation = OperateLogOperation.CREATE_SYS_DOC)
     public ApiResponse<SysDocVO> create(@Valid @RequestBody SysDocDTO dto) {
         return ApiResponse.success(sysDocService.create(dto, SecurityUtils.currentUsername()));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('SYS_DOC_MANAGE')")
-    @OperateLog(module = "知识库", operation = "更新知识库文档")
+    @OperateLog(module = OperateLogModule.SYS_DOC_MANAGEMENT, operation = OperateLogOperation.UPDATE_SYS_DOC)
     public ApiResponse<SysDocVO> update(@PathVariable Long id, @Valid @RequestBody SysDocDTO dto) {
         return ApiResponse.success(sysDocService.update(id, dto, SecurityUtils.currentUsername()));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('SYS_DOC_MANAGE')")
-    @OperateLog(module = "知识库", operation = "删除知识库文档")
+    @OperateLog(module = OperateLogModule.SYS_DOC_MANAGEMENT, operation = OperateLogOperation.DELETE_SYS_DOC)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         sysDocService.delete(id);
         return ApiResponse.success(null);

@@ -24,11 +24,9 @@
 defineOptions({ name: 'BpcsOrderChange' })
 
 import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { listOrderChanges } from '@/api/bpcs'
 import type { OrderChange } from '@/api/bpcs'
 
-const { t } = useI18n()
 const loading = ref(false)
 const rows = ref<OrderChange[]>([])
 const queryCono = ref('')

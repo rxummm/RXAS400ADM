@@ -6,6 +6,8 @@ import com.rxas400adm.as400.service.ICycleCountService;
 import com.rxas400adm.as400.vo.CycleCountPlanVO;
 import com.rxas400adm.as400.vo.CycleCountResultVO;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,7 +33,7 @@ public class CycleCountController {
 
     @PostMapping("/plans")
     @PreAuthorize("hasAuthority('BPCS_INVENTORY_VIEW')")
-    @OperateLog(module = "BPCS库存", operation = "创建盘点计划")
+    @OperateLog(module = OperateLogModule.BPCS_INVENTORY, operation = OperateLogOperation.CREATE_COUNT_PLAN)
     @Operation(summary = "创建盘点计划")
     public ApiResponse<CycleCountPlanVO> createPlan(
             @Valid @RequestBody CycleCountPlanDTO dto) {
@@ -49,7 +51,7 @@ public class CycleCountController {
 
     @PostMapping("/results")
     @PreAuthorize("hasAuthority('BPCS_INVENTORY_VIEW')")
-    @OperateLog(module = "BPCS库存", operation = "录入盘点结果")
+    @OperateLog(module = OperateLogModule.BPCS_INVENTORY, operation = OperateLogOperation.RECORD_COUNT_RESULT)
     @Operation(summary = "录入盘点结果")
     public ApiResponse<CycleCountResultVO> recordResult(
             @Valid @RequestBody CycleCountResultDTO dto,

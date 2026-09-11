@@ -202,11 +202,15 @@ async function handleDelete(row: SysDocItem) {
       confirmButtonText: t('common.confirm'),
       cancelButtonText: t('common.cancel'),
     })
+  } catch {
+    return
+  }
+  try {
     await deleteSysDoc(row.id)
     ElMessage.success(t('common.deleted'))
     load()
   } catch {
-    ElMessage.error(t('common.requestFailed'))
+    /* interceptor handles error */
   }
 }
 </script>

@@ -1,6 +1,8 @@
 package com.rxas400adm.as400.collaboration;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,7 +40,7 @@ public class OrderCollaborationController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "订单协同", operation = "创建协同")
+    @OperateLog(module = OperateLogModule.ORDER_COLLABORATION, operation = OperateLogOperation.CREATE_COLLABORATION)
     @Operation(summary = "创建订单协同")
     public ApiResponse<OrderCollaborationVO> create(@Valid @RequestBody CollabCreateDTO dto) {
         OrderCollaboration collab = collaborationService.create(dto);
@@ -47,7 +49,7 @@ public class OrderCollaborationController {
 
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "订单协同", operation = "更新协同状态")
+    @OperateLog(module = OperateLogModule.ORDER_COLLABORATION, operation = OperateLogOperation.UPDATE_COLLABORATION_STATUS)
     @Operation(summary = "更新协同状态")
     public ApiResponse<OrderCollaborationVO> updateStatus(@PathVariable Long id, @RequestParam String status) {
         OrderCollaboration collab = collaborationService.updateStatus(id, status);
@@ -56,7 +58,7 @@ public class OrderCollaborationController {
 
     @PutMapping("/{id}/assign")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "订单协同", operation = "分配协同负责人")
+    @OperateLog(module = OperateLogModule.ORDER_COLLABORATION, operation = OperateLogOperation.ASSIGN_COLLABORATION)
     @Operation(summary = "分配协同负责人")
     public ApiResponse<OrderCollaborationVO> assign(@PathVariable Long id, @RequestParam String assignedTo) {
         OrderCollaboration collab = collaborationService.assign(id, assignedTo);
@@ -65,7 +67,7 @@ public class OrderCollaborationController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "订单协同", operation = "删除协同")
+    @OperateLog(module = OperateLogModule.ORDER_COLLABORATION, operation = OperateLogOperation.DELETE_COLLABORATION)
     @Operation(summary = "删除协同记录")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         collaborationService.delete(id);
@@ -76,7 +78,7 @@ public class OrderCollaborationController {
 
     @PostMapping("/notifications")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "协同通知", operation = "发送通知")
+    @OperateLog(module = OperateLogModule.COLLABORATION_NOTIFICATION, operation = OperateLogOperation.SEND_COLLABORATION_NOTIFICATION)
     @Operation(summary = "发送协同通知")
     public ApiResponse<CollaborationNotificationVO> sendNotification(@Valid @RequestBody NotificationSendDTO dto) {
         return ApiResponse.success(CollaborationNotificationVO.from(
@@ -101,7 +103,7 @@ public class OrderCollaborationController {
 
     @PutMapping("/notifications/{notifId}/read")
     @PreAuthorize("hasAuthority('BPCS_VIEW')")
-    @OperateLog(module = "协同通知", operation = "标记通知已读")
+    @OperateLog(module = OperateLogModule.COLLABORATION_NOTIFICATION, operation = OperateLogOperation.MARK_COLLABORATION_NOTIFICATION_READ)
     @Operation(summary = "标记通知已读")
     public ApiResponse<Void> markAsRead(@PathVariable Long notifId) {
         collaborationService.markAsRead(notifId);

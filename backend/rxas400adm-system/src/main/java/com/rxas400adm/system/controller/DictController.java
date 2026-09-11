@@ -1,6 +1,8 @@
 package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.system.dto.DictItemDTO;
 import com.rxas400adm.system.dto.DictTypeDTO;
@@ -42,21 +44,21 @@ public class DictController {
 
     @PostMapping("/types")
     @PreAuthorize("hasAuthority('DICT_MANAGE')")
-    @OperateLog(module = "数据字典", operation = "新增字典类型")
+    @OperateLog(module = OperateLogModule.DICT_MANAGEMENT, operation = OperateLogOperation.CREATE_DICT_TYPE)
     public ApiResponse<DictTypeVO> createType(@Valid @RequestBody DictTypeDTO type) {
         return ApiResponse.success(DictTypeVO.from(dictService.createType(type)));
     }
 
     @PutMapping("/types/{id}")
     @PreAuthorize("hasAuthority('DICT_MANAGE')")
-    @OperateLog(module = "数据字典", operation = "修改字典类型")
+    @OperateLog(module = OperateLogModule.DICT_MANAGEMENT, operation = OperateLogOperation.UPDATE_DICT_TYPE)
     public ApiResponse<DictTypeVO> updateType(@PathVariable Long id, @Valid @RequestBody DictTypeDTO dto) {
         return ApiResponse.success(DictTypeVO.from(dictService.updateType(id, dto)));
     }
 
     @DeleteMapping("/types/{id}")
     @PreAuthorize("hasAuthority('DICT_MANAGE')")
-    @OperateLog(module = "数据字典", operation = "删除字典类型")
+    @OperateLog(module = OperateLogModule.DICT_MANAGEMENT, operation = OperateLogOperation.DELETE_DICT_TYPE)
     public ApiResponse<Void> deleteType(@PathVariable Long id) {
         dictService.deleteType(id);
         return ApiResponse.success(null);
@@ -76,21 +78,21 @@ public class DictController {
 
     @PostMapping("/items")
     @PreAuthorize("hasAuthority('DICT_MANAGE')")
-    @OperateLog(module = "数据字典", operation = "新增字典项")
+    @OperateLog(module = OperateLogModule.DICT_MANAGEMENT, operation = OperateLogOperation.CREATE_DICT_ITEM)
     public ApiResponse<DictItemVO> createItem(@Valid @RequestBody DictItemDTO item) {
         return ApiResponse.success(DictItemVO.from(dictService.createItem(item)));
     }
 
     @PutMapping("/items/{id}")
     @PreAuthorize("hasAuthority('DICT_MANAGE')")
-    @OperateLog(module = "数据字典", operation = "修改字典项")
+    @OperateLog(module = OperateLogModule.DICT_MANAGEMENT, operation = OperateLogOperation.UPDATE_DICT_ITEM)
     public ApiResponse<DictItemVO> updateItem(@PathVariable Long id, @Valid @RequestBody DictItemDTO dto) {
         return ApiResponse.success(DictItemVO.from(dictService.updateItem(id, dto)));
     }
 
     @DeleteMapping("/items/{id}")
     @PreAuthorize("hasAuthority('DICT_MANAGE')")
-    @OperateLog(module = "数据字典", operation = "删除字典项")
+    @OperateLog(module = OperateLogModule.DICT_MANAGEMENT, operation = OperateLogOperation.DELETE_DICT_ITEM)
     public ApiResponse<Void> deleteItem(@PathVariable Long id) {
         dictService.deleteItem(id);
         return ApiResponse.success(null);

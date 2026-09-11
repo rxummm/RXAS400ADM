@@ -20,7 +20,6 @@ export interface UserProfile {
   username: string
   email?: string
   permissions?: string[]
-  [key: string]: unknown
 }
 
 export const getProfile = (): Promise<UserProfile> => request.get('/auth/profile')

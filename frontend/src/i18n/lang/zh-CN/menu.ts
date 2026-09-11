@@ -119,6 +119,7 @@ export default {
     menus: '菜单管理',
     region: '区域管理',
     calendar: '日历',
+    opTemplate: '操作模板',
     config: '系统配置',
     i18n: '翻译管理',
     loginLog: '登录日志',

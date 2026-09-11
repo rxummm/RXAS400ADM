@@ -9,6 +9,8 @@ import com.rxas400adm.as400.vo.IfsDeleteVO;
 import com.rxas400adm.as400.vo.IfsPathVO;
 import com.rxas400adm.as400.vo.IfsUploadVO;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.ApiResponse;
@@ -84,7 +86,7 @@ public class IfsController {
      */
     @PostMapping("/write")
     @PreAuthorize("hasAuthority('DOC_MANAGE')")
-    @OperateLog(module = "文档管理", operation = "上传文档到 IFS")
+    @OperateLog(module = OperateLogModule.DOC_MANAGEMENT, operation = OperateLogOperation.UPLOAD_TO_IFS)
     public ApiResponse<IfsPathVO> write(@Valid @RequestBody IfsWriteDTO dto) {
         String path = normalize(dto.getPath());
         if (path == null || path.isBlank()) {
@@ -100,7 +102,7 @@ public class IfsController {
      */
     @PostMapping("/upload")
     @PreAuthorize("hasAuthority('IFS_MANAGE')")
-    @OperateLog(module = "IFS 文件", operation = "上传文件到 IFS")
+    @OperateLog(module = OperateLogModule.IFS_FILE, operation = OperateLogOperation.UPLOAD_TO_IFS)
     public ApiResponse<IfsUploadVO> upload(@RequestPart("file") MultipartFile file,
                                             @RequestParam String path) throws IOException {
         String normalized = normalize(path);
@@ -144,7 +146,7 @@ public class IfsController {
     /** 新建目录（IFS_MANAGE） */
     @PostMapping("/mkdir")
     @PreAuthorize("hasAuthority('IFS_MANAGE')")
-    @OperateLog(module = "IFS 文件", operation = "新建 IFS 目录")
+    @OperateLog(module = OperateLogModule.IFS_FILE, operation = OperateLogOperation.CREATE_IFS_DIRECTORY)
     public ApiResponse<IfsPathVO> mkdir(@Valid @RequestBody IfsWriteDTO dto) {
         String path = normalize(dto.getPath());
         if (path == null || path.isBlank()) {
@@ -160,7 +162,7 @@ public class IfsController {
      */
     @DeleteMapping("/file")
     @PreAuthorize("hasAuthority('IFS_MANAGE')")
-    @OperateLog(module = "IFS 文件", operation = "删除 IFS 文件/目录（移入回收站）")
+    @OperateLog(module = OperateLogModule.IFS_FILE, operation = OperateLogOperation.DELETE_IFS_FILE)
     public ApiResponse<IfsDeleteVO> delete(@RequestParam String path) {
         String normalized = normalize(path);
         if (normalized == null || normalized.isBlank()) {
@@ -173,7 +175,7 @@ public class IfsController {
     /** 从回收站恢复 IFS 文件/目录（IFS_MANAGE）：移回原路径 */
     @PostMapping("/restore")
     @PreAuthorize("hasAuthority('IFS_MANAGE')")
-    @OperateLog(module = "IFS 文件", operation = "恢复 IFS 文件/目录")
+    @OperateLog(module = OperateLogModule.IFS_FILE, operation = OperateLogOperation.RESTORE_IFS_FILE)
     public ApiResponse<IfsDeleteVO> restore(@RequestParam String trashPath) {
         String normalized = normalize(trashPath);
         if (normalized == null || normalized.isBlank()) {

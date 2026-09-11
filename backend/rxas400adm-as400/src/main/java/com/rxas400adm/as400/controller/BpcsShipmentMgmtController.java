@@ -5,6 +5,8 @@ import com.rxas400adm.as400.pdf.WaybillPdfRenderer;
 import com.rxas400adm.as400.service.IBpcsShipmentMgmtService;
 import com.rxas400adm.as400.vo.BpcsShipmentVO;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,10 +51,10 @@ public class BpcsShipmentMgmtController {
      */
     @PostMapping("/pdf")
     @PreAuthorize("hasAuthority('BPCS_VIEW')")
-    @OperateLog(module = "BPCS运单管理", operation = "导出运单PDF")
+    @OperateLog(module = OperateLogModule.BPCS_SHIPMENT, operation = OperateLogOperation.EXPORT_SHIPMENT_PDF)
     public ResponseEntity<byte[]> exportPdf(
             @RequestParam String waybillNo,
-            @RequestBody WaybillPdfDTO dto) {
+            @Valid @RequestBody WaybillPdfDTO dto) {
         Map<String, Object> params = new HashMap<>();
         params.put("shipFrom", dto.getShipFrom());
         params.put("shipTo", dto.getShipTo());

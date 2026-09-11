@@ -152,7 +152,8 @@ function openCreateDialog() {
 
 async function handleCreate() {
   if (!formRef.value) return
-  await formRef.value.validate()
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
   saving.value = true
   try {
     await createSimulation(form)
@@ -163,14 +164,22 @@ async function handleCreate() {
 }
 
 async function handleRun(row: InventorySimulationVO) {
-  await ElMessageBox.confirm(t('common.confirm.runSimulation', { name: row.simName }), '', { type: 'info' })
+  try {
+    await ElMessageBox.confirm(t('common.confirm.runSimulation', { name: row.simName }), '', { type: 'info' })
+  } catch {
+    return
+  }
   await runSimulation(row.id)
   ElMessage.success(t('common.success'))
   load()
 }
 
 async function handleDelete(row: InventorySimulationVO) {
-  await ElMessageBox.confirm(t('common.confirm.deleteSimulation', { name: row.simName }), '', { type: 'warning' })
+  try {
+    await ElMessageBox.confirm(t('common.confirm.deleteSimulation', { name: row.simName }), '', { type: 'warning' })
+  } catch {
+    return
+  }
   await deleteSimulation(row.id)
   ElMessage.success(t('common.success'))
   load()

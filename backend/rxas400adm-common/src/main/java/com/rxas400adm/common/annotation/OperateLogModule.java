@@ -1,0 +1,54 @@
+package com.rxas400adm.common.annotation;
+
+/**
+ * 操作日志模块常量（@OperateLog module 值）。
+ * 统一使用英文常量，避免中文硬编码。
+ */
+public final class OperateLogModule {
+
+    private OperateLogModule() {}
+
+    // ===== system 模块 =====
+    public static final String USER_MANAGEMENT = "USER_MANAGEMENT";
+    public static final String ROLE_MANAGEMENT = "ROLE_MANAGEMENT";
+    public static final String MENU_MANAGEMENT = "MENU_MANAGEMENT";
+    public static final String PERMISSION_MANAGEMENT = "PERMISSION_MANAGEMENT";
+    public static final String PERMISSION_REQUEST = "PERMISSION_REQUEST";
+    public static final String CONFIG_MANAGEMENT = "CONFIG_MANAGEMENT";
+    public static final String DICT_MANAGEMENT = "DICT_MANAGEMENT";
+    public static final String NOTICE_MANAGEMENT = "NOTICE_MANAGEMENT";
+    public static final String NOTIFICATION_CENTER = "NOTIFICATION_CENTER";
+    public static final String DASHBOARD_WIDGET = "DASHBOARD_WIDGET";
+    public static final String FAVORITE_MANAGEMENT = "FAVORITE_MANAGEMENT";
+    public static final String CALENDAR_MANAGEMENT = "CALENDAR_MANAGEMENT";
+    public static final String REGION_MANAGEMENT = "REGION_MANAGEMENT";
+    public static final String SYS_DOC_MANAGEMENT = "SYS_DOC_MANAGEMENT";
+    public static final String EMAIL_GROUP = "EMAIL_GROUP";
+    public static final String EMAIL_LOG = "EMAIL_LOG";
+
+    // ===== security 模块 =====
+    public static final String AUTH = "AUTH";
+    public static final String LOGIN_SECURITY = "LOGIN_SECURITY";
+
+    // ===== as400 模块 =====
+    public static final String AS400_MANAGEMENT = "AS400_MANAGEMENT";
+    public static final String IFS_FILE = "IFS_FILE";
+    public static final String DOC_MANAGEMENT = "DOC_MANAGEMENT";
+    public static final String DATA_AREA = "DATA_AREA";
+    public static final String MESSAGE_FILE = "MESSAGE_FILE";
+    public static final String BPCS_SHIPMENT = "BPCS_SHIPMENT";
+    public static final String BPCS_INVENTORY = "BPCS_INVENTORY";
+    public static final String FREIGHT_COST = "FREIGHT_COST";
+    public static final String FREIGHT_RECORD = "FREIGHT_RECORD";
+    public static final String ORDER_COLLABORATION = "ORDER_COLLABORATION";
+    public static final String COLLABORATION_NOTIFICATION = "COLLABORATION_NOTIFICATION";
+    public static final String INVENTORY_SIMULATION = "INVENTORY_SIMULATION";
+
+    // ===== monitor 模块 =====
+    public static final String ALERT_RULE = "ALERT_RULE";
+    public static final String WEBHOOK_MANAGEMENT = "WEBHOOK_MANAGEMENT";
+    public static final String WEBHOOK_LOG = "WEBHOOK_LOG";
+    public static final String AUDIT_LOG = "AUDIT_LOG";
+    public static final String LOGIN_LOG = "LOGIN_LOG";
+    public static final String IBMI_SYSTEM = "IBMI_SYSTEM";
+}

@@ -120,8 +120,8 @@ class As400ControllerSecurityTest {
 
         ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
         verify(auditLogMapper).insert(captor.capture());
-        assertEquals("AS400 管理", captor.getValue().getModule());
-        assertEquals("执行 CL 命令", captor.getValue().getAction());
+        assertEquals("AS400_MANAGEMENT", captor.getValue().getModule());
+        assertEquals("EXECUTE_CL", captor.getValue().getAction());
         assertEquals("admin", captor.getValue().getUserName());
     }
 

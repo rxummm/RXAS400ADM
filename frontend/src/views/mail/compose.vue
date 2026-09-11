@@ -27,12 +27,12 @@
         </el-form-item>
         <el-form-item :label="$t('compose.body')" prop="text" class="editor-form-item">
           <div class="editor-wrapper">
-            <Toolbar :editor="editorRef" :defaultConfig="toolbarConfig" class="editor-toolbar" />
+            <Toolbar :editor="editorRef" :default-config="toolbarConfig" class="editor-toolbar" />
             <Editor
               v-model="form.htmlContent"
-              :defaultConfig="editorConfig"
+              :default-config="editorConfig"
               class="editor-content"
-              @onCreated="handleEditorCreated"
+              @on-created="handleEditorCreated"
             />
           </div>
         </el-form-item>

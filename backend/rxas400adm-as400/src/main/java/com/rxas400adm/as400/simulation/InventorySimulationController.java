@@ -1,6 +1,8 @@
 package com.rxas400adm.as400.simulation;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +35,7 @@ public class InventorySimulationController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "库存模拟", operation = "创建模拟")
+    @OperateLog(module = OperateLogModule.INVENTORY_SIMULATION, operation = OperateLogOperation.CREATE_SIMULATION)
     @Operation(summary = "创建库存模拟")
     public ApiResponse<InventorySimulationVO> create(@Valid @RequestBody SimulationCreateDTO dto) {
         return ApiResponse.success(InventorySimulationVO.from(simulationService.create(dto)));
@@ -41,7 +43,7 @@ public class InventorySimulationController {
 
     @PostMapping("/{id}/run")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "库存模拟", operation = "执行模拟")
+    @OperateLog(module = OperateLogModule.INVENTORY_SIMULATION, operation = OperateLogOperation.RUN_SIMULATION)
     @Operation(summary = "执行库存模拟")
     public ApiResponse<InventorySimulationVO> run(@PathVariable Long id) {
         return ApiResponse.success(InventorySimulationVO.from(simulationService.run(id)));
@@ -49,7 +51,7 @@ public class InventorySimulationController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "库存模拟", operation = "删除模拟")
+    @OperateLog(module = OperateLogModule.INVENTORY_SIMULATION, operation = OperateLogOperation.DELETE_SIMULATION)
     @Operation(summary = "删除模拟记录")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         simulationService.delete(id);

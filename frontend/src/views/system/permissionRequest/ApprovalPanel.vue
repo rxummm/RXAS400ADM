@@ -44,7 +44,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdTime" :label="$t('permissionRequest.time')" min-width="190">
-          <template #default="{ row }">{{ formatTime(row.createdTime) }}</template>
+          <template #default="{ row }">{{ formatDate(row.createdTime) }}</template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="150" fixed="right">
           <template #default="{ row }">
@@ -82,6 +82,7 @@ import {
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 import { useUserStore } from '@/stores/user'
+import { formatDate } from '@/utils/format'
 
 const { t } = useI18n()
 const userStore = useUserStore()
@@ -96,10 +97,6 @@ const filterKeyword = ref('')
 const pendingCount = ref(0)
 
 const parseNames = (raw?: string) => parseJsonArray(raw)
-
-const formatTime = (time?: string) => {
-  return time ? time.replace('T', ' ').slice(0, 19) : '-'
-}
 
 const statusTag = (s?: string) => (s === 'PENDING' ? 'warning' : s === 'APPROVED' ? 'success' : 'danger')
 const statusLabel = (s?: string) =>

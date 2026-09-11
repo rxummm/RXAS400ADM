@@ -1,6 +1,8 @@
 package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.RegionDTO;
@@ -60,21 +62,21 @@ public class RegionController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('REGION_MANAGE')")
-    @OperateLog(module = "行政区划", operation = "新增行政区划")
+    @OperateLog(module = OperateLogModule.REGION_MANAGEMENT, operation = OperateLogOperation.CREATE_REGION)
     public ApiResponse<RegionVO> create(@Valid @RequestBody RegionDTO region) {
         return ApiResponse.success(RegionVO.from(regionService.create(region)));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('REGION_MANAGE')")
-    @OperateLog(module = "行政区划", operation = "修改行政区划")
+    @OperateLog(module = OperateLogModule.REGION_MANAGEMENT, operation = OperateLogOperation.UPDATE_REGION)
     public ApiResponse<RegionVO> update(@PathVariable Long id, @Valid @RequestBody RegionDTO dto) {
         return ApiResponse.success(RegionVO.from(regionService.update(id, dto)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('REGION_MANAGE')")
-    @OperateLog(module = "行政区划", operation = "删除行政区划")
+    @OperateLog(module = OperateLogModule.REGION_MANAGEMENT, operation = OperateLogOperation.DELETE_REGION)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         regionService.delete(id);
         return ApiResponse.success(null);

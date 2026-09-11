@@ -1,6 +1,7 @@
 import request from './request'
 import type { SysMenu } from './menu'
 import type { SysRole } from './role'
+import type { PaginatedResult } from './types'
 
 /** 用户状态（后端 rx_user.status，仅两个取值） */
 export type UserStatus = 'ACTIVE' | 'DISABLED'
@@ -14,13 +15,6 @@ export interface UserVO {
   as400ServerId?: number
   roles?: SysRole[]
   createdTime?: string
-}
-
-export interface PaginatedResult<T> {
-  records: T[]
-  total: number
-  size: number
-  current: number
 }
 
 /** 登录失败/锁定记录（后端 LoginAttemptVO，字段以 VO 为准） */

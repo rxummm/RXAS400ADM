@@ -78,7 +78,7 @@
               </el-scrollbar>
             </div>
 
-            <div class="table-wrapper mt16">
+            <div class="table-wrapper mt16" v-loading="mineLoading">
               <div class="search-bar">
                 <span class="section-title">{{ $t('permissionRequest.myRequests') }}</span>
               </div>
@@ -89,7 +89,7 @@
                     <span class="request-menus">{{ displayMenus(req) }}</span>
                     <el-tag size="small" :type="statusTag(req.status)">{{ statusLabel(req.status) }}</el-tag>
                   </div>
-                  <div class="request-time">{{ formatTime(req.createdTime) }}</div>
+                  <div class="request-time">{{ formatDate(req.createdTime) }}</div>
                   <div v-if="req.reason" class="request-remark">{{ $t('permissionRequest.reason') }}：{{ req.reason }}</div>
                   <div v-if="req.approveComment" class="request-remark">
                     {{ $t('permissionRequest.approveComment') }}：{{ req.approveComment }}
@@ -137,6 +137,7 @@ import AppPagination from '@/components/AppPagination.vue'
 import { MenuType } from '@/api/menu'
 import { useUserStore } from '@/stores/user'
 import ApprovalPanel from './ApprovalPanel.vue'
+import { formatDate } from '@/utils/format'
 
 defineOptions({ name: 'PermissionRequest' })
 
@@ -278,10 +279,6 @@ function onTabClick(pane: { index?: string; name?: string }) {
   if (name === 'review') {
     approvalRef.value?.init()
   }
-}
-
-function formatTime(time?: string) {
-  return time ? time.replace('T', ' ').slice(0, 19) : '-'
 }
 
 const statusTag = (s?: string) => (s === 'PENDING' ? 'warning' : s === 'APPROVED' ? 'success' : 'danger')

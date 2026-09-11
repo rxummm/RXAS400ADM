@@ -151,7 +151,7 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 import {
   listCollaborations, createCollaboration, updateCollabStatus, deleteCollaboration,
-  sendCollabNotification, listCollabNotifications,
+  sendCollabNotification,
   type OrderCollaborationVO, type CollaborationNotificationVO
 } from '@/api/bpcs'
 import AppPagination from '@/components/AppPagination.vue'
@@ -228,7 +228,8 @@ function openCreateDialog() {
 
 async function handleCreate() {
   if (!createFormRef.value) return
-  await createFormRef.value.validate()
+  const valid = await createFormRef.value.validate().catch(() => false)
+  if (!valid) return
   createSaving.value = true
   try {
     await createCollaboration(createForm)
@@ -239,13 +240,22 @@ async function handleCreate() {
 }
 
 async function handleStatusChange(row: OrderCollaborationVO, status: string) {
+  try {
+    await ElMessageBox.confirm(t('common.confirm.changeStatus'), '', { type: 'warning' })
+  } catch {
+    return
+  }
   await updateCollabStatus(row.id, status)
   ElMessage.success(t('common.success'))
   load()
 }
 
 async function handleDelete(row: OrderCollaborationVO) {
-  await ElMessageBox.confirm(t('common.confirm.deleteCollaboration', { name: row.orderNo }), '', { type: 'warning' })
+  try {
+    await ElMessageBox.confirm(t('common.confirm.deleteCollaboration', { name: row.orderNo }), '', { type: 'warning' })
+  } catch {
+    return
+  }
   await deleteCollaboration(row.id)
   ElMessage.success(t('common.success'))
   load()

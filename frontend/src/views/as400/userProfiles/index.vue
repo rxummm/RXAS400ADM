@@ -337,17 +337,22 @@ async function openDetail(row: UserProfileListRow) {
   }
 }
 
-function openEdit(row: UserProfileListRow) {
-  editUserName.value = row.USER_NAME
-  Object.assign(editForm, {
-    description: row.TEXT_DESCRIPTION || '',
-    groupProfile: row.GROUP_PROFILE || '*NONE',
-    status: row.STATUS || '*ENABLED',
-    initialMenu: '*SIGNOFF',
-    specialAuthorities: [],
-    newPassword: ''
-  })
-  editVisible.value = true
+async function openEdit(row: UserProfileListRow) {
+  try {
+    const detail = await getUserProfileDetail(row.USER_NAME)
+    editUserName.value = row.USER_NAME
+    Object.assign(editForm, {
+      description: detail.description || '',
+      groupProfile: detail.groupProfile || '*NONE',
+      status: detail.status || '*ENABLED',
+      initialMenu: detail.initialMenu || '*SIGNOFF',
+      specialAuthorities: detail.specialAuthorities || [],
+      newPassword: ''
+    })
+    editVisible.value = true
+  } catch {
+    /* interceptor handles error */
+  }
 }
 
 async function handleEdit() {

@@ -1,6 +1,8 @@
 package com.rxas400adm.system.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.SysPermissionDTO;
@@ -63,7 +65,7 @@ public class PermissionController {
     /** 新增 */
     @PostMapping
     @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
-    @OperateLog(module = "权限管理", operation = "新增权限")
+    @OperateLog(module = OperateLogModule.PERMISSION_MANAGEMENT, operation = OperateLogOperation.CREATE_PERMISSION)
     public ApiResponse<SysPermissionVO> create(@Valid @RequestBody SysPermissionDTO dto) {
         return ApiResponse.success(SysPermissionVO.from(permissionService.create(dto)));
     }
@@ -71,7 +73,7 @@ public class PermissionController {
     /** 更新 */
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
-    @OperateLog(module = "权限管理", operation = "更新权限")
+    @OperateLog(module = OperateLogModule.PERMISSION_MANAGEMENT, operation = OperateLogOperation.UPDATE_PERMISSION)
     public ApiResponse<SysPermissionVO> update(@PathVariable Long id, @Valid @RequestBody SysPermissionDTO dto) {
         return ApiResponse.success(SysPermissionVO.from(permissionService.update(id, dto)));
     }
@@ -79,7 +81,7 @@ public class PermissionController {
     /** 删除（被菜单/角色绑定引用则拒绝） */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
-    @OperateLog(module = "权限管理", operation = "删除权限")
+    @OperateLog(module = OperateLogModule.PERMISSION_MANAGEMENT, operation = OperateLogOperation.DELETE_PERMISSION)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         permissionService.delete(id);
         return ApiResponse.success(null);
