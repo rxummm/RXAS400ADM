@@ -2,7 +2,9 @@ package com.rxas400adm.as400.controller;
 
 import com.rxas400adm.as400.service.IBackupMonitorService;
 import com.rxas400adm.as400.vo.BackupStatusVO;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,8 +12,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/as400/backup")
@@ -23,8 +23,13 @@ public class BackupMonitorController {
 
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('BACKUP_VIEW')")
-    public ApiResponse<List<BackupStatusVO>> listByServer(@RequestParam(required = false) Long serverId) {
-        return ApiResponse.success(backupMonitorService.listByServer(serverId));
+    public ApiResponse<PageResult<BackupStatusVO>> listByServer(
+            @RequestParam(required = false) Long serverId,
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "20") Integer size) {
+        current = (int) PageConstants.clampNum(current);
+        size = (int) PageConstants.clampSize(size);
+        return ApiResponse.success(backupMonitorService.listByServer(serverId, current, size));
     }
 
     @GetMapping("/latest")

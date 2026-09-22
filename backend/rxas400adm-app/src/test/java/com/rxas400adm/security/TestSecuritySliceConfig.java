@@ -9,7 +9,7 @@ import com.rxas400adm.security.config.RateLimitProperties;
 import jakarta.annotation.PostConstruct;
 import org.mockito.stubbing.Answer;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import com.rxas400adm.system.service.SysConfigService;
 
@@ -38,7 +38,7 @@ public class TestSecuritySliceConfig {
      * 【第六章·P2】RateLimitFilter 运行时阈值改读 rx_config 后新增 SysConfigService 依赖——
      * 切片上下文以 Mock 提供（限流逻辑本身不经此切片验证），避免拖入真实 Mapper。
      */
-    @MockBean
+    @MockitoBean
     private SysConfigService sysConfigService;
 
     /** 默认返回 defaultValue，避免 Mockito 默认 null → NPE（§14.3） */

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="page-container">
     <el-card shadow="never" class="mb16">
       <template #header>
         {{ $t('monitor.wsHint', { serverId: sid() }) }}
@@ -45,7 +45,7 @@
 
     <el-card shadow="never">
       <template #header>{{ $t('monitor.history') }}</template>
-      <el-table :data="pagedMetrics" size="small" :max-height="historyMaxHeight">
+      <el-table :data="pagedMetrics" size="small" border :max-height="historyMaxHeight">
         <el-table-column prop="id" :label="$t('col.id')" width="80" />
         <el-table-column prop="metricName" :label="$t('monitor.metric')" width="120" />
         <el-table-column prop="metricValue" :label="$t('monitor.value')" width="120" />

@@ -16,7 +16,7 @@
 
     <div class="table-wrapper">
       <RxSkeleton type="table" :rows="8" :loading="loading">
-        <el-table :data="pagedRows" size="small" border stripe class="w-full">
+        <el-table :data="tableData" size="small" border stripe class="w-full">
         <el-table-column prop="configKey" :label="$t('config.key')" width="280" show-overflow-tooltip />
         <el-table-column prop="configValue" :label="$t('config.value')" min-width="220" show-overflow-tooltip />
         <el-table-column prop="description" :label="$t('config.description')" min-width="220" show-overflow-tooltip />
@@ -82,8 +82,6 @@ const {
   enableCache: true,
   searchFields: ['configKey', 'description'],
 })
-
-const pagedRows = computed(() => tableData.value)
 
 const onSizeChange = () => {
   current.value = 1

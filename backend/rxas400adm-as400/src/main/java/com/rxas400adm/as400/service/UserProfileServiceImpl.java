@@ -1,19 +1,26 @@
 package com.rxas400adm.as400.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.CommandResult;
 import com.rxas400adm.as400.sql.SqlStatementRegistry;
+import com.rxas400adm.as400.dto.UserProfileBatchDeleteDTO;
 import com.rxas400adm.as400.dto.UserProfileCreateDTO;
 import com.rxas400adm.as400.dto.UserProfileUpdateDTO;
 import com.rxas400adm.as400.entity.UserProfileLog;
 import com.rxas400adm.as400.mapper.UserProfileLogMapper;
 import com.rxas400adm.as400.model.UserProfileListRow;
+import com.rxas400adm.as400.util.As400PaginationHelper;
+import com.rxas400adm.as400.vo.UserProfileBatchDeleteResultVO;
 import com.rxas400adm.as400.vo.UserProfileCreateResult;
+import com.rxas400adm.as400.vo.UserProfileDeleteStatsVO;
 import com.rxas400adm.as400.vo.UserProfileDetailVO;
 import com.rxas400adm.common.constants.As400Identifiers;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.security.SecretMasker;
 
 import lombok.RequiredArgsConstructor;
@@ -40,8 +47,21 @@ public class UserProfileServiceImpl implements IUserProfileService {
     private final UserProfileLogMapper userProfileLogMapper;
 
     @Override
-    public List<UserProfileListRow> listUserProfiles() {
-        return clientProvider.current().listUserProfiles();
+    public PageResult<UserProfileListRow> listUserProfiles(int current, int size, String keyword) {
+        String sql = SqlStatementRegistry.of("auth.user.list.paged");
+        Object[] params = new Object[0];
+        if (keyword != null && !keyword.isBlank()) {
+            sql = "SELECT USER_NAME, STATUS, GROUP_PROFILE, TEXT_DESCRIPTION, LAST_USED_DATE " +
+                    "FROM QSYS2.USER_INFO WHERE USER_NAME LIKE ? ORDER BY USER_NAME";
+            params = new Object[]{"%" + keyword.toUpperCase() + "%"};
+        }
+        return As400PaginationHelper.queryPaged(clientProvider, sql, current, size, params,
+                row -> new UserProfileListRow(
+                        getStringValue(row, "USER_NAME"),
+                        getStringValue(row, "STATUS"),
+                        getStringValue(row, "GROUP_PROFILE"),
+                        getStringValue(row, "TEXT_DESCRIPTION"),
+                        getStringValue(row, "LAST_USED_DATE")));
     }
 
     @Override
@@ -129,7 +149,7 @@ public class UserProfileServiceImpl implements IUserProfileService {
     }
 
     @Override
-    public void deleteUserProfile(String userName, String operator) {
+    public void deleteUserProfile(String userName, String operator, String deleteReason, String deletionType) {
         requireValidIdentifier(userName);
         AS400Client client = clientProvider.current();
         
@@ -146,10 +166,101 @@ public class UserProfileServiceImpl implements IUserProfileService {
             throw new BusinessException(ErrorCode.AS400_COMMAND_FAILED, result.message());
         }
         
-        // 记录操作日志
-        saveLog(userName, "DELETE", operator, "删除用户");
+        // 记录删除操作日志
+        saveDeleteLog(userName, operator, deleteReason, deletionType);
         
-        log.info("删除用户Profile成功: {}", userName);
+        log.info("删除用户Profile成功: {}, 原因: {}, 操作人: {}", userName, deleteReason, operator);
+    }
+
+    @Override
+    public PageResult<UserProfileLog> getProfileLogs(String userName, int current, int size) {
+        LambdaQueryWrapper<UserProfileLog> wrapper = new LambdaQueryWrapper<>();
+        if (userName != null && !userName.isBlank()) {
+            wrapper.eq(UserProfileLog::getUserName, userName.toUpperCase());
+        }
+        wrapper.orderByDesc(UserProfileLog::getCreatedTime);
+        
+        Page<UserProfileLog> page = userProfileLogMapper.selectPage(
+                new Page<>(current, size), wrapper);
+        
+        return new PageResult<>(page.getTotal(), page.getRecords());
+    }
+
+    @Override
+    public UserProfileBatchDeleteResultVO batchDeleteUserProfiles(UserProfileBatchDeleteDTO dto, String operator) {
+        if (dto.getUserNames() == null || dto.getUserNames().isEmpty()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "用户名列表不能为空");
+        }
+        
+        int total = dto.getUserNames().size();
+        int successCount = 0;
+        StringBuilder failDetails = new StringBuilder();
+        
+        for (String userName : dto.getUserNames()) {
+            try {
+                deleteUserProfile(userName, operator, dto.getDeleteReason(), dto.getDeletionType());
+                successCount++;
+            } catch (Exception e) {
+                failDetails.append(userName).append(": ").append(e.getMessage()).append("; ");
+                log.error("批量删除用户 {} 失败: {}", userName, e.getMessage());
+            }
+        }
+        
+        return new UserProfileBatchDeleteResultVO(
+                total,
+                successCount,
+                total - successCount,
+                failDetails.toString()
+        );
+    }
+
+    @Override
+    public UserProfileDeleteStatsVO getDeleteStats() {
+        long totalDeletes = userProfileLogMapper.selectCount(
+                new LambdaQueryWrapper<UserProfileLog>()
+                        .eq(UserProfileLog::getAction, "DELETE"));
+        
+        long manualDeletes = userProfileLogMapper.selectCount(
+                new LambdaQueryWrapper<UserProfileLog>()
+                        .eq(UserProfileLog::getAction, "DELETE")
+                        .eq(UserProfileLog::getDeletionType, "MANUAL"));
+        
+        long inactiveDeletes = userProfileLogMapper.selectCount(
+                new LambdaQueryWrapper<UserProfileLog>()
+                        .eq(UserProfileLog::getAction, "DELETE")
+                        .eq(UserProfileLog::getDeletionType, "INACTIVE_90D"));
+        
+        long resignedDeletes = userProfileLogMapper.selectCount(
+                new LambdaQueryWrapper<UserProfileLog>()
+                        .eq(UserProfileLog::getAction, "DELETE")
+                        .eq(UserProfileLog::getDeletionType, "RESIGNED"));
+        
+        // 获取最近7天的删除记录
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        List<UserProfileLog> recentLogs = userProfileLogMapper.selectList(
+                new LambdaQueryWrapper<UserProfileLog>()
+                        .eq(UserProfileLog::getAction, "DELETE")
+                        .ge(UserProfileLog::getCreatedTime, sevenDaysAgo)
+                        .orderByDesc(UserProfileLog::getCreatedTime)
+                        .last("LIMIT 20"));
+        
+        List<UserProfileDeleteStatsVO.DeleteRecordVO> records = recentLogs.stream()
+                .map(log -> new UserProfileDeleteStatsVO.DeleteRecordVO(
+                        log.getUserName(),
+                        log.getOperator(),
+                        log.getDeleteReason(),
+                        log.getDeletionType(),
+                        log.getCreatedTime() != null ? log.getCreatedTime().toString() : ""
+                ))
+                .toList();
+        
+        return new UserProfileDeleteStatsVO(
+                totalDeletes,
+                manualDeletes,
+                inactiveDeletes,
+                resignedDeletes,
+                records
+        );
     }
 
     private String buildCreateCommand(UserProfileCreateDTO dto) {
@@ -265,6 +376,18 @@ public class UserProfileServiceImpl implements IUserProfileService {
         logEntry.setAction(action);
         logEntry.setOperator(operator);
         logEntry.setDetail(detail);
+        logEntry.setCreatedTime(LocalDateTime.now());
+        userProfileLogMapper.insert(logEntry);
+    }
+
+    private void saveDeleteLog(String userName, String operator, String deleteReason, String deletionType) {
+        UserProfileLog logEntry = new UserProfileLog();
+        logEntry.setUserName(userName);
+        logEntry.setAction("DELETE");
+        logEntry.setOperator(operator);
+        logEntry.setDetail("删除用户Profile");
+        logEntry.setDeleteReason(deleteReason);
+        logEntry.setDeletionType(deletionType);
         logEntry.setCreatedTime(LocalDateTime.now());
         userProfileLogMapper.insert(logEntry);
     }

@@ -3,7 +3,7 @@
     <div class="search-bar">
       <el-input v-model="keyword" clearable :placeholder="$t('common.search')" @keyup.enter="load" />
       <el-button type="primary" @click="load">{{ $t('common.search') }}</el-button>
-      <el-button @click="openCreate">{{ $t('emailGroups.add') }}</el-button>
+      <el-button @click="() => openCreate()">{{ $t('emailGroups.add') }}</el-button>
     </div>
     <div class="table-wrapper">
       <el-table :data="rows" v-loading="loading" size="small" border>
@@ -60,7 +60,7 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
+import { useFormDialog } from '@/composables/useFormDialog'
 import {
   listEmailGroups, createEmailGroup, updateEmailGroup, deleteEmailGroup,
   listGroupMembers, addGroupMember, removeGroupMember
@@ -71,7 +71,6 @@ defineOptions({ name: 'EmailGroups' })
 
 const { t } = useI18n()
 const loading = ref(false)
-const saving = ref(false)
 const memberLoading = ref(false)
 const rows = ref<EmailGroup[]>([])
 const total = ref(0)
@@ -79,14 +78,17 @@ const current = ref(1)
 const size = ref(10)
 const keyword = ref('')
 
-const dialogVisible = ref(false)
-const isEdit = ref(false)
-const editId = ref<number | null>(null)
-const formRef = ref<FormInstance>()
-const form = ref({ groupName: '', description: '' })
-const rules: FormRules = {
-  groupName: [{ required: true, message: () => t('validation.notBlank'), trigger: 'blur' }],
-}
+const { dialogVisible, isEdit, loading: saving, formRef, form, rules, openCreate, openEdit, onSubmit: handleSave } =
+  useFormDialog<{ groupName: string; description: string }>({
+    defaultForm: () => ({ groupName: '', description: '' }),
+    rules: {
+      groupName: [{ required: true, message: () => t('validation.notBlank'), trigger: 'blur' }],
+    },
+    createApi: (data) => createEmailGroup(data),
+    updateApi: (id, data) => updateEmailGroup(Number(id), data),
+    onSuccess: () => load(),
+    i18nPrefix: 'emailGroup',
+  })
 
 const drawerVisible = ref(false)
 const currentGroup = ref<EmailGroup | null>(null)
@@ -105,39 +107,6 @@ async function load() {
     loading.value = false
   }
 }
-
-function openCreate() {
-  isEdit.value = false
-  editId.value = null
-  form.value = { groupName: '', description: '' }
-  dialogVisible.value = true
-}
-
-function openEdit(row: EmailGroup) {
-  isEdit.value = true
-  editId.value = row.id
-  form.value = { groupName: row.groupName, description: row.description || '' }
-  dialogVisible.value = true
-}
-
-async function handleSave() {
-  const valid = await formRef.value?.validate().catch(() => false)
-  if (!valid) return
-  saving.value = true
-  try {
-    if (isEdit.value && editId.value != null) {
-      await updateEmailGroup(editId.value, form.value)
-    } else {
-      await createEmailGroup(form.value)
-    }
-    ElMessage.success(t('common.operationSuccess'))
-    dialogVisible.value = false
-    load()
-  } finally {
-    saving.value = false
-  }
-}
-
 async function handleDelete(row: EmailGroup) {
   try {
     await ElMessageBox.confirm(t('emailGroups.deleteConfirm', { name: row.groupName }), t('common.confirm'), { type: 'warning' })

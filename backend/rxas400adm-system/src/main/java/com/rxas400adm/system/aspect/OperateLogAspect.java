@@ -180,7 +180,7 @@ public class OperateLogAspect {
         }
         if (node.isObject()) {
             ObjectNode objectNode = (ObjectNode) node;
-            Iterator<Map.Entry<String, JsonNode>> fields = objectNode.fields();
+            Iterator<Map.Entry<String, JsonNode>> fields = objectNode.properties().iterator();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> field = fields.next();
                 if (SENSITIVE_KEY.matcher(field.getKey()).matches()) {

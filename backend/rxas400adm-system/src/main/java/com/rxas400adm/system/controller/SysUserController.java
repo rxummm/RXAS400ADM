@@ -3,6 +3,7 @@ package com.rxas400adm.system.controller;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.annotation.OperateLogModule;
 import com.rxas400adm.common.annotation.OperateLogOperation;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.UserDTO;
@@ -43,6 +44,8 @@ public class SysUserController {
     public ApiResponse<PageResult<UserVO>> page(@RequestParam(defaultValue = "1") long current,
                                                 @RequestParam(defaultValue = "10") long size,
                                                 @RequestParam(required = false) String keyword) {
+        current = PageConstants.clampNum(current);
+        size = PageConstants.clampSize(size);
         return ApiResponse.success(userService.page(current, size, keyword));
     }
 

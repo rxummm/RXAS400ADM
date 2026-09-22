@@ -1,6 +1,7 @@
-import request from './request'
+// AS400 用户 Profile 管理 API
+import request from '@/api/request'
+import type { PaginatedResult } from '@/api/types'
 
-/** 用户Profile列表行 */
 export interface UserProfileListRow {
   USER_NAME: string
   STATUS: string
@@ -9,7 +10,6 @@ export interface UserProfileListRow {
   LAST_USED_DATE: string
 }
 
-/** 用户Profile详情 */
 export interface UserProfileDetail {
   userName: string
   status: string
@@ -21,8 +21,7 @@ export interface UserProfileDetail {
   passwordExpireDate: string
 }
 
-/** 创建用户Profile请求 */
-export interface UserProfileCreateRequest {
+export interface UserProfileCreateDTO {
   userName: string
   password: string
   description?: string
@@ -33,8 +32,7 @@ export interface UserProfileCreateRequest {
   recipientEmail?: string
 }
 
-/** 更新用户Profile请求 */
-export interface UserProfileUpdateRequest {
+export interface UserProfileUpdateDTO {
   description?: string
   groupProfile?: string
   status?: string
@@ -43,30 +41,65 @@ export interface UserProfileUpdateRequest {
   newPassword?: string
 }
 
-/** 创建用户Profile响应 */
-export interface UserProfileCreateResult {
-  success: boolean
-  message: string
+export interface UserProfileDeleteParams {
+  deleteReason: string
+  deletionType: string
+}
+
+export interface UserProfileLog {
+  id: number
   userName: string
+  action: string
+  operator: string
+  detail: string
+  deleteReason: string
+  deletionType: string
   createdTime: string
 }
 
-/** 获取用户Profile列表 */
-export const fetchUserProfileList = (): Promise<UserProfileListRow[]> =>
-  request.get('/as400/user-profiles')
+export interface UserProfileDeleteStats {
+  totalDeletes: number
+  manualDeletes: number
+  inactiveDeletes: number
+  resignedDeletes: number
+  recentRecords: UserProfileLog[]
+}
 
-/** 获取用户Profile详情 */
-export const getUserProfileDetail = (userName: string): Promise<UserProfileDetail> =>
-  request.get(`/as400/user-profiles/${userName}`)
+export interface UserProfileBatchDeleteResult {
+  total: number
+  successCount: number
+  failCount: number
+  failDetails: string
+}
 
-/** 创建用户Profile */
-export const createUserProfile = (data: UserProfileCreateRequest): Promise<UserProfileCreateResult> =>
-  request.post('/as400/user-profiles', data)
+export function fetchUserProfileList(params: Record<string, unknown>): Promise<PaginatedResult<UserProfileListRow>> {
+  return request.get('/api/v1/as400/user-profiles', { params })
+}
 
-/** 更新用户Profile */
-export const updateUserProfile = (userName: string, data: UserProfileUpdateRequest): Promise<void> =>
-  request.put(`/as400/user-profiles/${userName}`, data)
+export function getUserProfileDetail(userName: string): Promise<UserProfileDetail> {
+  return request.get(`/api/v1/as400/user-profiles/${encodeURIComponent(userName)}`)
+}
 
-/** 删除用户Profile */
-export const deleteUserProfile = (userName: string): Promise<void> =>
-  request.delete(`/as400/user-profiles/${userName}`)
+export function createUserProfile(dto: UserProfileCreateDTO): Promise<{ userName: string }> {
+  return request.post('/api/v1/as400/user-profiles', dto)
+}
+
+export function updateUserProfile(userName: string, dto: UserProfileUpdateDTO): Promise<void> {
+  return request.put(`/api/v1/as400/user-profiles/${encodeURIComponent(userName)}`, dto)
+}
+
+export function deleteUserProfile(userName: string, params?: UserProfileDeleteParams): Promise<void> {
+  return request.delete(`/api/v1/as400/user-profiles/${encodeURIComponent(userName)}`, { params })
+}
+
+export function getUserProfileLogs(userName: string, params?: Record<string, unknown>): Promise<PaginatedResult<UserProfileLog>> {
+  return request.get(`/api/v1/as400/user-profiles/${encodeURIComponent(userName)}/logs`, { params })
+}
+
+export function batchDeleteUserProfiles(dto: { userNames: string[]; deleteReason: string; deletionType: string }): Promise<UserProfileBatchDeleteResult> {
+  return request.post('/api/v1/as400/user-profiles/batch-delete', dto)
+}
+
+export function getDeleteStats(): Promise<UserProfileDeleteStats> {
+  return request.get('/api/v1/as400/user-profiles/delete-stats')
+}

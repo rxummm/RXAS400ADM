@@ -4,6 +4,7 @@ import com.rxas400adm.as400.CommandResult;
 import com.rxas400adm.as400.model.JobQueueRow;
 import com.rxas400adm.as400.model.SpoolRow;
 import com.rxas400adm.as400.vo.JobInfo;
+import com.rxas400adm.common.response.PageResult;
 
 import java.io.InputStream;
 import java.util.List;
@@ -16,6 +17,8 @@ import java.util.Map;
 public interface IJobService {
 
     List<JobInfo> activeJobs(String status);
+
+    PageResult<JobInfo> activeJobsPage(String status, int current, int size);
 
     List<JobInfo> msgwJobs();
 
@@ -33,9 +36,13 @@ public interface IJobService {
 
     List<Map<String, Object>> msgwMessages();
 
+    PageResult<Map<String, Object>> msgwMessagesPage(int current, int size);
+
     List<JobQueueRow> jobQueues();
 
     List<SpoolRow> spoolFiles(String jobName, String jobUser, String jobNumber);
+
+    PageResult<SpoolRow> spoolFilesPage(String jobName, String jobUser, String jobNumber, int current, int size);
 
     /** SPOOL 文件内容读取（文本流） */
     InputStream spoolFileContent(String jobName, String jobUser, String jobNumber,
@@ -49,4 +56,8 @@ public interface IJobService {
 
     /** 历史日志查询（QSYS2.HISTORY_LOG_INFO） */
     List<Map<String, Object>> historyLog(String jobName, String fromDate, String toDate);
+
+    /** 分页历史日志查询 */
+    PageResult<Map<String, Object>> historyLogPage(String jobName, String fromDate, String toDate,
+                                                   int current, int size);
 }

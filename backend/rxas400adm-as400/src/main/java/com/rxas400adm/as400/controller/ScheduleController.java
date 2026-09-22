@@ -6,6 +6,8 @@ import com.rxas400adm.as400.vo.JobScheduleHistoryVO;
 import com.rxas400adm.as400.vo.JobScheduleVO;
 import com.rxas400adm.as400.vo.ScheduleExecuteResultVO;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -43,14 +45,14 @@ public class ScheduleController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('SCHEDULE_MANAGE')")
-    @OperateLog(module = "作业调度", operation = "创建调度任务")
+    @OperateLog(module = OperateLogModule.JOB_SCHEDULE, operation = OperateLogOperation.CREATE_SCHEDULE)
     public ApiResponse<JobScheduleVO> create(@Valid @RequestBody JobScheduleRequest request) {
         return ApiResponse.success(JobScheduleVO.from(scheduleService.create(request, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('SCHEDULE_MANAGE')")
-    @OperateLog(module = "作业调度", operation = "更新调度任务")
+    @OperateLog(module = OperateLogModule.JOB_SCHEDULE, operation = OperateLogOperation.UPDATE_SCHEDULE)
     public ApiResponse<JobScheduleVO> update(@PathVariable Long id,
                                              @Valid @RequestBody JobScheduleRequest request) {
         return ApiResponse.success(JobScheduleVO.from(scheduleService.update(id, request)));
@@ -58,7 +60,7 @@ public class ScheduleController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('SCHEDULE_MANAGE')")
-    @OperateLog(module = "作业调度", operation = "删除调度任务")
+    @OperateLog(module = OperateLogModule.JOB_SCHEDULE, operation = OperateLogOperation.DELETE_SCHEDULE)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         scheduleService.delete(id);
         return ApiResponse.success(null);
@@ -66,14 +68,14 @@ public class ScheduleController {
 
     @PostMapping("/{id}/toggle")
     @PreAuthorize("hasAuthority('SCHEDULE_MANAGE')")
-    @OperateLog(module = "作业调度", operation = "启停调度任务")
+    @OperateLog(module = OperateLogModule.JOB_SCHEDULE, operation = OperateLogOperation.TOGGLE_SCHEDULE)
     public ApiResponse<JobScheduleVO> toggle(@PathVariable Long id, @RequestParam Boolean enabled) {
         return ApiResponse.success(JobScheduleVO.from(scheduleService.toggle(id, enabled)));
     }
 
     @PostMapping("/{id}/execute")
     @PreAuthorize("hasAuthority('SCHEDULE_MANAGE')")
-    @OperateLog(module = "作业调度", operation = "立即执行调度任务")
+    @OperateLog(module = OperateLogModule.JOB_SCHEDULE, operation = OperateLogOperation.EXECUTE_SCHEDULE)
     public ApiResponse<ScheduleExecuteResultVO> executeNow(@PathVariable Long id) {
         return ApiResponse.success(scheduleService.executeNow(id));
     }

@@ -35,14 +35,14 @@
       <!-- ==================== 运费记录 Tab ==================== -->
       <el-tab-pane :label="$t('bpcs.freight.records')" name="records">
         <div class="search-bar">
-          <el-input v-model="recordQuery.orderNo" class="w-160" :placeholder="$t('bpcs.freight.orderNo')" clearable @keyup.enter="loadRecords" />
-          <el-input v-model="recordQuery.carrier" class="w-120" :placeholder="$t('bpcs.freight.carrier')" clearable @keyup.enter="loadRecords" />
-          <el-button type="primary" @click="loadRecords">{{ $t('common.search') }}</el-button>
+          <el-input v-model="recordQuery.orderNo" class="w-160" :placeholder="$t('bpcs.freight.orderNo')" clearable @keyup.enter="forceSearchRecords" />
+          <el-input v-model="recordQuery.carrier" class="w-120" :placeholder="$t('bpcs.freight.carrier')" clearable @keyup.enter="forceSearchRecords" />
+          <el-button type="primary" @click="forceSearchRecords">{{ $t('common.search') }}</el-button>
           <el-button @click="resetRecordQuery">{{ $t('common.reset') }}</el-button>
           <el-button type="primary" @click="openRecordDialog()">{{ $t('bpcs.freight.addRecord') }}</el-button>
         </div>
         <div class="table-wrapper">
-          <el-table :data="records" v-loading="recordsLoading" size="small" border>
+          <el-table :data="recordsData" v-loading="recordsLoading" size="small" border>
             <el-table-column prop="orderNo" :label="$t('bpcs.freight.orderNo')" width="120" />
             <el-table-column prop="carrier" :label="$t('bpcs.freight.carrier')" width="100" />
             <el-table-column prop="weight" :label="$t('bpcs.freight.weight')" width="90" align="right" />
@@ -64,7 +64,7 @@
               </template>
             </el-table-column>
           </el-table>
-          <AppPagination :total="recordTotal" v-model:current="recordPage.current" v-model:size="recordPage.size" @change="loadRecords" @size-change="loadRecords" />
+          <AppPagination :total="recordTotal" v-model:current="recordCurrent" v-model:size="recordSize" @change="forceSearchRecords" @size-change="forceSearchRecords" />
         </div>
       </el-tab-pane>
 
@@ -181,6 +181,7 @@ import {
   getFreightTrend, getCarrierCostShare,
   type FreightCostRuleVO, type FreightCostRecordVO, type FreightCostTrendVO
 } from '@/api/bpcs'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import AppPagination from '@/components/AppPagination.vue'
 
 defineOptions({ name: 'BpcsFreightCost' })
@@ -242,10 +243,6 @@ async function handleDeleteRule(row: FreightCostRuleVO) {
 }
 
 // ==================== 记录 ====================
-const recordsLoading = ref(false)
-const records = ref<FreightCostRecordVO[]>([])
-const recordTotal = ref(0)
-const recordPage = reactive({ current: 1, size: 20 })
 const recordQuery = reactive({ orderNo: '', carrier: '' })
 const recordDialogVisible = ref(false)
 const recordSaving = ref(false)
@@ -256,23 +253,19 @@ const recordRules = reactive<FormRules>({
   carrier: [{ required: true, message: t('common.validation.notBlank'), trigger: 'blur' }],
 })
 
-async function loadRecords() {
-  recordsLoading.value = true
-  try {
-    const params: Record<string, string | number> = { current: recordPage.current, size: recordPage.size }
-    if (recordQuery.orderNo) params.orderNo = recordQuery.orderNo
-    if (recordQuery.carrier) params.carrier = recordQuery.carrier
-    const res = await listFreightRecords(params)
-    records.value = res.records
-    recordTotal.value = res.total
-  } finally { recordsLoading.value = false }
-}
+const { records: recordsData, loading: recordsLoading, current: recordCurrent, size: recordSize, total: recordTotal, forceSearch: forceSearchRecords, resetSearch: resetRecordsSearch } = useSmartQueryTable<FreightCostRecordVO>({
+  fetchApi: (params) => {
+    const p: Record<string, string | number> = { current: params.current!, size: params.size! }
+    if (recordQuery.orderNo) p.orderNo = recordQuery.orderNo
+    if (recordQuery.carrier) p.carrier = recordQuery.carrier
+    return listFreightRecords(p)
+  },
+})
 
 function resetRecordQuery() {
   recordQuery.orderNo = ''
   recordQuery.carrier = ''
-  recordPage.current = 1
-  loadRecords()
+  resetRecordsSearch()
 }
 
 function openRecordDialog() {
@@ -289,7 +282,7 @@ async function saveRecord() {
     await createFreightRecord(recordForm)
     recordDialogVisible.value = false
     ElMessage.success(t('common.success'))
-    loadRecords()
+    forceSearchRecords()
   } finally { recordSaving.value = false }
 }
 
@@ -301,7 +294,7 @@ async function handleDeleteRecord(row: FreightCostRecordVO) {
   }
   await deleteFreightRecord(row.id)
   ElMessage.success(t('common.success'))
-  loadRecords()
+  forceSearchRecords()
 }
 
 // ==================== 成本分析 ====================
@@ -329,5 +322,5 @@ async function loadCarrierShare() {
   }))
 }
 
-onMounted(() => { loadRules(); loadRecords(); loadTrend(); loadCarrierShare() })
+onMounted(() => { loadRules(); forceSearchRecords(); loadTrend(); loadCarrierShare() })
 </script>

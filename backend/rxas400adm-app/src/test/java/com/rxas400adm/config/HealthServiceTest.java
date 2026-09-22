@@ -64,6 +64,7 @@ class HealthServiceTest {
 
     @Test
     @DisplayName("countOpenAlerts → 返回 OPEN 告警数")
+    @SuppressWarnings("unchecked")
     void countOpenAlerts_shouldReturn() {
         when(alertEventMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(3L);
         assertEquals(3, service.countOpenAlerts());
@@ -71,6 +72,7 @@ class HealthServiceTest {
 
     @Test
     @DisplayName("listSystemsOrdered → 返回服务器列表")
+    @SuppressWarnings("unchecked")
     void listSystemsOrdered_shouldReturn() {
         IbmiSystem sys = new IbmiSystem();
         sys.setId(1L);
@@ -83,6 +85,7 @@ class HealthServiceTest {
 
     @Test
     @DisplayName("probeServers → 无服务器返回空列表")
+    @SuppressWarnings("unchecked")
     void probeServers_empty_shouldReturnEmpty() {
         when(systemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
         assertTrue(service.probeServers().isEmpty());

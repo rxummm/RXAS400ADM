@@ -17,7 +17,7 @@
       <RxSkeleton type="table" :rows="8" :loading="loading">
         <el-table :data="rows" size="small" border stripe class="w-full" @selection-change="onSelectionChange">
         <el-table-column v-if="canDelete" type="selection" width="44" align="center" />
-        <el-table-column prop="type" label="Type" width="90" align="center">
+        <el-table-column prop="type" :label="$t('notice.type')" width="90" align="center">
           <template #default="{ row }">
             <el-tag size="small" :type="typeTag(row.type)">{{ typeLabel(row.type) }}</el-tag>
           </template>

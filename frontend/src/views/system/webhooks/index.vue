@@ -37,6 +37,7 @@
             </el-table-column>
           </el-table>
           </RxSkeleton>
+          <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="loadWebhooks" @size-change="loadWebhooks" />
         </div>
       </el-tab-pane>
 
@@ -146,6 +147,9 @@ const userStore = useUserStore()
 const tab = ref('config')
 const loading = ref(false)
 const webhooks = ref<WebhookConfig[]>([])
+const total = ref(0)
+const current = ref(1)
+const size = ref(20)
 
 const logLoading = ref(false)
 const logs = ref<WebhookLog[]>([])
@@ -182,7 +186,9 @@ const {
 async function loadWebhooks() {
   loading.value = true
   try {
-    webhooks.value = (await listWebhooks()) || []
+    const data = await listWebhooks({ current: current.value, size: size.value })
+    webhooks.value = data.records
+    total.value = data.total
   } finally {
     loading.value = false
   }

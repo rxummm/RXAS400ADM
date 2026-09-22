@@ -5,14 +5,13 @@ import com.rxas400adm.as400.service.IBpcsInventoryAnalyticsService;
 import com.rxas400adm.as400.vo.BpcsInventoryConsistencyVO;
 import com.rxas400adm.as400.vo.BpcsInventorySlowMovingVO;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 库存分析 Controller（多级一致性核对、呆滞物料）。
@@ -37,10 +36,11 @@ public class BpcsInventoryAnalyticsController {
     @GetMapping("/slow-moving")
     @PreAuthorize("hasAuthority('BPCS_INVENTORY_VIEW')")
     @Operation(summary = "呆滞物料分析")
-    public ApiResponse<List<BpcsInventorySlowMovingVO>> slowMoving(
+    public ApiResponse<PageResult<BpcsInventorySlowMovingVO>> slowMoving(
             @RequestParam(defaultValue = "001") String cono,
             @RequestParam String cutoffDate,
-            @RequestParam(defaultValue = "50") int limit) {
-        return ApiResponse.success(analyticsService.getSlowMovingItems(cono, cutoffDate, limit));
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(analyticsService.getSlowMovingItems(cono, cutoffDate, current, size));
     }
 }

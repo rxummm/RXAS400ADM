@@ -41,6 +41,7 @@ class JobSlaServiceTest {
 
     @Test
     @DisplayName("list() — 返回全部 SLA 规则")
+    @SuppressWarnings("unchecked")
     void list_returnsAll() {
         JobSla sla = createSampleSla();
         when(slaMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(sla));

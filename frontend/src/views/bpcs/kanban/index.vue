@@ -30,6 +30,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="load" @size-change="load" />
     </div>
   </div>
 </template>
@@ -40,14 +41,20 @@ defineOptions({ name: 'BpcsKanban' })
 
 import { ref, onMounted } from 'vue'
 import { listKanbanOrders, type KanbanVO } from '@/api/bpcs'
+import AppPagination from '@/components/AppPagination.vue'
 
 const loading = ref(false)
 const rows = ref<KanbanVO[]>([])
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
 
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listKanbanOrders()
+    const res = await listKanbanOrders({ current: current.value, size: size.value })
+    rows.value = res.records
+    total.value = res.total
   } finally {
     loading.value = false
   }

@@ -1,4 +1,5 @@
 import request from './request'
+import type { PaginatedResult } from './types'
 
 /** 消息文件（*MSGF）列表项 */
 export interface MessageFileSummary {
@@ -22,9 +23,13 @@ export interface MessageFileRow {
 export const fetchMessageFiles = (library?: string): Promise<MessageFileSummary[]> =>
   request.get('/message-files/files', { params: { library } })
 
-/** 文件内消息描述列表（MESSAGE_ID / 文本 / 二级文本 / 严重级别） */
-export const fetchMessages = (library: string, file: string, keyword?: string): Promise<MessageFileRow[]> =>
-  request.get('/message-files/messages', { params: { library, file, keyword } })
+/** 文件内消息描述列表（分页，MESSAGE_ID / 文本 / 二级文本 / 严重级别） */
+export const fetchMessages = (library: string, file: string, params?: {
+  keyword?: string
+  current?: number
+  size?: number
+}): Promise<PaginatedResult<MessageFileRow>> =>
+  request.get('/message-files/messages', { params: { library, file, ...params } })
 
 export interface MessageRequest {
   library?: string

@@ -151,11 +151,12 @@ const onSizeChange = () => {
   current.value = 1
 }
 
-function filterTree(nodes: SysMenu[], kw: string): SysMenu[] {
+function filterTree(nodes: SysMenu[], kw: string, depth: number = 0): SysMenu[] {
+  if (depth > 10) return []
   return nodes.reduce<SysMenu[]>((acc, node) => {
     const nameMatch = node.menuName?.toLowerCase().includes(kw)
     const permMatch = node.perms?.toLowerCase().includes(kw)
-    const children = node.children ? filterTree(node.children, kw) : []
+    const children = node.children ? filterTree(node.children, kw, depth + 1) : []
     if (nameMatch || permMatch || children.length > 0) {
       acc.push({ ...node, children })
     }

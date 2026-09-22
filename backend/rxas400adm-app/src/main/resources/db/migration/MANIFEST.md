@@ -81,6 +81,9 @@
 | `rx_collaboration_notification` | V75 | 协作通知 |
 | `rx_backup_status` | V79 | 备份状态 |
 | `rx_system_value_compliance` | V79 | 系统值合规 |
+| `rx_op_step` | V94 | 操作步骤 |
+| `rx_op_step_version` | V98 | 操作步骤版本 |
+| `rx_op_desired_state` | V97 | 期望状态 |
 
 ---
 
@@ -145,5 +148,5 @@
 
 ---
 
-*最后更新：2026-09-04*
-*覆盖迁移：V1 ~ V90（共 90 个）*
+*最后更新：2026-09-20*
+*覆盖迁移：V1 ~ V116（共 116 个）*

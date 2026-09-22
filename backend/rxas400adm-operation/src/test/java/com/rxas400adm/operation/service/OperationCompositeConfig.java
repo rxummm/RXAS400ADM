@@ -28,6 +28,7 @@ import org.mockito.Mockito;
 public class OperationCompositeConfig {
 
     @Bean
+    @SuppressWarnings("unchecked")
     public OperationMapper stubOperationMapper() {
         OperationMapper mockMapper = Mockito.mock(OperationMapper.class);
         Mockito.when(mockMapper.selectPageOrderByRequestedAt(Mockito.any(Page.class)))

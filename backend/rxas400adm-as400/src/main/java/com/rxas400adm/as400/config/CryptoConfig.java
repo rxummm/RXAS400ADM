@@ -2,20 +2,19 @@ package com.rxas400adm.as400.config;
 
 import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.crypto.AesCryptoService;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * AES 加密服务配置，从环境变量 RXAS400_CRYPTO_KEY 读取密钥。
- * <p>
- * S4 加固：mock（演示）环境允许回退内置开发密钥；非 mock（prod 等）环境
- * 密钥缺失直接启动失败，避免「漏配环境变量却用公开密钥加密」的静默风险。
  */
-@Slf4j
 @Configuration
 public class CryptoConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(CryptoConfig.class);
 
     @Value("${rxas400.crypto.key:}")
     private String cryptoKey;

@@ -107,6 +107,10 @@ function splitStatements(sql) {
 const tables = new Map() // table -> first seen file
 const indexes = new Map() // `${table}.${index}` -> first seen file
 const seenStmts = new Map() // file -> stmt count
+// V42 复用 V1 的 idx_metric_instance_time（information_schema 预查 + PREPARE 动态 DDL，运行时幂等）
+const ALLOW_INDEX_DUPES = new Map([
+  ['rx_metric.idx_metric_instance_time', new Set(['V1__init.sql', 'V42__metric_report_groupby_index.sql'])],
+])
 
 for (const f of files) {
   const sql = readFileSync(join(MIG_DIR, f), 'utf-8')
@@ -132,7 +136,12 @@ for (const f of files) {
       const tbl = idx[1] ?? (stmt.match(/ON\s+`?(\w+)`?/i) || [])[1]
       const key = `${tbl}.${idx[2]}`
       if (tbl && indexes.has(key)) {
-        check('索引跨迁移不重复', false, `${key} 重复创建（${indexes.get(key)} 与 ${f}）`)
+        const dupAllowed = ALLOW_INDEX_DUPES.get(key)?.has(f)
+        if (dupAllowed) {
+          console.log(`  ℹ  放行已知遗留：\`${key}\` 在 ${indexes.get(key)} 与 ${f} 重复（运行时幂等）`)
+        } else {
+          check('索引跨迁移不重复', false, `${key} 重复创建（${indexes.get(key)} 与 ${f}）`)
+        }
       } else if (tbl) {
         indexes.set(key, f)
       }

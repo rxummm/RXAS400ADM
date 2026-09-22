@@ -2,6 +2,7 @@ package com.rxas400adm.as400.service;
 
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.sql.SqlStatementRegistry;
+import com.rxas400adm.as400.util.As400PaginationHelper;
 import com.rxas400adm.as400.util.BpcsRowUtil;
 import com.rxas400adm.as400.vo.BpcsInventoryConsistencyVO;
 import com.rxas400adm.as400.vo.BpcsInventoryConsistencyVO.LevelDetail;
@@ -11,12 +12,12 @@ import com.rxas400adm.common.constants.As400Identifiers;
 import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -24,9 +25,6 @@ import static com.rxas400adm.as400.util.BpcsRowUtil.pickStr;
 
 /**
  * 库存分析服务实现（多级一致性核对、呆滞物料分析）。
- *
- * <p>只读查询，数据源 BPCS IPI/ILI/IWM/IWI/IIM/ITL。
- * mock 模式返回演示数据，prod 模式走 AS400 SQL。
  */
 @Slf4j
 @Service
@@ -64,39 +62,34 @@ public class BpcsInventoryAnalyticsServiceImpl implements IBpcsInventoryAnalytic
     }
 
     @Override
-    public List<BpcsInventorySlowMovingVO> getSlowMovingItems(String cono, String cutoffDate, int limit) {
+    public PageResult<BpcsInventorySlowMovingVO> getSlowMovingItems(String cono, String cutoffDate, int current, int size) {
         validateCono(cono);
         if (profileResolver.isMockMode()) {
-            return mockSlowMoving();
+            return new PageResult<>(mockSlowMoving().size(), mockSlowMoving());
         }
         String sql = statements.get("bpcs.inv.slowMoving");
-        List<Map<String, Object>> rows = clientProvider.current().queryListCheckedBounded(sql, limit, cono, cutoffDate);
-        List<BpcsInventorySlowMovingVO> result = new ArrayList<>();
-        for (Map<String, Object> row : rows) {
-            int idleDays = BpcsRowUtil.intVal(row, "IDLE_DAYS");
-            String level;
-            if (idleDays > 365) level = "OVER_12M";
-            else if (idleDays > 180) level = "6M_12M";
-            else if (idleDays > 90) level = "3M_6M";
-            else level = "UNDER_3M";
-
-            result.add(new BpcsInventorySlowMovingVO(
-                    pickStr(row, "ITEM"),
-                    pickStr(row, "ITDSC"),
-                    pickStr(row, "WH"),
-                    BpcsRowUtil.intVal(row, "QTYOH"),
-                    pickStr(row, "UNIT"),
-                    BpcsRowUtil.decOrNull(row, "UNITCOST"),
-                    BpcsRowUtil.decOrNull(row, "STOCK_VALUE"),
-                    pickStr(row, "LAST_TXN_DATE"),
-                    idleDays,
-                    level
-            ));
-        }
-        return result;
+        return As400PaginationHelper.queryPaged(clientProvider, sql, current, size,
+                new Object[]{cono, cutoffDate}, row -> {
+                    int idleDays = BpcsRowUtil.intVal(row, "IDLE_DAYS");
+                    String level;
+                    if (idleDays > 365) level = "OVER_12M";
+                    else if (idleDays > 180) level = "6M_12M";
+                    else if (idleDays > 90) level = "3M_6M";
+                    else level = "UNDER_3M";
+                    return new BpcsInventorySlowMovingVO(
+                            pickStr(row, "ITEM"),
+                            pickStr(row, "ITDSC"),
+                            pickStr(row, "WH"),
+                            BpcsRowUtil.intVal(row, "QTYOH"),
+                            pickStr(row, "UNIT"),
+                            BpcsRowUtil.decOrNull(row, "UNITCOST"),
+                            BpcsRowUtil.decOrNull(row, "STOCK_VALUE"),
+                            pickStr(row, "LAST_TXN_DATE"),
+                            idleDays,
+                            level
+                    );
+                });
     }
-
-    // ==================== Mock 数据 ====================
 
     private BpcsInventoryConsistencyVO mockConsistency() {
         return new BpcsInventoryConsistencyVO(
@@ -122,8 +115,6 @@ public class BpcsInventoryAnalyticsServiceImpl implements IBpcsInventoryAnalytic
                 new BpcsInventorySlowMovingVO("DEF-2010", "旧型号轴承", "WH1", 50, "PCS", new BigDecimal("85.00"), new BigDecimal("4250.00"), "20240601", 453, "OVER_12M")
         );
     }
-
-    // ==================== 工具方法 ====================
 
     private int queryLevelSum(String sqlId, String cono, String item) {
         String sql = statements.get(sqlId);

@@ -1,10 +1,10 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-button type="primary" @click="load">{{ $t('common.search') }}</el-button>
+      <el-button type="primary" @click="forceSearch">{{ $t('common.search') }}</el-button>
     </div>
     <div class="table-wrapper">
-      <el-table :data="rows" v-loading="loading" size="small" border>
+      <el-table :data="pagedData" v-loading="loading" size="small" border>
         <el-table-column prop="poNo" :label="$t('bpcs.po.poNo')" width="140" />
         <el-table-column prop="vendor" :label="$t('bpcs.po.vendorCode')" width="100" />
         <el-table-column prop="vendorName" :label="$t('bpcs.po.vendorName')" min-width="160" />
@@ -17,6 +17,7 @@
         </el-table-column>
         <el-table-column prop="lineCount" :label="$t('bpcs.po.lineCount')" width="90" align="center" />
       </el-table>
+      <AppPagination v-model:current="current" v-model:size="size" :total="total" @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
   </div>
 </template>
@@ -25,20 +26,12 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'BpcsPoLifecycle' })
 
-import { ref, onMounted } from 'vue'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { listPoLifecycle, type PoLifecycleVO } from '@/api/bpcs'
 
-const loading = ref(false)
-const rows = ref<PoLifecycleVO[]>([])
-
-const load = async () => {
-  loading.value = true
-  try {
-    rows.value = await listPoLifecycle()
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(load)
+const { pagedData, loading, total, current, size, forceSearch, handlePageChange, handleSizeChange } = useSmartQueryTable<PoLifecycleVO>({
+  fetchApi: () => listPoLifecycle({}),
+  frontendPage: true,
+  searchFields: ['poNo', 'vendor', 'vendorName', 'status'],
+})
 </script>

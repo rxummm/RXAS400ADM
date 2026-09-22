@@ -5,9 +5,6 @@ import request from './request'
 import blobClient from './blobClient'
 import type { PaginatedResult } from './types'
 
-/** @deprecated 使用 PaginatedResult 代替 */
-export type PageResult<T> = PaginatedResult<T>
-
 /** 时间轴节点 */
 export interface TimelineNode {
   stageKey: string
@@ -103,7 +100,7 @@ export interface BpcsCustomer {
 }
 
 export const searchCustomers = (params: { cono?: string; cust?: string; name?: string; current?: number; size?: number }) =>
-  request.get<PageResult<BpcsCustomer>>('/bpcs/customers', { params })
+  request.get<PaginatedResult<BpcsCustomer>>('/bpcs/customers', { params })
 
 export const getCustomerDetail = (cono: string, cust: string) =>
   request.get<BpcsCustomer>(`/bpcs/customers/${cono}/${cust}`)
@@ -134,7 +131,7 @@ export interface BpcsInventory {
 }
 
 export const searchInventory = (params: { cono?: string; item?: string; desc?: string; wh?: string; current?: number; size?: number }) =>
-  request.get<PageResult<BpcsInventory>>('/bpcs/inventory', { params })
+  request.get<PaginatedResult<BpcsInventory>>('/bpcs/inventory', { params })
 
 // ===== P2: 发运看板 =====
 
@@ -153,7 +150,7 @@ export interface BpcsLoad {
 }
 
 export const searchLoads = (params: { cono?: string; lhno?: string; current?: number; size?: number }) =>
-  request.get<PageResult<BpcsLoad>>('/bpcs/shipping', { params })
+  request.get<PaginatedResult<BpcsLoad>>('/bpcs/shipping', { params })
 
 // ===== P2: 发票轨迹 =====
 
@@ -183,7 +180,7 @@ export interface BpcsInvoice {
 }
 
 export const searchInvoices = (params: { cono?: string; orno?: string; tab?: string; current?: number; size?: number }) =>
-  request.get<PageResult<BpcsInvoice>>('/bpcs/invoices', { params })
+  request.get<PaginatedResult<BpcsInvoice>>('/bpcs/invoices', { params })
 
 // ===== P2: 销售趋势 =====
 
@@ -235,7 +232,15 @@ export interface BpcsPurchaseOrder {
 }
 
 export const searchPurchases = (params: { cono?: string; pono?: string; vendor?: string; current?: number; size?: number }) =>
-  request.get<PageResult<BpcsPurchaseOrder>>('/bpcs/purchases', { params })
+  request.get<PaginatedResult<BpcsPurchaseOrder>>('/bpcs/purchases', { params })
+
+/** 采购收货（服务端分页，预展平行级数据） */
+export const searchPurchaseReceiving = (params: Record<string, unknown>) =>
+  request.get('/bpcs/supply-chain/purchase/receiving', { params })
+
+/** 订单列表（服务端分页，模糊搜索） */
+export const searchOrderList = (params: Record<string, unknown>) =>
+  request.get('/bpcs/supply-chain/orders', { params })
 
 // ===== P2: 物料主档（多 Tab） =====
 
@@ -286,7 +291,7 @@ export interface BpcsItem {
 }
 
 export const searchItems = (params: { cono?: string; item?: string; desc?: string; current?: number; size?: number }) =>
-  request.get<PageResult<BpcsItem>>('/bpcs/items', { params })
+  request.get<PaginatedResult<BpcsItem>>('/bpcs/items', { params })
 
 export const getItemDetail = (item: string) =>
   request.get<BpcsItem>(`/bpcs/items/${encodeURIComponent(item)}`)
@@ -346,11 +351,11 @@ export interface BackorderByItem {
 export const getFulfillmentStats = (cono = '001') =>
   request.get<FulfillmentStats>('/bpcs/orders/analytics/fulfillment', { params: { cono } })
 
-export const getBackorderLines = (params: { cono?: string; itemFilter?: string; size?: number }) =>
-  request.get<BackorderLine[]>('/bpcs/orders/analytics/backorder', { params })
+export const getBackorderLines = (params: { cono?: string; itemFilter?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<BackorderLine>>('/bpcs/orders/analytics/backorder', { params })
 
-export const getBackorderByItem = (cono = '001', limit = 20) =>
-  request.get<BackorderByItem[]>('/bpcs/orders/analytics/backorder/by-item', { params: { cono, limit } })
+export const getBackorderByItem = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<BackorderByItem>>('/bpcs/orders/analytics/backorder/by-item', { params })
 
 // ===== ⑬ 交期绩效 OTD =====
 
@@ -376,8 +381,8 @@ export interface OtdByCustomer {
 export const getOtdStats = (cono = '001') =>
   request.get<OtdStats>('/bpcs/orders/analytics/otd', { params: { cono } })
 
-export const getOtdByCustomer = (cono = '001', limit = 20) =>
-  request.get<OtdByCustomer[]>('/bpcs/orders/analytics/otd/by-customer', { params: { cono, limit } })
+export const getOtdByCustomer = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<OtdByCustomer>>('/bpcs/orders/analytics/otd/by-customer', { params })
 
 // ===== ㊿ 库存多级一致性 =====
 
@@ -426,8 +431,8 @@ export interface SlowMovingItem {
   idleLevel: string
 }
 
-export const getSlowMovingItems = (params: { cono?: string; cutoffDate: string; limit?: number }) =>
-  request.get<SlowMovingItem[]>('/bpcs/inventory/analytics/slow-moving', { params })
+export const getSlowMovingItems = (params: { cono?: string; cutoffDate: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<SlowMovingItem>>('/bpcs/inventory/analytics/slow-moving', { params })
 
 // ===== ⑰ 订单详情增强 =====
 
@@ -529,8 +534,8 @@ export interface AbcXyzItem {
   matrixCell: string
 }
 
-export const getAbcXyzMatrix = (params: { cono?: string; fromDate?: string; limit?: number }) =>
-  request.get<AbcXyzItem[]>('/bpcs/inventory/abc-xyz', { params })
+export const getAbcXyzMatrix = (params: { cono?: string; fromDate?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<AbcXyzItem>>('/bpcs/inventory/abc-xyz', { params })
 
 // ===== ㉙ 循环盘点 =====
 
@@ -567,8 +572,8 @@ export interface CycleCountResult {
 export const createCycleCountPlan = (data: { item: string; itemDesc?: string; warehouse: string; plannedDate: string; abcClass?: string }) =>
   request.post<CycleCountPlan>('/bpcs/cycle-count/plans', data)
 
-export const listCycleCountPlans = (params: { status?: string; limit?: number }) =>
-  request.get<CycleCountPlan[]>('/bpcs/cycle-count/plans', { params })
+export const listCycleCountPlans = (params: { status?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<CycleCountPlan>>('/bpcs/cycle-count/plans', { params })
 
 export const recordCycleCountResult = (data: { planId: number; countedQty: number; reason?: string }, systemQty: number) =>
   request.post<CycleCountResult>('/bpcs/cycle-count/results', data, { params: { systemQty } })
@@ -589,8 +594,8 @@ export interface OrderAnomaly {
   status: string
   backorderLines: number
 }
-export const detectAnomalies = (cono = '001', limit = 50) =>
-  request.get<OrderAnomaly[]>('/bpcs/anomaly/detect', { params: { cono, limit } })
+export const detectAnomalies = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<OrderAnomaly>>('/bpcs/anomaly/detect', { params })
 
 /** ① BOM 展开 */
 export interface BomLine {
@@ -620,8 +625,8 @@ export interface ShipmentVO {
   weight: number
   orderNos: string
 }
-export const listShipments = (cono = '001', limit = 50) =>
-  request.get<ShipmentVO[]>('/bpcs/shipment/list', { params: { cono, limit } })
+export const listShipments = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<ShipmentVO>>('/bpcs/shipment/list', { params })
 export const exportShipmentPdf = (cono: string, waybillNo: string, params: Record<string, unknown>) =>
   blobClient.post('/bpcs/shipment/pdf', params, { params: { waybillNo, cono } })
 
@@ -637,8 +642,8 @@ export interface RcmxAssignment {
 }
 export interface CsrOption { empId: string; name: string }
 export interface CustOption { cust: string; custName: string }
-export const listRcmx = (cono = '001', custLike?: string, csrLike?: string, limit = 50) =>
-  request.get<RcmxAssignment[]>('/bpcs/rcmx/list', { params: { cono, custLike, csrLike, limit } })
+export const listRcmx = (params: { cono?: string; custLike?: string; csrLike?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<RcmxAssignment>>('/bpcs/rcmx/list', { params })
 export const searchCsrOptions = (cono = '001', keyword?: string) =>
   request.get<CsrOption[]>('/bpcs/rcmx/csrOptions', { params: { cono, keyword } })
 export const searchCustOptions = (cono = '001', keyword?: string) =>
@@ -671,8 +676,8 @@ export interface WabpConfig {
   maintUser: string
   maintDate: string
 }
-export const listWabp = (cono = '001', limit = 50) =>
-  request.get<WabpConfig[]>('/bpcs/wabp/list', { params: { cono, limit } })
+export const listWabp = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<WabpConfig>>('/bpcs/wabp/list', { params })
 export const getWabp = (cono: string, wh: string, dayOfWeek: number) =>
   request.get<WabpConfig>(`/bpcs/wabp/get`, { params: { cono, wh, dayOfWeek } })
 export const createWabp = (cono: string, data: {
@@ -700,8 +705,8 @@ export interface LocationInventory {
   qtyOnHand: number
   status: string
 }
-export const listLocations = (cono = '001', limit = 100) =>
-  request.get<LocationInventory[]>('/bpcs/location/list', { params: { cono, limit } })
+export const listLocations = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<LocationInventory>>('/bpcs/location/list', { params })
 
 /** ② 智能补货 */
 export interface ReplenishmentVO {
@@ -713,8 +718,8 @@ export interface ReplenishmentVO {
   shortage: number
   avgDemand: number
 }
-export const listReplenishment = (cono = '001', limit = 50) =>
-  request.get<ReplenishmentVO[]>('/bpcs/replenishment/list', { params: { cono, limit } })
+export const listReplenishment = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<ReplenishmentVO>>('/bpcs/replenishment/list', { params })
 
 /** ㉜ 预警规则 */
 export interface AlertRuleVO {
@@ -726,8 +731,8 @@ export interface AlertRuleVO {
   maxStock: number
   alertType: string
 }
-export const listAlertRules = (cono = '001', limit = 50) =>
-  request.get<AlertRuleVO[]>('/bpcs/alert/rules', { params: { cono, limit } })
+export const listAlertRules = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<AlertRuleVO>>('/bpcs/alert/rules', { params })
 
 /** ㉚ 库存价值 */
 export interface StockValueVO {
@@ -738,8 +743,8 @@ export interface StockValueVO {
   unitCost: number
   stockValue: number
 }
-export const listStockValue = (cono = '001', limit = 50) =>
-  request.get<StockValueVO[]>('/bpcs/stockValue/report', { params: { cono, limit } })
+export const listStockValue = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<StockValueVO>>('/bpcs/stockValue/report', { params })
 
 /** ④ 供应商评分 */
 export interface SupplierScoreVO {
@@ -749,8 +754,8 @@ export interface SupplierScoreVO {
   onTime: number
   score: number
 }
-export const listSupplierScores = (cono = '001', limit = 50) =>
-  request.get<SupplierScoreVO[]>('/bpcs/supplierScore/list', { params: { cono, limit } })
+export const listSupplierScores = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<SupplierScoreVO>>('/bpcs/supplierScore/list', { params })
 
 /** ⑤ PO 生命周期 */
 export interface PoLifecycleVO {
@@ -764,8 +769,8 @@ export interface PoLifecycleVO {
   onHold: boolean
   lineCount: number
 }
-export const listPoLifecycle = (cono = '001', limit = 50) =>
-  request.get<PoLifecycleVO[]>('/bpcs/po/lifecycle', { params: { cono, limit } })
+export const listPoLifecycle = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<PoLifecycleVO>>('/bpcs/po/lifecycle', { params })
 
 /** ⑪ 信用 Hold */
 export interface CreditHoldVO {
@@ -781,8 +786,8 @@ export interface CreditHoldVO {
   shipHold: string
   prHold: string
 }
-export const listCreditHolds = (cono = '001', limit = 50) =>
-  request.get<CreditHoldVO[]>('/bpcs/creditHold/list', { params: { cono, limit } })
+export const listCreditHolds = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<CreditHoldVO>>('/bpcs/creditHold/list', { params })
 
 /** ⑯ 订单看板 */
 export interface KanbanVO {
@@ -797,8 +802,8 @@ export interface KanbanVO {
   partialLines: number
   shippedLines: number
 }
-export const listKanbanOrders = (cono = '001', limit = 50) =>
-  request.get<KanbanVO[]>('/bpcs/kanban/orders', { params: { cono, limit } })
+export const listKanbanOrders = (params: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<KanbanVO>>('/bpcs/kanban/orders', { params })
 
 // ==================== ㊵ 运费核算与成本分析 ====================
 export interface FreightCostRuleVO {
@@ -951,7 +956,7 @@ export interface WarehouseReplenishItem {
 export const searchWarehouseReplenish = (params: {
   cono?: string; item?: string; itdsc?: string; belowSafetyOnly?: boolean; current?: number; size?: number
 }) =>
-  request.get<PageResult<WarehouseReplenishItem>>('/bpcs/warehouse-replenish', { params })
+  request.get<PaginatedResult<WarehouseReplenishItem>>('/bpcs/warehouse-replenish', { params })
 
 // ==================== ⑥ 预测补货看板 ====================
 export interface ForecastMonthlyDemand {
@@ -1001,8 +1006,8 @@ export interface OrderTemplate {
   active: string | null
   createdBy: string | null
 }
-export const listOrderTemplates = (params?: { keyword?: string }) =>
-  request.get<OrderTemplate[]>('/bpcs/orderTemplate', { params })
+export const listOrderTemplates = (params?: { keyword?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<OrderTemplate>>('/bpcs/orderTemplate', { params })
 export const getOrderTemplate = (id: number) =>
   request.get<OrderTemplate>(`/bpcs/orderTemplate/${id}`)
 export const createOrderTemplate = (data: Partial<OrderTemplate>) =>
@@ -1031,8 +1036,8 @@ export interface OrderChange {
   changedBy: string | null
   changedTime: string | null
 }
-export const listOrderChanges = (params: { cono: string; orno: string }) =>
-  request.get<OrderChange[]>('/bpcs/orderChange', { params })
+export const listOrderChanges = (params: { cono: string; orno: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<OrderChange>>('/bpcs/orderChange', { params })
 
 // ==================== ⑭ 退货与 RMA ====================
 export interface Rma {
@@ -1048,14 +1053,30 @@ export interface Rma {
   createdBy: string | null
   createdTime: string | null
 }
-export const listRma = (params?: { status?: string }) =>
-  request.get<Rma[]>('/bpcs/rma', { params })
+export const listRma = (params?: { status?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<Rma>>('/bpcs/rma', { params })
 export const getRma = (id: number) =>
   request.get<Rma>(`/bpcs/rma/${id}`)
 export const createRma = (data: Partial<Rma>) =>
   request.post<Rma>('/bpcs/rma', data)
 export const updateRmaStatus = (id: number, status: string) =>
   request.put<Rma>(`/bpcs/rma/${id}/status`, { status })
+
+// ==================== ㉓ 订单排程 ====================
+export interface OrderScheduleVO {
+  id: number
+  cono: string
+  orno: string
+  cust: string
+  custName: string | null
+  startDate: string | null
+  endDate: string | null
+  progress: number
+  priority: number
+  createdBy: string | null
+}
+export const listOrderSchedule = (params?: { startDate?: string; endDate?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<OrderScheduleVO>>('/bpcs/orderSchedule', { params })
 
 // ==================== Supply Chain 迁移补充 API ====================
 
@@ -1072,7 +1093,7 @@ export interface InventoryHistory {
 }
 
 export const getInventoryHistory = (params: Record<string, string | number>) =>
-  request.get<InventoryHistory[]>('/bpcs/supply-chain/inventory/history', { params })
+  request.get<PaginatedResult<InventoryHistory>>('/bpcs/supply-chain/inventory/history', { params })
 
 /** 供应链 KPI */
 export interface SupplyChainKpi {
@@ -1121,7 +1142,7 @@ export interface InventoryAlert {
 }
 
 export const getInventoryAlerts = (params: Record<string, string | number>) =>
-  request.get<InventoryAlert[]>('/bpcs/supply-chain/inventory/alerts', { params })
+  request.get<PaginatedResult<InventoryAlert>>('/bpcs/supply-chain/inventory/alerts', { params })
 
 // ========== A1 系统健康仪表板 ==========
 
@@ -1192,8 +1213,8 @@ export interface BackupStatus {
   createdTime: string
 }
 
-export const getBackupList = (params?: { serverId?: number }) =>
-  request.get<BackupStatus[]>('/as400/backup/list', { params })
+export const getBackupList = (params?: Record<string, unknown>) =>
+  request.get('/as400/backup/list', { params })
 
 export const getBackupLatest = (params?: { serverId?: number }) =>
   request.get<BackupStatus>('/as400/backup/latest', { params })
@@ -1464,14 +1485,14 @@ export interface TmsLiteResult {
   freightAnalysis: FreightAnalysis
   deliveryTrackings: DeliveryTracking[]
 }
-export const getTmsRoutePlans = (params?: { cono?: string; limit?: number }) =>
-  request.get<RoutePlan[]>('/bpcs/tms/route-plans', { params })
-export const getTmsCarrierComparison = (params?: { cono?: string }) =>
-  request.get<CarrierComparison[]>('/bpcs/tms/carrier-comparison', { params })
+export const getTmsRoutePlans = (params?: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<RoutePlan>>('/bpcs/tms/route-plans', { params })
+export const getTmsCarrierComparison = (params?: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<CarrierComparison>>('/bpcs/tms/carrier-comparison', { params })
 export const getTmsFreightAnalysis = (params?: { cono?: string; months?: number }) =>
   request.get<FreightAnalysis>('/bpcs/tms/freight-analysis', { params })
-export const getTmsDeliveryTracking = (params?: { cono?: string; status?: string; limit?: number }) =>
-  request.get<DeliveryTracking[]>('/bpcs/tms/delivery-tracking', { params })
+export const getTmsDeliveryTracking = (params?: { cono?: string; status?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<DeliveryTracking>>('/bpcs/tms/delivery-tracking', { params })
 export const getTmsAll = (params?: { cono?: string; months?: number }) =>
   request.get<TmsLiteResult>('/bpcs/tms/all', { params })
 
@@ -1528,5 +1549,5 @@ export interface AtpResult {
 }
 export const getAtpOverview = (params?: { cono?: string; weeks?: number }) =>
   request.get<AtpResult>('/bpcs/supply-chain/atp', { params })
-export const getAtpDeviation = (params?: { cono?: string }) =>
-  request.get<AtpDeviation[]>('/bpcs/supply-chain/atp/deviation', { params })
+export const getAtpDeviation = (params?: { cono?: string; current?: number; size?: number }) =>
+  request.get<PaginatedResult<AtpDeviation>>('/bpcs/supply-chain/atp/deviation', { params })

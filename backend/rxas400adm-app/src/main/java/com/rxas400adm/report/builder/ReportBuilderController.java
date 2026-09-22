@@ -1,7 +1,11 @@
 package com.rxas400adm.report.builder;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.report.builder.dto.ReportDefinitionDTO;
 import com.rxas400adm.report.builder.vo.DataSourceMeta;
 import com.rxas400adm.report.builder.vo.ReportDefinitionVO;
@@ -21,8 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 自定义报表构建器 REST API。
- */
+ * 自定义报表构建器 REST API。 */
 @RestController
 @RequestMapping("/api/v1/report-builder")
 @RequiredArgsConstructor
@@ -41,8 +44,12 @@ public class ReportBuilderController {
     @GetMapping("/definitions")
     @PreAuthorize("hasAuthority('REPORT_BUILDER_VIEW')")
     @Operation(summary = "查询全部报表定义")
-    public ApiResponse<List<ReportDefinitionVO>> listDefinitions() {
-        return ApiResponse.success(reportBuilderService.listDefinitions());
+    public ApiResponse<PageResult<ReportDefinitionVO>> listDefinitions(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size) {
+        current = (int) PageConstants.clampNum(current);
+        size = (int) PageConstants.clampSize(size);
+        return ApiResponse.success(reportBuilderService.pageDefinitions(current, size));
     }
 
     @GetMapping("/definitions/{id}")
@@ -54,7 +61,7 @@ public class ReportBuilderController {
 
     @PostMapping("/definitions")
     @PreAuthorize("hasAuthority('REPORT_BUILDER_MANAGE')")
-    @OperateLog(module = "报表构建器", operation = "创建报表定义")
+    @OperateLog(module = OperateLogModule.REPORT_BUILDER, operation = OperateLogOperation.CREATE_REPORT_DEFINITION)
     @Operation(summary = "创建报表定义")
     public ApiResponse<ReportDefinitionVO> createDefinition(
             @Valid @RequestBody ReportDefinitionDTO dto) {
@@ -63,7 +70,7 @@ public class ReportBuilderController {
 
     @PutMapping("/definitions/{id}")
     @PreAuthorize("hasAuthority('REPORT_BUILDER_MANAGE')")
-    @OperateLog(module = "报表构建器", operation = "更新报表定义")
+    @OperateLog(module = OperateLogModule.REPORT_BUILDER, operation = OperateLogOperation.UPDATE_REPORT_DEFINITION)
     @Operation(summary = "更新报表定义")
     public ApiResponse<ReportDefinitionVO> updateDefinition(
             @PathVariable Long id,
@@ -73,7 +80,7 @@ public class ReportBuilderController {
 
     @DeleteMapping("/definitions/{id}")
     @PreAuthorize("hasAuthority('REPORT_BUILDER_MANAGE')")
-    @OperateLog(module = "报表构建器", operation = "删除报表定义")
+    @OperateLog(module = OperateLogModule.REPORT_BUILDER, operation = OperateLogOperation.DELETE_REPORT_DEFINITION)
     @Operation(summary = "删除报表定义")
     public ApiResponse<Void> deleteDefinition(@PathVariable Long id) {
         reportBuilderService.deleteDefinition(id);

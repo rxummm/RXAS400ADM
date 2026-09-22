@@ -5,6 +5,8 @@ import com.rxas400adm.as400.service.IJobSlaService;
 import com.rxas400adm.as400.vo.JobSlaVO;
 import com.rxas400adm.as400.vo.SlaExecutionVO;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -43,21 +45,21 @@ public class JobSlaController {
 
     @PostMapping("/rules")
     @PreAuthorize("hasAuthority('SLA_MANAGE')")
-    @OperateLog(module = "作业 SLA", operation = "新增 SLA 规则")
+    @OperateLog(module = OperateLogModule.JOB_SLA, operation = OperateLogOperation.CREATE_SLA_RULE)
     public ApiResponse<JobSlaVO> create(@Valid @RequestBody JobSlaDTO sla) {
         return ApiResponse.success(JobSlaVO.from(slaService.create(sla, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/rules/{id}")
     @PreAuthorize("hasAuthority('SLA_MANAGE')")
-    @OperateLog(module = "作业 SLA", operation = "修改 SLA 规则")
+    @OperateLog(module = OperateLogModule.JOB_SLA, operation = OperateLogOperation.UPDATE_SLA_RULE)
     public ApiResponse<JobSlaVO> update(@PathVariable Long id, @Valid @RequestBody JobSlaDTO sla) {
         return ApiResponse.success(JobSlaVO.from(slaService.update(id, sla)));
     }
 
     @DeleteMapping("/rules/{id}")
     @PreAuthorize("hasAuthority('SLA_MANAGE')")
-    @OperateLog(module = "作业 SLA", operation = "删除 SLA 规则")
+    @OperateLog(module = OperateLogModule.JOB_SLA, operation = OperateLogOperation.DELETE_SLA_RULE)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         slaService.delete(id);
         return ApiResponse.success(null);

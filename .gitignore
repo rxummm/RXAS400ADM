@@ -1,8 +1,6 @@
 # Node
 node_modules/
 frontend/dist/
-docs/.vitepress/dist/
-docs/.vitepress/cache/
 
 # Java / Maven
 backend/**/target/

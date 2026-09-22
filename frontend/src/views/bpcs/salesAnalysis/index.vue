@@ -89,14 +89,4 @@ const fmtMoney = (v: number | null | undefined) => formatMoney(v, 0)
   padding: 16px;
   text-align: center;
 }
-.summary-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-.summary-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 4px;
-}
 </style>

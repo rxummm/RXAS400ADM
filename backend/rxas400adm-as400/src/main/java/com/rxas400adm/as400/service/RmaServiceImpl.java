@@ -1,17 +1,19 @@
 package com.rxas400adm.as400.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.as400.dto.RmaDTO;
 import com.rxas400adm.as400.entity.Rma;
 import com.rxas400adm.as400.mapper.RmaMapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -34,13 +36,15 @@ public class RmaServiceImpl implements IRmaService {
     private final RmaMapper mapper;
 
     @Override
-    public List<Rma> list(String status) {
+    public PageResult<Rma> list(String status, int current, int size) {
         LambdaQueryWrapper<Rma> qw = new LambdaQueryWrapper<>();
         if (status != null && !status.isBlank()) {
             qw.eq(Rma::getStatus, status);
         }
         qw.orderByDesc(Rma::getId);
-        return mapper.selectList(qw);
+
+        IPage<Rma> page = mapper.selectPage(new Page<>(current, size), qw);
+        return new PageResult<>(page.getTotal(), page.getRecords());
     }
 
     @Override

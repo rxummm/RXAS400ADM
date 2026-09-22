@@ -65,3 +65,33 @@
     width: 64px;
   }
 }
+
+/* --- 768px: 手机端 --- */
+@media (max-width: 768px) {
+  .el-aside {
+    display: none;
+  }
+
+  .page-container {
+    padding: 8px;
+  }
+
+  .search-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .search-bar .el-input,
+  .search-bar .el-select {
+    width: 100% !important;
+  }
+
+  .el-table {
+    font-size: 12px;
+  }
+
+  .el-dialog {
+    width: 95% !important;
+    margin: 16px auto !important;
+  }
+}

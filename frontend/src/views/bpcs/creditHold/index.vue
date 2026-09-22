@@ -1,10 +1,10 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-button type="primary" @click="load">{{ $t('common.search') }}</el-button>
+      <el-button type="primary" @click="forceSearch">{{ $t('common.search') }}</el-button>
     </div>
     <div class="table-wrapper">
-      <el-table :data="rows" v-loading="loading" size="small" border>
+      <el-table :data="pagedData" v-loading="loading" size="small" border>
         <el-table-column prop="orno" :label="$t('bpcs.common.orderNo')" width="140" />
         <el-table-column prop="cust" :label="$t('bpcs.common.customerCode')" width="100" />
         <el-table-column prop="custName" :label="$t('bpcs.common.customerName')" min-width="140" />
@@ -25,6 +25,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <AppPagination v-model:current="current" v-model:size="size" :total="total" @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
   </div>
 </template>
@@ -33,20 +34,12 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'BpcsCreditHold' })
 
-import { ref, onMounted } from 'vue'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { listCreditHolds, type CreditHoldVO } from '@/api/bpcs'
 
-const loading = ref(false)
-const rows = ref<CreditHoldVO[]>([])
-
-const load = async () => {
-  loading.value = true
-  try {
-    rows.value = await listCreditHolds()
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(load)
+const { pagedData, loading, total, current, size, forceSearch, handlePageChange, handleSizeChange } = useSmartQueryTable<CreditHoldVO>({
+  fetchApi: () => listCreditHolds({}),
+  frontendPage: true,
+  searchFields: ['orno', 'cust', 'custName'],
+})
 </script>

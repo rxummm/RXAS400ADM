@@ -1,6 +1,8 @@
 package com.rxas400adm.operation.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
@@ -31,7 +33,7 @@ public class OperationController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('OPERATION_EXECUTE')")
-    @OperateLog(module = "Operation", operation = "Create and execute")
+    @OperateLog(module = OperateLogModule.OPERATION, operation = OperateLogOperation.CREATE_AND_EXECUTE)
     @Operation(summary = "Create and execute an Operation")
     public ApiResponse<OperationVO> create(@Valid @RequestBody CreateOperationRequest req) {
         var op = operationService.create(
@@ -59,17 +61,17 @@ public class OperationController {
     @PreAuthorize("hasAuthority('OPERATION_VIEW')")
     @Operation(summary = "List Operations with pagination")
     public ApiResponse<PageResult<OperationVO>> list(
-            @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "20") int pageSize) {
-        pageNum = (int) PageConstants.clampNum(pageNum);
-        pageSize = (int) PageConstants.clampSize(pageSize);
-        var result = operationService.list(pageNum, pageSize);
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "20") Integer size) {
+        current = (int) PageConstants.clampNum(current);
+        size = (int) PageConstants.clampSize(size);
+        var result = operationService.list(current, size);
         return ApiResponse.success(result);
     }
 
     @PostMapping("/{id}/retry")
     @PreAuthorize("hasAuthority('OPERATION_EXECUTE')")
-    @OperateLog(module = "Operation", operation = "Retry")
+    @OperateLog(module = OperateLogModule.OPERATION, operation = OperateLogOperation.RETRY)
     @Operation(summary = "Retry a failed Operation")
     public ApiResponse<OperationVO> retry(@PathVariable Long id) {
         var op = operationService.retry(id);
@@ -79,7 +81,7 @@ public class OperationController {
 
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAuthority('OPERATION_EXECUTE')")
-    @OperateLog(module = "Operation", operation = "Cancel")
+    @OperateLog(module = OperateLogModule.OPERATION, operation = OperateLogOperation.CANCEL)
     @Operation(summary = "Cancel an Operation")
     public ApiResponse<Void> cancel(@PathVariable Long id) {
         operationService.cancel(id);

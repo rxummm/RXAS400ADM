@@ -10,6 +10,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.concurrent.Executor;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -24,10 +26,12 @@ class EmailServiceTest {
     private EmailLogMapper emailLogMapper;
     @Mock
     private ISysConfigService sysConfigService;
+    @Mock
+    private Executor emailSendPool;
 
     @Test
     void send_noRecipient_shouldSkip() {
-        EmailService service = new EmailService(emailConfigMapper, emailLogMapper, sysConfigService);
+        EmailService service = new EmailService(emailConfigMapper, emailLogMapper, sysConfigService, emailSendPool);
         // alert() 默认 recipients=null → send() 提前返回，无需任何 stub
         assertDoesNotThrow(() -> service.send(
                 com.rxas400adm.email.MailMessage.alert("告警标题", "告警内容")));
@@ -36,7 +40,7 @@ class EmailServiceTest {
 
     @Test
     void send_noHost_shouldSkip() {
-        EmailService service = new EmailService(emailConfigMapper, emailLogMapper, sysConfigService);
+        EmailService service = new EmailService(emailConfigMapper, emailLogMapper, sysConfigService, emailSendPool);
         assertDoesNotThrow(() -> service.send(
                 com.rxas400adm.email.MailMessage.alert("告警标题", "告警内容")));
     }

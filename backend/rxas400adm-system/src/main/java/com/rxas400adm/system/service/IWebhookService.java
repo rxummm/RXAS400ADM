@@ -4,6 +4,7 @@ import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.WebhookConfigDTO;
 import com.rxas400adm.system.entity.WebhookConfig;
 import com.rxas400adm.system.entity.WebhookLog;
+import com.rxas400adm.system.vo.WebhookConfigVO;
 
 import java.util.List;
 
@@ -11,6 +12,8 @@ import java.util.List;
  * Webhook 管理服务接口（rx_webhook / rx_webhook_log）。
  */
 public interface IWebhookService {
+
+    PageResult<WebhookConfigVO> pageList(int current, int size);
 
     List<WebhookConfig> listAll();
 

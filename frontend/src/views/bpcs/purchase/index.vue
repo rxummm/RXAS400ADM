@@ -7,20 +7,20 @@
         class="w-200"
         :placeholder="$t('bpcs.purchase.ponoPlaceholder')"
         clearable
-        @keyup.enter="search"
+        @keyup.enter="forceSearch"
       />
       <el-input
         v-model="query.vendor"
         class="w-200"
         :placeholder="$t('bpcs.purchase.vendorPlaceholder')"
         clearable
-        @keyup.enter="search"
+        @keyup.enter="forceSearch"
       />
-      <el-button type="primary" :loading="loading" @click="search">
+      <el-button type="primary" :loading="loading" @click="forceSearch">
         {{ $t('common.search') }}
       </el-button>
       <ExportDropdown
-        :data="orders"
+        :data="tableData"
         :columns="exportColumns"
         :title="$t('bpcs.menu.purchases')"
         :export-url="BPCS_EXPORT.purchases"
@@ -31,7 +31,7 @@
     <!-- ── 表格 ─────────────────────────────────────────── -->
     <div class="table-wrapper">
       <el-table
-        :data="orders"
+        :data="tableData"
         v-loading="loading"
         size="small"
         border
@@ -63,8 +63,8 @@
           </template>
         </el-table-column>
       </el-table>
-      <AppPagination v-if="total > 0" :total="total" v-model:current="current" v-model:size="size" @change="search" @size-change="search" />
-      <el-empty v-if="searched && !loading && orders.length === 0" :description="$t('common.noData')" />
+      <AppPagination v-if="total > 0" :total="total" v-model:current="current" v-model:size="size" @change="forceSearch" @size-change="forceSearch" />
+      <el-empty v-if="!loading && tableData.length === 0" :description="$t('common.noData')" />
     </div>
 
     <!-- ── 详情抽屉 ──────────────────────────────────── -->
@@ -120,6 +120,7 @@
 import { reactive, ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { searchPurchases, type BpcsPurchaseOrder, BPCS_EXPORT } from '@/api/bpcs'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import AppPagination from '@/components/AppPagination.vue'
 import ExportDropdown from '@/components/ExportDropdown.vue'
 import type { ExportColumn } from '@/components/ExportButton.vue'
@@ -130,14 +131,17 @@ const { t } = useI18n()
 defineOptions({ name: 'BpcsPurchase' })
 
 const query = reactive({ pono: '', vendor: '' })
-const loading = ref(false)
-const searched = ref(false)
-const orders = ref<BpcsPurchaseOrder[]>([])
-const total = ref(0)
-const current = ref(1)
-const size = ref(20)
 const detailVisible = ref(false)
 const detailOrder = ref<BpcsPurchaseOrder | null>(null)
+
+const { tableData, loading, current, size, total, forceSearch } = useSmartQueryTable<BpcsPurchaseOrder>({
+  fetchApi: (params) => {
+    const p: Record<string, string | number> = { current: params.current!, size: params.size! }
+    if (query.pono.trim()) p.pono = query.pono.trim()
+    if (query.vendor.trim()) p.vendor = query.vendor.trim()
+    return searchPurchases(p)
+  },
+})
 
 const exportColumns = computed<ExportColumn[]>(() => [
   { key: 'cono', label: t('bpcs.label.cono') },
@@ -149,20 +153,6 @@ const exportColumns = computed<ExportColumn[]>(() => [
   { key: 'lineCount', label: t('bpcs.purchase.lineCount') },
   { key: 'statusKey', label: t('bpcs.purchase.status') },
 ])
-
-function search() {
-  loading.value = true
-  searched.value = true
-  const params: Record<string, string | number> = { current: current.value, size: size.value }
-  if (query.pono.trim()) params.pono = query.pono.trim()
-  if (query.vendor.trim()) params.vendor = query.vendor.trim()
-  searchPurchases(params)
-    .then(data => {
-      orders.value = data.records
-      total.value = data.total
-    })
-    .finally(() => { loading.value = false })
-}
 
 function openDetail(row: BpcsPurchaseOrder) {
   detailOrder.value = row

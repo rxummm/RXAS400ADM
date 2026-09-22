@@ -1,5 +1,6 @@
 package com.rxas400adm.report;
 
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.report.dto.ReportScheduleDTO;
 import com.rxas400adm.report.vo.ScheduleExecuteResultVO;
 
@@ -22,4 +23,6 @@ public interface IReportScheduleService {
     ScheduleExecuteResultVO execute(Long id);
 
     List<ReportScheduleHistoryVO> history(Long scheduleId);
+
+    PageResult<ReportScheduleHistoryVO> pageHistory(Long scheduleId, int current, int size);
 }

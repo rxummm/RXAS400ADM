@@ -1,7 +1,9 @@
 package com.rxas400adm.monitor.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.common.constants.PageConstants;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.monitor.alert.AlertEvent;
 import com.rxas400adm.monitor.mapper.AlertEventMapper;
 import lombok.RequiredArgsConstructor;
@@ -23,5 +25,14 @@ public class AlertEventService {
         return alertEventMapper.selectList(new LambdaQueryWrapper<AlertEvent>()
                 .orderByDesc(AlertEvent::getCreatedTime)
                 .last(PageConstants.limitClause(Math.min(Math.max(limit, 1), 200))));
+    }
+
+    /** 分页查询告警事件（按创建时间倒序） */
+    public PageResult<AlertEvent> pageRecent(int current, int size) {
+        Page<AlertEvent> page = alertEventMapper.selectPage(
+                new Page<>(current, size),
+                new LambdaQueryWrapper<AlertEvent>()
+                        .orderByDesc(AlertEvent::getCreatedTime));
+        return new PageResult<>(page.getTotal(), page.getRecords());
     }
 }

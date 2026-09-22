@@ -1,9 +1,11 @@
 package com.rxas400adm.as400.controller;
 
 import com.rxas400adm.as400.dto.OrderScheduleDTO;
+import com.rxas400adm.as400.entity.OrderSchedule;
 import com.rxas400adm.as400.service.IOrderScheduleService;
 import com.rxas400adm.as400.vo.OrderScheduleVO;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.util.SecurityUtils;
 import jakarta.validation.Valid;
@@ -11,8 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
-import java.util.List;
 
 
 /**
@@ -28,10 +28,14 @@ public class OrderScheduleController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('BPCS_VIEW')")
-    public ApiResponse<List<OrderScheduleVO>> list(
+    public ApiResponse<PageResult<OrderScheduleVO>> list(
             @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
-        return ApiResponse.success(service.list(startDate, endDate).stream().map(OrderScheduleVO::from).toList());
+            @RequestParam(required = false) String endDate,
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        PageResult<OrderSchedule> page = service.list(startDate, endDate, current, size);
+        return ApiResponse.success(new PageResult<>(page.getTotal(),
+                page.getRecords().stream().map(OrderScheduleVO::from).toList()));
     }
 
     @GetMapping("/{id}")

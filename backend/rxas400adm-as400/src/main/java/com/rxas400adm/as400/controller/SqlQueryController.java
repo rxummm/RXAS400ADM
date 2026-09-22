@@ -5,6 +5,8 @@ import com.rxas400adm.as400.service.ISqlQueryService;
 import com.rxas400adm.as400.vo.QueryResult;
 import com.rxas400adm.as400.vo.SqlHistoryVO;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +35,7 @@ public class SqlQueryController {
 
     @PostMapping("/execute")
     @PreAuthorize("hasAuthority('QUERY_EXECUTE')")
-    @OperateLog(module = "数据查询", operation = "执行 SQL 查询")
+    @OperateLog(module = OperateLogModule.SQL_QUERY, operation = OperateLogOperation.EXECUTE_SQL_QUERY)
     public ApiResponse<QueryResult> execute(@Valid @RequestBody QueryRequest request) {
         return ApiResponse.success(queryService.execute(request.getSql()));
     }

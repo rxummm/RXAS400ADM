@@ -19,6 +19,10 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.rxas400adm</groupId>
             <artifactId>rxas400adm-common</artifactId>
         </dependency>
@@ -46,6 +50,30 @@
             <groupId>com.rxas400adm</groupId>
             <artifactId>rxas400adm-operation</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.rxas400adm</groupId>
+            <artifactId>rxas400adm-quality</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.rxas400adm</groupId>
+            <artifactId>rxas400adm-cost</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.rxas400adm</groupId>
+            <artifactId>rxas400adm-mrp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.rxas400adm</groupId>
+            <artifactId>rxas400adm-tpm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.rxas400adm</groupId>
+            <artifactId>rxas400adm-edi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.rxas400adm</groupId>
+            <artifactId>rxas400adm-olap</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.baomidou</groupId>
@@ -69,6 +97,11 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
+        <!-- 邮件配置缓存 -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
@@ -85,6 +118,11 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
         <!-- 报表引擎（3.11）：Excel 导出（版本收口于父 pom dependencyManagement，B16） -->

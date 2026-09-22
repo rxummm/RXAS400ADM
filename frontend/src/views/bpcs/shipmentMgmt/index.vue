@@ -19,6 +19,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="load" @size-change="load" />
     </div>
 
     <!-- PDF 预览对话框 -->
@@ -41,10 +42,14 @@ import { ref, onMounted } from 'vue'
 import { listShipments, exportShipmentPdf, type ShipmentVO } from '@/api/bpcs'
 import { triggerBlobDownload } from '@/api/blobClient'
 import { ElMessage } from 'element-plus'
+import AppPagination from '@/components/AppPagination.vue'
 
 const cono = ref('001')
 const loading = ref(false)
 const rows = ref<ShipmentVO[]>([])
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
 const pdfVisible = ref(false)
 const pdfUrl = ref('')
 const pdfBlob = ref<Blob | null>(null)
@@ -53,7 +58,9 @@ const currentWaybillNo = ref('')
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listShipments(cono.value)
+    const res = await listShipments({ cono: cono.value, current: current.value, size: size.value })
+    rows.value = res.records
+    total.value = res.total
   } finally {
     loading.value = false
   }

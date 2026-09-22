@@ -20,9 +20,9 @@
 
     <div class="table-wrapper">
       <RxSkeleton type="table" :rows="8" :loading="loading">
-        <el-table :data="pagedRows" size="small" border stripe class="w-full">
+        <el-table :data="tableData" size="small" border stripe class="w-full">
         <el-table-column prop="className" :label="$t('tasks.bean')" width="180" show-overflow-tooltip />
-        <el-table-column prop="bean" label="Bean" width="200" show-overflow-tooltip />
+        <el-table-column prop="bean" :label="$t('tasks.bean')" width="200" show-overflow-tooltip />
         <el-table-column :label="$t('tasks.method')" width="200">
           <template #default="{ row }">{{ (row.methods || []).map((m: TaskMethodInfo) => m.method).join(', ') }}</template>
         </el-table-column>
@@ -77,8 +77,6 @@ const {
   enableCache: true,
   searchFields: ['bean', 'className'],
 })
-
-const pagedRows = computed(() => tableData.value)
 
 const onSizeChange = () => {
   current.value = 1

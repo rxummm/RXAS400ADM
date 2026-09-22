@@ -5,6 +5,7 @@ import com.ibm.as400.access.CommandCall;
 import com.rxas400adm.as400.model.UserProfileListRow;
 import com.rxas400adm.as400.model.UserProfileRow;
 import com.rxas400adm.as400.sql.SqlStatementRegistry;
+import com.rxas400adm.common.response.PageResult;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -61,9 +62,13 @@ class JTOpenAuthClient implements AuthClient {
     }
 
     @Override
-    public List<UserProfileListRow> listUserProfiles() {
+    public PageResult<UserProfileListRow> listUserProfilesPaged(int current, int size) {
+        int offset = (current - 1) * size;
         List<Map<String, Object>> rows = new JTOpenSqlClient(state).queryList(
-                SqlStatementRegistry.of("auth.user.list.paged"));
+                SqlStatementRegistry.of("auth.user.list.paged"),
+                size, offset);
+        long total = new JTOpenSqlClient(state).queryForObject(
+                SqlStatementRegistry.of("auth.user.list.count"), Long.class);
         List<UserProfileListRow> result = new ArrayList<>();
         for (Map<String, Object> row : rows) {
             result.add(new UserProfileListRow(
@@ -73,7 +78,7 @@ class JTOpenAuthClient implements AuthClient {
                     str(row, "TEXT_DESCRIPTION"),
                     str(row, "LAST_USED_DATE")));
         }
-        return result;
+        return new PageResult<>(total, result);
     }
 
     @Override

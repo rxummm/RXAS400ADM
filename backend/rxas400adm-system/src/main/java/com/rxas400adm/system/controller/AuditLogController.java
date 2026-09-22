@@ -1,5 +1,6 @@
 package com.rxas400adm.system.controller;
 
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.service.IAuditLogService;
@@ -30,11 +31,13 @@ public class AuditLogController {
     @GetMapping
     @PreAuthorize("hasAuthority('AUDIT_VIEW')")
     public ApiResponse<PageResult<AuditLogVO>> list(@RequestParam(defaultValue = "1") long current,
-                                                   @RequestParam(defaultValue = "20") long size,
-                                                   @RequestParam(required = false) String module,
-                                                   @RequestParam(required = false) String username,
-                                                   @RequestParam(required = false) String action,
-                                                   @RequestParam(required = false) String keyword) {
+                                                    @RequestParam(defaultValue = "20") long size,
+                                                    @RequestParam(required = false) String module,
+                                                    @RequestParam(required = false) String username,
+                                                    @RequestParam(required = false) String action,
+                                                    @RequestParam(required = false) String keyword) {
+        current = PageConstants.clampNum(current);
+        size = PageConstants.clampSize(size);
         return ApiResponse.success(auditLogService.page(current, size, module, username, action, keyword));
     }
 }

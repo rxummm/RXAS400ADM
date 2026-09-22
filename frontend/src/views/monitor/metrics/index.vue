@@ -113,11 +113,13 @@ const as400Metrics = ref<{ name: string; value: string }[]>([])
 async function refresh() {
   loading.value = true
   try {
-    await fetchHealthData()
-    await fetchJvmMetrics()
-    await fetchHttpMetrics()
-    await fetchAs400Metrics()
-    await loadServers()
+    await Promise.all([
+      fetchHealthData(),
+      fetchJvmMetrics(),
+      fetchHttpMetrics(),
+      fetchAs400Metrics(),
+      loadServers(),
+    ])
   } finally {
     loading.value = false
   }
@@ -167,14 +169,16 @@ async function fetchHealthData() {
 
 async function fetchJvmMetrics() {
   try {
-    const heap = await fetchMetricDetail('jvm.memory.used')
+    const [heap, heapMaxDetail, threads] = await Promise.all([
+      fetchMetricDetail('jvm.memory.used'),
+      fetchMetricDetail('jvm.memory.max'),
+      fetchMetricDetail('jvm.threads.live'),
+    ])
     const heapUsed = heap?.measurements?.find((m) => m.statistic === 'VALUE')?.value ?? 0
     jvmMemoryUsedValue.value = formatSize(heapUsed)
 
-    const heapMaxDetail = await fetchMetricDetail('jvm.memory.max')
     const heapMax = heapMaxDetail?.measurements?.find((m) => m.statistic === 'VALUE')?.value ?? 0
 
-    const threads = await fetchMetricDetail('jvm.threads.live')
     const threadCount = threads?.measurements?.find((m) => m.statistic === 'VALUE')?.value ?? 0
     jvmThreadsValue.value = String(Math.round(threadCount))
 
@@ -197,8 +201,10 @@ async function fetchHttpMetrics() {
 
 async function fetchAs400Metrics() {
   try {
-    const total = await fetchMetricDetail('as400.servers.total')
-    const enabled = await fetchMetricDetail('as400.servers.enabled')
+    const [total, enabled] = await Promise.all([
+      fetchMetricDetail('as400.servers.total'),
+      fetchMetricDetail('as400.servers.enabled'),
+    ])
     const totalCount = total?.measurements?.find((m) => m.statistic === 'VALUE')?.value ?? 0
     const enabledCount = enabled?.measurements?.find((m) => m.statistic === 'VALUE')?.value ?? 0
     as400ServersValue.value = `${enabledCount}/${totalCount}`

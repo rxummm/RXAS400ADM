@@ -1,6 +1,8 @@
 package com.rxas400adm.config;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,7 +43,7 @@ public class PlatformTaskController {
     /** 手动触发一次（异步执行，立即返回） */
     @PostMapping("/{beanName}/{methodName}/trigger")
     @PreAuthorize("hasAuthority('SYS_TASK_MANAGE')")
-    @OperateLog(module = "定时任务", operation = "手动触发任务")
+    @OperateLog(module = OperateLogModule.PLATFORM_TASK, operation = OperateLogOperation.TRIGGER_TASK)
     public ApiResponse<TaskTriggerVO> trigger(@PathVariable String beanName,
                                               @PathVariable String methodName) {
         LocalDateTime triggeredAt = platformTaskService.trigger(beanName, methodName);

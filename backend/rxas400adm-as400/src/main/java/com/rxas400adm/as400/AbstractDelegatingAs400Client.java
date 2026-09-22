@@ -18,6 +18,7 @@ import com.rxas400adm.as400.model.SpoolRow;
 import com.rxas400adm.as400.model.SubsystemRow;
 import com.rxas400adm.as400.model.SysvalRow;
 import com.rxas400adm.as400.model.UserProfileListRow;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.as400.model.UserProfileRow;
 
 import java.io.InputStream;
@@ -143,8 +144,8 @@ public abstract class AbstractDelegatingAs400Client implements AS400Client {
     }
 
     @Override
-    public List<UserProfileListRow> listUserProfiles() {
-        return authClient().listUserProfiles();
+    public PageResult<UserProfileListRow> listUserProfilesPaged(int current, int size) {
+        return authClient().listUserProfilesPaged(current, size);
     }
 
     @Override

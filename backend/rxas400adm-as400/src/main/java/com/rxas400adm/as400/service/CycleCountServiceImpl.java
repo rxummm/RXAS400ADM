@@ -1,6 +1,8 @@
 package com.rxas400adm.as400.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.as400.dto.CycleCountPlanDTO;
 import com.rxas400adm.as400.dto.CycleCountResultDTO;
 import com.rxas400adm.as400.entity.CycleCountPlan;
@@ -9,9 +11,9 @@ import com.rxas400adm.as400.mapper.CycleCountPlanMapper;
 import com.rxas400adm.as400.mapper.CycleCountResultMapper;
 import com.rxas400adm.as400.vo.CycleCountPlanVO;
 import com.rxas400adm.as400.vo.CycleCountResultVO;
-import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,14 +53,15 @@ public class CycleCountServiceImpl implements ICycleCountService {
     }
 
     @Override
-    public List<CycleCountPlanVO> listPlans(String status, int limit) {
+    public PageResult<CycleCountPlanVO> listPlans(String status, int current, int size) {
         LambdaQueryWrapper<CycleCountPlan> wrapper = new LambdaQueryWrapper<>();
         if (status != null && !status.isBlank()) {
             wrapper.eq(CycleCountPlan::getStatus, status);
         }
         wrapper.orderByDesc(CycleCountPlan::getCreatedTime);
-        wrapper.last(PageConstants.limitClause(limit));
-        return planMapper.selectList(wrapper).stream().map(this::toPlanVO).collect(Collectors.toList());
+
+        IPage<CycleCountPlan> page = planMapper.selectPage(new Page<>(current, size), wrapper);
+        return new PageResult<>(page.getTotal(), page.getRecords().stream().map(this::toPlanVO).collect(Collectors.toList()));
     }
 
     @Override
@@ -99,11 +102,13 @@ public class CycleCountServiceImpl implements ICycleCountService {
     }
 
     @Override
-    public List<CycleCountResultVO> listResults(Long planId) {
+    public PageResult<CycleCountResultVO> listResults(Long planId, int current, int size) {
         LambdaQueryWrapper<CycleCountResult> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(CycleCountResult::getPlanId, planId);
         wrapper.orderByAsc(CycleCountResult::getItem);
-        return resultMapper.selectList(wrapper).stream().map(this::toResultVO).collect(Collectors.toList());
+
+        IPage<CycleCountResult> page = resultMapper.selectPage(new Page<>(current, size), wrapper);
+        return new PageResult<>(page.getTotal(), page.getRecords().stream().map(this::toResultVO).toList());
     }
 
     @Override

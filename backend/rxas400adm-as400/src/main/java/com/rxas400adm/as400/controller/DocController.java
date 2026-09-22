@@ -12,6 +12,7 @@ import com.rxas400adm.as400.vo.DocVO;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.annotation.OperateLogModule;
 import com.rxas400adm.common.annotation.OperateLogOperation;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.util.SecurityUtils;
@@ -89,6 +90,8 @@ public class DocController {
                                                  @RequestParam(defaultValue = "0") int deleted,
                                                  @RequestParam(defaultValue = "1") long current,
                                                  @RequestParam(defaultValue = "20") long size) {
+        current = PageConstants.clampNum(current);
+        size = PageConstants.clampSize(size);
         PageResult<Doc> page = docService.listDocs(keyword, status, current, size, deleted == 1);
         return ApiResponse.success(new PageResult<>(page.getTotal(), page.getRecords().stream().map(DocVO::from).toList()));
     }

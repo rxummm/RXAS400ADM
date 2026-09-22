@@ -3,6 +3,7 @@ package com.rxas400adm.system.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.system.dto.DictItemDTO;
 import com.rxas400adm.system.dto.DictTypeDTO;
 import com.rxas400adm.system.entity.DictItem;
@@ -134,9 +135,7 @@ public class DictService implements IDictService {
 
     
     public void deleteItem(Long id) {
-        if (itemMapper.selectById(id) == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "Dict item not found: " + id);
-        }
+        EntityUtil.require(id, "DictItem", itemMapper::selectById);
         itemMapper.deleteById(id);
     }
 }

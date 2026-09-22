@@ -7,9 +7,9 @@
         class="w-200"
         :placeholder="$t('bpcs.label.orno')"
         clearable
-        @keyup.enter="search"
+        @keyup.enter="forceSearch"
       />
-      <el-button type="primary" :loading="loading" @click="search">
+      <el-button type="primary" :loading="loading" @click="forceSearch">
         {{ $t('common.search') }}
       </el-button>
     </div>
@@ -26,9 +26,9 @@
 
     <div class="table-wrapper invoice-content">
       <!-- 汇总卡片 -->
-      <div v-if="invoices.length" class="summary-row">
+      <div v-if="records.length" class="summary-row">
         <div class="summary-item">
-          <span class="summary-value">{{ invoices.length }}</span>
+          <span class="summary-value">{{ records.length }}</span>
           <span class="summary-label">{{ $t('bpcs.invoice.invoiceCount') }}</span>
         </div>
         <div class="summary-item">
@@ -43,9 +43,9 @@
 
       <!-- 发票时间轴 -->
       <div v-loading="loading">
-        <el-timeline v-if="invoices.length">
+        <el-timeline v-if="records.length">
           <el-timeline-item
-            v-for="inv in invoices"
+            v-for="inv in records"
             :key="inv.invNo"
             :type="timelineType(inv.status)"
             :hollow="inv.status === 'cancelled'"
@@ -70,8 +70,8 @@
             </el-card>
           </el-timeline-item>
         </el-timeline>
-        <AppPagination v-if="total > 0" :total="total" v-model:current="current" v-model:size="size" @change="search" @size-change="search" />
-        <el-empty v-if="!loading && invoices.length === 0" :description="$t('common.noData')" />
+        <AppPagination v-if="total > 0" :total="total" v-model:current="current" v-model:size="size" @change="forceSearch" @size-change="forceSearch" />
+        <el-empty v-if="!loading && records.length === 0" :description="$t('common.noData')" />
       </div>
     </div>
 
@@ -118,6 +118,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { searchInvoices, type BpcsInvoice } from '@/api/bpcs'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { formatMoney } from '@/utils/format'
 import AppPagination from '@/components/AppPagination.vue'
 
@@ -125,32 +126,24 @@ defineOptions({ name: 'BpcsInvoice' })
 
 const activeTab = ref('active')
 const orno = ref('')
-const loading = ref(false)
-const invoices = ref<BpcsInvoice[]>([])
-const total = ref(0)
-const current = ref(1)
-const size = ref(20)
 const detailVisible = ref(false)
 const detailInv = ref<BpcsInvoice | null>(null)
 
-const grandTotal = computed(() => invoices.value.reduce((s, i) => s + (i.totalAmount ?? 0), 0))
-const grandTax = computed(() => invoices.value.reduce((s, i) => s + (i.taxAmount ?? 0), 0))
+const { records, loading, current, size, total, forceSearch } = useSmartQueryTable<BpcsInvoice>({
+  fetchApi: (params) => {
+    const p: Record<string, string | number> = { tab: activeTab.value, current: params.current!, size: params.size! }
+    if (orno.value.trim()) p.orno = orno.value.trim()
+    return searchInvoices(p)
+  },
+})
+
+const grandTotal = computed(() => records.value.reduce((s, i) => s + (i.totalAmount ?? 0), 0))
+const grandTax = computed(() => records.value.reduce((s, i) => s + (i.taxAmount ?? 0), 0))
 
 function switchTab(tab: string) {
   activeTab.value = tab
-  search()
-}
-
-function search() {
-  loading.value = true
-  const params: Record<string, string | number> = { tab: activeTab.value, current: current.value, size: size.value }
-  if (orno.value.trim()) params.orno = orno.value.trim()
-  searchInvoices(params)
-    .then(data => {
-      invoices.value = data.records
-      total.value = data.total
-    })
-    .finally(() => { loading.value = false })
+  current.value = 1
+  forceSearch()
 }
 
 function openDetail(inv: BpcsInvoice) {
@@ -215,12 +208,6 @@ function statusTagType(status: string | null): 'success' | 'danger' | 'primary' 
 }
 .summary-value {
   font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-.summary-label {
-  font-size: 12px;
-  color: var(--text-secondary);
 }
 .invoice-card {
   cursor: pointer;

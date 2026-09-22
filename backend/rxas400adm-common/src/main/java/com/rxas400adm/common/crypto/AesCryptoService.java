@@ -58,10 +58,10 @@ public final class AesCryptoService {
      */
     public AesCryptoService(String rawKey, int pbkdf2Iterations) {
         if (rawKey == null || rawKey.isBlank()) {
-            throw new IllegalArgumentException("AES 密钥不能为空，请设置环境变量 RXAS400_CRYPTO_KEY");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "AES key must not be empty, set env RXAS400_CRYPTO_KEY");
         }
         if (pbkdf2Iterations < 1) {
-            throw new IllegalArgumentException("PBKDF2 迭代次数必须 >= 1: " + pbkdf2Iterations);
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "PBKDF2 iterations must be >= 1: " + pbkdf2Iterations);
         }
         this.rawKey = rawKey;
         this.pbkdf2Iterations = pbkdf2Iterations;

@@ -1,17 +1,17 @@
 package com.rxas400adm.as400.controller;
 
 import com.rxas400adm.as400.dto.OrderTemplateDTO;
+import com.rxas400adm.as400.entity.OrderTemplate;
 import com.rxas400adm.as400.service.IOrderTemplateService;
 import com.rxas400adm.as400.vo.OrderTemplateVO;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.annotation.OperateLog;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
-import java.util.List;
 
 
 /**
@@ -27,8 +27,13 @@ public class OrderTemplateController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('BPCS_VIEW')")
-    public ApiResponse<List<OrderTemplateVO>> list(@RequestParam(required = false) String keyword) {
-        return ApiResponse.success(service.list(keyword).stream().map(OrderTemplateVO::from).toList());
+    public ApiResponse<PageResult<OrderTemplateVO>> list(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        PageResult<OrderTemplate> page = service.list(keyword, current, size);
+        return ApiResponse.success(new PageResult<>(page.getTotal(),
+                page.getRecords().stream().map(OrderTemplateVO::from).toList()));
     }
 
     @GetMapping("/{id}")

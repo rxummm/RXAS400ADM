@@ -1,5 +1,7 @@
 package com.rxas400adm.email.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.rxas400adm.common.security.SecretMasker;
 import com.rxas400adm.email.MailMessage;
 import com.rxas400adm.email.entity.EmailConfig;
@@ -7,6 +9,7 @@ import com.rxas400adm.email.entity.EmailLog;
 import com.rxas400adm.email.mapper.EmailConfigMapper;
 import com.rxas400adm.email.mapper.EmailLogMapper;
 import com.rxas400adm.system.service.ISysConfigService;
+import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +24,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 邮件服务实现：SMTP 配置优先从 rx_email_config 读取，回退到 rx_config（兼容旧数据）。
  * 发送结果记录到 rx_email_log。发送失败不抛异常（优雅降级）。
+ * <p>发送通过 emailSendPool 异步执行，不阻塞调用方主线程。
  */
 @Slf4j
 @Service
@@ -37,17 +43,28 @@ public class EmailService implements IEmailService {
     private final EmailConfigMapper emailConfigMapper;
     private final EmailLogMapper emailLogMapper;
     private final ISysConfigService sysConfigService;
+    private final Executor emailSendPool;
+
+    /** SMTP 配置缓存（5 分钟过期，最多 50 条键值） */
+    private final Cache<String, String> configCache = Caffeine.newBuilder()
+            .expireAfterWrite(5, TimeUnit.MINUTES)
+            .maximumSize(50)
+            .build();
+
+    /** 缓存已创建的 JavaMailSender（key = host:port:username，配置变更时自动失效） */
+    private volatile JavaMailSenderImpl cachedSender;
+    private volatile String cachedSenderKey;
 
     @Override
     public void send(MailMessage message) {
         String recipients = message.recipients();
         if (recipients == null || recipients.isBlank()) {
-            log.warn("[{}] 未配置收件人，跳过", message.channel());
+            log.warn("[{}] no recipients configured, skip", message.channel());
             return;
         }
         String host = getConfig("host", "");
         if (host.isBlank()) {
-            log.debug("[{}] 未配置 SMTP（host），跳过", message.channel());
+            log.debug("[{}] SMTP host not configured, skip", message.channel());
             return;
         }
 
@@ -55,7 +72,7 @@ public class EmailService implements IEmailService {
         try {
             portNum = Integer.parseInt(getConfig("port", DEFAULT_SMTP_PORT));
         } catch (NumberFormatException nfe) {
-            log.error("SMTP 端口配置非法={}，邮件通知禁用", getConfig("port", DEFAULT_SMTP_PORT));
+            log.error("SMTP port invalid={}, email notifications disabled", getConfig("port", DEFAULT_SMTP_PORT));
             recordLog(message.subject(), recipients, message.channel(), "FAILED", "端口配置非法", message.filename());
             return;
         }
@@ -66,21 +83,17 @@ public class EmailService implements IEmailService {
                 ? message.sender()
                 : getConfig("from", user.isBlank() ? "rxas400adm@localhost" : user);
 
-        JavaMailSenderImpl sender = new JavaMailSenderImpl();
-        sender.setHost(host);
-        sender.setPort(portNum);
-        sender.setUsername(user);
-        sender.setPassword(pass);
-        sender.setDefaultEncoding("UTF-8");
+        JavaMailSenderImpl sender = getOrCreateSender(host, portNum, user, pass);
 
-        Properties props = sender.getJavaMailProperties();
-        props.put("mail.smtp.auth", user.isBlank() ? "false" : "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.ssl.enable", DEFAULT_SMTP_PORT.equals(getConfig("port", DEFAULT_SMTP_PORT)) ? "true" : "false");
-        String timeout = getConfig("timeout", DEFAULT_SMTP_TIMEOUT);
-        props.put("mail.smtp.connectiontimeout", timeout);
-        props.put("mail.smtp.timeout", timeout);
+        // 异步发送，不阻塞调用方主线程
+        emailSendPool.execute(() -> doSend(sender, message, recipients, from));
+    }
 
+    /**
+     * 在线程池中执行实际的 SMTP 发送（阻塞 I/O 操作）。
+     */
+    private void doSend(JavaMailSenderImpl sender, MailMessage message,
+                         String recipients, String from) {
         try {
             MimeMessage mime = sender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mime, message.data() != null, "UTF-8");
@@ -108,11 +121,14 @@ public class EmailService implements IEmailService {
             }
 
             sender.send(mime);
-            log.info("[{}] 已发送至 {}（{}）", message.channel(), recipients, message.subject());
+            log.debug("[{}] sent to {} ({})", message.channel(), recipients, message.subject());
             recordLog(message.subject(), recipients, message.channel(), "SUCCESS", null, message.filename());
+        } catch (MessagingException e) {
+            log.warn("[{}] send failed: {}", message.channel(), e.getClass().getSimpleName());
+            recordLog(message.subject(), recipients, message.channel(), "FAILED", "SMTP error", message.filename());
         } catch (Exception e) {
-            log.warn("[{}] 发送失败: {}", message.channel(), e.getMessage());
-            recordLog(message.subject(), recipients, message.channel(), "FAILED", e.getMessage(), message.filename());
+            log.error("[{}] unexpected error: {}", message.channel(), e.getMessage(), e);
+            recordLog(message.subject(), recipients, message.channel(), "FAILED", "Unknown error", message.filename());
         }
     }
 
@@ -147,6 +163,7 @@ public class EmailService implements IEmailService {
                 emailConfigMapper.insert(config);
             }
         }
+        invalidateConfigCache();
     }
 
     @Override
@@ -156,16 +173,60 @@ public class EmailService implements IEmailService {
     }
 
     /**
-     * 读取邮件配置：优先 rx_email_config，回退 rx_config（兼容旧数据）。
+     * 读取邮件配置：优先 rx_email_config，回退 rx_config（兼容旧数据）。结果缓存 5 分钟。
      */
     private String getConfig(String key, String defaultValue) {
-        // 1. 优先从 rx_email_config 读取
-        EmailConfig config = emailConfigMapper.selectById(key);
-        if (config != null && config.getConfigValue() != null && !config.getConfigValue().isBlank()) {
-            return config.getConfigValue();
+        return configCache.get(key, k -> {
+            EmailConfig config = emailConfigMapper.selectById(k);
+            if (config != null && config.getConfigValue() != null && !config.getConfigValue().isBlank()) {
+                return config.getConfigValue();
+            }
+            return sysConfigService.get("alert.email." + k, defaultValue);
+        });
+    }
+
+    /**
+     * 配置更新时清除缓存，确保下次读取生效。
+     */
+    public void invalidateConfigCache() {
+        configCache.invalidateAll();
+        cachedSender = null;
+        cachedSenderKey = null;
+    }
+
+    /**
+     * 获取或创建缓存的 JavaMailSender 实例（配置变更时自动重建）。
+     */
+    private JavaMailSenderImpl getOrCreateSender(String host, int port, String user, String pass) {
+        String senderKey = host + ":" + port + ":" + user;
+        JavaMailSenderImpl sender = cachedSender;
+        if (sender != null && senderKey.equals(cachedSenderKey)) {
+            return sender;
         }
-        // 2. 回退到 rx_config（兼容 alert.email.* 旧数据）
-        return sysConfigService.get("alert.email." + key, defaultValue);
+        synchronized (this) {
+            sender = cachedSender;
+            if (sender != null && senderKey.equals(cachedSenderKey)) {
+                return sender;
+            }
+            sender = new JavaMailSenderImpl();
+            sender.setHost(host);
+            sender.setPort(port);
+            sender.setUsername(user);
+            sender.setPassword(pass);
+            sender.setDefaultEncoding("UTF-8");
+
+            Properties props = sender.getJavaMailProperties();
+            props.put("mail.smtp.auth", user.isBlank() ? "false" : "true");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.ssl.enable", String.valueOf(DEFAULT_SMTP_PORT.equals(getConfig("port", DEFAULT_SMTP_PORT))));
+            String timeout = getConfig("timeout", DEFAULT_SMTP_TIMEOUT);
+            props.put("mail.smtp.connectiontimeout", timeout);
+            props.put("mail.smtp.timeout", timeout);
+
+            cachedSender = sender;
+            cachedSenderKey = senderKey;
+            return sender;
+        }
     }
 
     private void recordLog(String subject, String recipients, String channel,
@@ -181,7 +242,7 @@ public class EmailService implements IEmailService {
             logEntry.setCreatedTime(LocalDateTime.now());
             emailLogMapper.insert(logEntry);
         } catch (Exception e) {
-            log.debug("记录邮件日志失败: {}", e.getMessage());
+            log.debug("Failed to record email log: {}", e.getMessage());
         }
     }
 }

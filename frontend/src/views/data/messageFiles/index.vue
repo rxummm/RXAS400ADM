@@ -3,8 +3,6 @@
     <QueryBar
       v-model:keyword="keyword"
       :placeholder="$t('messageFiles.keyword')"
-      :from-cache="isFromCache"
-      :flash-tick="dataSourceTick"
       @force-search="handleRefresh"
       @reset="resetSearch"
     >
@@ -43,7 +41,7 @@
 
     <div class="table-wrapper">
       <RxSkeleton type="table" :rows="8" :loading="loading">
-        <el-table :data="filteredRows" size="small" border>
+        <el-table :data="currentPageData" size="small" border>
         <el-table-column prop="MESSAGE_ID" :label="$t('messageFiles.id')" width="120">
           <template #default="{ row }">
             <el-tag size="small" type="info">{{ row.MESSAGE_ID }}</el-tag>
@@ -58,7 +56,7 @@
             <el-tag :type="severityTag(Number(row.SEVERITY))" size="small">{{ row.SEVERITY }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.operation')" width="140" align="center" fixed="right">
+        <el-table-column :label="$t('common.operation')" width="180" align="center" fixed="right">
           <template #default="{ row }">
             <el-button v-has-perm="'MSGF_EDIT'" size="small" type="primary" plain :icon="Edit" @click="openEditMsg(row as MessageFileRow)">
               {{ $t('common.edit') }}
@@ -70,7 +68,8 @@
         </el-table-column>
       </el-table>
       </RxSkeleton>
-      <el-empty v-if="!loading && !filteredRows.length" :description="$t('messageFiles.empty')" />
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="loadMessages" @size-change="loadMessages" />
+      <el-empty v-if="!loading && !currentPageData.length" :description="$t('messageFiles.empty')" />
     </div>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--rx-dialog-sm)" :close-on-click-modal="false">
@@ -107,15 +106,15 @@
 // keep-alive 缓存标识，需与路由 name 一致
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'MessageFiles' })
-import { onMounted, ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { Delete, Edit, Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { useFormDialog } from '@/composables/useFormDialog'
 import QueryBar from '@/components/QueryBar.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
+import AppPagination from '@/components/AppPagination.vue'
 import {
   addMessage,
   deleteMessage,
@@ -149,46 +148,55 @@ const loadFiles = async () => {
   }
 }
 
-// 3 分钟查询缓存 + 已加载消息前端实时模糊匹配（关键词不再发后端，缓存 key 仅按库+文件隔离）
-const {
-  filteredData: filteredRows,
-  records,
-  loading,
-  keyword,
-  isFromCache,
-  dataSourceTick,
-  resetSearch: baseResetSearch,
-  fetchData,
-} = useSmartQueryTable<MessageFileRow>({
-  fetchApi: () => fetchMessages(library.value.trim(), file.value!.trim()),
-  enableCache: true,
-  autoFetch: false,
-  buildParams: () => ({ library: library.value.trim(), file: file.value! }),
-  searchFields: ['MESSAGE_ID', 'MESSAGE_TEXT', 'SECOND_LEVEL_TEXT'],
+const loading = ref(false)
+const allMessages = ref<MessageFileRow[]>([])
+const keyword = ref('')
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
+
+const currentPageData = computed(() => {
+  let data = allMessages.value
+  if (keyword.value.trim()) {
+    const kw = keyword.value.trim().toLowerCase()
+    data = data.filter(row =>
+      row.MESSAGE_ID.toLowerCase().includes(kw) ||
+      row.MESSAGE_TEXT.toLowerCase().includes(kw) ||
+      (row.SECOND_LEVEL_TEXT || '').toLowerCase().includes(kw)
+    )
+  }
+  total.value = data.length
+  const start = (current.value - 1) * size.value
+  return data.slice(start, start + size.value)
 })
 
-const load = () => {
-  if (!file.value) {
-    ElMessage.warning(t('messageFiles.selectFirst'))
-    return
+const loadMessages = async () => {
+  if (!file.value || !library.value.trim()) return
+  loading.value = true
+  try {
+    const result = await fetchMessages(library.value.trim(), file.value.trim())
+    allMessages.value = result.records || []
+    total.value = result.total
+    current.value = 1
+  } finally {
+    loading.value = false
   }
-  void fetchData()
 }
 
 const onFileChange = () => {
-  if (file.value) load()
-  else records.value = []
+  if (file.value) loadMessages()
+  else allMessages.value = []
 }
 
 const handleRefresh = () => {
   loadFiles()
-  void fetchData({}, true)
+  if (file.value) loadMessages()
 }
 
 const resetSearch = () => {
-  baseResetSearch()
+  keyword.value = ''
   loadFiles()
-  void fetchData({}, true)
+  if (file.value) loadMessages()
 }
 
 const severityTag = (sev: number) => {
@@ -214,7 +222,7 @@ const { dialogVisible, dialogTitle, isEdit, loading: saving, form, openCreate, o
       else await addMessage(data)
     },
     onSuccess: () => {
-      void fetchData({}, true)
+      void loadMessages()
     },
     i18nPrefix: 'messageFiles',
   })
@@ -244,7 +252,7 @@ const handleSave = () => {
 
 const { removeLoading, confirmRemove } = useConfirmDelete({
   deleteApi: (row: MessageFileRow) => deleteMessage(library.value.trim(), file.value!.trim(), row.MESSAGE_ID),
-  onSuccess: () => fetchData({}, true),
+  onSuccess: () => void loadMessages(),
   confirmMessage: 'messageFiles.deleteConfirm',
   confirmTitle: 'common.warning',
   idField: 'MESSAGE_ID',

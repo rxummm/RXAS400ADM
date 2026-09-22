@@ -7,27 +7,27 @@
         class="w-200"
         :placeholder="$t('bpcs.inventory.itemPlaceholder')"
         clearable
-        @keyup.enter="search"
+        @keyup.enter="forceSearch"
       />
       <el-input
         v-model="query.desc"
         class="w-200"
         :placeholder="$t('bpcs.inventory.descPlaceholder')"
         clearable
-        @keyup.enter="search"
+        @keyup.enter="forceSearch"
       />
       <el-input
         v-model="query.wh"
         class="w-120"
         :placeholder="$t('bpcs.label.wh')"
         clearable
-        @keyup.enter="search"
+        @keyup.enter="forceSearch"
       />
-      <el-button type="primary" :loading="loading" @click="search">
+      <el-button type="primary" :loading="loading" @click="forceSearch">
         {{ $t('common.search') }}
       </el-button>
       <ExportDropdown
-        :data="items"
+        :data="tableData"
         :columns="exportColumns"
         :title="$t('bpcs.menu.inventory')"
         :export-url="BPCS_EXPORT.inventory"
@@ -36,7 +36,7 @@
     </div>
 
     <!-- ── 汇总卡片 ──────────────────────────────────── -->
-    <div v-if="items.length" class="summary-cards mb16">
+    <div v-if="tableData.length" class="summary-cards mb16">
       <div class="summary-card">
         <div class="summary-value">{{ totalOnHand }}</div>
         <div class="summary-label">{{ $t('bpcs.inventory.totalOnHand') }}</div>
@@ -58,7 +58,7 @@
     <!-- ── 物料表格（可展开仓库明细） ─────────────────── -->
     <div class="table-wrapper">
       <el-table
-        :data="items"
+        :data="tableData"
         v-loading="loading"
         size="small"
         border
@@ -118,17 +118,18 @@
           <template #default="{ row }">{{ row.warehouses?.length || 0 }}</template>
         </el-table-column>
       </el-table>
-      <AppPagination v-if="total > 0" :total="total" v-model:current="current" v-model:size="size" @change="search" @size-change="search" />
+      <AppPagination v-if="total > 0" :total="total" v-model:current="current" v-model:size="size" @change="forceSearch" @size-change="forceSearch" />
     </div>
 
-    <el-empty v-if="searched && !loading && items.length === 0" :description="$t('common.noData')" />
+    <el-empty v-if="!loading && tableData.length === 0" :description="$t('common.noData')" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed } from 'vue'
+import { reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { searchInventory, type BpcsInventory, BPCS_EXPORT } from '@/api/bpcs'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import AppPagination from '@/components/AppPagination.vue'
 import ExportDropdown from '@/components/ExportDropdown.vue'
 import type { ExportColumn } from '@/components/ExportButton.vue'
@@ -138,13 +139,17 @@ const { t } = useI18n()
 defineOptions({ name: 'BpcsInventory' })
 
 const query = reactive({ item: '', desc: '', wh: '' })
-const loading = ref(false)
-const searched = ref(false)
-const items = ref<BpcsInventory[]>([])
-const total = ref(0)
-const current = ref(1)
-const size = ref(20)
 const expandedKeys = ref<string[]>([])
+
+const { tableData, loading, current, size, total, forceSearch } = useSmartQueryTable<BpcsInventory>({
+  fetchApi: (params) => {
+    const p: Record<string, string | number> = { current: params.current!, size: params.size! }
+    if (query.item.trim()) p.item = query.item.trim()
+    if (query.desc.trim()) p.desc = query.desc.trim()
+    if (query.wh.trim()) p.wh = query.wh.trim()
+    return searchInventory(p)
+  },
+})
 
 const exportColumns = computed<ExportColumn[]>(() => [
   { key: 'item', label: t('bpcs.label.item') },
@@ -157,26 +162,10 @@ const exportColumns = computed<ExportColumn[]>(() => [
   { key: 'unitCost', label: t('bpcs.inventory.unitCost') },
 ])
 
-const totalOnHand = computed(() => items.value.reduce((s, i) => s + i.totalOnHand, 0))
-const totalAllocated = computed(() => items.value.reduce((s, i) => s + i.totalAllocated, 0))
-const totalOnOrder = computed(() => items.value.reduce((s, i) => s + i.totalOnOrder, 0))
-const totalAvailable = computed(() => items.value.reduce((s, i) => s + i.totalAvailable, 0))
-
-function search() {
-  loading.value = true
-  searched.value = true
-  expandedKeys.value = []
-  const params: Record<string, string | number> = { current: current.value, size: size.value }
-  if (query.item.trim()) params.item = query.item.trim()
-  if (query.desc.trim()) params.desc = query.desc.trim()
-  if (query.wh.trim()) params.wh = query.wh.trim()
-  searchInventory(params)
-    .then(data => {
-      items.value = data.records
-      total.value = data.total
-    })
-    .finally(() => { loading.value = false })
-}
+const totalOnHand = computed(() => tableData.value.reduce((s, i) => s + i.totalOnHand, 0))
+const totalAllocated = computed(() => tableData.value.reduce((s, i) => s + i.totalAllocated, 0))
+const totalOnOrder = computed(() => tableData.value.reduce((s, i) => s + i.totalOnOrder, 0))
+const totalAvailable = computed(() => tableData.value.reduce((s, i) => s + i.totalAvailable, 0))
 
 function handleExpand(_row: BpcsInventory, expanded: BpcsInventory[] | boolean) {
   if (Array.isArray(expanded)) {
@@ -202,18 +191,8 @@ function handleExpand(_row: BpcsInventory, expanded: BpcsInventory[] | boolean) 
   border-color: var(--color-primary);
   background: var(--el-color-primary-light-9);
 }
-.summary-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
 .summary-card--accent .summary-value {
   color: var(--color-primary);
-}
-.summary-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 4px;
 }
 .expand-content {
   padding: 8px 48px;

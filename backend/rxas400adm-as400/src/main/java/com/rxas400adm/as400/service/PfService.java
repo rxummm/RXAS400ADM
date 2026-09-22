@@ -4,6 +4,8 @@ import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.model.PfColumnRow;
 import com.rxas400adm.as400.model.PfRow;
 import com.rxas400adm.as400.model.PfStatsRow;
+import com.rxas400adm.common.constants.PageConstants;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,13 @@ public class PfService implements IPfService {
 
     public List<Map<String, Object>> data(String library, String file, int limit) {
         return clientProvider.current().pfData(library, file, limit);
+    }
+
+    public PageResult<Map<String, Object>> dataPage(String library, String file, int current, int size) {
+        int limit = (int) Math.min(PageConstants.clampSize(size), PageConstants.MAX_PF_DATA_LIMIT);
+        List<Map<String, Object>> all = clientProvider.current().pfData(library, file, limit);
+        int[] bounds = PageConstants.sliceBounds(current, size, all.size());
+        return new PageResult<>(all.size(), all.subList(bounds[0], bounds[1]));
     }
 
     public PfStatsRow statistics(String library, String file) {

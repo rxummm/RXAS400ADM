@@ -71,6 +71,7 @@ class PermissionManageServiceTest {
         assertThrows(BusinessException.class, () -> service.create(dto));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("create → code 重复抛异常")
     void create_duplicateCode_shouldThrow() {
@@ -80,6 +81,7 @@ class PermissionManageServiceTest {
         assertThrows(BusinessException.class, () -> service.create(dto));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("create → 正常新增")
     void create_valid_shouldInsert() {
@@ -99,6 +101,7 @@ class PermissionManageServiceTest {
         assertEquals("JOB", result.getModule());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("delete → 被菜单引用则拒绝")
     void delete_usedByMenu_shouldThrow() {
@@ -112,6 +115,7 @@ class PermissionManageServiceTest {
         assertThrows(BusinessException.class, () -> service.delete(1L));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("delete → 未被引用则正常删除")
     void delete_notUsed_shouldDelete() {
@@ -126,6 +130,7 @@ class PermissionManageServiceTest {
         verify(permissionMapper).deleteById(1L);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("page → 分页查询")
     void page_shouldReturn() {

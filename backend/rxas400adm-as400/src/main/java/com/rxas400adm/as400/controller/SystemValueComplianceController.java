@@ -24,7 +24,7 @@ public class SystemValueComplianceController {
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('COMPLIANCE_VIEW')")
     public ApiResponse<List<SystemValueComplianceVO>> listByServer(@RequestParam(required = false) Long serverId) {
-        return ApiResponse.success(complianceService.listByServer(serverId));
+        return ApiResponse.success(complianceService.listByServer(serverId, 1, Integer.MAX_VALUE).getRecords());
     }
 
     @GetMapping("/latest")

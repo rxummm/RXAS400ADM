@@ -14,7 +14,7 @@ import java.util.Map;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/api/v1/source")
+@RequestMapping("/api/v1/source/libraries")
 @RequiredArgsConstructor
 @PreAuthorize("hasAuthority('SOURCE_VIEW')")
 @Tag(name = "源码管理")
@@ -22,22 +22,22 @@ public class SourceController {
 
     private final ISourceService sourceService;
 
-    @GetMapping("/libraries")
+    @GetMapping
     public ApiResponse<List<String>> libraries() {
         return ApiResponse.success(sourceService.listLibraries());
     }
 
-    @GetMapping("/libraries/{library}/files")
+    @GetMapping("/{library}/files")
     public ApiResponse<List<String>> files(@PathVariable String library) {
         return ApiResponse.success(sourceService.listSourceFiles(library));
     }
 
-    @GetMapping("/libraries/{library}/files/{file}/members")
+    @GetMapping("/{library}/files/{file}/members")
     public ApiResponse<List<String>> members(@PathVariable String library, @PathVariable String file) {
         return ApiResponse.success(sourceService.listMembers(library, file));
     }
 
-    @GetMapping("/libraries/{library}/files/{file}/members/{member}")
+    @GetMapping("/{library}/files/{file}/members/{member}")
     public ApiResponse<Map<String, String>> member(@PathVariable String library,
                                                    @PathVariable String file,
                                                    @PathVariable String member) {

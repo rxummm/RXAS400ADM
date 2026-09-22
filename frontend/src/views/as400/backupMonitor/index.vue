@@ -41,6 +41,7 @@
         <el-table-column prop="mediaName" :label="$t('backupMonitor.mediaName')" min-width="100" />
         <el-table-column prop="errorMessage" :label="$t('backupMonitor.errorMessage')" min-width="160" show-overflow-tooltip />
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="load" @size-change="load" />
       <el-empty v-if="!loading && records.length === 0" :description="$t('backupMonitor.noData')" />
     </div>
   </div>
@@ -58,6 +59,9 @@ const loading = ref(false)
 const serverId = ref<number | undefined>(undefined)
 const records = ref<BackupStatus[]>([])
 const servers = ref<IbmiSystem[]>([])
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
 
 function statusType(status: string): 'primary' | 'success' | 'warning' | 'info' | 'danger' {
   const map: Record<string, 'primary' | 'success' | 'warning' | 'info' | 'danger'> = {
@@ -87,8 +91,11 @@ async function loadServers() {
 async function load() {
   loading.value = true
   try {
-    const res = await getBackupList(serverId.value != null ? { serverId: serverId.value } : undefined)
-    records.value = res
+    const params: Record<string, unknown> = { current: current.value, size: size.value }
+    if (serverId.value != null) params.serverId = serverId.value
+    const res = await getBackupList(params) as { records: BackupStatus[]; total: number }
+    records.value = res.records
+    total.value = res.total
   } finally {
     loading.value = false
   }

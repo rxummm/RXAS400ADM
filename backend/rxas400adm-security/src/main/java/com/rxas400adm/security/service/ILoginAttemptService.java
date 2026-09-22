@@ -1,5 +1,6 @@
 package com.rxas400adm.security.service;
 
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.security.entity.LoginAttempt;
 
 import java.util.List;
@@ -15,7 +16,11 @@ public interface ILoginAttemptService {
 
     List<LoginAttempt> listAttempts(Long serverId);
 
+    PageResult<LoginAttempt> pageAttempts(Long serverId, int current, int size);
+
     List<Map<String, Object>> aggregateByIp();
+
+    PageResult<Map<String, Object>> pageAggregateByIp(int current, int size);
 
     void checkIpRate(String ip);
 }

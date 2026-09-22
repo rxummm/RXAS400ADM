@@ -8,9 +8,11 @@ import com.rxas400adm.as400.model.JobQueueRow;
 import com.rxas400adm.as400.model.SpoolRow;
 import com.rxas400adm.as400.vo.JobInfo;
 import com.rxas400adm.common.constants.As400Identifiers;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -67,6 +69,13 @@ public class JobService implements IJobService {
             rows = client.queryList(ACTIVE_JOB_SQL);
         }
         return rows.stream().map(JobInfo::from).toList();
+    }
+
+    /** 分页活动作业列表 */
+    public PageResult<JobInfo> activeJobsPage(String status, int current, int size) {
+        List<JobInfo> all = activeJobs(status);
+        int[] bounds = PageConstants.sliceBounds(current, size, all.size());
+        return new PageResult<>(all.size(), all.subList(bounds[0], bounds[1]));
     }
 
     /** MSGW 作业（生产关键） */
@@ -148,6 +157,13 @@ public class JobService implements IJobService {
         return futures.stream().map(CompletableFuture::join).toList();
     }
 
+    /** 分页 MSGW 消息列表 */
+    public PageResult<Map<String, Object>> msgwMessagesPage(int current, int size) {
+        List<Map<String, Object>> all = msgwMessages();
+        int[] bounds = PageConstants.sliceBounds(current, size, all.size());
+        return new PageResult<>(all.size(), all.subList(bounds[0], bounds[1]));
+    }
+
     /** P9：单作业消息抓取任务体；单个作业异常降级为该作业仿真行，不中断整体 */
     private Map<String, Object> fetchMsgwMessageRow(AS400Client client, JobInfo job) {
         Map<String, Object> row = new LinkedHashMap<>();
@@ -188,6 +204,14 @@ public class JobService implements IJobService {
         return clientProvider.current().listSpoolFiles(jobName, jobUser, jobNumber);
     }
 
+    /** 分页 SPOOL 文件列表 */
+    public PageResult<SpoolRow> spoolFilesPage(String jobName, String jobUser, String jobNumber,
+                                               int current, int size) {
+        List<SpoolRow> all = spoolFiles(jobName, jobUser, jobNumber);
+        int[] bounds = PageConstants.sliceBounds(current, size, all.size());
+        return new PageResult<>(all.size(), all.subList(bounds[0], bounds[1]));
+    }
+
     /** SPOOL 文件内容读取（文本流） */
     public java.io.InputStream spoolFileContent(String jobName, String jobUser, String jobNumber,
                                                 String spoolName, String outputQueue) {
@@ -210,6 +234,14 @@ public class JobService implements IJobService {
     /** 历史日志查询（QSYS2.HISTORY_LOG_INFO） */
     public List<Map<String, Object>> historyLog(String jobName, String fromDate, String toDate) {
         return clientProvider.current().historyLog(jobName, fromDate, toDate);
+    }
+
+    /** 分页历史日志查询 */
+    public PageResult<Map<String, Object>> historyLogPage(String jobName, String fromDate, String toDate,
+                                                         int current, int size) {
+        List<Map<String, Object>> all = historyLog(jobName, fromDate, toDate);
+        int[] bounds = PageConstants.sliceBounds(current, size, all.size());
+        return new PageResult<>(all.size(), all.subList(bounds[0], bounds[1]));
     }
 
     private void requireJob(String jobName, String jobUser, String jobNumber) {

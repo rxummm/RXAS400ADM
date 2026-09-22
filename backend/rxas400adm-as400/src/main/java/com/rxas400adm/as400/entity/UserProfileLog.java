@@ -29,6 +29,12 @@ public class UserProfileLog {
     /** 操作详情 */
     private String detail;
 
+    /** 删除原因（仅DELETE操作有效） */
+    private String deleteReason;
+
+    /** 删除类型：MANUAL/INACTIVE_90D/AUTO_EXPIRE */
+    private String deletionType;
+
     /** 创建时间 */
     private LocalDateTime createdTime;
 }

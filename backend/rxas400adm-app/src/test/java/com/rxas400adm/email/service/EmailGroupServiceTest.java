@@ -55,6 +55,7 @@ class EmailGroupServiceTest {
 
     @Test
     @DisplayName("delete() — 正常删除分组及成员")
+    @SuppressWarnings("unchecked")
     void delete_normal() {
         EmailRecipientGroup group = new EmailRecipientGroup();
         group.setId(1L);
@@ -77,6 +78,7 @@ class EmailGroupServiceTest {
 
     @Test
     @DisplayName("addMember() — 正常添加成员")
+    @SuppressWarnings("unchecked")
     void addMember_normal() {
         EmailRecipientGroup group = new EmailRecipientGroup();
         group.setId(1L);
@@ -93,6 +95,7 @@ class EmailGroupServiceTest {
 
     @Test
     @DisplayName("addMember() — 重复邮箱抛异常")
+    @SuppressWarnings("unchecked")
     void addMember_duplicate_throws() {
         EmailRecipientGroup group = new EmailRecipientGroup();
         group.setId(1L);
@@ -106,6 +109,7 @@ class EmailGroupServiceTest {
 
     @Test
     @DisplayName("members() — 返回分组成员列表")
+    @SuppressWarnings("unchecked")
     void members_normal() {
         EmailRecipient r = new EmailRecipient();
         r.setId(1L);

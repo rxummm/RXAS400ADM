@@ -3,6 +3,7 @@ package com.rxas400adm.system.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.system.dto.SysMenuDTO;
 import com.rxas400adm.system.entity.SysMenu;
 import com.rxas400adm.system.mapper.SysMenuMapper;
@@ -54,10 +55,7 @@ public class MenuManageService {
 
     /** 更新菜单（字段非空才覆盖；parentId 环校验） */
     public SysMenu update(Long id, SysMenuDTO dto) {
-        SysMenu menu = menuMapper.selectById(id);
-        if (menu == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "Menu not found: " + id);
-        }
+        SysMenu menu = EntityUtil.require(id, "Menu", menuMapper::selectById);
         if (dto.getParentId() != null && !dto.getParentId().equals(menu.getId())) {
             if (menuMapper.selectById(dto.getParentId()) == null) {
                 throw new BusinessException(ErrorCode.BAD_REQUEST, "Parent menu not found: " + dto.getParentId());
@@ -99,9 +97,7 @@ public class MenuManageService {
 
     /** 删除菜单（有子节点则拒绝） */
     public void delete(Long id) {
-        if (menuMapper.selectById(id) == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "Menu not found: " + id);
-        }
+        EntityUtil.require(id, "Menu", menuMapper::selectById);
         Long children = menuMapper.selectCount(new LambdaQueryWrapper<SysMenu>()
                 .eq(SysMenu::getParentId, id));
         if (children > 0) {

@@ -110,11 +110,6 @@ withDefaults(
   margin-bottom: 10px !important;
   width: 40% !important;
 }
-.rx-skeleton-row--title {
-  height: 18px !important;
-  margin-bottom: 10px !important;
-  width: 40% !important;
-}
 /* 骨架屏→内容淡入淡出过渡 */
 .rx-skeleton-fade-enter-active,
 .rx-skeleton-fade-leave-active {

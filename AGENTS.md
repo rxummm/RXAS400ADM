@@ -3,7 +3,7 @@
 > **⚠️ 编码规范权威文档：[`CODING_STANDARDS.md`](CODING_STANDARDS.md)（176 条规则，17 章节）。**
 > **opencode 每次写代码前必须先读取该文件**（`Read CODING_STANDARDS.md`），本文档仅作架构补充。
 
-Spring Boot 3.3 (Java 17) 多模块 Maven + Vue 3 (TypeScript, Vite) 前后端分离项目。
+Spring Boot 3.5.16 (Java 17) 多模块 Maven + Vue 3 (TypeScript, Vite) 前后端分离项目。
 包名/工程名：`com.rxas400adm` / `rxas400adm-*`；数据库：MySQL 8，库名 `rxas400adm`。
 模块：`common / system / security / as400 / source / monitor / app`（deploy 已于 V30 下线、compile 已于 V56 下线移除，见 `backend/pom.xml`）。
 前端：Vue3 + TS + Vite + Element Plus + Pinia + vue-i18n（zh-CN / en-US）+ ECharts + @stomp/stompjs。
@@ -22,22 +22,9 @@ Spring Boot 3.3 (Java 17) 多模块 Maven + Vue 3 (TypeScript, Vite) 前后端�
 | `RXAS400_JWT_SECRET=<32+字节随机值> java -jar backend/rxas400adm-app/target/rxas400adm-app-1.0.0-SNAPSHOT.jar --spring.datasource.password=root --spring.profiles.active=prod` | 生产启动（**必须** `prod` 档 + 设 `RXAS400_JWT_SECRET` 环境变量，否则 `StartupGuard` 拒启；`prod` 下 AS400 走真实 `JTOpenAS400Client` 连 IBM i）。推荐直接用 `scripts/start-backend.sh`（已内置 `--spring.profiles.active=prod` 并自动加载 env） |
 | `cd frontend && npm run dev` | 前端 dev server（5173，代理 /api、/ws 到 8080） |
 | `cd frontend && npm run build` | 前端构建验证 |
-| `cd docs && npm run dev` | 审计文档站（VitePress，默认 5174）：Trae 报告按章拆页 + 合订本单页 + 全文搜索 |
-| `cd docs && npm run split:trae && npm run build` | 重新拆页 + 构建文档站（源报告修改后必须重跑拆页） |
 
 默认演示账号：`admin` / `admin123`。API 文档：`http://localhost:8080/swagger-ui.html`（springdoc）。
 本机 MySQL：`root` / `root` @ `localhost:3306`。数据库已存在且由 Flyway 管理（`backend/rxas400adm-app/src/main/resources/db/migration/`），**不要手动改表结构，用新迁移文件**。
-
-## 审计文档站（VitePress，2026-08-15 落地）
-
-`docs/` 下独立 VitePress 站点（自带 `package.json`，依赖 `vitepress` + `vitepress-plugin-mermaid` + `mermaid`；`config.ts` 用 `withMermaid()` 包裹，站内 `mermaid` 代码块直接渲染，如 `flowcharts/modules-mermaid-source.md`）：
-
-> 流程图编辑 / 新模块画图 / 挂系统侧边栏菜单：见根目录《模块流程图与菜单接入指南.md》（含 iframe 内嵌与外链两种菜单方案及门禁影响）。
-
-- **Trae 审计报告按章拆页**：`npm run split:trae` 把 `Trae-RXAS400ADM-2026-08-15.md` 按 `## ` 章标题拆成 `docs/review/trae/{nn}-{slug}.md`（19 页，附录 → 99-）；**源报告修改后必须重跑拆页**，否则站点内容过期。
-- **合订本保持单页全文**（线性 review 日志，拆页反而不利导航）；全文搜索（`provider: local`）覆盖站内所有页面。
-- **站点收录白名单**：首页 + `review/trae/*` + 合订本 + 上手指南 + 避坑指南；其余历史遗留 md（`项目开发步骤追踪.md` 等已并入合订本）在 `config.ts` 的 `srcExclude` 排除——**不要**往 `docs/` 随便丢 .md，会被 VitePress 当页面编译（未闭合 HTML 标签会直接 build 失败，实测踩过：`List<Metric>` 未包反引号 → `Element is missing end tag`）。
-- 合订本/其他被站点收录的 md 中，**HTML 尖括号必须包反引号**（如 `List<Metric>` → `` `List<Metric>` ``），否则 vue 编译报未闭合标签。
 
 ## ⚠️ Windows 中文编码警告（务必阅读）
 
@@ -67,6 +54,7 @@ mysql -uroot -proot -D rxas400adm -e "SOURCE script.sql"
 - **多模块 Maven**：`rxas400adm-app` 是唯一启动模块（`com.rxas400adm.Rxas400admApplication`），`@MapperScan("com.rxas400adm.**.mapper")`
 - **统一返回**：`ApiResponse{ code:0, message, data }`，code=0 成功；错误码见 `ErrorCode` 枚举（按域分段）
 - **认证**：Spring Security 6 + JWT（`rxas400adm-security`），`@PreAuthorize` 权限码（如 `DEPLOY_EXECUTE`、`DEPLOY_APPROVE`）
+- **测试 Mock**：Spring Boot 3.4+ 起 `@MockBean` 已废弃，测试类 Mock 注入**必须**用 `@MockitoBean`（`org.springframework.test.context.bean.override.mockito.MockitoBean`）
 - **审计**：写操作加 `@OperateLog(module=..., operation=...)` 注解，AOP 自动写 `rx_audit_log`
 - **多 AS400 服务器**：前端发 `X-AS400-Server: <id>` 头 → `As400ServerIdInterceptor` → `As400ServerContextHolder`(ThreadLocal) → `AS400ClientProvider` 按服务器取客户端（mock 模式开发 / JT400 模式生产）
 - **IBM i 访问抽象**：业务代码不允许直接 `new AS400(...)`，一律经 `AS400Client` 接口（`MockAS400Client` / `JTOpenAS400Client`）
@@ -180,7 +168,7 @@ bash scripts/verify-all.sh                                 # 一键门禁：分�
 | `frontend/scripts/check-template-classes.mjs` | 模板自定义 class 必须有适用作用域样式定义：全局（common.css/theme.css + 未标 scoped 的 `<style>` 块 + `:deep()` 穿透类）／ 本组件 style 块 ／ 父组件 scoped 对子组件**根元素**豁免（Vue scoped 真实语义，组件树经 import+模板标签解析）；`:style="..."` 绑定屏蔽不提取（内联样式非 class）；白名单 el-*/fa-*/v-enter | **无**（73 .vue + 2 全局 CSS 全绿） | 并入 `npm run lint` + `verify-all` | 实测抓到 header 按钮样式丢失（父 scoped 到不了子组件内部）；新增样式必须按「作用域归属」放置：子组件要用的样式放全局块或该子组件自己的 style 块，禁止依赖父组件 scoped |
 | `frontend/src/__tests__/gates.test.ts` | 门禁脚本自身的回归测试：插槽 R1/R2、分层 R1~R3、V38 一致性、迁移结构 fixture 驱动、拼行检测、模板 class scoped 判定/:style/子根豁免、i18n prefix.add、菜单页禁 default-expand-all（共 75 例） | — | frontend.yml `Unit tests (vitest)` | 防改脚本时破坏检测逻辑 |
 | `frontend/scripts/check-i18n.mjs` | i18n key 一致性（$t 引用存在于 zh-CN、zh-CN/en-US key 集合一致）+ useFormDialog `i18nPrefix` 命名空间必须含 `add` 键（新增弹窗标题） | — | frontend.yml `i18n key check` | `npm run check:i18n`；walk 排除 `__tests__`/`*.test.ts`（测试 fixture 非源码） |
-| `scripts/verify-fresh-db.sh` | M1 全新库单源一致性（V1~V42 迁移后断言结构计数 = V38 种子） | — | backend.yml `Verify fresh-DB M1 consistency` | 需 mysql 客户端 + 已打包 jar + 本地 MySQL；V38 种子变更须同步 V38_EXPECT_* |
+| `scripts/verify-fresh-db.sh` | M1 全新库单源一致性（全部迁移后断言结构计数 = V38 种子 + 后置增量） | — | backend.yml `Verify fresh-DB M1 consistency` | 需 mysql 客户端 + 已打包 jar + 本地 MySQL；V38 种子变更须同步 V38_EXPECT_* |
 | `scripts/check-v38-consistency.mjs` | V38 种子 ↔ V38_EXPECT_* 静态一致（解析 V38 SQL 算出行数，无需 MySQL） | — | backend.yml `V38 seed static consistency` | 静态快校验，V38 与期望值任一侧漂移即失败 |
 | `scripts/check-migrations.mjs` | 迁移结构一致性：V{n}__desc.sql 命名/版本连续唯一、表/索引跨迁移去重、空迁移拦截、MANIFEST 文档化对象断言（V40/V41/V42） | 1 对已知遗留（V29/V30 重复建 rx_scheduler_lock，IF NOT EXISTS 幂等不可删） | backend.yml `Migration structure consistency` | 新增迁移必须按脚本头「固定模板」（命名/幂等/进 MANIFEST）；无需 MySQL；有 vitest 回归 |
 | `scripts/check-transactional.sh` | 事务注解一致性：任何 `@Transactional` 必须显式 `rollbackFor = Exception.class`（裸注解/无 rollbackFor 变体即失败） | **无**（55 处已全量补齐，零遗留起步） | backend.yml `Transaction rollbackFor consistency` | 新增裸注解即失败；支持传目标目录供回归测试；无需 MySQL |

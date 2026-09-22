@@ -1,8 +1,7 @@
 package com.rxas400adm.as400.service;
 
 import com.rxas400adm.as400.vo.BpcsShipmentVO;
-
-import java.util.List;
+import com.rxas400adm.common.response.PageResult;
 
 /**
  * ㊳ 运单管理接口。
@@ -10,5 +9,5 @@ import java.util.List;
 public interface IBpcsShipmentMgmtService {
 
     /** 运单列表 */
-    List<BpcsShipmentVO> listShipments(String cono, int limit);
+    PageResult<BpcsShipmentVO> listShipments(String cono, int current, int size);
 }

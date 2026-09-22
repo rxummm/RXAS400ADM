@@ -6,26 +6,26 @@
         class="w-200"
         :placeholder="$t('bpcs.whReplenish.itemPlaceholder')"
         clearable
-        @keyup.enter="search"
+        @keyup.enter="forceSearch"
       />
       <el-input
         v-model="query.itdsc"
         class="w-200"
         :placeholder="$t('bpcs.whReplenish.itdscPlaceholder')"
         clearable
-        @keyup.enter="search"
+        @keyup.enter="forceSearch"
       />
       <el-checkbox v-model="query.belowSafetyOnly" class="ml8">
         {{ $t('bpcs.whReplenish.belowSafetyOnly') }}
       </el-checkbox>
-      <el-button type="primary" :loading="loading" @click="search">
+      <el-button type="primary" :loading="loading" @click="forceSearch">
         {{ $t('common.search') }}
       </el-button>
     </div>
 
     <div class="table-wrapper">
       <el-table
-        :data="items"
+        :data="tableData"
         v-loading="loading"
         size="small"
         border
@@ -57,8 +57,8 @@
           <template #default="{ row }">{{ row.warehouses?.length ?? 0 }}</template>
         </el-table-column>
       </el-table>
-      <AppPagination v-if="total > 0" :total="total" v-model:current="current" v-model:size="size" @change="search" @size-change="search" />
-      <el-empty v-if="searched && !loading && items.length === 0" :description="$t('common.noData')" />
+      <AppPagination v-if="total > 0" :total="total" v-model:current="current" v-model:size="size" @change="forceSearch" @size-change="forceSearch" />
+      <el-empty v-if="!loading && tableData.length === 0" :description="$t('common.noData')" />
     </div>
 
     <el-drawer
@@ -112,34 +112,24 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { searchWarehouseReplenish, type WarehouseReplenishItem } from '@/api/bpcs'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import AppPagination from '@/components/AppPagination.vue'
 
 defineOptions({ name: 'BpcsWhReplenish' })
 
 const query = reactive({ item: '', itdsc: '', belowSafetyOnly: false })
-const loading = ref(false)
-const searched = ref(false)
-const items = ref<WarehouseReplenishItem[]>([])
-const total = ref(0)
-const current = ref(1)
-const size = ref(20)
 const detailVisible = ref(false)
 const detailItem = ref<WarehouseReplenishItem | null>(null)
 
-function search() {
-  loading.value = true
-  searched.value = true
-  const params: Record<string, string | number | boolean> = { current: current.value, size: size.value }
-  if (query.item.trim()) params.item = query.item.trim()
-  if (query.itdsc.trim()) params.itdsc = query.itdsc.trim()
-  if (query.belowSafetyOnly) params.belowSafetyOnly = true
-  searchWarehouseReplenish(params)
-    .then(data => {
-      items.value = data.records
-      total.value = data.total
-    })
-    .finally(() => { loading.value = false })
-}
+const { tableData, loading, current, size, total, forceSearch } = useSmartQueryTable<WarehouseReplenishItem>({
+  fetchApi: (params) => {
+    const p: Record<string, string | number | boolean> = { current: params.current!, size: params.size! }
+    if (query.item.trim()) p.item = query.item.trim()
+    if (query.itdsc.trim()) p.itdsc = query.itdsc.trim()
+    if (query.belowSafetyOnly) p.belowSafetyOnly = true
+    return searchWarehouseReplenish(p)
+  },
+})
 
 function openDetail(row: WarehouseReplenishItem) {
   detailItem.value = row

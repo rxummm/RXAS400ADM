@@ -99,8 +99,8 @@ class AesCryptoServiceTest {
 
     @Test
     void invalidPbkdf2Iterations_throws() {
-        assertThrows(IllegalArgumentException.class, () -> new AesCryptoService(KEY, 0));
-        assertThrows(IllegalArgumentException.class, () -> new AesCryptoService(KEY, -1));
+        assertThrows(com.rxas400adm.common.exception.BusinessException.class, () -> new AesCryptoService(KEY, 0));
+        assertThrows(com.rxas400adm.common.exception.BusinessException.class, () -> new AesCryptoService(KEY, -1));
     }
 
     @Test

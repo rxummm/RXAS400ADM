@@ -7,7 +7,9 @@ import com.rxas400adm.as400.vo.BpcsShipmentVO;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.annotation.OperateLogModule;
 import com.rxas400adm.common.annotation.OperateLogOperation;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -22,33 +24,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * ㊳ 运单管理 Controller。
- */
 @RestController
 @RequestMapping("/api/v1/bpcs/shipment")
 @RequiredArgsConstructor
 @Tag(name = "BPCS Shipment Management", description = "Shipment and waybill management")
 public class BpcsShipmentMgmtController {
-
     private final IBpcsShipmentMgmtService service;
     private final WaybillPdfRenderer pdfRenderer;
 
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('BPCS_VIEW')")
-    public ApiResponse<List<BpcsShipmentVO>> list(
+    public ApiResponse<PageResult<BpcsShipmentVO>> list(
             @RequestParam(defaultValue = "001") String cono,
-            @RequestParam(defaultValue = "50") int limit) {
-        return ApiResponse.success(service.listShipments(cono, limit));
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "20") Integer size) {
+        current = (int) PageConstants.clampNum(current);
+        size = (int) PageConstants.clampSize(size);
+        return ApiResponse.success(service.listShipments(cono, current, size));
     }
 
-    /**
-     * ㊼ 运输单 PDF 导出。
-     *
-     * @param waybillNo 运单号
-     * @param params    运单数据（shipFrom/shipTo/carrier/weight/items/notes）
-     * @return PDF 文件流
-     */
     @PostMapping("/pdf")
     @PreAuthorize("hasAuthority('BPCS_VIEW')")
     @OperateLog(module = OperateLogModule.BPCS_SHIPMENT, operation = OperateLogOperation.EXPORT_SHIPMENT_PDF)

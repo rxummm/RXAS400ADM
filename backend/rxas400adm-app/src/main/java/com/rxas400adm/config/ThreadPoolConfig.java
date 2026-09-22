@@ -80,4 +80,23 @@ public class ThreadPoolConfig {
         executor.initialize();
         return executor;
     }
+
+    /**
+     * 邮件发送线程池（2 线程，队列容量 50）。
+     * 用途：EmailService 异步发送 SMTP 邮件，避免阻塞业务主线程。
+     * Discard+日志：邮件发送非关键路径，队列满时丢弃并记录告警，不拖垮调用方。
+     */
+    @Bean("emailSendPool")
+    public Executor emailSendPool() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(2);
+        executor.setQueueCapacity(50);
+        executor.setThreadNamePrefix("email-send-");
+        executor.setDaemon(true);
+        executor.setRejectedExecutionHandler((r, exec) ->
+                log.warn("[emailSend] queue full, dropping email task"));
+        executor.initialize();
+        return executor;
+    }
 }

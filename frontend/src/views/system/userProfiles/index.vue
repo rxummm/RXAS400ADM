@@ -23,6 +23,7 @@
         <el-table-column prop="TEXT_DESCRIPTION" :label="$t('userProfile.description')" min-width="160" show-overflow-tooltip />
         <el-table-column prop="LAST_USED_DATE" :label="$t('userProfile.lastUsed')" width="120" />
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="load" @size-change="load" />
       <el-empty v-if="!loading && profiles.length === 0" :description="$t('common.noData')" />
     </div>
 
@@ -56,18 +57,25 @@ import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { fetchUserProfiles, switchUser, type UserProfileList } from '@/api/userProfiles'
+import AppPagination from '@/components/AppPagination.vue'
 
 const { t } = useI18n()
 const loading = ref(false)
 const profiles = ref<UserProfileList[]>([])
+const total = ref(0)
+const current = ref(1)
+const size = ref(20)
 const switchVisible = ref(false)
 const switchTarget = ref('')
 const switching = ref(false)
 
 function load() {
   loading.value = true
-  fetchUserProfiles()
-    .then(data => { profiles.value = data })
+  fetchUserProfiles({ current: current.value, size: size.value })
+    .then(data => {
+      profiles.value = data.records
+      total.value = data.total
+    })
     .catch(() => {})
     .finally(() => { loading.value = false })
 }

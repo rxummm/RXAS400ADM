@@ -151,7 +151,7 @@ public class AuthController {
     /** 手动解锁（清除该用户名在指定服务器上的失败记录；serverId 缺省为平台） */
     @DeleteMapping("/login-attempts/{username}")
     @PreAuthorize("hasAuthority('USER_MANAGE')")
-    @OperateLog(module = "Login Security", operation = "Manual unlock account")
+    @OperateLog(module = OperateLogModule.LOGIN_SECURITY, operation = OperateLogOperation.UNLOCK_USER)
     public ApiResponse<Void> unlock(@PathVariable String username,
                                     @RequestParam(required = false) Long serverId) {
         loginAttemptService.clearFailure(username, serverId);

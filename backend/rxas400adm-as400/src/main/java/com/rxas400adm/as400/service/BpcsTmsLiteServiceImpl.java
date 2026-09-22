@@ -2,6 +2,7 @@ package com.rxas400adm.as400.service;
 
 import com.rxas400adm.as400.vo.BpcsTmsLiteVO;
 import com.rxas400adm.common.config.ProfileResolver;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,19 +22,19 @@ public class BpcsTmsLiteServiceImpl implements IBpcsTmsLiteService {
     private final ProfileResolver profileResolver;
 
     @Override
-    public List<BpcsTmsLiteVO.RoutePlan> getRoutePlans(String cono, int limit) {
+    public PageResult<BpcsTmsLiteVO.RoutePlan> getRoutePlans(String cono, int current, int size) {
         if (profileResolver.isMockMode()) {
-            return mockRoutePlans();
+            return new PageResult<>(mockRoutePlans().size(), mockRoutePlans());
         }
-        return mockRoutePlans();
+        return new PageResult<>(mockRoutePlans().size(), mockRoutePlans());
     }
 
     @Override
-    public List<BpcsTmsLiteVO.CarrierComparison> getCarrierComparison(String cono) {
+    public PageResult<BpcsTmsLiteVO.CarrierComparison> getCarrierComparison(String cono, int current, int size) {
         if (profileResolver.isMockMode()) {
-            return mockCarrierComparison();
+            return new PageResult<>(mockCarrierComparison().size(), mockCarrierComparison());
         }
-        return mockCarrierComparison();
+        return new PageResult<>(mockCarrierComparison().size(), mockCarrierComparison());
     }
 
     @Override
@@ -45,23 +46,21 @@ public class BpcsTmsLiteServiceImpl implements IBpcsTmsLiteService {
     }
 
     @Override
-    public List<BpcsTmsLiteVO.DeliveryTracking> getDeliveryTracking(String cono, String status, int limit) {
+    public PageResult<BpcsTmsLiteVO.DeliveryTracking> getDeliveryTracking(String cono, String status, int current, int size) {
         if (profileResolver.isMockMode()) {
-            return mockDeliveryTracking();
+            return new PageResult<>(mockDeliveryTracking().size(), mockDeliveryTracking());
         }
-        return mockDeliveryTracking();
+        return new PageResult<>(mockDeliveryTracking().size(), mockDeliveryTracking());
     }
 
     @Override
     public BpcsTmsLiteVO getAll(String cono, int months) {
         return new BpcsTmsLiteVO(
-                getRoutePlans(cono, 50),
-                getCarrierComparison(cono),
+                getRoutePlans(cono, 1, 50).getRecords(),
+                getCarrierComparison(cono, 1, 50).getRecords(),
                 getFreightAnalysis(cono, months),
-                getDeliveryTracking(cono, null, 50));
+                getDeliveryTracking(cono, null, 1, 50).getRecords());
     }
-
-    // ==================== Mock 数据 ====================
 
     private List<BpcsTmsLiteVO.RoutePlan> mockRoutePlans() {
         List<BpcsTmsLiteVO.RoutePlan> routes = new ArrayList<>();

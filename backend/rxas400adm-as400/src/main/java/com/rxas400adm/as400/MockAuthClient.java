@@ -2,6 +2,7 @@ package com.rxas400adm.as400;
 
 import com.rxas400adm.as400.model.UserProfileListRow;
 import com.rxas400adm.as400.model.UserProfileRow;
+import com.rxas400adm.common.response.PageResult;
 
 import java.util.List;
 
@@ -37,14 +38,21 @@ class MockAuthClient implements AuthClient {
     }
 
     @Override
-    public List<UserProfileListRow> listUserProfiles() {
-        return List.of(
+    public PageResult<UserProfileListRow> listUserProfilesPaged(int current, int size) {
+        List<UserProfileListRow> all = List.of(
                 new UserProfileListRow("QSECOFR", "*ENABLED", "GRPADM", "Security Officer", "2026-08-27"),
                 new UserProfileListRow("ADMIN", "*ENABLED", "GRPADM", "Administrator", "2026-08-27"),
                 new UserProfileListRow("DEVELOPER", "*ENABLED", "GRPDEV", "Developer", "2026-08-26"),
                 new UserProfileListRow("OPERATOR", "*ENABLED", "GRPOPR", "Operator", "2026-08-25"),
                 new UserProfileListRow("BATCH01", "*ENABLED", "GRPOPR", "Batch User", "2026-08-24")
         );
+        int total = all.size();
+        int fromIndex = (current - 1) * size;
+        int toIndex = Math.min(fromIndex + size, total);
+        if (fromIndex >= total) {
+            return new PageResult<>(total, List.of());
+        }
+        return new PageResult<>(total, all.subList(fromIndex, toIndex));
     }
 
     @Override

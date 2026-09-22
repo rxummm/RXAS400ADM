@@ -162,13 +162,6 @@ const fmtMoney = (v: number | null | undefined) => formatMoney(v, 0)
 }
 .summary-value {
   font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-.summary-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 4px;
 }
 .chart-container {
   width: 100%;

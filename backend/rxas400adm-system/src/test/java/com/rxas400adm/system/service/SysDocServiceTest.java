@@ -2,6 +2,7 @@ package com.rxas400adm.system.service;
 
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.system.dto.SysDocDTO;
@@ -148,11 +149,11 @@ class SysDocServiceTest {
         verify(sysDocMapper).deleteById(1L);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("list → 关键字搜索含 title 和 content")
     void list_withKeyword_shouldSearchTitleAndContent() {
-        com.baomidou.mybatisplus.extension.plugins.pagination.Page<SysDoc> page =
-                new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(1, 10);
+        Page<SysDoc> page = new Page<>(1, 10);
         page.setTotal(0);
         page.setRecords(List.of());
         when(sysDocMapper.selectPage(any(), any(LambdaQueryWrapper.class))).thenReturn(page);
@@ -162,11 +163,11 @@ class SysDocServiceTest {
         verify(sysDocMapper).selectPage(any(), any(LambdaQueryWrapper.class));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("list → status/category 过滤")
     void list_withFilters_shouldApplyEq() {
-        com.baomidou.mybatisplus.extension.plugins.pagination.Page<SysDoc> page =
-                new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(1, 10);
+        Page<SysDoc> page = new Page<>(1, 10);
         page.setTotal(0);
         page.setRecords(List.of());
         when(sysDocMapper.selectPage(any(), any(LambdaQueryWrapper.class))).thenReturn(page);

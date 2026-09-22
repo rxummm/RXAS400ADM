@@ -28,6 +28,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="load" @size-change="load" />
     </div>
 
     <!-- 新增/编辑对话框 -->
@@ -93,6 +94,7 @@ import { useI18n } from 'vue-i18n'
 import { listRcmx, getRcmx, createRcmx, updateRcmx, deleteRcmx, importRcmx, exportRcmx, type RcmxAssignment } from '@/api/bpcs'
 import { UploadFilled } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
+import AppPagination from '@/components/AppPagination.vue'
 
 const { t } = useI18n()
 
@@ -100,6 +102,9 @@ const custLike = ref('')
 const csrLike = ref('')
 const loading = ref(false)
 const rows = ref<RcmxAssignment[]>([])
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
 const dialogVisible = ref(false)
 const importVisible = ref(false)
 const resultVisible = ref(false)
@@ -118,7 +123,9 @@ const form = ref({
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listRcmx('001', custLike.value || undefined, csrLike.value || undefined)
+    const res = await listRcmx({ cono: '001', custLike: custLike.value || undefined, csrLike: csrLike.value || undefined, current: current.value, size: size.value })
+    rows.value = res.records
+    total.value = res.total
   } finally {
     loading.value = false
   }

@@ -3,21 +3,21 @@
     <!-- ── 搜索区 ───────────────────────────────────────── -->
     <div class="search-bar">
       <el-input
-        v-model="lhno"
+        v-model="keyword"
         class="w-200"
         :placeholder="$t('bpcs.shipping.lhnoPlaceholder')"
         clearable
-        @keyup.enter="search"
+        @keyup.enter="forceSearch"
       />
-      <el-button type="primary" :loading="loading" @click="search">
+      <el-button type="primary" :loading="loading" @click="forceSearch">
         {{ $t('common.search') }}
       </el-button>
       <ExportDropdown
-        :data="loads"
+        :data="records"
         :columns="exportColumns"
         :title="$t('bpcs.menu.shipping')"
         :export-url="BPCS_EXPORT.shipping"
-        :query-params="{ lhno }"
+        :query-params="{ lhno: keyword }"
       />
       <span class="hint">{{ $t('bpcs.shipping.hint') }}</span>
     </div>
@@ -70,7 +70,7 @@
           <el-empty v-if="col.items.length === 0" :image-size="48" description="" />
         </div>
       </div>
-      <AppPagination v-if="total > 0" :total="total" v-model:current="current" v-model:size="size" @change="search" @size-change="search" />
+      <AppPagination v-if="total > 0" :total="total" v-model:current="current" v-model:size="size" @change="forceSearch" @size-change="forceSearch" />
     </div>
 
     <!-- ── 详情抽屉 ──────────────────────────────────── -->
@@ -115,6 +115,7 @@
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { searchLoads, type BpcsLoad, BPCS_EXPORT } from '@/api/bpcs'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import AppPagination from '@/components/AppPagination.vue'
 import ExportDropdown from '@/components/ExportDropdown.vue'
 import type { ExportColumn } from '@/components/ExportButton.vue'
@@ -123,12 +124,14 @@ const { t } = useI18n()
 
 defineOptions({ name: 'BpcsShipping' })
 
-const lhno = ref('')
-const loading = ref(false)
-const loads = ref<BpcsLoad[]>([])
-const total = ref(0)
-const current = ref(1)
-const size = ref(20)
+const { keyword, records, loading, current, size, total, forceSearch } = useSmartQueryTable<BpcsLoad>({
+  fetchApi: (params) => {
+    const q: Record<string, string | number> = { current: params.current!, size: params.size! }
+    if (keyword.value.trim()) q.lhno = keyword.value.trim()
+    return searchLoads(q)
+  },
+})
+
 const detailVisible = ref(false)
 const detailLoad = ref<BpcsLoad | null>(null)
 
@@ -157,24 +160,12 @@ const kanbanColumns = computed<KanbanColumn[]>(() => {
     { status: 2, titleKey: 'bpcs.loadStatus.released', color: 'var(--el-color-warning)', tagType: 'warning', items: [] },
     { status: 3, titleKey: 'bpcs.loadStatus.dispatched', color: 'var(--color-success)', tagType: 'success', items: [] },
   ]
-  for (const load of loads.value) {
+  for (const load of records.value) {
     const col = cols.find(c => c.status === load.status)
     if (col) col.items.push(load)
   }
   return cols
 })
-
-function search() {
-  loading.value = true
-  const params: Record<string, string | number> = { current: current.value, size: size.value }
-  if (lhno.value.trim()) params.lhno = lhno.value.trim()
-  searchLoads(params)
-    .then(data => {
-      loads.value = data.records
-      total.value = data.total
-    })
-    .finally(() => { loading.value = false })
-}
 
 function openDetail(load: BpcsLoad) {
   detailLoad.value = load

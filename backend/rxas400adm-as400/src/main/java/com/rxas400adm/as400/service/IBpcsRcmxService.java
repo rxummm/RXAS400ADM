@@ -3,6 +3,7 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.dto.BpcsRcmxConfigDTO;
 import com.rxas400adm.as400.dto.BpcsRcmxImportResult;
 import com.rxas400adm.as400.vo.*;
+import com.rxas400adm.common.response.PageResult;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,7 +16,7 @@ import java.util.List;
 public interface IBpcsRcmxService {
 
     /** 分页查询分配列表 */
-    List<BpcsRcmxAssignmentVO> listAssignments(String cono, String custLike, String csrLike, int limit);
+    PageResult<BpcsRcmxAssignmentVO> listAssignments(String cono, String custLike, String csrLike, int current, int size);
 
     /** 查询单条分配 */
     BpcsRcmxAssignmentVO getAssignment(String cono, String cust);

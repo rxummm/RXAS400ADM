@@ -33,6 +33,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="load" @size-change="load" />
     </div>
 
     <!-- 新增/编辑对话框 -->
@@ -120,6 +121,7 @@ defineOptions({ name: 'BpcsWabp' })
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import AppPagination from '@/components/AppPagination.vue'
 
 const { t } = useI18n()
 import { listWabp, getWabp, createWabp, updateWabp, deleteWabp, importWabp, exportWabp, type WabpConfig } from '@/api/bpcs'
@@ -128,6 +130,9 @@ import * as XLSX from 'xlsx'
 
 const loading = ref(false)
 const rows = ref<WabpConfig[]>([])
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
 const dialogVisible = ref(false)
 const importVisible = ref(false)
 const resultVisible = ref(false)
@@ -161,7 +166,9 @@ const dayLabel = (d: number) => dayOptions.find(o => o.value === d)?.label || St
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listWabp(queryWh.value || '001')
+    const res = await listWabp({ cono: queryWh.value || '001', current: current.value, size: size.value })
+    rows.value = res.records
+    total.value = res.total
   } finally {
     loading.value = false
   }

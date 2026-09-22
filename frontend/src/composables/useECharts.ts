@@ -17,7 +17,7 @@
  *   // 数据到达时：
  *   cpu.setOption({ series: [{ data: cpuData.value }] })
  */
-import { onActivated, onBeforeUnmount, onMounted, type Ref } from 'vue'
+import { onActivated, onBeforeUnmount, onMounted, type Ref, watch } from 'vue'
 import * as echarts from '@/utils/echarts'
 
 type EChartsInstance = ReturnType<typeof echarts.init>
@@ -26,11 +26,13 @@ export type ECOption = Parameters<EChartsInstance['setOption']>[0]
 
 export function useECharts(elRef: Ref<HTMLDivElement | undefined>, getBaseOption: () => ECOption) {
   let instance: EChartsInstance | null = null
+  let boundEl: HTMLDivElement | null = null
 
   /** 未初始化且元素已存在时立即 init 并应用基准配置；返回当前实例（可能为 null） */
   const ensureInit = (): EChartsInstance | null => {
     if (!instance && elRef.value) {
       instance = echarts.init(elRef.value)
+      boundEl = elRef.value
       instance.setOption(getBaseOption())
     }
     return instance
@@ -48,6 +50,16 @@ export function useECharts(elRef: Ref<HTMLDivElement | undefined>, getBaseOption
     instance?.resize()
   }
 
+  // 监听 DOM 元素重建（RxSkeleton v-if/v-else 切换会销毁再重建 chart div）
+  watch(elRef, (newEl) => {
+    if (newEl && instance && boundEl !== newEl) {
+      instance.dispose()
+      instance = null
+      boundEl = null
+    }
+    ensureInit()
+  })
+
   onMounted(ensureInit)
   onActivated(() => {
     ensureInit()?.resize()
@@ -58,6 +70,7 @@ export function useECharts(elRef: Ref<HTMLDivElement | undefined>, getBaseOption
     window.removeEventListener('resize', onResize)
     instance?.dispose()
     instance = null
+    boundEl = null
   })
 
   return { setOption, resize: onResize, getInstance }

@@ -3,6 +3,7 @@ package com.rxas400adm.system.controller;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.annotation.OperateLogModule;
 import com.rxas400adm.common.annotation.OperateLogOperation;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.SysPermissionDTO;
@@ -42,9 +43,11 @@ public class PermissionController {
     @GetMapping
     @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
     public ApiResponse<PageResult<PermissionVO>> page(@RequestParam(defaultValue = "1") long current,
-                                                      @RequestParam(defaultValue = "20") long size,
-                                                      @RequestParam(required = false) String keyword,
-                                                      @RequestParam(required = false) String module) {
+                                                       @RequestParam(defaultValue = "20") long size,
+                                                       @RequestParam(required = false) String keyword,
+                                                       @RequestParam(required = false) String module) {
+        current = PageConstants.clampNum(current);
+        size = PageConstants.clampSize(size);
         return ApiResponse.success(permissionService.page(keyword, module, current, size));
     }
 

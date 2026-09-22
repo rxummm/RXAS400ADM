@@ -8,7 +8,7 @@
     <div class="table-wrapper">
       <RxSkeleton type="table" :rows="8" :loading="loading">
         <el-table :data="tableData" size="small" border>
-          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="id" :label="$t('operation.id')" width="80" />
           <el-table-column prop="operationType" :label="$t('operation.type')" width="140" />
           <el-table-column prop="status" :label="$t('operation.status')" width="120">
             <template #default="{ row }">

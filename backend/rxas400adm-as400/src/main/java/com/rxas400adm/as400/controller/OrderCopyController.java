@@ -3,6 +3,8 @@ package com.rxas400adm.as400.controller;
 import com.rxas400adm.as400.service.IOrderCopyService;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,7 +24,7 @@ public class OrderCopyController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('BPCS_MANAGE')")
-    @OperateLog(module = "BPCS", operation = "复制订单")
+    @OperateLog(module = OperateLogModule.BPCS_ORDER_COPY, operation = OperateLogOperation.COPY_ORDER)
     public ApiResponse<String> copy(
             @RequestParam String cono,
             @RequestParam String sourceOrno) {

@@ -76,6 +76,7 @@ class ExecutionServiceTest {
 
     @Test
     @DisplayName("scheduleExecutions → 空结果返回空列表")
+    @SuppressWarnings("unchecked")
     void scheduleExecutions_empty_shouldReturnEmpty() {
         when(historyMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
 
@@ -85,6 +86,7 @@ class ExecutionServiceTest {
 
     @Test
     @DisplayName("scheduleExecutions → 关联 schedule 信息填充")
+    @SuppressWarnings("unchecked")
     void scheduleExecutions_withSchedule_shouldFillFields() {
         JobScheduleHistory h = history(1L, 10L, "SUCCESS");
         JobSchedule s = schedule(10L, "每日备份", "DAILY");
@@ -100,6 +102,7 @@ class ExecutionServiceTest {
 
     @Test
     @DisplayName("scheduleExecutions → status 过滤")
+    @SuppressWarnings("unchecked")
     void scheduleExecutions_withStatus_shouldFilter() {
         when(historyMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
 
@@ -109,6 +112,7 @@ class ExecutionServiceTest {
 
     @Test
     @DisplayName("scheduleExecutions → keyword 匹配 name/user/message")
+    @SuppressWarnings("unchecked")
     void scheduleExecutions_withKeyword_shouldMatch() {
         JobScheduleHistory h = history(1L, 10L, "SUCCESS");
         h.setMessage("CPU告警触发");
@@ -125,6 +129,7 @@ class ExecutionServiceTest {
 
     @Test
     @DisplayName("scriptExecutions → 脚本执行记录")
+    @SuppressWarnings("unchecked")
     void scriptExecutions_shouldReturn() {
         CommandScript script = new CommandScript();
         script.setId(1L);
@@ -143,6 +148,7 @@ class ExecutionServiceTest {
 
     @Test
     @DisplayName("scriptExecutions → null lastRunStatus 按 FAILED 处理")
+    @SuppressWarnings("unchecked")
     void scriptExecutions_nullStatus_shouldTreatAsFailed() {
         CommandScript script = new CommandScript();
         script.setId(1L);

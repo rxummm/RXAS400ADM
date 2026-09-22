@@ -3,6 +3,7 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.dto.BpcsWabpConfigDTO;
 import com.rxas400adm.as400.dto.BpcsWabpImportResult;
 import com.rxas400adm.as400.vo.BpcsWabpConfigVO;
+import com.rxas400adm.common.response.PageResult;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,7 +16,7 @@ import java.util.List;
 public interface IBpcsWabpService {
 
     /** 查询配置列表 */
-    List<BpcsWabpConfigVO> listConfigs(String cono, int limit);
+    PageResult<BpcsWabpConfigVO> listConfigs(String cono, int current, int size);
 
     /** 查询单条配置 */
     BpcsWabpConfigVO getConfig(String cono, String wh, int dayOfWeek);

@@ -54,6 +54,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="load" @size-change="load" />
       <el-empty v-if="!loading && alerts.length === 0" :description="$t('bpcs.inventoryAlert.allGood')" />
     </div>
   </div>
@@ -71,11 +72,15 @@ import { BPCS_EXPORT } from '@/api/bpcs'
 import ExportDropdown from '@/components/ExportDropdown.vue'
 import type { ExportColumn } from '@/components/ExportButton.vue'
 import { useStompClient } from '@/composables/useStompClient'
+import AppPagination from '@/components/AppPagination.vue'
 
 const { t } = useI18n()
 const cono = ref('001')
 const loading = ref(false)
 const alerts = ref<InventoryAlert[]>([])
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
 const wsConnected = ref(false)
 
 const exportColumns: ExportColumn[] = [
@@ -116,8 +121,8 @@ onMounted(() => {
 
 function load() {
   loading.value = true
-  getInventoryAlerts({ cono: cono.value || '001', limit: 100 })
-    .then(data => { alerts.value = data })
+  getInventoryAlerts({ cono: cono.value || '001', current: current.value, size: size.value })
+    .then(data => { alerts.value = data.records; total.value = data.total })
     .catch(() => {})
     .finally(() => { loading.value = false })
 }
@@ -140,17 +145,7 @@ function load() {
   border-color: var(--color-danger);
   background: var(--el-color-danger-light-9);
 }
-.summary-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
 .summary-card--danger .summary-value {
   color: var(--color-danger);
-}
-.summary-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 4px;
 }
 </style>

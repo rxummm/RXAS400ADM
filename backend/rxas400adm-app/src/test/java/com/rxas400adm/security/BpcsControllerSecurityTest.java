@@ -29,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = BpcsOrderController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, TestAopConfig.class})
 @DisplayName("BPCS Controller 权限门控")
+@SuppressWarnings("removal")
 class BpcsControllerSecurityTest {
 
     @Autowired

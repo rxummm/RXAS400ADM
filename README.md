@@ -1,29 +1,25 @@
 # RXAS400 — Enterprise IBM i Operation Platform
 
-基于 `docs/RXAS400-分析总结.md`（由三份 ChatGPT 设计文档整理）落地的 **IBM i（AS400）运维管理平台** MVP。
-
-> 设计文档来源：`docs/` 目录下三个 HTML 导出文件 → 详见 [docs/RXAS400-分析总结.md](docs/RXAS400-分析总结.md)
+**IBM i（AS400）运维管理平台** MVP。
 
 ## 技术栈
 
 | 端 | 技术 |
 | --- | --- |
-| 后端 | Java 17 · Spring Boot 3.3 · Spring Security 6 (JWT) · MyBatis Plus · MySQL 8 · Flyway · WebSocket (STOMP) · JT400 |
+| 后端 | Java 17 · Spring Boot 3.5.16 · Spring Security 6 (JWT) · MyBatis Plus · MySQL 8 · Flyway · WebSocket (STOMP) · JT400 |
 | 前端 | Vue 3 · TypeScript · Vite · Element Plus · ECharts · Pinia · vue-i18n · vue-router |
 
 ## 目录结构
 
 ```
 RXAS400
-├── docs/                          # 设计文档（HTML 原件 + 分析总结 md）
+├── docs/                          # 项目文档（分析/建议/审查报告 .md）
 ├── backend/                       # Spring Boot 多模块 Maven
 │   ├── rxas400adm-common          # 统一返回 / 异常 / 常量
 │   ├── rxas400adm-system          # 用户 / 角色 / 权限 (RBAC)
 │   ├── rxas400adm-security        # 登录 / JWT / 权限过滤
 │   ├── rxas400adm-as400           # IBM i 连接抽象（JT400 + Mock）
 │   ├── rxas400adm-source          # Source Library / File / Member
-│   ├── rxas400adm-compile         # 编译 (CRTBNDRPG 等)
-│   ├── rxas400adm-deploy          # 发布流水线 / 审批 / 回滚 / WebSocket 日志
 │   ├── rxas400adm-monitor         # 指标采集 / 告警 / WebSocket 推送
 │   └── rxas400adm-app             # 启动模块（配置 + Flyway + 演示数据）
 └── frontend/                      # Vue3 + TS + Vite
@@ -93,7 +89,7 @@ java -jar rxas400adm-app/target/rxas400adm-app-1.0.0-SNAPSHOT.jar \
 
 ## 文档
 
-- [分析总结](docs/RXAS400-分析总结.md) · [新旧项目对比](docs/RXAS400-vs-RXAS400ADM-对比分析.md) · [步骤追踪](docs/项目开发步骤追踪.md) · [部署 US400CND](docs/部署到US400CND.md)
+项目文档位于 `docs/` 目录，包含架构分析、Code Review 报告、部署指南等。
 
 ## 后续路线（对应设计文档 Phase 42+）
 

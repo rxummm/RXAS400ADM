@@ -2,9 +2,11 @@ package com.rxas400adm.as400.service;
 
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.sql.SqlStatementRegistry;
+import com.rxas400adm.as400.util.As400PaginationHelper;
 import com.rxas400adm.as400.util.BpcsRowUtil;
 import com.rxas400adm.as400.vo.BpcsInventoryAbcXyzVO;
 import com.rxas400adm.common.config.ProfileResolver;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,19 +33,20 @@ public class BpcsAbcXyzServiceImpl implements IBpcsAbcXyzService {
     private final ProfileResolver profileResolver;
 
     @Override
-    public List<BpcsInventoryAbcXyzVO> getMatrix(String cono, String fromDate, int limit) {
+    public PageResult<BpcsInventoryAbcXyzVO> getMatrix(String cono, String fromDate, int current, int size) {
         if (profileResolver.isMockMode()) {
-            return mockMatrix();
+            return new PageResult<>(mockMatrix().size(), mockMatrix());
         }
 
-        // 1. ABC 分析
+        // 1. ABC 分析 — 分页查询
         String abcSql = statements.get("bpcs.inv.abcAnalysis");
-        List<Map<String, Object>> abcRows = clientProvider.current().queryListCheckedBounded(abcSql, limit, cono);
+        PageResult<Map<String, Object>> abcPage = As400PaginationHelper.queryPaged(
+                clientProvider, abcSql, current, size, new Object[]{cono}, row -> row);
 
-        // 计算总价值
+        // 计算总价值 (基于当前页数据做百分比分类)
         BigDecimal totalValue = BigDecimal.ZERO;
         List<Map<String, Object>> enrichedRows = new ArrayList<>();
-        for (Map<String, Object> row : abcRows) {
+        for (Map<String, Object> row : abcPage.getRecords()) {
             BigDecimal sv = BpcsRowUtil.decOrNull(row, "STOCK_VALUE");
             if (sv != null) totalValue = totalValue.add(sv);
             enrichedRows.add(row);
@@ -66,9 +69,9 @@ public class BpcsAbcXyzServiceImpl implements IBpcsAbcXyzService {
             }
         }
 
-        // 2. XYZ 分析
+        // 2. XYZ 分析 — 批量获取构建映射
         String xyzSql = statements.get("bpcs.inv.xyzAnalysis");
-        List<Map<String, Object>> xyzRows = clientProvider.current().queryListCheckedBounded(xyzSql, limit, cono, fromDate);
+        List<Map<String, Object>> xyzRows = clientProvider.current().queryListCheckedBounded(xyzSql, 500, cono, fromDate);
         Map<String, Map<String, Object>> xyzMap = new HashMap<>();
         for (Map<String, Object> row : xyzRows) {
             xyzMap.put(pickStr(row, "ITEM"), row);
@@ -96,7 +99,7 @@ public class BpcsAbcXyzServiceImpl implements IBpcsAbcXyzService {
                     matrix
             ));
         }
-        return result;
+        return new PageResult<>(abcPage.getTotal(), result);
     }
 
     private String classifyXyz(BigDecimal cv) {

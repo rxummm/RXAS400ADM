@@ -44,7 +44,7 @@
             </el-button>
           </div>
           <RxSkeleton type="table" :rows="8" :loading="loading">
-            <el-table :data="pagedJobs" size="small" @selection-change="handleSelectionChange">
+            <el-table :data="pagedJobs" size="small" border @selection-change="handleSelectionChange">
             <template #empty>
               <el-empty :description="$t('jobs.empty')" :image-size="80" />
             </template>
@@ -169,7 +169,7 @@
 
     <!-- 作业日志 Drawer -->
     <el-drawer v-model="logVisible" :title="$t('jobs.logDrawer')" size="55%">
-      <el-table :data="logRows" size="small" max-height="560">
+      <el-table :data="logRows" size="small" border max-height="560">
         <el-table-column prop="ORDINAL_POSITION" :label="$t('jobs.ordinal')" width="60" />
         <el-table-column prop="MESSAGE_ID" :label="$t('jobs.messageId')" width="110" />
         <el-table-column prop="MESSAGE_TYPE" :label="$t('jobs.messageType')" width="130" />
@@ -181,7 +181,7 @@
 
     <!-- MSGW 待应答消息 Drawer -->
     <el-drawer v-model="msgVisible" :title="$t('jobs.messagesTitle')" size="60%">
-      <el-table :data="msgwMsgs" size="small" max-height="560">
+      <el-table :data="msgwMsgs" size="small" border max-height="560">
         <el-table-column prop="JOB_NAME" :label="$t('jobs.jobName')" min-width="130" />
         <el-table-column prop="JOB_USER" :label="$t('jobs.jobUser')" width="110" />
         <el-table-column prop="MESSAGE_ID" :label="$t('jobs.messageId')" width="110" />

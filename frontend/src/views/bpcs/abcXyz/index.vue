@@ -48,6 +48,7 @@
           </el-table-column>
         </el-table>
       </el-card>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="load" @size-change="load" />
     </div>
   </div>
 </template>
@@ -58,16 +59,22 @@ defineOptions({ name: 'BpcsAbcXyz' })
 
 import { ref } from 'vue'
 import { getAbcXyzMatrix, type AbcXyzItem } from '@/api/bpcs'
+import AppPagination from '@/components/AppPagination.vue'
 
 const cono = ref('001')
 const fromDate = ref('20250101')
 const loading = ref(false)
 const matrixData = ref<AbcXyzItem[]>([])
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
 
 async function load() {
   loading.value = true
   try {
-    matrixData.value = await getAbcXyzMatrix({ cono: cono.value, fromDate: fromDate.value, limit: 100 })
+    const res = await getAbcXyzMatrix({ cono: cono.value, fromDate: fromDate.value, current: current.value, size: size.value })
+    matrixData.value = res.records
+    total.value = res.total
   } catch {
     /* interceptor handles error */
   } finally {

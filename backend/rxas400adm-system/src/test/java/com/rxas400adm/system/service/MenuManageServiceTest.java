@@ -63,6 +63,7 @@ class MenuManageServiceTest {
         assertThrows(BusinessException.class, () -> service.delete(99L));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("delete → 有子菜单抛异常")
     void delete_hasChildren_shouldThrow() {
@@ -74,6 +75,7 @@ class MenuManageServiceTest {
         assertThrows(BusinessException.class, () -> service.delete(1L));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("delete → 无子菜单则删除")
     void delete_noChildren_shouldDelete() {

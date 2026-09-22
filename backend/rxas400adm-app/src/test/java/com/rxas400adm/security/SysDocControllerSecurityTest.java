@@ -42,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = SysDocController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, OperateLogAspect.class, TestAopConfig.class})
 @DisplayName("SysDocController 权限门控与审计")
+@SuppressWarnings("removal")
 class SysDocControllerSecurityTest {
 
     @Autowired

@@ -1,6 +1,6 @@
 import * as echarts from 'echarts/core'
-import { LineChart, BarChart, GraphChart, PieChart, GaugeChart } from 'echarts/charts'
-import { GridComponent, TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components'
+import { LineChart, BarChart, GraphChart, PieChart, GaugeChart, HeatmapChart } from 'echarts/charts'
+import { GridComponent, TitleComponent, TooltipComponent, LegendComponent, VisualMapComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 
 echarts.use([
@@ -9,10 +9,12 @@ echarts.use([
   GraphChart,
   PieChart,
   GaugeChart,
+  HeatmapChart,
   GridComponent,
   TitleComponent,
   TooltipComponent,
   LegendComponent,
+  VisualMapComponent,
   CanvasRenderer,
 ])
 

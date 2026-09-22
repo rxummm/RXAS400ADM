@@ -23,7 +23,6 @@ export interface OperationVO {
   errorMessage?: string
   retryCount: number
   maxRetry: number
-  idempotencyKey?: string
   riskLevel?: string
   requestedBy?: string
   requestedAt?: string

@@ -1,12 +1,13 @@
 package com.rxas400adm.as400.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.as400.entity.OrderChange;
 import com.rxas400adm.as400.mapper.OrderChangeMapper;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * 订单变更管理服务实现（只读查询）。
@@ -18,11 +19,13 @@ public class OrderChangeServiceImpl implements IOrderChangeService {
     private final OrderChangeMapper mapper;
 
     @Override
-    public List<OrderChange> listByOrder(String cono, String orno) {
+    public PageResult<OrderChange> listByOrder(String cono, String orno, int current, int size) {
         LambdaQueryWrapper<OrderChange> qw = new LambdaQueryWrapper<>();
         qw.eq(OrderChange::getCono, cono);
         qw.eq(OrderChange::getOrno, orno);
         qw.orderByDesc(OrderChange::getId);
-        return mapper.selectList(qw);
+
+        IPage<OrderChange> page = mapper.selectPage(new Page<>(current, size), qw);
+        return new PageResult<>(page.getTotal(), page.getRecords());
     }
 }

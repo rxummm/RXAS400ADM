@@ -9,6 +9,7 @@ import com.rxas400adm.as400.mapper.JobSlaMapper;
 import com.rxas400adm.as400.model.JobSlaExecRow;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.util.EntityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -64,10 +65,7 @@ public class JobSlaService implements IJobSlaService {
 
     @CacheEvict(cacheNames = CACHE, allEntries = true)
     public JobSla update(Long id, JobSlaDTO sla) {
-        JobSla existing = slaMapper.selectById(id);
-        if (existing == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "SLA rule not found");
-        }
+        JobSla existing = EntityUtil.require(id, "SlaRule", slaMapper::selectById);
         if (sla.getJobName() != null) {
             existing.setJobName(sla.getJobName());
         }
@@ -90,9 +88,7 @@ public class JobSlaService implements IJobSlaService {
 
     @CacheEvict(cacheNames = CACHE, allEntries = true)
     public void delete(Long id) {
-        if (slaMapper.selectById(id) == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "SLA rule not found");
-        }
+        EntityUtil.require(id, "SlaRule", slaMapper::selectById);
         slaMapper.deleteById(id);
     }
 

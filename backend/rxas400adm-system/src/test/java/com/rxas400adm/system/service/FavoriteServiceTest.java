@@ -42,6 +42,7 @@ class FavoriteServiceTest {
         service = new FavoriteService(favoriteMapper);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("toggle → 未收藏则添加，返回 favorited=true")
     void toggle_notFavorited_shouldAdd() {
@@ -56,6 +57,7 @@ class FavoriteServiceTest {
         verify(favoriteMapper).insert(any(Favorite.class));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("toggle → 已收藏则取消，返回 favorited=false")
     void toggle_alreadyFavorited_shouldRemove() {
@@ -74,6 +76,7 @@ class FavoriteServiceTest {
         assertThrows(BusinessException.class, () -> service.toggle("admin", "", "", null));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("mine → 返回用户收藏列表")
     void mine_shouldReturnList() {
@@ -82,6 +85,7 @@ class FavoriteServiceTest {
         assertNotNull(result);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("remove → 删除指定收藏")
     void remove_shouldDelete() {

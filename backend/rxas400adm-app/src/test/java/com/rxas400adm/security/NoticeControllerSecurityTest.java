@@ -30,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = NoticeController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, OperateLogAspect.class, TestAopConfig.class})
 @DisplayName("NoticeController 权限门控")
+@SuppressWarnings("removal")
 class NoticeControllerSecurityTest {
 
     @Autowired

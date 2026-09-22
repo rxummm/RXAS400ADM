@@ -52,6 +52,7 @@ class AlertRuleServiceTest {
         return rule;
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("list → 按 metricName + threshold 排序")
     void list_shouldReturn() {

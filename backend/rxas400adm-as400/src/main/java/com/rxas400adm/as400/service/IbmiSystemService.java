@@ -14,6 +14,7 @@ import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.security.DangerousClCommandValidator;
 import com.rxas400adm.common.security.SecretMasker;
+import com.rxas400adm.common.util.EntityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -57,11 +58,7 @@ public class IbmiSystemService implements IIbmiSystemService {
     }
 
     public IbmiSystem get(Long id) {
-        IbmiSystem system = systemMapper.selectById(id);
-        if (system == null) {
-            throw new BusinessException(ErrorCode.AS400_SERVER_NOT_FOUND);
-        }
-        return system;
+        return EntityUtil.require(id, "IbmiSystem", systemMapper::selectById);
     }
 
     public IbmiSystem create(IbmiSystemDTO dto) {
@@ -103,9 +100,7 @@ public class IbmiSystemService implements IIbmiSystemService {
     }
 
     public void delete(Long id) {
-        if (systemMapper.selectById(id) == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "IBM i system not found: " + id);
-        }
+        EntityUtil.require(id, "IbmiSystem", systemMapper::selectById);
         systemMapper.deleteById(id);
         clientProvider.evict(id);
     }

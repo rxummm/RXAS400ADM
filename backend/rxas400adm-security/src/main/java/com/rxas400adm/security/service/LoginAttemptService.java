@@ -2,10 +2,13 @@ package com.rxas400adm.security.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.security.config.LoginSecurityProperties;
 import com.rxas400adm.system.service.SysConfigService;
 import com.rxas400adm.security.entity.LoginAttempt;
@@ -174,9 +177,27 @@ public class LoginAttemptService implements ILoginAttemptService {
         return attemptMapper.selectList(wrapper);
     }
 
+    /** 分页查询登录失败记录 */
+    public PageResult<LoginAttempt> pageAttempts(Long serverId, int current, int size) {
+        LambdaQueryWrapper<LoginAttempt> wrapper = new LambdaQueryWrapper<>();
+        if (serverId != null) {
+            wrapper.eq(LoginAttempt::getServerId, normalize(serverId));
+        }
+        wrapper.orderByDesc(LoginAttempt::getLastFailTime);
+        Page<LoginAttempt> page = attemptMapper.selectPage(new Page<>(current, size), wrapper);
+        return new PageResult<>(page.getTotal(), page.getRecords());
+    }
+
     /** 按 IP 聚合统计（暴力破解溯源） */
     public List<Map<String, Object>> aggregateByIp() {
         return attemptMapper.aggregateByIp();
+    }
+
+    /** 分页查询按 IP 聚合统计（内存分页，聚合结果无法 DB 分页） */
+    public PageResult<Map<String, Object>> pageAggregateByIp(int current, int size) {
+        List<Map<String, Object>> all = attemptMapper.aggregateByIp();
+        int[] bounds = PageConstants.sliceBounds(current, size, all.size());
+        return new PageResult<>(all.size(), all.subList(bounds[0], bounds[1]));
     }
 
     /** 检查并累计 IP 登录频率（超限抛异常） */

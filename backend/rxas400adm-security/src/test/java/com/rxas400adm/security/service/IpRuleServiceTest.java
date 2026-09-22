@@ -43,6 +43,7 @@ class IpRuleServiceTest {
         verify(ipRuleMapper, never()).selectList(any());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("checkIp() — 无启用规则不拦截")
     void checkIp_noRules_passes() {
@@ -51,6 +52,7 @@ class IpRuleServiceTest {
         assertDoesNotThrow(() -> service.checkIp("192.168.1.1"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("checkIp() — 黑名单命中拒绝")
     void checkIp_blackHit_throws() {
@@ -63,6 +65,7 @@ class IpRuleServiceTest {
         assertThrows(BusinessException.class, () -> service.checkIp("192.168.1.100"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("checkIp() — 白名单未命中拒绝")
     void checkIp_whiteMiss_throws() {
@@ -75,6 +78,7 @@ class IpRuleServiceTest {
         assertThrows(BusinessException.class, () -> service.checkIp("192.168.1.1"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("checkIp() — 白名单命中放行")
     void checkIp_whiteHit_passes() {
@@ -112,6 +116,7 @@ class IpRuleServiceTest {
 
     // ========== CRUD ==========
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("create() — 正常创建")
     void create_normal() {
@@ -126,6 +131,7 @@ class IpRuleServiceTest {
         assertEquals("admin", result.getCreatedBy());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("create() — 重复 IP 抛异常")
     void create_duplicate_throws() {

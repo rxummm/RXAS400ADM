@@ -173,4 +173,151 @@ public final class OperateLogOperation {
     public static final String TOGGLE_WEBHOOK = "TOGGLE_WEBHOOK";
     public static final String TEST_WEBHOOK = "TEST_WEBHOOK";
     public static final String CLEAN_WEBHOOK_LOGS = "CLEAN_WEBHOOK_LOGS";
+
+    // ===== Quality =====
+    public static final String CREATE_NCR = "CREATE_NCR";
+    public static final String UPDATE_NCR_STATUS = "UPDATE_NCR_STATUS";
+    public static final String CREATE_INSPECTION = "CREATE_INSPECTION";
+    public static final String UPDATE_INSPECTION = "UPDATE_INSPECTION";
+
+    // ===== Cost =====
+    public static final String CREATE_COST_COLLECTION = "CREATE_COST_COLLECTION";
+    public static final String UPDATE_COST_COLLECTION = "UPDATE_COST_COLLECTION";
+    public static final String POST_COST_COLLECTION = "POST_COST_COLLECTION";
+    public static final String CREATE_COST_VARIANCE = "CREATE_COST_VARIANCE";
+    public static final String UPDATE_COST_VARIANCE = "UPDATE_COST_VARIANCE";
+    public static final String CREATE_STANDARD_COST = "CREATE_STANDARD_COST";
+    public static final String UPDATE_STANDARD_COST = "UPDATE_STANDARD_COST";
+    public static final String CREATE_PROFIT_ANALYSIS = "CREATE_PROFIT_ANALYSIS";
+
+    // ===== MRP =====
+    public static final String CREATE_BOM = "CREATE_BOM";
+    public static final String UPDATE_BOM = "UPDATE_BOM";
+    public static final String RUN_MRP = "RUN_MRP";
+    public static final String RELEASE_RECOMMENDATION = "RELEASE_RECOMMENDATION";
+
+    // ===== TPM =====
+    public static final String CREATE_EQUIPMENT = "CREATE_EQUIPMENT";
+    public static final String UPDATE_EQUIPMENT = "UPDATE_EQUIPMENT";
+    public static final String CREATE_MAINTENANCE_PLAN = "CREATE_MAINTENANCE_PLAN";
+    public static final String UPDATE_MAINTENANCE_PLAN = "UPDATE_MAINTENANCE_PLAN";
+    public static final String CREATE_MAINTENANCE_RECORD = "CREATE_MAINTENANCE_RECORD";
+    public static final String CREATE_FAILURE_RECORD = "CREATE_FAILURE_RECORD";
+
+    // ===== EDI =====
+    public static final String CREATE_EDI_DOCUMENT = "CREATE_EDI_DOCUMENT";
+    public static final String SEND_EDI_DOCUMENT = "SEND_EDI_DOCUMENT";
+    public static final String CREATE_EDI_PARTNER = "CREATE_EDI_PARTNER";
+    public static final String UPDATE_EDI_PARTNER = "UPDATE_EDI_PARTNER";
+
+    // ===== OLAP =====
+    public static final String CREATE_OLAP_DIMENSION = "CREATE_OLAP_DIMENSION";
+    public static final String UPDATE_OLAP_DIMENSION = "UPDATE_OLAP_DIMENSION";
+    public static final String RUN_OLAP_ANALYSIS = "RUN_OLAP_ANALYSIS";
+
+    // ===== Approval =====
+    public static final String APPROVE = "APPROVE";
+    public static final String REJECT = "REJECT";
+
+    // ===== 缓存管理 =====
+    public static final String CLEAR_CACHE = "CLEAR_CACHE";
+    public static final String CLEAR_ALL_CACHE = "CLEAR_ALL_CACHE";
+
+    // ===== 定时任务 =====
+    public static final String TRIGGER_TASK = "TRIGGER_TASK";
+
+    // ===== 应收账款 =====
+    public static final String CREATE_AR_INVOICE = "CREATE_AR_INVOICE";
+    public static final String UPDATE_AR_INVOICE = "UPDATE_AR_INVOICE";
+    public static final String SUBMIT_AR_INVOICE = "SUBMIT_AR_INVOICE";
+    public static final String RECORD_AR_PAYMENT = "RECORD_AR_PAYMENT";
+    public static final String DELETE_AR_INVOICE = "DELETE_AR_INVOICE";
+
+    // ===== 邮件管理 =====
+    public static final String SEND_EMAIL = "SEND_EMAIL";
+    public static final String CREATE_EMAIL_GROUP = "CREATE_EMAIL_GROUP";
+    public static final String UPDATE_EMAIL_GROUP = "UPDATE_EMAIL_GROUP";
+    public static final String DELETE_EMAIL_GROUP = "DELETE_EMAIL_GROUP";
+    public static final String ADD_GROUP_MEMBER = "ADD_GROUP_MEMBER";
+    public static final String REMOVE_GROUP_MEMBER = "REMOVE_GROUP_MEMBER";
+    public static final String UPDATE_EMAIL_CONFIG = "UPDATE_EMAIL_CONFIG";
+    public static final String SEND_TEST_EMAIL = "SEND_TEST_EMAIL";
+
+    // ===== 报表中心 =====
+    public static final String CREATE_REPORT_SCHEDULE = "CREATE_REPORT_SCHEDULE";
+    public static final String UPDATE_REPORT_SCHEDULE = "UPDATE_REPORT_SCHEDULE";
+    public static final String DELETE_REPORT_SCHEDULE = "DELETE_REPORT_SCHEDULE";
+    public static final String TOGGLE_REPORT_SCHEDULE = "TOGGLE_REPORT_SCHEDULE";
+    public static final String EXECUTE_REPORT_SCHEDULE = "EXECUTE_REPORT_SCHEDULE";
+
+    // ===== 报表构建器 =====
+    public static final String CREATE_REPORT_DEFINITION = "CREATE_REPORT_DEFINITION";
+    public static final String UPDATE_REPORT_DEFINITION = "UPDATE_REPORT_DEFINITION";
+    public static final String DELETE_REPORT_DEFINITION = "DELETE_REPORT_DEFINITION";
+
+    // ===== 采购订单 =====
+    public static final String CREATE_PURCHASE_ORDER = "CREATE_PURCHASE_ORDER";
+    public static final String UPDATE_PURCHASE_ORDER = "UPDATE_PURCHASE_ORDER";
+    public static final String SUBMIT_PURCHASE_APPROVAL = "SUBMIT_PURCHASE_APPROVAL";
+    public static final String APPROVE_PURCHASE_ORDER = "APPROVE_PURCHASE_ORDER";
+    public static final String RECEIVE_PURCHASE_ORDER = "RECEIVE_PURCHASE_ORDER";
+    public static final String CANCEL_PURCHASE_ORDER = "CANCEL_PURCHASE_ORDER";
+    public static final String DELETE_PURCHASE_ORDER = "DELETE_PURCHASE_ORDER";
+
+    // ===== 作业 SLA =====
+    public static final String CREATE_SLA_RULE = "CREATE_SLA_RULE";
+    public static final String UPDATE_SLA_RULE = "UPDATE_SLA_RULE";
+    public static final String DELETE_SLA_RULE = "DELETE_SLA_RULE";
+
+    // ===== 操作模板 =====
+    public static final String CREATE_TEMPLATE = "CREATE_TEMPLATE";
+    public static final String UPDATE_TEMPLATE = "UPDATE_TEMPLATE";
+    public static final String DELETE_TEMPLATE = "DELETE_TEMPLATE";
+    public static final String EXECUTE_TEMPLATE = "EXECUTE_TEMPLATE";
+
+    // ===== 作业调度 =====
+    public static final String CREATE_SCHEDULE = "CREATE_SCHEDULE";
+    public static final String UPDATE_SCHEDULE = "UPDATE_SCHEDULE";
+    public static final String DELETE_SCHEDULE = "DELETE_SCHEDULE";
+    public static final String TOGGLE_SCHEDULE = "TOGGLE_SCHEDULE";
+    public static final String EXECUTE_SCHEDULE = "EXECUTE_SCHEDULE";
+
+    // ===== 命令脚本 =====
+    public static final String CREATE_SCRIPT = "CREATE_SCRIPT";
+    public static final String UPDATE_SCRIPT = "UPDATE_SCRIPT";
+    public static final String DELETE_SCRIPT = "DELETE_SCRIPT";
+    public static final String TOGGLE_SCRIPT_FAVORITE = "TOGGLE_SCRIPT_FAVORITE";
+    public static final String EXECUTE_SCRIPT = "EXECUTE_SCRIPT";
+
+    // ===== 数据查询 =====
+    public static final String EXECUTE_SQL_QUERY = "EXECUTE_SQL_QUERY";
+
+    // ===== 系统服务 =====
+    public static final String START_SUBSYSTEM = "START_SUBSYSTEM";
+    public static final String STOP_SUBSYSTEM = "STOP_SUBSYSTEM";
+
+    // ===== 系统值 =====
+    public static final String UPDATE_SYSTEM_VALUE = "UPDATE_SYSTEM_VALUE";
+    public static final String BATCH_UPDATE_SYSTEM_VALUE = "BATCH_UPDATE_SYSTEM_VALUE";
+
+    // ===== 用户态管理 =====
+    public static final String SWITCH_USER_PROFILE = "SWITCH_USER_PROFILE";
+
+    // ===== AS400 用户 Profile 管理 =====
+    public static final String CREATE_AS400_USER_PROFILE = "CREATE_AS400_USER_PROFILE";
+    public static final String UPDATE_AS400_USER_PROFILE = "UPDATE_AS400_USER_PROFILE";
+    public static final String DELETE_AS400_USER_PROFILE = "DELETE_AS400_USER_PROFILE";
+
+    // ===== BPCS 订单复制 =====
+    public static final String COPY_ORDER = "COPY_ORDER";
+
+    // ===== 操作管理 =====
+    public static final String CREATE_AND_EXECUTE = "CREATE_AND_EXECUTE";
+    public static final String RETRY = "RETRY";
+    public static final String CANCEL = "CANCEL";
+
+    // ===== I18n 管理 =====
+    public static final String CREATE_TRANSLATION = "CREATE_TRANSLATION";
+    public static final String UPDATE_TRANSLATION = "UPDATE_TRANSLATION";
+    public static final String DELETE_TRANSLATION = "DELETE_TRANSLATION";
 }

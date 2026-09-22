@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = ConfigController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, OperateLogAspect.class, TestAopConfig.class})
 @DisplayName("ConfigController 权限门控")
+@SuppressWarnings("removal")
 class ConfigControllerSecurityTest {
 
     @Autowired

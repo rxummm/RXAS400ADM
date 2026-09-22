@@ -17,13 +17,12 @@ import com.rxas400adm.as400.vo.BpcsPurchaseReceivingVO;
 import com.rxas400adm.as400.vo.BpcsSalesAnalysisVO;
 import com.rxas400adm.as400.vo.BpcsSupplierPerfVO;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * BPCS 供应链增强：全部 Phase 1-4 功能。
@@ -40,16 +39,17 @@ public class BpcsSupplyChainController {
 
     @GetMapping("/orders")
     @PreAuthorize("hasAuthority('BPCS_ORDER_VIEW')")
-    public ApiResponse<List<BpcsOrderListVO>> searchOrders(BpcsOrderListQueryDTO query) {
+    public ApiResponse<PageResult<BpcsOrderListVO>> searchOrders(BpcsOrderListQueryDTO query) {
         return ApiResponse.success(sc.searchOrders(query));
     }
 
     @GetMapping("/inventory/alerts")
     @PreAuthorize("hasAuthority('BPCS_INVENTORY_VIEW')")
-    public ApiResponse<List<BpcsInventoryAlertVO>> inventoryAlerts(
+    public ApiResponse<PageResult<BpcsInventoryAlertVO>> inventoryAlerts(
             @RequestParam(required = false) String cono,
-            @RequestParam(defaultValue = "50") int limit) {
-        return ApiResponse.success(sc.inventoryAlerts(cono, limit));
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(sc.inventoryAlerts(cono, current, size));
     }
 
     @GetMapping("/sales/analysis")
@@ -64,51 +64,56 @@ public class BpcsSupplyChainController {
 
     @GetMapping("/inventory/history")
     @PreAuthorize("hasAuthority('BPCS_INVENTORY_VIEW')")
-    public ApiResponse<List<BpcsInventoryHistoryVO>> inventoryHistory(
+    public ApiResponse<PageResult<BpcsInventoryHistoryVO>> inventoryHistory(
             @RequestParam(required = false) String cono,
             @RequestParam(required = false) String item,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
-            @RequestParam(defaultValue = "100") int limit) {
-        return ApiResponse.success(sc.inventoryHistory(cono, item, fromDate, toDate, limit));
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(sc.inventoryHistory(cono, item, fromDate, toDate, current, size));
     }
 
     @GetMapping("/purchase/receiving")
     @PreAuthorize("hasAuthority('BPCS_PURCHASE_VIEW')")
-    public ApiResponse<List<BpcsPurchaseReceivingVO>> purchaseReceiving(
+    public ApiResponse<PageResult<BpcsPurchaseReceivingVO>> purchaseReceiving(
             @RequestParam(required = false) String cono,
             @RequestParam(required = false) String pono,
             @RequestParam(required = false) String vendor,
-            @RequestParam(defaultValue = "100") int limit) {
-        return ApiResponse.success(sc.purchaseReceiving(cono, pono, vendor, limit));
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(sc.purchaseReceiving(cono, pono, vendor, current, size));
     }
 
     @GetMapping("/shipping/list")
     @PreAuthorize("hasAuthority('BPCS_SHIPPING_VIEW')")
-    public ApiResponse<List<BpcsLoadVO>> shippingList(
+    public ApiResponse<PageResult<BpcsLoadVO>> shippingList(
             @RequestParam(required = false) String cono,
             @RequestParam(required = false) String lhno,
             @RequestParam(required = false) String carrier,
-            @RequestParam(defaultValue = "100") int limit) {
-        return ApiResponse.success(sc.shippingList(cono, lhno, carrier, limit));
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(sc.shippingList(cono, lhno, carrier, current, size));
     }
 
     // ==================== Phase 3 ====================
 
     @GetMapping("/inventory/abc")
     @PreAuthorize("hasAuthority('BPCS_INVENTORY_VIEW')")
-    public ApiResponse<List<BpcsAbcAnalysisVO>> abcAnalysis(
+    public ApiResponse<PageResult<BpcsAbcAnalysisVO>> abcAnalysis(
             @RequestParam(required = false) String cono,
-            @RequestParam(defaultValue = "100") int limit) {
-        return ApiResponse.success(sc.abcAnalysis(cono, limit));
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(sc.abcAnalysis(cono, current, size));
     }
 
     @GetMapping("/supplier/performance")
     @PreAuthorize("hasAuthority('BPCS_PURCHASE_VIEW')")
-    public ApiResponse<List<BpcsSupplierPerfVO>> supplierPerformance(
+    public ApiResponse<PageResult<BpcsSupplierPerfVO>> supplierPerformance(
             @RequestParam(required = false) String cono,
-            @RequestParam(defaultValue = "20") int limit) {
-        return ApiResponse.success(sc.supplierPerformance(cono, limit));
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(sc.supplierPerformance(cono, current, size));
     }
 
     // ==================== Phase 4 ====================
@@ -168,8 +173,10 @@ public class BpcsSupplyChainController {
     @GetMapping("/atp/deviation")
     @PreAuthorize("hasAuthority('BPCS_ORDER_VIEW')")
     @Operation(summary = "ATP vs OTIF 偏差分析")
-    public ApiResponse<List<BpcsAtpVO.AtpDeviation>> atpDeviation(
-            @RequestParam(required = false) String cono) {
-        return ApiResponse.success(sc.atpDeviation(cono));
+    public ApiResponse<PageResult<BpcsAtpVO.AtpDeviation>> atpDeviation(
+            @RequestParam(required = false) String cono,
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(sc.atpDeviation(cono, current, size));
     }
 }

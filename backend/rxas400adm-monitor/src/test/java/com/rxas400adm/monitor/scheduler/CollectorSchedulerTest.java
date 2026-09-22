@@ -60,6 +60,7 @@ class CollectorSchedulerTest {
 
     @Test
     @DisplayName("多服务器并行采集：全部服务器 × 全部 Collector 均执行")
+    @SuppressWarnings("unchecked")
     void collect_parallel_runsAllServersAndCollectors() {
         when(systemMapper.selectList(any())).thenReturn(List.of(server(1L, "US400CND"), server(2L, "TEST01")));
         MetricCollector c1 = mock(MetricCollector.class);
@@ -80,6 +81,7 @@ class CollectorSchedulerTest {
 
     @Test
     @DisplayName("单台服务器采集失败不影响其他服务器")
+    @SuppressWarnings("unchecked")
     void collect_serverFailure_doesNotStopOthers() {
         when(systemMapper.selectList(any())).thenReturn(List.of(server(1L, "US400CND"), server(2L, "TEST01")));
         MetricCollector c1 = mock(MetricCollector.class);
@@ -115,6 +117,7 @@ class CollectorSchedulerTest {
 
     @Test
     @DisplayName("并行采集：三台各自成批落库（P5 批量语义）")
+    @SuppressWarnings("unchecked")
     void collect_parallel_waitsForAllBeforeReturn() {
         when(systemMapper.selectList(any())).thenReturn(List.of(server(1L, "A"), server(2L, "B"), server(3L, "C")));
         MetricCollector c = mock(MetricCollector.class);

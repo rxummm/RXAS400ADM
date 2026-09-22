@@ -1,6 +1,7 @@
 package com.rxas400adm.as400.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.as400.entity.IbmiSystem;
 import com.rxas400adm.as400.entity.SystemValueCompliance;
 import com.rxas400adm.as400.mapper.IbmiSystemMapper;
@@ -10,6 +11,7 @@ import com.rxas400adm.as400.vo.SystemValueComplianceVO;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,18 +32,19 @@ public class SystemValueComplianceServiceImpl implements ISystemValueComplianceS
     private final IbmiSystemMapper systemMapper;
 
     @Override
-    public List<SystemValueComplianceVO> listByServer(Long serverId) {
+    public PageResult<SystemValueComplianceVO> listByServer(Long serverId, int current, int size) {
         LambdaQueryWrapper<SystemValueCompliance> wrapper = new LambdaQueryWrapper<>();
         if (serverId != null) {
             wrapper.eq(SystemValueCompliance::getServerId, serverId);
         }
         wrapper.orderByDesc(SystemValueCompliance::getLastChecked);
-        List<SystemValueCompliance> records = complianceMapper.selectList(wrapper);
+
+        Page<SystemValueCompliance> page = complianceMapper.selectPage(new Page<>(current, size), wrapper);
 
         Map<Long, String> serverNames = systemMapper.selectList(null).stream()
                 .collect(Collectors.toMap(IbmiSystem::getId, IbmiSystem::getName, (a, b) -> b));
 
-        return records.stream().map(r -> {
+        List<SystemValueComplianceVO> records = page.getRecords().stream().map(r -> {
             SystemValueComplianceVO vo = new SystemValueComplianceVO();
             vo.setId(r.getId());
             vo.setServerId(r.getServerId());
@@ -58,6 +61,8 @@ public class SystemValueComplianceServiceImpl implements ISystemValueComplianceS
             vo.setUpdatedTime(r.getUpdatedTime());
             return vo;
         }).toList();
+
+        return new PageResult<>(page.getTotal(), records);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.rxas400adm.as400.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.as400.entity.BackupStatus;
 import com.rxas400adm.as400.entity.IbmiSystem;
 import com.rxas400adm.as400.mapper.BackupStatusMapper;
@@ -10,6 +11,7 @@ import com.rxas400adm.as400.vo.BackupStatusVO;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,18 +32,19 @@ public class BackupMonitorServiceImpl implements IBackupMonitorService {
     private final IbmiSystemMapper systemMapper;
 
     @Override
-    public List<BackupStatusVO> listByServer(Long serverId) {
+    public PageResult<BackupStatusVO> listByServer(Long serverId, int current, int size) {
         LambdaQueryWrapper<BackupStatus> wrapper = new LambdaQueryWrapper<>();
         if (serverId != null) {
             wrapper.eq(BackupStatus::getServerId, serverId);
         }
         wrapper.orderByDesc(BackupStatus::getStartTime);
-        List<BackupStatus> records = backupStatusMapper.selectList(wrapper);
+
+        Page<BackupStatus> page = backupStatusMapper.selectPage(new Page<>(current, size), wrapper);
 
         Map<Long, String> serverNames = systemMapper.selectList(null).stream()
                 .collect(Collectors.toMap(IbmiSystem::getId, IbmiSystem::getName, (a, b) -> b));
 
-        return records.stream().map(r -> {
+        List<BackupStatusVO> records = page.getRecords().stream().map(r -> {
             BackupStatusVO vo = new BackupStatusVO();
             vo.setId(r.getId());
             vo.setServerId(r.getServerId());
@@ -59,6 +62,8 @@ public class BackupMonitorServiceImpl implements IBackupMonitorService {
             vo.setCreatedTime(r.getCreatedTime());
             return vo;
         }).toList();
+
+        return new PageResult<>(page.getTotal(), records);
     }
 
     @Override

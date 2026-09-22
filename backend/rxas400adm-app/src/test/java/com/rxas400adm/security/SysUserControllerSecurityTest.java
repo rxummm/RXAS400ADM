@@ -43,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = SysUserController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, OperateLogAspect.class, TestAopConfig.class})
 @DisplayName("SysUserController 权限门控与审计")
+@SuppressWarnings("removal")
 class SysUserControllerSecurityTest {
 
     @Autowired

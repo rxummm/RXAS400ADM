@@ -3,7 +3,7 @@ package com.rxas400adm.as400.vo;
 import java.math.BigDecimal;
 
 /**
- * 采购收�行 VO（订单数量 vs 已收数量）。
+ * 采购收货行 VO（订单数量 vs 已收数量）。
  */
 public record BpcsPurchaseReceivingVO(
         String pono,

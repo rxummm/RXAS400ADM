@@ -3,6 +3,7 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.model.PfColumnRow;
 import com.rxas400adm.as400.model.PfRow;
 import com.rxas400adm.as400.model.PfStatsRow;
+import com.rxas400adm.common.response.PageResult;
 
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,8 @@ public interface IPfService {
     List<PfColumnRow> columns(String library, String file);
 
     List<Map<String, Object>> data(String library, String file, int limit);
+
+    PageResult<Map<String, Object>> dataPage(String library, String file, int current, int size);
 
     PfStatsRow statistics(String library, String file);
 }

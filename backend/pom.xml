@@ -26,6 +26,12 @@
         <module>rxas400adm-operation</module>
         <module>rxas400adm-source</module>
         <module>rxas400adm-monitor</module>
+        <module>rxas400adm-quality</module>
+        <module>rxas400adm-cost</module>
+        <module>rxas400adm-mrp</module>
+        <module>rxas400adm-tpm</module>
+        <module>rxas400adm-edi</module>
+        <module>rxas400adm-olap</module>
         <module>rxas400adm-app</module>
     </modules>
 
@@ -72,6 +78,36 @@
             <dependency>
                 <groupId>com.rxas400adm</groupId>
                 <artifactId>rxas400adm-operation</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.rxas400adm</groupId>
+                <artifactId>rxas400adm-quality</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.rxas400adm</groupId>
+                <artifactId>rxas400adm-cost</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.rxas400adm</groupId>
+                <artifactId>rxas400adm-mrp</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.rxas400adm</groupId>
+                <artifactId>rxas400adm-tpm</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.rxas400adm</groupId>
+                <artifactId>rxas400adm-edi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.rxas400adm</groupId>
+                <artifactId>rxas400adm-olap</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

@@ -1,8 +1,7 @@
 package com.rxas400adm.as400.service;
 
 import com.rxas400adm.as400.vo.BpcsInventoryAbcXyzVO;
-
-import java.util.List;
+import com.rxas400adm.common.response.PageResult;
 
 /**
  * ABC/XYZ 矩阵分析服务（㊲）。
@@ -11,5 +10,5 @@ import java.util.List;
 public interface IBpcsAbcXyzService {
 
     /** 获取 ABC/XYZ 矩阵分析结果 */
-    List<BpcsInventoryAbcXyzVO> getMatrix(String cono, String fromDate, int limit);
+    PageResult<BpcsInventoryAbcXyzVO> getMatrix(String cono, String fromDate, int current, int size);
 }

@@ -2,8 +2,7 @@ package com.rxas400adm.as400;
 
 import com.rxas400adm.as400.model.UserProfileListRow;
 import com.rxas400adm.as400.model.UserProfileRow;
-
-import java.util.List;
+import com.rxas400adm.common.response.PageResult;
 
 /**
  * 认证域：AS400 user profile 登录验证、组归属查询、用户列表、用户态切换。
@@ -24,11 +23,9 @@ public interface AuthClient {
     UserProfileRow userProfile(String username);
 
     /**
-     * 用户 profile 列表（QSYS2.USER_INFO）。
+     * 用户 profile 列表（分页，QSYS2.USER_INFO）。
      */
-    default List<UserProfileListRow> listUserProfiles() {
-        return List.of();
-    }
+    PageResult<UserProfileListRow> listUserProfilesPaged(int current, int size);
 
     /**
      * 切换用户态（SWITCHUSR CL 命令）。

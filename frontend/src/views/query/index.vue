@@ -47,7 +47,7 @@
         <span>{{ $t('query.history') }}</span>
         <el-button :icon="Refresh" size="small" text @click="loadHistory">{{ $t('common.refresh') }}</el-button>
       </div>
-      <el-table :data="pagedHistory" size="small" class="w-full">
+      <el-table :data="pagedHistory" size="small" border class="w-full">
         <el-table-column prop="sqlText" :label="$t('query.sql')" min-width="300" show-overflow-tooltip />
         <el-table-column prop="rowsReturned" :label="$t('query.rowsHeader')" width="100" />
         <el-table-column prop="costMs" :label="$t('query.cost')" width="100" />

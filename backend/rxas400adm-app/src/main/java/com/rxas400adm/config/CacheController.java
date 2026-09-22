@@ -1,6 +1,8 @@
 package com.rxas400adm.config;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.config.vo.CacheInfoVO;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +59,7 @@ public class CacheController {
     /** 清空指定缓存 */
     @DeleteMapping("/{name}")
     @PreAuthorize("hasAuthority('SYS_CACHE_MANAGE')")
-    @OperateLog(module = "缓存管理", operation = "清空缓存")
+    @OperateLog(module = OperateLogModule.CACHE_MANAGEMENT, operation = OperateLogOperation.CLEAR_CACHE)
     public ApiResponse<Void> clear(@PathVariable String name) {
         CacheManager cacheManager = cacheManager();
         Cache cache = cacheManager == null ? null : cacheManager.getCache(name);
@@ -70,7 +72,7 @@ public class CacheController {
     /** 清空全部缓存 */
     @DeleteMapping
     @PreAuthorize("hasAuthority('SYS_CACHE_MANAGE')")
-    @OperateLog(module = "缓存管理", operation = "清空全部缓存")
+    @OperateLog(module = OperateLogModule.CACHE_MANAGEMENT, operation = OperateLogOperation.CLEAR_ALL_CACHE)
     public ApiResponse<Void> clearAll() {
         CacheManager cacheManager = cacheManager();
         if (cacheManager != null) {

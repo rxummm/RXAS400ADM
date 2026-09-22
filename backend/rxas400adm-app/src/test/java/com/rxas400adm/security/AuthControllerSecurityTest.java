@@ -49,6 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = AuthController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, OperateLogAspect.class, TestAopConfig.class})
 @DisplayName("AuthController 权限门控与审计")
+@SuppressWarnings("removal")
 class AuthControllerSecurityTest {
 
     @Autowired
@@ -117,8 +118,8 @@ class AuthControllerSecurityTest {
 
         ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
         verify(auditLogMapper).insert(captor.capture());
-        assertEquals("Login Security", captor.getValue().getModule());
-        assertEquals("Manual unlock account", captor.getValue().getAction());
+        assertEquals("LOGIN_SECURITY", captor.getValue().getModule());
+        assertEquals("UNLOCK_USER", captor.getValue().getAction());
         assertEquals("admin", captor.getValue().getUserName());
     }
 

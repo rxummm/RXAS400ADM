@@ -4,7 +4,6 @@ import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.operation.annotation.IbmiOperation;
 import com.rxas400adm.operation.domain.Operation;
-import com.rxas400adm.operation.domain.RiskLevel;
 import com.rxas400adm.operation.executor.OperationExecutor;
 import com.rxas400adm.operation.service.OperationRegistry;
 import lombok.RequiredArgsConstructor;

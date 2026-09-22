@@ -39,10 +39,12 @@
 | 2.1.2 | **禁止** `new QueryWrapper` / `new LambdaQueryWrapper` | `check-layering.sh R1` |
 | 2.1.3 | 写接口 `@RequestBody` **必须**用 Create/Update DTO，**禁止** Entity 入参 | `check-layering.sh R2` |
 | 2.1.4 | 返回类型优先 VO，**禁止**直接返回 Entity | `check-layering.sh R3` |
-| 2.1.5 | 分页参数统一 `PageConstants.clampNum/clampSize`，**禁止**散落 `Math.min` 魔法值 | — |
+| 2.1.5 | 分页参数**必须**做边界钳制：`@RequestParam` 方式调用 `PageConstants.clampNum/clampSize`，QueryDTO 方式在 getter 中自动调用；**禁止**散落 `Math.min` 魔法值 | — |
+| 2.1.5.1 | **分页参数接收方式**：存量 `@RequestParam` 端点补齐钳制即可；**新增模块优先用 QueryDTO**（`extends PageParam`），筛选参数与分页参数内聚，getter 自动钳制 | — |
 | 2.1.6 | 每个受保护端点**必须**有 `@PreAuthorize` | — |
 | 2.1.7 | 写操作**必须**加 `@OperateLog(module=..., operation=...)` | — |
 | 2.1.8 | **禁止** `@Transactional`（零容忍，含 `rollbackFor` 变体） | `check-transactional.sh` |
+| 2.1.9 | Security Header 配置**必须**用 `permissionsPolicyHeader(Customizer)`，**禁止**已废弃的 `permissionsPolicy(Customizer)`（Spring Security 6.4 起标记移除） | — |
 
 ### 2.2 Service 层
 
@@ -50,6 +52,7 @@
 |---|------|
 | 2.2.1 | 构造器注入 `@RequiredArgsConstructor` + `private final`，**禁止** `@Autowired` 字段注入 |
 | 2.2.2 | **唯一例外**：Quartz Job 类必须字段注入（SpringBeanJobFactory 反射实例化不支持构造器） |
+| 2.2.3 | 测试类 Mock 注入**必须**用 `@MockitoBean`（`org.springframework.test.context.bean.override.mockito.MockitoBean`），**禁止**已废弃的 `@MockBean`（Spring Boot 3.4 起标记移除） |
 | 2.2.3 | 多个类中出现相同工具方法时，提取到公共 utils 类（参照 `BpcsRowUtil`） |
 | 2.2.4 | `AS400Client` 操作**禁止**直接 `new AS400(...)`，一律经 `AS400ClientProvider` |
 | 2.2.5 | Service 查询方法**禁止**返回 null，无结果时**必须**抛 `BusinessException(ErrorCode.NOT_FOUND)` |
@@ -140,7 +143,7 @@
 | 3.5.2 | 表单弹窗使用 `useFormDialog` composable | 含 dialogVisible/isEdit/loading/formRef/form/rules/openCreate/openEdit/onSubmit + i18nPrefix 命名空间 |
 | 3.5.3 | 删除操作使用 `useConfirmDelete` composable | 含 ElMessageBox.confirm → loading → API → success → refresh |
 | 3.5.4 | 表格分页使用 `<AppPagination>` 组件，**禁止**手动分页 | 右对齐，含 sizes + jumper |
-| 3.5.5 | 搜索栏使用 `<QueryBar>` 组件 | 含 keyword 输入/搜索重置按钮/缓存指示器/刷新图标 |
+| 3.5.5 | 搜索栏推荐使用 `<QueryBar>` 组件（**可选，非强制**） | 封装 keyword 输入/搜索重置按钮/缓存指示器/刷新图标/前端过滤空结果引导；新页面推荐使用，存量页面保持 `<div class="search-bar">` 即可，不强制迁移 |
 | 3.5.6 | 加载占位使用 `<RxSkeleton>` 组件 | 支持 `table`/`card`/`list` 类型，含自动过渡 |
 | 3.5.7 | Blob 下载使用 `triggerBlobDownload()`，**禁止**手写下载逻辑 | — |
 | 3.5.8 | 列表动画使用 `flash-pop` CSS 类 + `useFlash` composable | — |
@@ -450,16 +453,4 @@ Windows 中文环境默认编码为 GBK（CP936），以下场景会触发双编
 
 ---
 
-## 十七、文档站（VitePress）
-
-| # | 规则 |
-|---|------|
-| 17.1 | `docs/` 下独立 VitePress 站点（自带 `package.json`），`config.ts` 用 `withMermaid()` 包裹 |
-| 17.2 | Trae 审计报告按章拆页：`npm run split:trae`，**源报告修改后必须重跑拆页**，否则站点内容过期 |
-| 17.3 | 站点收录白名单：首页 + `review/trae/*` + 合订本 + 上手指南 + 避坑指南；其余历史遗留 md 在 `config.ts` 的 `srcExclude` 排除 |
-| 17.4 | 合订本/其他被站点收录的 md 中，HTML 尖括号**必须**包反引号（如 `` `List<Metric>` ``），否则 vue 编译报未闭合标签 |
-| 17.5 | **不要**往 `docs/` 随便丢 `.md`，会被 VitePress 当页面编译（未闭合 HTML 标签会直接 build 失败） |
-
----
-
-*v1.1 | 2026-09-04 | 基于三轮完整 Code Review 制定，新增 VO 类型安全/Service 返回值/delete 检查/异常处理/前端异步错误处理等规范*
+*v1.3 | 2026-09-22 | @MockitoBean 替代 @MockBean（Boot 3.4+）+ permissionsPolicyHeader 替代 permissionsPolicy（Sec 6.4+）*

@@ -4,14 +4,13 @@ import com.rxas400adm.as400.dto.BpcsOrderFulfillmentQueryDTO;
 import com.rxas400adm.as400.service.IBpcsOrderAnalyticsService;
 import com.rxas400adm.as400.vo.*;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 订单分析 Controller（履行率、OTD、Backorder）。
@@ -36,7 +35,7 @@ public class BpcsOrderAnalyticsController {
     @GetMapping("/backorder")
     @PreAuthorize("hasAuthority('BPCS_ORDER_VIEW')")
     @Operation(summary = "Backorder 行明细")
-    public ApiResponse<List<BpcsOrderBackorderLineVO>> backorderLines(
+    public ApiResponse<PageResult<BpcsOrderBackorderLineVO>> backorderLines(
             @Valid BpcsOrderFulfillmentQueryDTO query) {
         return ApiResponse.success(analyticsService.getBackorderLines(query));
     }
@@ -44,10 +43,11 @@ public class BpcsOrderAnalyticsController {
     @GetMapping("/backorder/by-item")
     @PreAuthorize("hasAuthority('BPCS_ORDER_VIEW')")
     @Operation(summary = "Backorder 按物料聚合")
-    public ApiResponse<List<BpcsOrderBackorderByItemVO>> backorderByItem(
+    public ApiResponse<PageResult<BpcsOrderBackorderByItemVO>> backorderByItem(
             @RequestParam(defaultValue = "001") String cono,
-            @RequestParam(defaultValue = "20") int limit) {
-        return ApiResponse.success(analyticsService.getBackorderByItem(cono, limit));
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(analyticsService.getBackorderByItem(cono, current, size));
     }
 
     @GetMapping("/otd")
@@ -61,9 +61,10 @@ public class BpcsOrderAnalyticsController {
     @GetMapping("/otd/by-customer")
     @PreAuthorize("hasAuthority('BPCS_ORDER_VIEW')")
     @Operation(summary = "OTD 按客户聚合")
-    public ApiResponse<List<BpcsOrderOtdByCustomerVO>> otdByCustomer(
+    public ApiResponse<PageResult<BpcsOrderOtdByCustomerVO>> otdByCustomer(
             @RequestParam(defaultValue = "001") String cono,
-            @RequestParam(defaultValue = "20") int limit) {
-        return ApiResponse.success(analyticsService.getOtdByCustomer(cono, limit));
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(analyticsService.getOtdByCustomer(cono, current, size));
     }
 }

@@ -3,13 +3,12 @@ package com.rxas400adm.as400.controller;
 import com.rxas400adm.as400.service.IBpcsTmsLiteService;
 import com.rxas400adm.as400.vo.BpcsTmsLiteVO;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * TMS Lite 运输管理 Controller。
@@ -26,18 +25,21 @@ public class BpcsTmsLiteController {
     @GetMapping("/route-plans")
     @PreAuthorize("hasAuthority('BPCS_SHIPPING_VIEW')")
     @Operation(summary = "路线规划列表")
-    public ApiResponse<List<BpcsTmsLiteVO.RoutePlan>> getRoutePlans(
+    public ApiResponse<PageResult<BpcsTmsLiteVO.RoutePlan>> getRoutePlans(
             @RequestParam(required = false) String cono,
-            @RequestParam(defaultValue = "50") int limit) {
-        return ApiResponse.success(tmsService.getRoutePlans(cono, limit));
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(tmsService.getRoutePlans(cono, current, size));
     }
 
     @GetMapping("/carrier-comparison")
     @PreAuthorize("hasAuthority('BPCS_SHIPPING_VIEW')")
     @Operation(summary = "承运商比价")
-    public ApiResponse<List<BpcsTmsLiteVO.CarrierComparison>> getCarrierComparison(
-            @RequestParam(required = false) String cono) {
-        return ApiResponse.success(tmsService.getCarrierComparison(cono));
+    public ApiResponse<PageResult<BpcsTmsLiteVO.CarrierComparison>> getCarrierComparison(
+            @RequestParam(required = false) String cono,
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(tmsService.getCarrierComparison(cono, current, size));
     }
 
     @GetMapping("/freight-analysis")
@@ -52,11 +54,12 @@ public class BpcsTmsLiteController {
     @GetMapping("/delivery-tracking")
     @PreAuthorize("hasAuthority('BPCS_SHIPPING_VIEW')")
     @Operation(summary = "签收追踪")
-    public ApiResponse<List<BpcsTmsLiteVO.DeliveryTracking>> getDeliveryTracking(
+    public ApiResponse<PageResult<BpcsTmsLiteVO.DeliveryTracking>> getDeliveryTracking(
             @RequestParam(required = false) String cono,
             @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "50") int limit) {
-        return ApiResponse.success(tmsService.getDeliveryTracking(cono, status, limit));
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(tmsService.getDeliveryTracking(cono, status, current, size));
     }
 
     @GetMapping("/all")

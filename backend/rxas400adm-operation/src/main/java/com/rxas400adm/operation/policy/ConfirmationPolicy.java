@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
@@ -46,7 +45,7 @@ public class ConfirmationPolicy {
     public String generateConfirmationToken() {
         String token = UUID.randomUUID().toString();
         tokenCache.put(token, Instant.now().plusMillis(confirmationTtlMs));
-        log.debug("Confirmation token generated: {}", token);
+        log.debug("Confirmation token generated: [masked]");
         return token;
     }
 
@@ -80,7 +79,7 @@ public class ConfirmationPolicy {
                 "Confirmation token has expired");
         }
 
-        log.debug("Confirmation token validated and consumed: {}", token);
+        log.debug("Confirmation token validated and consumed: [masked]");
     }
 
     /**

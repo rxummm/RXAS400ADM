@@ -5,7 +5,9 @@ import com.rxas400adm.as400.dto.BpcsWabpImportResult;
 import com.rxas400adm.as400.service.IBpcsWabpService;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.as400.vo.BpcsWabpConfigVO;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,10 +32,13 @@ public class BpcsWabpController {
 
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('BPCS_VIEW')")
-    public ApiResponse<List<BpcsWabpConfigVO>> list(
+    public ApiResponse<PageResult<BpcsWabpConfigVO>> list(
             @RequestParam(defaultValue = "001") String cono,
-            @RequestParam(defaultValue = "50") int limit) {
-        return ApiResponse.success(service.listConfigs(cono, limit));
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "20") Integer size) {
+        current = (int) PageConstants.clampNum(current);
+        size = (int) PageConstants.clampSize(size);
+        return ApiResponse.success(service.listConfigs(cono, current, size));
     }
 
     @GetMapping("/get")

@@ -24,6 +24,7 @@
           <template #default="{ row }">{{ row.weight }}</template>
           </el-table-column>
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="load" @size-change="load" />
       <el-empty v-if="!loading && rows.length === 0" :description="$t('common.noData')" />
     </div>
   </div>
@@ -34,16 +35,20 @@ defineOptions({ name: 'BpcsShippingList' })
 import { reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { searchLoads, type BpcsLoad } from '@/api/bpcs'
+import AppPagination from '@/components/AppPagination.vue'
 const { t } = useI18n()
 const loading = ref(false)
 const rows = ref<BpcsLoad[]>([])
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
 const query = reactive({ cono: '001', lhno: '', carrier: '' })
 function load() {
   loading.value = true
-  const p: Record<string, string | number> = { cono: query.cono || '001', current: 1, size: 200 }
+  const p: Record<string, string | number> = { cono: query.cono || '001', current: current.value, size: size.value }
   if (query.lhno) p.lhno = query.lhno
   if (query.carrier) p.carrier = query.carrier
-  searchLoads(p).then(d => { rows.value = d.records }).catch(() => {}).finally(() => { loading.value = false })
+  searchLoads(p).then(d => { rows.value = d.records; total.value = d.total }).catch(() => {}).finally(() => { loading.value = false })
 }
 const statusLabel = (s: number) => {
   const keys = ['bpcs.shippingList.statusPlanned', 'bpcs.shippingList.statusFirmed', 'bpcs.shippingList.statusReleased', 'bpcs.shippingList.statusDispatched']

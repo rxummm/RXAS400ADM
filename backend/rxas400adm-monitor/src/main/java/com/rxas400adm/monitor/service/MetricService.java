@@ -1,10 +1,12 @@
 package com.rxas400adm.monitor.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.as400.AS400Client;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.sql.SqlStatementRegistry;
 import com.rxas400adm.common.constants.PageConstants;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.monitor.domain.Metric;
 import com.rxas400adm.monitor.mapper.MetricMapper;
 import com.rxas400adm.monitor.websocket.MetricPublisher;
@@ -87,6 +89,16 @@ public class MetricService implements IMetricService {
                 .eq(Metric::getInstanceId, instanceId)
                 .orderByDesc(Metric::getCollectTime)
                 .last(PageConstants.limitClause(Math.max(1, Math.min(limit, PageConstants.MAX_LIMIT)))));
+    }
+
+    /** 分页查询历史指标 */
+    public PageResult<Metric> historyPage(Long instanceId, int current, int size) {
+        Page<Metric> page = metricMapper.selectPage(
+                new Page<>(current, size),
+                new LambdaQueryWrapper<Metric>()
+                        .eq(Metric::getInstanceId, instanceId)
+                        .orderByDesc(Metric::getCollectTime));
+        return new PageResult<>(page.getTotal(), page.getRecords());
     }
 
     public void cleanBefore(LocalDateTime time) {

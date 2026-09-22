@@ -13,6 +13,7 @@ import com.rxas400adm.system.mapper.SysRoleMenuMapper;
 import com.rxas400adm.system.mapper.SysUserMapper;
 import com.rxas400adm.system.mapper.SysUserMenuMapper;
 import com.rxas400adm.system.mapper.SysUserRoleMapper;
+import com.rxas400adm.common.util.EntityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -172,8 +173,6 @@ public class UserMenuService implements IUserMenuService {
     }
 
     private void requireUser(Long userId) {
-        if (userMapper.selectById(userId) == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "User not found: " + userId);
-        }
+        EntityUtil.require(userId, "User", userMapper::selectById);
     }
 }

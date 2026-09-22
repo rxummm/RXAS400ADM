@@ -101,7 +101,7 @@ const _pieChart = useECharts(pieChartRef, (): ECOption => ({
     type: 'pie',
     radius: ['40%', '70%'],
     avoidLabelOverlap: true,
-    itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+    itemStyle: { borderRadius: 6, borderColor: 'var(--color-white)', borderWidth: 2 },
     label: { show: true, formatter: '{b}: {c} ({d}%)' },
     data: [
       { value: 120, name: t('bpcs.transport.delivered') },
@@ -140,7 +140,7 @@ const _lineChart = useECharts(lineChartRef, (): ECOption => ({
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listShipments('001', 200)
+    rows.value = (await listShipments({ cono: '001', current: 1, size: 200 })).records
     summary.totalShipments = rows.value.length
     summary.onTimeRate = 92.3
     summary.avgTransitDays = 3.2

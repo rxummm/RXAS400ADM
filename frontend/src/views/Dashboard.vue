@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="page-container">
     <div class="search-bar">
       <div class="dash-title">{{ $t('dashboard.widgets') }}</div>
       <div class="flex-1" />
@@ -18,6 +18,75 @@
             <div>
               <div class="stat-value">{{ card.value }}</div>
               <div class="stat-title">{{ $t(card.title) }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- Executive Dashboard: 业务 KPI 卡片 -->
+    <el-row v-if="executive" :gutter="16" class="mt16">
+      <el-col :xs="12" :sm="12" :md="8" :lg="6" :xl="4">
+        <el-card shadow="never">
+          <div class="stat">
+            <div class="stat-icon icon-primary">
+              <el-icon :size="26" class="stat-icon-text"><Document /></el-icon>
+            </div>
+            <div>
+              <div class="stat-value">{{ executive.totalOrders }}</div>
+              <div class="stat-title">{{ $t('dashboard.totalOrders') }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="12" :md="8" :lg="6" :xl="4">
+        <el-card shadow="never">
+          <div class="stat">
+            <div class="stat-icon icon-success">
+              <el-icon :size="26" class="stat-icon-text"><CircleCheck /></el-icon>
+            </div>
+            <div>
+              <div class="stat-value">{{ executive.completionRate != null ? executive.completionRate.toFixed(1) + '%' : '-' }}</div>
+              <div class="stat-title">{{ $t('dashboard.completionRate') }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="12" :md="8" :lg="6" :xl="4">
+        <el-card shadow="never">
+          <div class="stat">
+            <div class="stat-icon icon-warning">
+              <el-icon :size="26" class="stat-icon-text"><Box /></el-icon>
+            </div>
+            <div>
+              <div class="stat-value">{{ executive.totalItems }}</div>
+              <div class="stat-title">{{ $t('dashboard.totalItems') }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="12" :md="8" :lg="6" :xl="4">
+        <el-card shadow="never">
+          <div class="stat">
+            <div class="stat-icon icon-info">
+              <el-icon :size="26" class="stat-icon-text"><Coin /></el-icon>
+            </div>
+            <div>
+              <div class="stat-value">{{ fmtMoney(executive.inventoryValue) }}</div>
+              <div class="stat-title">{{ $t('dashboard.inventoryValue') }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="12" :md="8" :lg="6" :xl="4">
+        <el-card shadow="never">
+          <div class="stat">
+            <div class="stat-icon icon-success">
+              <el-icon :size="26" class="stat-icon-text"><Timer /></el-icon>
+            </div>
+            <div>
+              <div class="stat-value">{{ executive.onTimeDeliveryRate != null ? executive.onTimeDeliveryRate.toFixed(1) + '%' : '-' }}</div>
+              <div class="stat-title">{{ $t('dashboard.onTimeDeliveryRate') }}</div>
             </div>
           </div>
         </el-card>
@@ -76,12 +145,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { Setting } from '@element-plus/icons-vue'
+import { Setting, Document, CircleCheck, Box, Coin, Timer } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { fetchSystems, type IbmiSystem } from '@/api/as400'
 import { getDashboardWidgets, updateDashboardWidget } from '@/api/dashboardWidget'
 import { listScripts, type CommandScript } from '@/api/script'
+import { getExecutiveSummary, type ExecutiveSummary } from '@/api/executive'
+import { formatMoney } from '@/utils/format'
 import AppPagination from '@/components/AppPagination.vue'
 import RxSkeleton from '@/components/RxSkeleton.vue'
 
@@ -93,6 +164,10 @@ const prefs = ref<Record<string, number>>({})
 const customizeVisible = ref(false)
 const overviewCurrent = ref(1)
 const overviewSize = ref(10)
+
+// Executive Dashboard
+const executive = ref<ExecutiveSummary | null>(null)
+const fmtMoney = (v: number | null) => v != null ? formatMoney(v, 0) : '-'
 
 // 常用命令
 const favoriteScripts = ref<CommandScript[]>([])
@@ -188,10 +263,19 @@ async function loadFavoriteScripts() {
   }
 }
 
+async function loadExecutive() {
+  try {
+    executive.value = await getExecutiveSummary()
+  } catch {
+    /* interceptor 已提示错误 */
+  }
+}
+
 onMounted(() => {
   load()
   loadPrefs()
   loadFavoriteScripts()
+  loadExecutive()
 })
 </script>
 
@@ -231,4 +315,8 @@ onMounted(() => {
   padding: 10px 4px;
   border-bottom: 1px solid var(--border-light);
 }
+.icon-primary { background: var(--color-primary); }
+.icon-success { background: var(--color-success); }
+.icon-warning { background: var(--color-warning); }
+.icon-info { background: var(--color-info); }
 </style>

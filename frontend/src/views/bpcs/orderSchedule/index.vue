@@ -1,12 +1,13 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-date-picker v-model="dateRange" type="daterange" class="w-240" :start-placeholder="$t('bpcs.orderSchedule.startDate')" :end-placeholder="$t('bpcs.orderSchedule.endDate')" />
-      <el-button type="primary" @click="load" class="ml8">{{ $t('common.search') }}</el-button>
+      <el-date-picker v-model="dateRange" type="daterange" class="w-360" :start-placeholder="$t('bpcs.orderSchedule.startDate')" :end-placeholder="$t('bpcs.orderSchedule.endDate')" value-format="YYYYMMDD" />
+      <el-button type="primary" @click="forceSearch" class="ml8">{{ $t('common.search') }}</el-button>
     </div>
     <div class="table-wrapper">
-      <el-table :data="rows" v-loading="loading" size="small" border>
+      <el-table :data="tableData" v-loading="loading" size="small" border>
         <el-table-column prop="orno" :label="$t('bpcs.common.orderNo')" width="140" />
+        <el-table-column prop="cust" :label="$t('bpcs.common.customerCode')" width="100" />
         <el-table-column prop="custName" :label="$t('bpcs.common.customerName')" min-width="140" />
         <el-table-column prop="startDate" :label="$t('bpcs.orderSchedule.startDate')" width="110" />
         <el-table-column prop="endDate" :label="$t('bpcs.orderSchedule.endDate')" width="110" />
@@ -16,6 +17,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <AppPagination v-model:current="current" v-model:size="size" :total="total" @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
   </div>
 </template>
@@ -25,37 +27,20 @@
 defineOptions({ name: 'BpcsOrderSchedule' })
 
 import { ref } from 'vue'
-import request from '@/api/request'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
+import { listOrderSchedule, type OrderScheduleVO } from '@/api/bpcs'
 
-interface ScheduleRow {
-  id: number
-  cono: string
-  orno: string
-  cust: string
-  startDate: string
-  endDate: string
-  progress: number
-  priority: number
-  createdBy: string
-}
+const dateRange = ref<[string, string] | null>(null)
 
-const dateRange = ref<[Date, Date] | null>(null)
-const loading = ref(false)
-const rows = ref<ScheduleRow[]>([])
-
-async function load() {
-  loading.value = true
-  try {
-    const params: Record<string, string> = {}
+const { tableData, loading, total, current, size, forceSearch, handlePageChange, handleSizeChange } = useSmartQueryTable<OrderScheduleVO>({
+  fetchApi: (params) => {
+    const qp: Record<string, unknown> = { current: params.current, size: params.size }
     if (dateRange.value) {
-      params.startDate = dateRange.value[0].toISOString().slice(0, 10).replace(/-/g, '')
-      params.endDate = dateRange.value[1].toISOString().slice(0, 10).replace(/-/g, '')
+      qp.startDate = dateRange.value[0]
+      qp.endDate = dateRange.value[1]
     }
-    rows.value = await request.get<ScheduleRow[]>('/bpcs/orderSchedule', { params })
-  } catch {
-    /* interceptor handles error */
-  } finally {
-    loading.value = false
-  }
-}
+    return listOrderSchedule(qp)
+  },
+  frontendPage: false,
+})
 </script>

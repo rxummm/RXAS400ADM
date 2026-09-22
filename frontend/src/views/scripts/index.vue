@@ -42,11 +42,8 @@
         <el-table-column prop="lastRunTime" :label="$t('scripts.lastRun')" width="170">
           <template #default="{ row }">{{ row.lastRunTime || '-' }}</template>
         </el-table-column>
-        <el-table-column :label="$t('common.operation')" width="230" fixed="right">
+        <el-table-column :label="$t('common.operation')" width="200" fixed="right">
           <template #default="{ row }">
-            <el-select v-model="runServer[row.id]" :placeholder="$t('scripts.selectServer')" size="small" class="w-120">
-              <el-option v-for="s in servers" :key="s.id" :label="s.name" :value="s.id" />
-            </el-select>
             <el-button v-has-perm="'SCRIPT_MANAGE'" size="small" type="primary" plain :loading="runningId === row.id" @click="run(row as CommandScript)">
               {{ $t('scripts.run') }}
             </el-button>
@@ -87,13 +84,13 @@
 // keep-alive 缓存标识，需与路由 name 一致
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'Scripts' })
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useConfirmDelete } from '@/composables/useConfirmDelete'
 import { Plus, Star, StarFilled } from '@element-plus/icons-vue'
 import QueryBar from '@/components/QueryBar.vue'
 import { useI18n } from 'vue-i18n'
-import { useAs400ServerStore, type As400Server } from '@/stores/as400Server'
+import { useAs400ServerStore } from '@/stores/as400Server'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { useFormDialog } from '@/composables/useFormDialog'
 import AppPagination from '@/components/AppPagination.vue'
@@ -113,11 +110,9 @@ import {
 const { t } = useI18n()
 const as400Store = useAs400ServerStore()
 const allTags = ref<string[]>([])
-const servers = ref<As400Server[]>([])
 const runningId = ref(0)
 const tagFilter = ref<string | null>(null)
 const favOnly = ref(false)
-const runServer = reactive<Record<number, number>>({})
 
 const {
   pagedData,
@@ -197,7 +192,7 @@ const toggleFav = async (row: CommandScript) => {
 }
 
 const run = async (row: CommandScript) => {
-  const serverId = runServer[row.id]
+  const serverId = as400Store.currentServerId
   if (!serverId) {
     ElMessage.warning(t('scripts.selectServerFirst'))
     return
@@ -229,7 +224,6 @@ const { removeLoading, confirmRemove } = useConfirmDelete({
 
 onMounted(async () => {
   try {
-    servers.value = await as400Store.fetchServers()
     loadTags()
   } catch (e: unknown) {
     ElMessage.error((e instanceof Error ? e.message : null) || t('common.loadFailed'))

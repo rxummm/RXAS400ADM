@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@SuppressWarnings("java:S6813")
+@SuppressWarnings({"java:S6813", "spring-java.ConstructorParameterInjection"})
 @DisallowConcurrentExecution
 public class ReportScheduleQuartzJob implements Job {
 

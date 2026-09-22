@@ -37,6 +37,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="load" @size-change="load" />
     </div>
   </div>
 </template>
@@ -50,11 +51,15 @@ import { useECharts, type ECOption } from '@/composables/useECharts'
 import { CHART_COLORS } from '@/constants/chart'
 import { listAlertRules, type AlertRuleVO } from '@/api/bpcs'
 import { useI18n } from 'vue-i18n'
+import AppPagination from '@/components/AppPagination.vue'
 
 const { t } = useI18n()
 
 const loading = ref(false)
 const rows = ref<AlertRuleVO[]>([])
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
 
 const gaugeChartRef = ref<HTMLDivElement>()
 const barChartRef = ref<HTMLDivElement>()
@@ -75,8 +80,8 @@ const _gaugeChart = useECharts(gaugeChartRef, (): ECOption => ({
       },
     },
     pointer: { width: 5 },
-    axisTick: { distance: -12, length: 6, lineStyle: { color: '#fff', width: 1 } },
-    splitLine: { distance: -14, length: 14, lineStyle: { color: '#fff', width: 2 } },
+    axisTick: { distance: -12, length: 6, lineStyle: { color: 'var(--color-white)', width: 1 } },
+    splitLine: { distance: -14, length: 14, lineStyle: { color: 'var(--color-white)', width: 2 } },
     axisLabel: { distance: 20, color: 'var(--el-text-color-secondary)', fontSize: 11 },
     detail: { valueAnimation: true, formatter: '{value}%', fontSize: 20, offsetCenter: [0, '70%'] },
     title: { offsetCenter: [0, '90%'] },
@@ -130,7 +135,9 @@ const _lineChart = useECharts(lineChartRef, (): ECOption => ({
 const load = async () => {
   loading.value = true
   try {
-    rows.value = await listAlertRules()
+    const res = await listAlertRules({ current: current.value, size: size.value })
+    rows.value = res.records
+    total.value = res.total
   } finally {
     loading.value = false
   }

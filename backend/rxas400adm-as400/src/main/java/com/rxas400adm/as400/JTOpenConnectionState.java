@@ -237,7 +237,8 @@ class JTOpenConnectionState {
         if (v != null && !String.valueOf(v).isBlank()) {
             try {
                 return Long.parseLong(String.valueOf(v).trim());
-            } catch (NumberFormatException ignored) {
+            } catch (NumberFormatException e) {
+                log.trace("Failed to parse sequence number, using default: {}", e.getMessage());
                 return 0;
             }
         }

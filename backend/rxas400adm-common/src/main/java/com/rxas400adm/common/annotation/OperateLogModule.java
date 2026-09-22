@@ -25,6 +25,7 @@ public final class OperateLogModule {
     public static final String SYS_DOC_MANAGEMENT = "SYS_DOC_MANAGEMENT";
     public static final String EMAIL_GROUP = "EMAIL_GROUP";
     public static final String EMAIL_LOG = "EMAIL_LOG";
+    public static final String I18N_MANAGEMENT = "I18N_MANAGEMENT";
 
     // ===== security 模块 =====
     public static final String AUTH = "AUTH";
@@ -44,6 +45,9 @@ public final class OperateLogModule {
     public static final String COLLABORATION_NOTIFICATION = "COLLABORATION_NOTIFICATION";
     public static final String INVENTORY_SIMULATION = "INVENTORY_SIMULATION";
 
+    // ===== approval 模块 =====
+    public static final String APPROVAL = "APPROVAL";
+
     // ===== monitor 模块 =====
     public static final String ALERT_RULE = "ALERT_RULE";
     public static final String WEBHOOK_MANAGEMENT = "WEBHOOK_MANAGEMENT";
@@ -51,4 +55,46 @@ public final class OperateLogModule {
     public static final String AUDIT_LOG = "AUDIT_LOG";
     public static final String LOGIN_LOG = "LOGIN_LOG";
     public static final String IBMI_SYSTEM = "IBMI_SYSTEM";
+
+    // ===== quality 模块 =====
+    public static final String QUALITY = "QUALITY";
+
+    // ===== cost 模块 =====
+    public static final String COST = "COST";
+
+    // ===== mrp 模块 =====
+    public static final String MRP = "MRP";
+
+    // ===== tpm 模块 =====
+    public static final String TPM = "TPM";
+
+    // ===== edi 模块 =====
+    public static final String EDI = "EDI";
+
+    // ===== olap 模块 =====
+    public static final String OLAP = "OLAP";
+
+    // ===== app 模块 =====
+    public static final String CACHE_MANAGEMENT = "CACHE_MANAGEMENT";
+    public static final String PLATFORM_TASK = "PLATFORM_TASK";
+    public static final String FINANCE_AR = "FINANCE_AR";
+    public static final String EMAIL_MANAGEMENT = "EMAIL_MANAGEMENT";
+    public static final String REPORT_SCHEDULE = "REPORT_SCHEDULE";
+    public static final String REPORT_BUILDER = "REPORT_BUILDER";
+    public static final String PURCHASE_ORDER = "PURCHASE_ORDER";
+
+    // ===== as400 模块（补充） =====
+    public static final String JOB_SLA = "JOB_SLA";
+    public static final String OP_TEMPLATE = "OP_TEMPLATE";
+    public static final String JOB_SCHEDULE = "JOB_SCHEDULE";
+    public static final String COMMAND_SCRIPT = "COMMAND_SCRIPT";
+    public static final String SQL_QUERY = "SQL_QUERY";
+    public static final String SUBSYSTEM = "SUBSYSTEM";
+    public static final String SYSTEM_VALUE = "SYSTEM_VALUE";
+    public static final String USER_PROFILE = "USER_PROFILE";
+    public static final String AS400_USER_PROFILE = "AS400_USER_PROFILE";
+    public static final String BPCS_ORDER_COPY = "BPCS_ORDER_COPY";
+
+    // ===== operation 模块 =====
+    public static final String OPERATION = "OPERATION";
 }

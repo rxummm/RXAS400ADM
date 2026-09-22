@@ -1,12 +1,12 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-input v-model="whse" :placeholder="$t('bpcs.wms.whse')" clearable class="search-bar__input" @keyup.enter="load" />
-      <el-button type="primary" @click="load">{{ $t('common.search') }}</el-button>
-      <ExportDropdown :data="rows" :columns="exportColumns" :title="$t('bpcs.wms.binInventory')" />
+      <el-input v-model="whse" :placeholder="$t('bpcs.wms.whse')" clearable class="search-bar__input" @keyup.enter="onFilterChange" />
+      <el-button type="primary" @click="onFilterChange">{{ $t('common.search') }}</el-button>
+      <ExportDropdown :data="originData" :columns="exportColumns" :title="$t('bpcs.wms.binInventory')" />
     </div>
     <div class="table-wrapper">
-      <el-table :data="rows" v-loading="loading" size="small" border>
+      <el-table :data="pagedData" v-loading="loading" size="small" border>
         <el-table-column prop="whse" :label="$t('bpcs.wms.whse')" width="80" />
         <el-table-column prop="binno" :label="$t('bpcs.wms.binno')" width="120" />
         <el-table-column prop="bintype" :label="$t('bpcs.wms.bintype')" width="80" />
@@ -23,6 +23,7 @@
         <el-table-column prop="qty" :label="$t('bpcs.quantity')" width="80" />
         <el-table-column prop="lotno" :label="$t('bpcs.wms.lotno')" width="120" />
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
   </div>
 </template>
@@ -35,12 +36,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { searchBinInventory, type BinInventory } from '@/api/wms'
 import ExportDropdown from '@/components/ExportDropdown.vue'
+import AppPagination from '@/components/AppPagination.vue'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 
 const { t } = useI18n()
 
 const whse = ref('')
-const rows = ref<BinInventory[]>([])
-const loading = ref(false)
 const exportColumns = computed(() => [
   { key: 'whse', label: t('bpcs.wms.whse') },
   { key: 'binno', label: t('bpcs.wms.binno') },
@@ -52,15 +53,19 @@ const exportColumns = computed(() => [
   { key: 'lotno', label: t('bpcs.wms.lotno') }
 ])
 
-async function load() {
-  loading.value = true
-  try {
-    const res = await searchBinInventory({ cono: '001', whse: whse.value, current: 1, size: 1000 })
-    rows.value = res.records
-  } finally {
-    loading.value = false
-  }
+const {
+  pagedData, loading, originData, total, current, size,
+  handlePageChange, handleSizeChange, fetchData,
+} = useSmartQueryTable<BinInventory>({
+  fetchApi: (params) => searchBinInventory({ cono: '001', whse: whse.value || undefined, current: params.current, size: params.size }),
+  frontendPage: false,
+  enableCache: true,
+})
+
+function onFilterChange() {
+  current.value = 1
+  void fetchData({}, true)
 }
 
-onMounted(load)
+onMounted(() => void fetchData())
 </script>

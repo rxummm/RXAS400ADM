@@ -36,6 +36,7 @@ class EmailLogServiceTest {
 
     @Test
     @DisplayName("page() — 返回分页结果")
+    @SuppressWarnings("unchecked")
     void page_normal() {
         EmailLog log = createSampleLog();
         Page<EmailLog> page = new Page<>(1, 10);
@@ -51,6 +52,7 @@ class EmailLogServiceTest {
 
     @Test
     @DisplayName("page() — 带 keyword 过滤")
+    @SuppressWarnings("unchecked")
     void page_withKeyword() {
         Page<EmailLog> page = new Page<>(1, 10);
         page.setTotal(0);

@@ -187,12 +187,12 @@ public class BpcsExportController {
             case "orders" -> {
                 var q = new BpcsOrderListQueryDTO();
                 q.setCono(cono);
-                rows = scOrderRows(supplyChainService.searchOrders(q));
+                rows = scOrderRows(supplyChainService.searchOrders(q).getRecords());
                 title = "BPCS供应链订单";
                 headers = scOrderHeaders();
             }
             case "alerts" -> {
-                rows = scAlertRows(supplyChainService.inventoryAlerts(cono, limit));
+                rows = scAlertRows(supplyChainService.inventoryAlerts(cono, 1, limit).getRecords());
                 title = "BPCS库存预警";
                 headers = scAlertHeaders();
             }
@@ -203,22 +203,22 @@ public class BpcsExportController {
                 headers = scAnalysisHeaders();
             }
             case "history" -> {
-                rows = scHistoryRows(supplyChainService.inventoryHistory(cono, item, fromDate, toDate, limit));
+                rows = scHistoryRows(supplyChainService.inventoryHistory(cono, item, fromDate, toDate, 1, limit).getRecords());
                 title = "BPCS库存历史";
                 headers = scHistoryHeaders();
             }
             case "receiving" -> {
-                rows = scReceivingRows(supplyChainService.purchaseReceiving(cono, pono, vendor, limit));
+                rows = scReceivingRows(supplyChainService.purchaseReceiving(cono, pono, vendor, 1, limit).getRecords());
                 title = "BPCS采购收货";
                 headers = scReceivingHeaders();
             }
             case "abc" -> {
-                rows = scAbcRows(supplyChainService.abcAnalysis(cono, limit));
+                rows = scAbcRows(supplyChainService.abcAnalysis(cono, 1, limit).getRecords());
                 title = "BPCS ABC分析";
                 headers = scAbcHeaders();
             }
             case "supplier" -> {
-                rows = scSupplierRows(supplyChainService.supplierPerformance(cono, limit));
+                rows = scSupplierRows(supplyChainService.supplierPerformance(cono, 1, limit).getRecords());
                 title = "BPCS供应商绩效";
                 headers = scSupplierHeaders();
             }

@@ -1,18 +1,20 @@
 package com.rxas400adm.as400.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.as400.dto.OrderScheduleDTO;
 import com.rxas400adm.as400.entity.OrderSchedule;
 import com.rxas400adm.as400.mapper.OrderScheduleMapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.util.EntityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 /**
  * 订单排程服务实现。
@@ -24,7 +26,7 @@ public class OrderScheduleServiceImpl implements IOrderScheduleService {
     private final OrderScheduleMapper mapper;
 
     @Override
-    public List<OrderSchedule> list(String startDate, String endDate) {
+    public PageResult<OrderSchedule> list(String startDate, String endDate, int current, int size) {
         LambdaQueryWrapper<OrderSchedule> qw = new LambdaQueryWrapper<>();
         if (startDate != null && !startDate.isBlank()) {
             qw.ge(OrderSchedule::getStartDate, startDate);
@@ -33,7 +35,9 @@ public class OrderScheduleServiceImpl implements IOrderScheduleService {
             qw.le(OrderSchedule::getEndDate, endDate);
         }
         qw.orderByAsc(OrderSchedule::getStartDate);
-        return mapper.selectList(qw);
+
+        IPage<OrderSchedule> page = mapper.selectPage(new Page<>(current, size), qw);
+        return new PageResult<>(page.getTotal(), page.getRecords());
     }
 
     @Override

@@ -7,13 +7,13 @@
         class="w-200"
         :placeholder="$t('bpcs.item.searchPlaceholder')"
         clearable
-        @keyup.enter="search"
+        @keyup.enter="forceSearch"
       />
-      <el-button type="primary" :loading="loading" @click="search">
+      <el-button type="primary" :loading="loading" @click="forceSearch">
         {{ $t('common.search') }}
       </el-button>
       <ExportDropdown
-        :data="items"
+        :data="tableData"
         :columns="exportColumns"
         :title="$t('bpcs.menu.items')"
         :export-url="BPCS_EXPORT.items"
@@ -26,7 +26,7 @@
       <div class="item-list-panel">
         <div class="item-list" v-loading="loading">
           <div
-            v-for="it in items"
+            v-for="it in tableData"
             :key="it.item"
             class="item-entry"
             :class="{ active: selectedItem?.item === it.item }"
@@ -35,9 +35,9 @@
             <div class="item-name">{{ it.description || it.item }}</div>
             <div class="item-code">{{ it.item }} · {{ it.uom || '—' }}</div>
           </div>
-          <el-empty v-if="!loading && items.length === 0" :image-size="60" />
+          <el-empty v-if="!loading && tableData.length === 0" :image-size="60" />
         </div>
-        <AppPagination v-if="total > 0" :total="total" v-model:current="current" v-model:size="size" @change="search" @size-change="search" />
+        <AppPagination v-if="total > 0" :total="total" v-model:current="current" v-model:size="size" @change="forceSearch" @size-change="forceSearch" />
       </div>
 
       <!-- ── 右侧：物料详情 Tab ──────────────────────── -->
@@ -155,6 +155,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { searchItems, getItemDetail, type BpcsItem, BPCS_EXPORT } from '@/api/bpcs'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import AppPagination from '@/components/AppPagination.vue'
 import ExportDropdown from '@/components/ExportDropdown.vue'
 import type { ExportColumn } from '@/components/ExportButton.vue'
@@ -162,12 +163,19 @@ import type { ExportColumn } from '@/components/ExportButton.vue'
 defineOptions({ name: 'BpcsItem' })
 
 const { t } = useI18n()
-const keyword = ref('')
-const loading = ref(false)
-const items = ref<BpcsItem[]>([])
-const total = ref(0)
-const current = ref(1)
-const size = ref(20)
+
+const { keyword, tableData, loading, current, size, total, forceSearch } = useSmartQueryTable<BpcsItem>({
+  fetchApi: (params) => {
+    const p: Record<string, string | number> = { current: params.current!, size: params.size! }
+    const kw = keyword.value.trim()
+    if (kw) {
+      if (/^[A-Z]/.test(kw)) p.item = kw
+      else p.desc = kw
+    }
+    return searchItems(p)
+  },
+})
+
 const selectedItem = ref<BpcsItem | null>(null)
 const detail = ref<BpcsItem | null>(null)
 const activeTab = ref('inventory')
@@ -183,23 +191,6 @@ const exportColumns: ExportColumn[] = [
   { key: 'totalAllocated', label: t('bpcs.common.allocated') },
   { key: 'totalAvailable', label: t('bpcs.common.available') },
 ]
-
-function search() {
-  loading.value = true
-  const params: Record<string, string | number> = { current: current.value, size: size.value }
-  const kw = keyword.value.trim()
-  if (kw) {
-    if (/^[A-Z]/.test(kw)) params.item = kw
-    else params.desc = kw
-  }
-  searchItems(params)
-    .then(data => {
-      items.value = data.records
-      total.value = data.total
-      if (data.records.length === 1) selectItem(data.records[0])
-    })
-    .finally(() => { loading.value = false })
-}
 
 function selectItem(item: BpcsItem) {
   selectedItem.value = item

@@ -1,6 +1,8 @@
 package com.rxas400adm.monitor.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.monitor.alert.AlertRule;
 import com.rxas400adm.monitor.dto.AlertRuleDTO;
@@ -24,6 +26,14 @@ public class AlertRuleService {
         return ruleMapper.selectList(new LambdaQueryWrapper<AlertRule>()
                 .orderByAsc(AlertRule::getMetricName)
                 .orderByAsc(AlertRule::getThreshold));
+    }
+
+    public PageResult<AlertRule> page(int current, int size) {
+        LambdaQueryWrapper<AlertRule> wrapper = new LambdaQueryWrapper<AlertRule>()
+                .orderByAsc(AlertRule::getMetricName)
+                .orderByAsc(AlertRule::getThreshold);
+        Page<AlertRule> page = ruleMapper.selectPage(new Page<>(current, size), wrapper);
+        return new PageResult<>(page.getTotal(), page.getRecords());
     }
 
     public AlertRule create(AlertRuleDTO dto) {

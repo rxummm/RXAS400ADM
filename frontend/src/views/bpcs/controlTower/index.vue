@@ -187,7 +187,7 @@
               <el-table :data="disruptionData.riskItems" size="small" border max-height="350">
                 <el-table-column prop="item" :label="$t('bpcs.common.itemCode')" width="100" />
                 <el-table-column prop="itemDesc" :label="$t('common.description')" min-width="120" />
-                <el-table-column prop="riskLevel" label="Risk" width="70">
+                <el-table-column prop="riskLevel" :label="$t('disruption.riskLevel')" width="70">
                   <template #default="{ row }">
                     <el-tag :type="row.riskLevel === 'HIGH' ? 'danger' : 'warning'" size="small">{{ row.riskLevel }}</el-tag>
                   </template>
@@ -220,7 +220,7 @@
                 <el-table-column prop="totalOnHand" :label="$t('bpcs.crossNode.totalOnHand')" width="90" />
                 <el-table-column prop="capacityPct" :label="$t('bpcs.crossNode.capacityPct')" width="100">
                   <template #default="{ row }">
-                    <el-progress :percentage="row.capacityPct" :color="row.capacityPct > 80 ? '#F56C6C' : '#67C23A'" :stroke-width="14" :text-inside="true" />
+                    <el-progress :percentage="row.capacityPct" :color="row.capacityPct > 80 ? 'var(--color-danger)' : 'var(--color-success)'" :stroke-width="14" :text-inside="true" />
                   </template>
                 </el-table-column>
                 <el-table-column prop="alertCount" :label="$t('bpcs.crossNode.alertCount')" width="80" />

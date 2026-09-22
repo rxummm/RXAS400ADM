@@ -34,12 +34,12 @@
       <el-alert v-if="table" type="info" :closable="false" class="mb8">
         <template #title>
           {{ $t('tableFields.currentFile') }}: <b>{{ library }}.{{ table }}</b>
-          <span v-if="columns.length">（{{ $t('tableFields.fieldCount', { n: columns.length }) }}）</span>
+          <span v-if="columns.length">（{{ $t('tableFields.fieldCount', { n: total }) }}）</span>
         </template>
       </el-alert>
 
       <RxSkeleton type="table" :rows="8" :loading="loading">
-        <el-table :data="columns" size="small" border>
+        <el-table :data="paginatedColumns" size="small" border>
         <el-table-column prop="ORDINAL_POSITION" :label="$t('tableFields.ordinal')" width="70" align="center" />
         <el-table-column prop="COLUMN_NAME" :label="$t('tableFields.field')" min-width="140" />
         <el-table-column prop="DATA_TYPE" :label="$t('tableFields.type')" width="110" />
@@ -64,7 +64,8 @@
         </el-table-column>
       </el-table>
       </RxSkeleton>
-      <el-empty v-if="!loading && table && !columns.length" :description="$t('tableFields.empty')" />
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="loadColumns" @size-change="loadColumns" />
+      <el-empty v-if="!loading && table && !paginatedColumns.length" :description="$t('tableFields.empty')" />
     </div>
   </div>
 </template>
@@ -74,13 +75,14 @@
 // keep-alive 缓存标识，需与路由 name 一致
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'TableFields' })
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { bizColumns, listBizTables, type BizColumn, type BizTable } from '@/api/business'
 import { debounce } from '@/utils/debounce'
 import RxSkeleton from '@/components/RxSkeleton.vue'
+import AppPagination from '@/components/AppPagination.vue'
 
 const { t } = useI18n()
 
@@ -90,6 +92,14 @@ const tableOptions = ref<BizTable[]>([])
 const tableLoading = ref(false)
 const columns = ref<BizColumn[]>([])
 const loading = ref(false)
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
+
+const paginatedColumns = computed(() => {
+  const start = (current.value - 1) * size.value
+  return columns.value.slice(start, start + size.value)
+})
 
 const loadTables = async () => {
   if (!library.value.trim()) {
@@ -109,32 +119,35 @@ const loadTables = async () => {
 // P2-32：下拉 @change 直发查询防抖
 const debouncedLoadTables = debounce(() => void loadTables())
 
-const load = async () => {
+const loadColumns = async () => {
   if (!library.value.trim() || !table.value) {
     ElMessage.warning(t('tableFields.selectFirst'))
     return
   }
   loading.value = true
   try {
-    columns.value = await bizColumns(library.value.trim(), table.value)
+    const allColumns = await bizColumns(library.value.trim(), table.value)
+    total.value = allColumns.length
+    current.value = 1
+    columns.value = allColumns
   } finally {
     loading.value = false
   }
 }
 
 const onFileChange = () => {
-  if (table.value) load()
+  if (table.value) loadColumns()
   else columns.value = []
 }
 
 const handleSearch = () => {
   loadTables()
-  load()
+  if (table.value) loadColumns()
 }
 
 const handleRefresh = () => {
   loadTables()
-  load()
+  if (table.value) loadColumns()
 }
 
 onMounted(loadTables)

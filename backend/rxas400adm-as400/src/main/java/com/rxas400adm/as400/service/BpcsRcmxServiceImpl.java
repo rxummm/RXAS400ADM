@@ -4,6 +4,7 @@ import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.dto.BpcsRcmxConfigDTO;
 import com.rxas400adm.as400.dto.BpcsRcmxImportResult;
 import com.rxas400adm.as400.sql.SqlStatementRegistry;
+import com.rxas400adm.as400.util.As400PaginationHelper;
 import com.rxas400adm.as400.util.BpcsRowUtil;
 import com.rxas400adm.as400.vo.BpcsCsrOptionVO;
 import com.rxas400adm.as400.vo.BpcsCustOptionVO;
@@ -12,6 +13,7 @@ import com.rxas400adm.common.constants.As400Identifiers;
 import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,19 +47,15 @@ public class BpcsRcmxServiceImpl implements IBpcsRcmxService {
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HHmmss");
 
     @Override
-    public List<BpcsRcmxAssignmentVO> listAssignments(String cono, String custLike, String csrLike, int limit) {
+    public PageResult<BpcsRcmxAssignmentVO> listAssignments(String cono, String custLike, String csrLike, int current, int size) {
         if (cono == null || cono.isBlank()) cono = "001";
         validate(cono);
         if (profileResolver.isMockMode()) {
-            return mockAssignments();
+            return new PageResult<>(mockAssignments().size(), mockAssignments());
         }
         String sql = statements.get("bpcs.rcmx.list");
-        List<Map<String, Object>> rows = clientProvider.current().queryListCheckedBounded(sql, limit, cono, limit);
-        List<BpcsRcmxAssignmentVO> result = new ArrayList<>();
-        for (Map<String, Object> row : rows) {
-            result.add(mapToVO(row));
-        }
-        return result;
+        return As400PaginationHelper.queryPaged(clientProvider, sql, current, size,
+                new Object[]{cono}, row -> mapToVO(row));
     }
 
     @Override
@@ -247,7 +245,7 @@ public class BpcsRcmxServiceImpl implements IBpcsRcmxService {
 
     @Override
     public List<BpcsRcmxAssignmentVO> exportAssignments(String cono) {
-        return listAssignments(cono, null, null, 1000);
+        return listAssignments(cono, null, null, 1, 1000).getRecords();
     }
 
     private BpcsRcmxAssignmentVO mapToVO(Map<String, Object> row) {

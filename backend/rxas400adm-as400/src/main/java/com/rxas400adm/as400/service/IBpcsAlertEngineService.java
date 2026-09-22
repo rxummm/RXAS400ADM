@@ -1,8 +1,7 @@
 package com.rxas400adm.as400.service;
 
 import com.rxas400adm.as400.vo.BpcsAlertRuleVO;
-
-import java.util.List;
+import com.rxas400adm.common.response.PageResult;
 
 /**
  * ㉜ 预警规则引擎接口。
@@ -10,5 +9,5 @@ import java.util.List;
 public interface IBpcsAlertEngineService {
 
     /** 查询库存预警 */
-    List<BpcsAlertRuleVO> getAlertRules(String cono, int limit);
+    PageResult<BpcsAlertRuleVO> getAlertRules(String cono, int current, int size);
 }

@@ -173,7 +173,7 @@ const {
 } = useSmartQueryTable<AlertRule>({
   fetchApi: async () => {
     const data = await listAlertRules()
-    return data as AlertRule[]
+    return data
   },
   frontendPage: true,
   autoFetch: false,
@@ -255,11 +255,4 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.flex-row {
-  display: flex;
-  align-items: center;
-}
-.mx8 {
-  margin: 0 6px;
-}
 </style>

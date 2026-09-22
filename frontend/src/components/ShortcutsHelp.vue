@@ -1,6 +1,6 @@
 <template>
   <el-dialog :model-value="visible" :title="$t('layout.shortcuts')" width="var(--rx-dialog-xs)" :close-on-click-modal="false" @close="close">
-    <el-table :data="shortcuts" size="small">
+    <el-table :data="shortcuts" size="small" border>
       <el-table-column :label="$t('layout.shortcutKey')" width="160">
         <template #default="{ row }">
           <kbd class="kbd">{{ row.key }}</kbd>

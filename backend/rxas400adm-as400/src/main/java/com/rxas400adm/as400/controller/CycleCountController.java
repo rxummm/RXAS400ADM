@@ -9,6 +9,7 @@ import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.annotation.OperateLogModule;
 import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,10 +43,11 @@ public class CycleCountController {
     @GetMapping("/plans")
     @PreAuthorize("hasAuthority('BPCS_INVENTORY_VIEW')")
     @Operation(summary = "获取盘点计划列表")
-    public ApiResponse<List<CycleCountPlanVO>> listPlans(
+    public ApiResponse<PageResult<CycleCountPlanVO>> listPlans(
             @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "50") int limit) {
-        return ApiResponse.success(cycleCountService.listPlans(status, limit));
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(cycleCountService.listPlans(status, current, size));
     }
 
     @PostMapping("/results")
@@ -62,8 +63,11 @@ public class CycleCountController {
     @GetMapping("/results")
     @PreAuthorize("hasAuthority('BPCS_INVENTORY_VIEW')")
     @Operation(summary = "获取盘点结果列表")
-    public ApiResponse<List<CycleCountResultVO>> listResults(@RequestParam Long planId) {
-        return ApiResponse.success(cycleCountService.listResults(planId));
+    public ApiResponse<PageResult<CycleCountResultVO>> listResults(
+            @RequestParam Long planId,
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(cycleCountService.listResults(planId, current, size));
     }
 
     @GetMapping("/summary")

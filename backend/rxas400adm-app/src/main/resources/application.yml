@@ -48,6 +48,7 @@ spring:
 
 server:
   port: 8080
+  address: 0.0.0.0
   # 优雅停机：等待进行中的操作完成后再关闭应用
   shutdown: graceful
 
@@ -137,6 +138,12 @@ rxas400:
     # AS400 连接密码 AES-256-GCM 加密密钥。生产环境必须通过环境变量覆盖。
     # 生成方式: openssl rand -base64 32
     key: ${RXAS400_CRYPTO_KEY:}
+  threadpool:
+    msgw:
+      core-pool-size: 4
+      max-pool-size: 8
+      queue-capacity: 100
+      keep-alive-seconds: 60
   security:
     # 可信反向代理 IP（逗号分隔，S3）：仅当请求直接来自这些 IP 时才信任 X-Forwarded-For。
     # 留空（默认）= 完全忽略 X-Forwarded-For，直连/内网部署无需配置；

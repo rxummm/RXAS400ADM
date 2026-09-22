@@ -25,7 +25,8 @@ export interface WebhookLog {
   createdTime?: string
 }
 
-export const listWebhooks = () => request.get<WebhookConfig[]>('/webhooks')
+export const listWebhooks = (params?: { current?: number; size?: number }): Promise<PaginatedResult<WebhookConfig>> =>
+  request.get('/webhooks', { params })
 
 export const listWebhookLogs = (params: {
   current?: number

@@ -61,7 +61,7 @@ public class DataInitializer implements CommandLineRunner {
         initAdmin();
         initIbmiSystems();
         initAlertRules();
-        log.info("Demo data initialized: admin / admin123");
+        log.debug("Demo data initialized: admin account created");
     }
 
     /** 演示管理员：admin / admin123；角色-权限、角色-菜单绑定已由 V38 种子提供（ADMIN=全量） */

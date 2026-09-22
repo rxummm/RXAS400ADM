@@ -23,9 +23,9 @@
             <el-tag :type="row.scheduleType === 'SQL' ? 'warning' : 'success'" size="small">{{ row.scheduleType }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="serverId" label="Server" width="80" />
+        <el-table-column prop="serverId" :label="$t('schedule.server')" width="80" />
         <el-table-column prop="command" :label="$t('schedule.command')" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="cronExpr" label="Cron" width="130" />
+        <el-table-column prop="cronExpr" :label="$t('schedule.cron')" width="130" />
         <el-table-column :label="$t('schedule.enabled')" width="90">
           <template #default="{ row }">
             <el-switch
@@ -52,7 +52,7 @@
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.operation')" width="220" fixed="right">
+        <el-table-column :label="$t('common.operation')" width="280" fixed="right">
           <template #default="{ row }">
             <el-button v-has-perm="'SCHEDULE_MANAGE'" size="small" type="primary" plain :loading="runningId === row.id" @click="run(row as JobSchedule)">
               {{ $t('schedule.runNow') }}

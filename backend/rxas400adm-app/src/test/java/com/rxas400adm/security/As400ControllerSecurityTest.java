@@ -43,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = As400Controller.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, OperateLogAspect.class, TestAopConfig.class})
 @DisplayName("As400Controller 权限门控与审计")
+@SuppressWarnings("removal")
 class As400ControllerSecurityTest {
 
     @Autowired

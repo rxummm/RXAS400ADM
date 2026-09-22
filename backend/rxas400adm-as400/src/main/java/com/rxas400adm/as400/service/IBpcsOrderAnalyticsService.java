@@ -2,8 +2,7 @@ package com.rxas400adm.as400.service;
 
 import com.rxas400adm.as400.dto.BpcsOrderFulfillmentQueryDTO;
 import com.rxas400adm.as400.vo.*;
-
-import java.util.List;
+import com.rxas400adm.common.response.PageResult;
 
 /**
  * 订单分析服务（履行率、OTD、Backorder）。
@@ -15,14 +14,14 @@ public interface IBpcsOrderAnalyticsService {
     BpcsOrderFulfillmentStatsVO getFulfillmentStats(String cono);
 
     /** Backorder 行明细 */
-    List<BpcsOrderBackorderLineVO> getBackorderLines(BpcsOrderFulfillmentQueryDTO query);
+    PageResult<BpcsOrderBackorderLineVO> getBackorderLines(BpcsOrderFulfillmentQueryDTO query);
 
     /** Backorder 按物料聚合 */
-    List<BpcsOrderBackorderByItemVO> getBackorderByItem(String cono, int limit);
+    PageResult<BpcsOrderBackorderByItemVO> getBackorderByItem(String cono, int current, int size);
 
     /** OTD 统计 */
     BpcsOrderOtdStatsVO getOtdStats(String cono);
 
     /** OTD 按客户聚合 */
-    List<BpcsOrderOtdByCustomerVO> getOtdByCustomer(String cono, int limit);
+    PageResult<BpcsOrderOtdByCustomerVO> getOtdByCustomer(String cono, int current, int size);
 }

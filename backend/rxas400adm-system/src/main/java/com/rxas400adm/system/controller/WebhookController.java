@@ -1,4 +1,5 @@
 package com.rxas400adm.system.controller;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.util.SecurityUtils;
 
 import com.rxas400adm.common.annotation.OperateLog;
@@ -24,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
@@ -41,8 +41,13 @@ public class WebhookController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('WEBHOOK_MANAGE')")
-    public ApiResponse<List<WebhookConfigVO>> list() {
-        return ApiResponse.success(webhookService.listAll().stream().map(WebhookConfigVO::from).toList());
+    public ApiResponse<PageResult<WebhookConfigVO>> list(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "20") Integer size) {
+        current = (int) PageConstants.clampNum(current);
+        size = (int) PageConstants.clampSize(size);
+        PageResult<WebhookConfigVO> page = webhookService.pageList(current, size);
+        return ApiResponse.success(page);
     }
 
     @GetMapping("/logs")

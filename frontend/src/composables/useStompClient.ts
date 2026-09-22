@@ -41,6 +41,8 @@ export function useStompClient() {
       brokerURL: brokerURL(),
       connectHeaders: headers(),
       reconnectDelay: 5000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
       onDisconnect: () => {
         onDisconnect?.()
       },

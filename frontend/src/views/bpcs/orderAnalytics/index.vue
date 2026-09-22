@@ -163,15 +163,15 @@ async function load() {
     const [fStats, boLines, boItems, oStats, oCustomers] = await Promise.all([
       getFulfillmentStats(cono.value),
       getBackorderLines({ cono: cono.value, size: 50 }),
-      getBackorderByItem(cono.value, 20),
+      getBackorderByItem({ cono: cono.value, current: 1, size: 20 }),
       getOtdStats(cono.value),
-      getOtdByCustomer(cono.value, 20)
+      getOtdByCustomer({ cono: cono.value, current: 1, size: 20 })
     ])
     fulfillmentStats.value = fStats
-    backorderLines.value = boLines
-    backorderByItem.value = boItems
+    backorderLines.value = boLines.records
+    backorderByItem.value = boItems.records
     otdStats.value = oStats
-    otdByCustomer.value = oCustomers
+    otdByCustomer.value = oCustomers.records
   } catch {
     /* interceptor handles error */
   } finally {

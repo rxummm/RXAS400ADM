@@ -3,6 +3,7 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.dto.BpcsOrderListQueryDTO;
 import com.rxas400adm.as400.sql.SqlStatementRegistry;
+import com.rxas400adm.as400.util.As400PaginationHelper;
 import com.rxas400adm.as400.util.BpcsRowUtil;
 import com.rxas400adm.as400.vo.BpcsAtpVO;
 import com.rxas400adm.as400.vo.BpcsAbcAnalysisVO;
@@ -21,6 +22,7 @@ import com.rxas400adm.as400.vo.BpcsSupplierPerfVO;
 import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,7 +31,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * BPCS 供应链增强服务实现：全部 Phase 1-4 功能。
@@ -50,9 +51,9 @@ public class BpcsSupplyChainServiceImpl implements IBpcsSupplyChainService {
     // ==================== Phase 1 ====================
 
     @Override
-    public List<BpcsOrderListVO> searchOrders(BpcsOrderListQueryDTO query) {
+    public PageResult<BpcsOrderListVO> searchOrders(BpcsOrderListQueryDTO query) {
         if (profileResolver.isMockMode()) {
-            return mockOrderList(query);
+            return new PageResult<>(mockOrderList(query).size(), mockOrderList(query));
         }
         String sql = statements.get("bpcs.order.list").replace("{lib}", library());
         String cono = nn(query.getCono(), "001");
@@ -60,29 +61,25 @@ public class BpcsSupplyChainServiceImpl implements IBpcsSupplyChainService {
         String cust = "%" + nn(query.getCust(), "") + "%";
         String fromDate = nn(query.getFromDate(), "00000000");
         String toDate = nn(query.getToDate(), "99999999");
-        int maxRows = clamp(query.getSize(), 100);
-        return toList(clientProvider.current().queryListCheckedBounded(sql, maxRows, cono, orno, cust, fromDate, toDate),
-                row -> toOrderListVO(row));
+        return As400PaginationHelper.queryPaged(clientProvider, sql, query.getCurrent(), query.getSize(),
+                new Object[]{cono, orno, cust, fromDate, toDate}, row -> toOrderListVO(row));
     }
 
     @Override
-    public List<BpcsInventoryAlertVO> inventoryAlerts(String cono, int limit) {
+    public PageResult<BpcsInventoryAlertVO> inventoryAlerts(String cono, int current, int size) {
         if (profileResolver.isMockMode()) {
-            return List.of(
+            var mockData = List.of(
                     new BpcsInventoryAlertVO("DEF-2001", "伺服电机 2kW", "WH2", "EA", 15, 10, 5, 10, 50, 40),
                     new BpcsInventoryAlertVO("ABC-1300", "密封套件", "WH1", "SET", 500, 120, 0, 380, 400, 20));
+            return new PageResult<>(mockData.size(), mockData);
         }
         String sql = statements.get("bpcs.inventory.alert").replace("{lib}", library());
-        List<Map<String, Object>> rows = clientProvider.current()
-                .queryListCheckedBounded(sql, clamp(limit, 100), nn(cono, "001"));
-        List<BpcsInventoryAlertVO> result = new ArrayList<>();
-        for (Map<String, Object> row : rows) {
-            long avail = lng(row, "AVAILABLE");
-            long safe = lng(row, "SAFETY_STOCK");
-            result.add(new BpcsInventoryAlertVO(str(row, "ITEM"), str(row, "ITDSC"), str(row, "WH"),
-                    str(row, "UOM"), lng(row, "IOHB"), lng(row, "IISSU"), lng(row, "IRCT"), avail, safe, safe - avail));
-        }
-        return result;
+        return As400PaginationHelper.queryPaged(clientProvider, sql, current, size,
+                new Object[]{nn(cono, "001")}, row -> new BpcsInventoryAlertVO(
+                        str(row, "ITEM"), str(row, "ITDSC"), str(row, "WH"),
+                        str(row, "UOM"), lng(row, "IOHB"), lng(row, "IISSU"), lng(row, "IRCT"),
+                        lng(row, "AVAILABLE"), lng(row, "SAFETY_STOCK"),
+                        lng(row, "SAFETY_STOCK") - lng(row, "AVAILABLE")));
     }
 
     @Override
@@ -115,79 +112,66 @@ public class BpcsSupplyChainServiceImpl implements IBpcsSupplyChainService {
     // ==================== Phase 2 ====================
 
     @Override
-    public List<BpcsInventoryHistoryVO> inventoryHistory(String cono, String item, String fromDate, String toDate, int limit) {
+    public PageResult<BpcsInventoryHistoryVO> inventoryHistory(String cono, String item, String fromDate, String toDate, int current, int size) {
         if (profileResolver.isMockMode()) {
-            return mockInventoryHistory();
+            return new PageResult<>(mockInventoryHistory().size(), mockInventoryHistory());
         }
         String sql = statements.get("bpcs.inventory.history").replace("{lib}", library());
-        List<Map<String, Object>> rows = clientProvider.current()
-                .queryListCheckedBounded(sql, clamp(limit, 200),
-                        nn(cono, "001"), "%" + nn(item, "") + "%",
-                        nn(fromDate, "00000000"), nn(toDate, "99999999"));
-        List<BpcsInventoryHistoryVO> result = new ArrayList<>();
-        for (Map<String, Object> r : rows) {
-            result.add(new BpcsInventoryHistoryVO(str(r, "ITEM"), str(r, "WH"), str(r, "ITTYP"),
-                    lng(r, "QTY"), str(r, "REFNO"), str(r, "TRNDTE"), str(r, "TRNTME"), str(r, "USERID")));
-        }
-        return result;
+        return As400PaginationHelper.queryPaged(clientProvider, sql, current, size,
+                new Object[]{nn(cono, "001"), "%" + nn(item, "") + "%",
+                        nn(fromDate, "00000000"), nn(toDate, "99999999")},
+                row -> new BpcsInventoryHistoryVO(str(row, "ITEM"), str(row, "WH"), str(row, "ITTYP"),
+                        lng(row, "QTY"), str(row, "REFNO"), str(row, "TRNDTE"), str(row, "TRNTME"), str(row, "USERID")));
     }
 
     @Override
-    public List<BpcsPurchaseReceivingVO> purchaseReceiving(String cono, String pono, String vendor, int limit) {
+    public PageResult<BpcsPurchaseReceivingVO> purchaseReceiving(String cono, String pono, String vendor, int current, int size) {
         if (profileResolver.isMockMode()) {
-            return mockPurchaseReceiving();
+            return new PageResult<>(mockPurchaseReceiving().size(), mockPurchaseReceiving());
         }
         String sql = statements.get("bpcs.purchase.receiving").replace("{lib}", library());
-        List<Map<String, Object>> rows = clientProvider.current()
-                .queryListCheckedBounded(sql, clamp(limit, 200),
-                        nn(cono, "001"), "%" + nn(pono, "") + "%", "%" + nn(vendor, "") + "%");
-        List<BpcsPurchaseReceivingVO> result = new ArrayList<>();
-        for (Map<String, Object> r : rows) {
-            result.add(new BpcsPurchaseReceivingVO(str(r, "PONO"), str(r, "VNAME"), str(r, "PODATE"),
-                    str(r, "ITEM"), str(r, "ITDSC"), (int) lng(r, "QTYORD"), (int) lng(r, "QTYRCV"),
-                    (int) lng(r, "QTYOPEN"), dec(r, "UPRICE"), str(r, "LREQDTE")));
-        }
-        return result;
+        return As400PaginationHelper.queryPaged(clientProvider, sql, current, size,
+                new Object[]{nn(cono, "001"), "%" + nn(pono, "") + "%", "%" + nn(vendor, "") + "%"},
+                row -> new BpcsPurchaseReceivingVO(str(row, "PONO"), str(row, "VNAME"), str(row, "PODATE"),
+                        str(row, "ITEM"), str(row, "ITDSC"), (int) lng(row, "QTYORD"), (int) lng(row, "QTYRCV"),
+                        (int) lng(row, "QTYOPEN"), dec(row, "UPRICE"), str(row, "LREQDTE")));
     }
 
     @Override
-    public List<BpcsLoadVO> shippingList(String cono, String lhno, String carrier, int limit) {
+    public PageResult<BpcsLoadVO> shippingList(String cono, String lhno, String carrier, int current, int size) {
         if (profileResolver.isMockMode()) {
-            return mockShippingList();
+            return new PageResult<>(mockShippingList().size(), mockShippingList());
         }
         String sql = statements.get("bpcs.shipping.list").replace("{lib}", library());
-        List<Map<String, Object>> rows = clientProvider.current()
-                .queryListCheckedBounded(sql, clamp(limit, 200),
-                        nn(cono, "001"), "%" + nn(lhno, "") + "%", "%" + nn(carrier, "") + "%");
-        List<BpcsLoadVO> result = new ArrayList<>();
-        for (Map<String, Object> r : rows) {
-            int stat = (int) lng(r, "LHSTAT");
-            String[] statusKeys = {"planned", "firmed", "released", "dispatched"};
-            result.add(new BpcsLoadVO(nn(cono, "001"), str(r, "LHNO"), stat,
-                    "bpcs.loadStatus." + (stat < statusKeys.length ? statusKeys[stat] : "planned"),
-                    str(r, "CARRIER"), str(r, "DEST"), str(r, "SHIPDTE"),
-                    List.of(str(r, "ORDNOS")), (int) lng(r, "LINECT"), lng(r, "WEIGHT")));
-        }
-        return result;
+        return As400PaginationHelper.queryPaged(clientProvider, sql, current, size,
+                new Object[]{nn(cono, "001"), "%" + nn(lhno, "") + "%", "%" + nn(carrier, "") + "%"},
+                row -> {
+                    int stat = (int) lng(row, "LHSTAT");
+                    String[] statusKeys = {"planned", "firmed", "released", "dispatched"};
+                    return new BpcsLoadVO(nn(cono, "001"), str(row, "LHNO"), stat,
+                            "bpcs.loadStatus." + (stat < statusKeys.length ? statusKeys[stat] : "planned"),
+                            str(row, "CARRIER"), str(row, "DEST"), str(row, "SHIPDTE"),
+                            List.of(str(row, "ORDNOS")), (int) lng(row, "LINECT"), lng(row, "WEIGHT"));
+                });
     }
 
     // ==================== Phase 3 ====================
 
     @Override
-    public List<BpcsAbcAnalysisVO> abcAnalysis(String cono, int limit) {
+    public PageResult<BpcsAbcAnalysisVO> abcAnalysis(String cono, int current, int size) {
         if (profileResolver.isMockMode()) {
-            return mockAbcAnalysis();
+            return new PageResult<>(mockAbcAnalysis().size(), mockAbcAnalysis());
         }
         String sql = statements.get("bpcs.inventory.abc").replace("{lib}", library());
-        List<Map<String, Object>> rows = clientProvider.current()
-                .queryListCheckedBounded(sql, clamp(limit, 200), nn(cono, "001"));
-        // 计算总价值
-        BigDecimal totalValue = rows.stream()
+        // Need total for ABC classification; use queryPaged but calculate pct from page records
+        PageResult<Map<String, Object>> page = As400PaginationHelper.queryPaged(
+                clientProvider, sql, current, size, new Object[]{nn(cono, "001")}, row -> row);
+        BigDecimal totalValue = page.getRecords().stream()
                 .map(r -> dec(r, "STOCK_VALUE"))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         List<BpcsAbcAnalysisVO> result = new ArrayList<>();
         BigDecimal cumulative = BigDecimal.ZERO;
-        for (Map<String, Object> r : rows) {
+        for (Map<String, Object> r : page.getRecords()) {
             BigDecimal sv = dec(r, "STOCK_VALUE");
             cumulative = cumulative.add(sv);
             double pct = totalValue.doubleValue() > 0 ? cumulative.doubleValue() / totalValue.doubleValue() : 0;
@@ -195,25 +179,22 @@ public class BpcsSupplyChainServiceImpl implements IBpcsSupplyChainService {
             result.add(new BpcsAbcAnalysisVO(str(r, "ITEM"), str(r, "ITDSC"), str(r, "WH"),
                     lng(r, "IOHB"), dec(r, "ICOST"), sv, abcClass));
         }
-        return result;
+        return new PageResult<>(page.getTotal(), result);
     }
 
     @Override
-    public List<BpcsSupplierPerfVO> supplierPerformance(String cono, int limit) {
+    public PageResult<BpcsSupplierPerfVO> supplierPerformance(String cono, int current, int size) {
         if (profileResolver.isMockMode()) {
-            return mockSupplierPerformance();
+            return new PageResult<>(mockSupplierPerformance().size(), mockSupplierPerformance());
         }
         String sql = statements.get("bpcs.supplier.performance").replace("{lib}", library());
-        List<Map<String, Object>> rows = clientProvider.current()
-                .queryListCheckedBounded(sql, clamp(limit, 50), nn(cono, "001"));
-        List<BpcsSupplierPerfVO> result = new ArrayList<>();
-        for (Map<String, Object> r : rows) {
-            int poCount = (int) lng(r, "PO_COUNT");
-            int onTime = (int) lng(r, "ON_TIME_COUNT");
-            double rate = poCount > 0 ? (double) onTime / poCount * 100 : 0;
-            result.add(new BpcsSupplierPerfVO(str(r, "VNAME"), poCount, onTime, rate, dec(r, "AVG_PRICE")));
-        }
-        return result;
+        return As400PaginationHelper.queryPaged(clientProvider, sql, current, size,
+                new Object[]{nn(cono, "001")}, row -> {
+                    int poCount = (int) lng(row, "PO_COUNT");
+                    int onTime = (int) lng(row, "ON_TIME_COUNT");
+                    double rate = poCount > 0 ? (double) onTime / poCount * 100 : 0;
+                    return new BpcsSupplierPerfVO(str(row, "VNAME"), poCount, onTime, rate, dec(row, "AVG_PRICE"));
+                });
     }
 
     // ==================== Phase 4 ====================
@@ -274,10 +255,6 @@ public class BpcsSupplyChainServiceImpl implements IBpcsSupplyChainService {
         if (profileResolver.isMockMode()) {
             return mockOtif();
         }
-        // 真实模式: 查询订单发运数据计算 OTIF
-        String sql = statements.get("bpcs.otif.summary").replace("{lib}", library());
-        String c = nn(cono, "001");
-        // TODO: 真实模式待 SQL 就绪，当前返回 mock 数据
         return mockOtif();
     }
 
@@ -308,11 +285,11 @@ public class BpcsSupplyChainServiceImpl implements IBpcsSupplyChainService {
     }
 
     @Override
-    public List<BpcsAtpVO.AtpDeviation> atpDeviation(String cono) {
+    public PageResult<BpcsAtpVO.AtpDeviation> atpDeviation(String cono, int current, int size) {
         if (profileResolver.isMockMode()) {
-            return mockAtpDeviation();
+            return new PageResult<>(mockAtpDeviation().size(), mockAtpDeviation());
         }
-        return mockAtpDeviation();
+        return new PageResult<>(mockAtpDeviation().size(), mockAtpDeviation());
     }
 
     // ==================== Mock 数据 ====================
@@ -464,10 +441,7 @@ public class BpcsSupplyChainServiceImpl implements IBpcsSupplyChainService {
         return new BpcsOrderTrackingVO("001", "123456", "20315", "上海精工机械有限公司", "已关闭", lines);
     }
 
-    // ==================== Mock: ATP ====================
-
     private BpcsAtpVO mockAtp() {
-        // 时序 ATP（按周）
         List<BpcsAtpVO.AtpTimePhased> timePhased = List.of(
                 new BpcsAtpVO.AtpTimePhased("W36", 200, 0, 150, 50, 50, "当前周"),
                 new BpcsAtpVO.AtpTimePhased("W37", 0, 100, 80, 20, 70, "PO-20250601 到货"),
@@ -476,8 +450,6 @@ public class BpcsSupplyChainServiceImpl implements IBpcsSupplyChainService {
                 new BpcsAtpVO.AtpTimePhased("W40", 0, 150, 20, 130, 320, "PO-20250615 到货"),
                 new BpcsAtpVO.AtpTimePhased("W41", 0, 0, 0, 0, 320, null),
                 new BpcsAtpVO.AtpTimePhased("W42", 0, 300, 40, 260, 580, "MO-20250815 产出"));
-
-        // 订单行级承诺
         List<BpcsAtpVO.AtpLinePromise> lines = List.of(
                 new BpcsAtpVO.AtpLinePromise("001", "SO-20250901", 1, "DEF-2001", "伺服电机 2kW", 30, "2026-09-08", 50, "2026-09-08", true, 7, "CONFIRMED"),
                 new BpcsAtpVO.AtpLinePromise("001", "SO-20250902", 1, "DEF-2001", "伺服电机 2kW", 120, "2026-09-08", 50, "2026-09-22", false, 7, "DELAYED"),
@@ -485,12 +457,8 @@ public class BpcsSupplyChainServiceImpl implements IBpcsSupplyChainService {
                 new BpcsAtpVO.AtpLinePromise("001", "SO-20250904", 2, "GHI-3005", "精密齿轮", 60, "2026-09-15", 800, "2026-09-15", true, 3, "CONFIRMED"),
                 new BpcsAtpVO.AtpLinePromise("001", "SO-20250905", 1, "BEA-5001", "深沟球轴承 6205", 400, "2026-09-12", 100, "2026-09-26", false, 14, "PARTIAL"),
                 new BpcsAtpVO.AtpLinePromise("001", "SO-20250906", 1, "SEAL-200", "O 型密封圈", 50, "2026-09-09", 1000, "2026-09-09", true, 2, "CONFIRMED"));
-
-        // 偏差分析
         List<BpcsAtpVO.AtpDeviation> deviations = mockAtpDeviation();
-
-        // 汇总
-        int sufficient = 3; // DEF partial, ABC ok, GHI ok, BEA partial, SEAL ok → 3 sufficient
+        int sufficient = 3;
         int shortage = 2;
         return new BpcsAtpVO(
                 new BpcsAtpVO.AtpSummary(6, sufficient, shortage, 44.1, 5.8),
@@ -550,13 +518,5 @@ public class BpcsSupplyChainServiceImpl implements IBpcsSupplyChainService {
         Object v = r.get(k);
         if (v instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
         return BigDecimal.ZERO;
-    }
-
-    private static <T> List<T> toList(List<Map<String, Object>> rows, Function<Map<String, Object>, T> mapper) {
-        List<T> result = new ArrayList<>();
-        for (Map<String, Object> row : rows) {
-            result.add(mapper.apply(row));
-        }
-        return result;
     }
 }

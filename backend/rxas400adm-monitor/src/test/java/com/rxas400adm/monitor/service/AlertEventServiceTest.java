@@ -39,6 +39,7 @@ class AlertEventServiceTest {
         service = new AlertEventService(alertEventMapper);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("recent → 正常返回告警列表")
     void recent_shouldReturnList() {
@@ -52,6 +53,7 @@ class AlertEventServiceTest {
         assertEquals("OPEN", result.get(0).getStatus());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("recent → 无告警返回空列表")
     void recent_empty_shouldReturnEmpty() {
@@ -61,6 +63,7 @@ class AlertEventServiceTest {
         assertTrue(result.isEmpty());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("recent → limit 边界值钳制（负数→1，超大→200）")
     void recent_limitBoundary_shouldClamp() {

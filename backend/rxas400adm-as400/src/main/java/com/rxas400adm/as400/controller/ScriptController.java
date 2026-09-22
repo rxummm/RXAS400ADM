@@ -5,6 +5,8 @@ import com.rxas400adm.as400.dto.CommandScriptRequest;
 import com.rxas400adm.as400.service.ICommandScriptService;
 import com.rxas400adm.as400.vo.CommandScriptVO;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -49,14 +51,14 @@ public class ScriptController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('SCRIPT_MANAGE')")
-    @OperateLog(module = "命令脚本", operation = "新建脚本")
+    @OperateLog(module = OperateLogModule.COMMAND_SCRIPT, operation = OperateLogOperation.CREATE_SCRIPT)
     public ApiResponse<CommandScriptVO> create(@Valid @RequestBody CommandScriptRequest request) {
         return ApiResponse.success(CommandScriptVO.from(scriptService.create(request, SecurityUtils.currentUsername())));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('SCRIPT_MANAGE')")
-    @OperateLog(module = "命令脚本", operation = "更新脚本")
+    @OperateLog(module = OperateLogModule.COMMAND_SCRIPT, operation = OperateLogOperation.UPDATE_SCRIPT)
     public ApiResponse<CommandScriptVO> update(@PathVariable Long id,
                                                @Valid @RequestBody CommandScriptRequest request) {
         return ApiResponse.success(CommandScriptVO.from(scriptService.update(id, request)));
@@ -64,7 +66,7 @@ public class ScriptController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('SCRIPT_MANAGE')")
-    @OperateLog(module = "命令脚本", operation = "删除脚本")
+    @OperateLog(module = OperateLogModule.COMMAND_SCRIPT, operation = OperateLogOperation.DELETE_SCRIPT)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         scriptService.delete(id);
         return ApiResponse.success(null);
@@ -72,14 +74,14 @@ public class ScriptController {
 
     @PostMapping("/{id}/favorite")
     @PreAuthorize("hasAuthority('SCRIPT_MANAGE')")
-    @OperateLog(module = "命令脚本", operation = "切换收藏状态")
+    @OperateLog(module = OperateLogModule.COMMAND_SCRIPT, operation = OperateLogOperation.TOGGLE_SCRIPT_FAVORITE)
     public ApiResponse<CommandScriptVO> favorite(@PathVariable Long id, @RequestParam Boolean favorite) {
         return ApiResponse.success(CommandScriptVO.from(scriptService.toggleFavorite(id, favorite)));
     }
 
     @PostMapping("/{id}/execute")
     @PreAuthorize("hasAuthority('SCRIPT_MANAGE')")
-    @OperateLog(module = "命令脚本", operation = "执行脚本")
+    @OperateLog(module = OperateLogModule.COMMAND_SCRIPT, operation = OperateLogOperation.EXECUTE_SCRIPT)
     public ApiResponse<CommandResult> execute(@PathVariable Long id, @RequestParam Long serverId) {
         return ApiResponse.success(scriptService.execute(id, serverId));
     }

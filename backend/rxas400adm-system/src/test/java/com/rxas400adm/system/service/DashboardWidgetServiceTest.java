@@ -40,6 +40,7 @@ class DashboardWidgetServiceTest {
         service = new DashboardWidgetService(widgetMapper);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("isEnabled → 无记录默认显示")
     void isEnabled_noRecord_shouldDefaultTrue() {
@@ -47,6 +48,7 @@ class DashboardWidgetServiceTest {
         assertTrue(service.isEnabled("admin", "cpuChart"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("isEnabled → enabled=0 返回 false")
     void isEnabled_disabled_shouldReturnFalse() {
@@ -56,6 +58,7 @@ class DashboardWidgetServiceTest {
         assertFalse(service.isEnabled("admin", "cpuChart"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("isEnabled → enabled=1 返回 true")
     void isEnabled_enabled_shouldReturnTrue() {
@@ -65,6 +68,7 @@ class DashboardWidgetServiceTest {
         assertTrue(service.isEnabled("admin", "cpuChart"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("update → 不存在则插入")
     void update_notExists_shouldInsert() {
@@ -79,6 +83,7 @@ class DashboardWidgetServiceTest {
         verify(widgetMapper).insert(any(DashboardWidget.class));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("update → 已存在则更新")
     void update_exists_shouldUpdate() {
@@ -92,6 +97,7 @@ class DashboardWidgetServiceTest {
         verify(widgetMapper).update(isNull(), any(LambdaUpdateWrapper.class));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("prefs → 返回用户偏好列表")
     void prefs_shouldReturnList() {

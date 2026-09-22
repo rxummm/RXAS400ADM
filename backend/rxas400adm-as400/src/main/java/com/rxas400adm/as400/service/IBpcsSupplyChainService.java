@@ -15,8 +15,7 @@ import com.rxas400adm.as400.vo.BpcsDisruptionAlertVO;
 import com.rxas400adm.as400.vo.BpcsAtpVO;
 import com.rxas400adm.as400.vo.BpcsOtifVO;
 import com.rxas400adm.as400.vo.BpcsSupplierPerfVO;
-
-import java.util.List;
+import com.rxas400adm.common.response.PageResult;
 
 /**
  * BPCS 供应链增强服务：订单列表搜索 / 库存预警 / 销售分析 / Phase 2-4 功能。
@@ -24,28 +23,28 @@ import java.util.List;
 public interface IBpcsSupplyChainService {
 
     /** 订单列表搜索 */
-    List<BpcsOrderListVO> searchOrders(BpcsOrderListQueryDTO query);
+    PageResult<BpcsOrderListVO> searchOrders(BpcsOrderListQueryDTO query);
 
     /** 库存预警（可用量 < 安全库存） */
-    List<BpcsInventoryAlertVO> inventoryAlerts(String cono, int limit);
+    PageResult<BpcsInventoryAlertVO> inventoryAlerts(String cono, int current, int size);
 
     /** 销售分析（Top N） */
     BpcsSalesAnalysisVO salesAnalysis(String cono, int topN);
 
     /** Phase 2: 库存变动历史 */
-    List<BpcsInventoryHistoryVO> inventoryHistory(String cono, String item, String fromDate, String toDate, int limit);
+    PageResult<BpcsInventoryHistoryVO> inventoryHistory(String cono, String item, String fromDate, String toDate, int current, int size);
 
     /** Phase 2: 采购收货管理 */
-    List<BpcsPurchaseReceivingVO> purchaseReceiving(String cono, String pono, String vendor, int limit);
+    PageResult<BpcsPurchaseReceivingVO> purchaseReceiving(String cono, String pono, String vendor, int current, int size);
 
     /** Phase 2: 发运列表视图 */
-    List<BpcsLoadVO> shippingList(String cono, String lhno, String carrier, int limit);
+    PageResult<BpcsLoadVO> shippingList(String cono, String lhno, String carrier, int current, int size);
 
     /** Phase 3: ABC 分析 */
-    List<BpcsAbcAnalysisVO> abcAnalysis(String cono, int limit);
+    PageResult<BpcsAbcAnalysisVO> abcAnalysis(String cono, int current, int size);
 
     /** Phase 3: 供应商绩效 */
-    List<BpcsSupplierPerfVO> supplierPerformance(String cono, int limit);
+    PageResult<BpcsSupplierPerfVO> supplierPerformance(String cono, int current, int size);
 
     /** Phase 4: 供应链 KPI */
     BpcsKpiVO supplyChainKpi(String cono);
@@ -70,5 +69,5 @@ public interface IBpcsSupplyChainService {
     BpcsAtpVO atpOverview(String cono, int weeks);
 
     /** ATP-OTIF 偏差分析 */
-    List<BpcsAtpVO.AtpDeviation> atpDeviation(String cono);
+    PageResult<BpcsAtpVO.AtpDeviation> atpDeviation(String cono, int current, int size);
 }

@@ -27,4 +27,18 @@ public interface IIfsService {
     String trash(String path);
 
     void restore(String trashPath);
+
+    /**
+     * IFS 路径归一化 + 安全校验（沙箱）：
+     * ① 仅接受绝对路径（以 / 开头）；② 拒绝 .. 路径穿越与反斜杠混淆；
+     * ③ 拒绝以 . 开头的隐藏段；④ 去除尾部多余斜杠；⑤ 根目录白名单校验。
+     * 非法路径抛 BAD_REQUEST；空/blank 返回 null。
+     */
+    String normalizeAndValidate(String path);
+
+    /**
+     * 校验上传文件参数：非空 + 大小上限检查。
+     * 非法参数抛 BAD_REQUEST。
+     */
+    void validateUploadFile(org.springframework.web.multipart.MultipartFile file, long maxUploadBytes);
 }

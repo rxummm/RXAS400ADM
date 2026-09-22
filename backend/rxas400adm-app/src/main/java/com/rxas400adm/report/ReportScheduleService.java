@@ -2,11 +2,13 @@ package com.rxas400adm.report;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.as400.util.CronValidator;
 import com.rxas400adm.common.constants.ExecutionStatus;
 import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.email.MailMessage;
 import com.rxas400adm.email.service.IEmailService;
@@ -189,6 +191,18 @@ public class ReportScheduleService implements IReportScheduleService, Applicatio
                 .orderByDesc(ReportScheduleHistory::getRunTime)
                 .last(PageConstants.limitClause(50)))
                 .stream().map(ReportScheduleHistoryVO::from).toList();
+    }
+
+    /** 分页查询报表执行历史 */
+    public PageResult<ReportScheduleHistoryVO> pageHistory(Long scheduleId, int current, int size) {
+        Page<ReportScheduleHistory> page = historyMapper.selectPage(
+                new Page<>(current, size),
+                new LambdaQueryWrapper<ReportScheduleHistory>()
+                        .eq(ReportScheduleHistory::getScheduleId, scheduleId)
+                        .orderByDesc(ReportScheduleHistory::getRunTime));
+        List<ReportScheduleHistoryVO> voList = page.getRecords().stream()
+                .map(ReportScheduleHistoryVO::from).toList();
+        return new PageResult<>(page.getTotal(), voList);
     }
 
     /** 启动时恢复启用中的定时任务 */

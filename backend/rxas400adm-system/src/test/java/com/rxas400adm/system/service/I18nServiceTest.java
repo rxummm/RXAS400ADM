@@ -47,7 +47,6 @@ class I18nServiceTest {
         e1.setText("搜索");
         when(i18nMapper.selectList(anyWrapper())).thenReturn(List.of(e1));
 
-        @SuppressWarnings("unchecked")
         Map<String, Object> result = service.translations("zh-CN", null);
         // translations() 返回嵌套 Map，common.search 位于 {common: {search: "搜索"}}
         assertNotNull(result.get("common"));

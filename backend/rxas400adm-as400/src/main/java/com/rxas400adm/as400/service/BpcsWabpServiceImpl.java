@@ -4,11 +4,13 @@ import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.dto.BpcsWabpConfigDTO;
 import com.rxas400adm.as400.dto.BpcsWabpImportResult;
 import com.rxas400adm.as400.sql.SqlStatementRegistry;
+import com.rxas400adm.as400.util.As400PaginationHelper;
 import com.rxas400adm.as400.util.BpcsRowUtil;
 import com.rxas400adm.as400.vo.BpcsWabpConfigVO;
 import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,18 +44,14 @@ public class BpcsWabpServiceImpl implements IBpcsWabpService {
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HHmmss");
 
     @Override
-    public List<BpcsWabpConfigVO> listConfigs(String cono, int limit) {
+    public PageResult<BpcsWabpConfigVO> listConfigs(String cono, int current, int size) {
         if (cono == null || cono.isBlank()) cono = "001";
         if (profileResolver.isMockMode()) {
-            return mockConfigs();
+            return new PageResult<>(mockConfigs().size(), mockConfigs());
         }
         String sql = statements.get("bpcs.wabp.list");
-        List<Map<String, Object>> rows = clientProvider.current().queryListCheckedBounded(sql, limit, cono, limit);
-        List<BpcsWabpConfigVO> result = new ArrayList<>();
-        for (Map<String, Object> row : rows) {
-            result.add(mapToVO(row));
-        }
-        return result;
+        return As400PaginationHelper.queryPaged(clientProvider, sql, current, size,
+                new Object[]{cono}, row -> mapToVO(row));
     }
 
     @Override
@@ -203,7 +201,7 @@ public class BpcsWabpServiceImpl implements IBpcsWabpService {
 
     @Override
     public List<BpcsWabpConfigVO> exportConfigs(String cono) {
-        return listConfigs(cono, 1000);
+        return listConfigs(cono, 1, 1000).getRecords();
     }
 
     private BpcsWabpConfigVO mapToVO(Map<String, Object> row) {

@@ -42,6 +42,7 @@ class CalendarEventServiceTest {
         service = new CalendarEventService(eventMapper);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("month → 返回当月事件列表")
     void month_shouldReturnList() {

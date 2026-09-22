@@ -58,6 +58,7 @@ class TokenBlacklistServiceTest {
         assertFalse(service.isBlacklisted("  "));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("isBlacklisted → 已吊销返回 true")
     void isBlacklisted_blacklisted_shouldReturnTrue() {
@@ -65,6 +66,7 @@ class TokenBlacklistServiceTest {
         assertTrue(service.isBlacklisted("jti-1"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("isBlacklisted → 未吊销返回 false")
     void isBlacklisted_notBlacklisted_shouldReturnFalse() {
@@ -72,6 +74,7 @@ class TokenBlacklistServiceTest {
         assertFalse(service.isBlacklisted("jti-1"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("isBlacklisted → DB 异常 + fail-closed 返回 true")
     void isBlacklisted_dbError_failClosed_shouldReturnTrue() {
@@ -80,6 +83,7 @@ class TokenBlacklistServiceTest {
         assertTrue(service.isBlacklisted("jti-1"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("isBlacklisted → DB 异常 + fail-open 返回 false")
     void isBlacklisted_dbError_failOpen_shouldReturnFalse() {
@@ -111,6 +115,7 @@ class TokenBlacklistServiceTest {
         verify(blacklistMapper, never()).insert(any(TokenBlacklist.class));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("cleanup → 删除过期记录")
     void cleanup_shouldDeleteExpired() {

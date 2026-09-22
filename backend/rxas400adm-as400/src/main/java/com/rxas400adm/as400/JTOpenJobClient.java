@@ -46,6 +46,15 @@ class JTOpenJobClient implements JobClient {
         this.sqlClient = new JTOpenSqlClient(state);
     }
 
+    /**
+     * 清理CL命令参数，防止CL命令注入。
+     * 只保留字母、数字、下划线、美元符号、@号、#号。
+     */
+    private static String sanitizeClParam(String value) {
+        if (value == null) return "";
+        return value.replaceAll("[^a-zA-Z0-9_$@#]", "");
+    }
+
     @Override
     public List<JobQueueRow> listJobQueues() {
         return sqlClient.queryList(SqlStatementRegistry.of("job.queue.list")).stream()
@@ -86,9 +95,9 @@ class JTOpenJobClient implements JobClient {
             tempPath = "/tmp/rxas400/spool/" + java.util.UUID.randomUUID() + ".txt";
             String cmd = String.format(
                     "DSPSPLF FILE(%s) JOB(%s/%s/%s) SPLNBR(*SELECT) OUTPUT(%s) OUTTYPE(*OUTFILE) OUTFILE(QTEMP/SPLFOUT)",
-                    spoolName.trim().toUpperCase(),
-                    jobNumber.trim(), jobUser.trim().toUpperCase(),
-                    jobName.trim().toUpperCase(), tempPath);
+                    sanitizeClParam(spoolName),
+                    sanitizeClParam(jobNumber), sanitizeClParam(jobUser),
+                    sanitizeClParam(jobName), tempPath);
             CommandCall call = new CommandCall(system);
             boolean ok = call.run(cmd);
             if (!ok) {
@@ -136,9 +145,9 @@ class JTOpenJobClient implements JobClient {
                     ? outputQueue.trim().toUpperCase() : "*SELECT";
             String cmd = String.format(
                     "DLTSPLF FILE(%s) JOB(%s/%s/%s) SPLNBR(*SELECT) OUTPUT(%s)",
-                    spoolName.trim().toUpperCase(),
-                    jobNumber.trim(), jobUser.trim().toUpperCase(),
-                    jobName.trim().toUpperCase(), queue);
+                    sanitizeClParam(spoolName),
+                    sanitizeClParam(jobNumber), sanitizeClParam(jobUser),
+                    sanitizeClParam(jobName), queue);
             CommandCall call = new CommandCall(system);
             boolean ok = call.run(cmd);
             StringBuilder sb = new StringBuilder();

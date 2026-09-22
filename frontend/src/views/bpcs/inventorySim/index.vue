@@ -1,19 +1,19 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-input v-model="query.itemNo" class="w-160" :placeholder="$t('bpcs.simulation.itemNo')" clearable @keyup.enter="load" />
-      <el-input v-model="query.warehouse" class="w-120" :placeholder="$t('bpcs.simulation.warehouse')" clearable @keyup.enter="load" />
+      <el-input v-model="query.itemNo" class="w-160" :placeholder="$t('bpcs.simulation.itemNo')" clearable @keyup.enter="forceSearch" />
+      <el-input v-model="query.warehouse" class="w-120" :placeholder="$t('bpcs.simulation.warehouse')" clearable @keyup.enter="forceSearch" />
       <el-select v-model="query.status" class="w-120" :placeholder="$t('bpcs.simulation.status')" clearable>
         <el-option :label="$t('bpcs.simulation.draft')" value="DRAFT" />
         <el-option :label="$t('bpcs.simulation.running')" value="RUNNING" />
         <el-option :label="$t('bpcs.simulation.completed')" value="COMPLETED" />
       </el-select>
-      <el-button type="primary" @click="load">{{ $t('common.search') }}</el-button>
-      <el-button @click="resetQuery">{{ $t('common.reset') }}</el-button>
+      <el-button type="primary" @click="forceSearch">{{ $t('common.search') }}</el-button>
+      <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
       <el-button type="primary" @click="openCreateDialog">{{ $t('bpcs.simulation.addSimulation') }}</el-button>
     </div>
     <div class="table-wrapper">
-      <el-table :data="rows" v-loading="loading" size="small" border>
+      <el-table :data="tableData" v-loading="loading" size="small" border>
         <el-table-column prop="simName" :label="$t('bpcs.simulation.simName')" min-width="120" />
         <el-table-column prop="itemNo" :label="$t('bpcs.simulation.itemNo')" width="100" />
         <el-table-column prop="warehouse" :label="$t('bpcs.simulation.warehouse')" width="80" />
@@ -50,7 +50,7 @@
           </template>
         </el-table-column>
       </el-table>
-      <AppPagination :total="total" v-model:current="page.current" v-model:size="page.size" @change="load" @size-change="load" />
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="forceSearch" @size-change="forceSearch" />
     </div>
 
     <!-- ==================== 创建模拟弹窗 ==================== -->
@@ -97,15 +97,22 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 import { listSimulations, createSimulation, runSimulation, deleteSimulation, type InventorySimulationVO } from '@/api/bpcs'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import AppPagination from '@/components/AppPagination.vue'
 
 defineOptions({ name: 'BpcsInventorySim' })
 
-const loading = ref(false)
-const rows = ref<InventorySimulationVO[]>([])
-const total = ref(0)
-const page = reactive({ current: 1, size: 20 })
 const query = reactive({ itemNo: '', warehouse: '', status: '' })
+
+const { tableData, loading, current, size, total, forceSearch, resetSearch } = useSmartQueryTable<InventorySimulationVO>({
+  fetchApi: (params) => {
+    const p: Record<string, string | number> = { current: params.current!, size: params.size! }
+    if (query.itemNo) p.itemNo = query.itemNo
+    if (query.warehouse) p.warehouse = query.warehouse
+    if (query.status) p.status = query.status
+    return listSimulations(p)
+  },
+})
 
 const dialogVisible = ref(false)
 const saving = ref(false)
@@ -124,25 +131,11 @@ function statusTagType(status: string) {
   return 'info'
 }
 
-async function load() {
-  loading.value = true
-  try {
-    const params: Record<string, string | number> = { current: page.current, size: page.size }
-    if (query.itemNo) params.itemNo = query.itemNo
-    if (query.warehouse) params.warehouse = query.warehouse
-    if (query.status) params.status = query.status
-    const res = await listSimulations(params)
-    rows.value = res.records
-    total.value = res.total
-  } finally { loading.value = false }
-}
-
 function resetQuery() {
   query.itemNo = ''
   query.warehouse = ''
   query.status = ''
-  page.current = 1
-  load()
+  resetSearch()
 }
 
 function openCreateDialog() {
@@ -159,7 +152,7 @@ async function handleCreate() {
     await createSimulation(form)
     dialogVisible.value = false
     ElMessage.success(t('common.success'))
-    load()
+    forceSearch()
   } finally { saving.value = false }
 }
 
@@ -171,7 +164,7 @@ async function handleRun(row: InventorySimulationVO) {
   }
   await runSimulation(row.id)
   ElMessage.success(t('common.success'))
-  load()
+  forceSearch()
 }
 
 async function handleDelete(row: InventorySimulationVO) {
@@ -182,8 +175,8 @@ async function handleDelete(row: InventorySimulationVO) {
   }
   await deleteSimulation(row.id)
   ElMessage.success(t('common.success'))
-  load()
+  forceSearch()
 }
 
-onMounted(load)
+onMounted(() => { forceSearch() })
 </script>

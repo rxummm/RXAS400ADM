@@ -1,10 +1,10 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-button type="primary" @click="load">{{ $t('common.search') }}</el-button>
+      <el-button type="primary" @click="forceSearch">{{ $t('common.search') }}</el-button>
     </div>
     <div class="table-wrapper">
-      <el-table :data="rows" v-loading="loading" size="small" border>
+      <el-table :data="pagedData" v-loading="loading" size="small" border>
         <el-table-column prop="vendor" :label="$t('bpcs.supplier.vendorCode')" width="100" />
         <el-table-column prop="vendorName" :label="$t('bpcs.supplier.vendorName')" min-width="160" />
         <el-table-column prop="totalPo" :label="$t('bpcs.supplier.totalPo')" width="90" align="center" />
@@ -15,6 +15,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <AppPagination v-model:current="current" v-model:size="size" :total="total" @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
   </div>
 </template>
@@ -23,20 +24,12 @@
 //noinspection JSUnusedGlobalSymbols
 defineOptions({ name: 'BpcsSupplierScore' })
 
-import { ref, onMounted } from 'vue'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { listSupplierScores, type SupplierScoreVO } from '@/api/bpcs'
 
-const loading = ref(false)
-const rows = ref<SupplierScoreVO[]>([])
-
-const load = async () => {
-  loading.value = true
-  try {
-    rows.value = await listSupplierScores()
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(load)
+const { pagedData, loading, total, current, size, forceSearch, handlePageChange, handleSizeChange } = useSmartQueryTable<SupplierScoreVO>({
+  fetchApi: () => listSupplierScores({}),
+  frontendPage: true,
+  searchFields: ['vendor', 'vendorName'],
+})
 </script>

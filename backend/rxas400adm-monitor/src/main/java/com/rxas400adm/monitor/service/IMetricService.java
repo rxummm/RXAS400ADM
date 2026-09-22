@@ -1,5 +1,6 @@
 package com.rxas400adm.monitor.service;
 
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.monitor.domain.Metric;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,8 @@ public interface IMetricService {
     Map<String, Object> overview(Long instanceId);
 
     List<Metric> history(Long instanceId, int limit);
+
+    PageResult<Metric> historyPage(Long instanceId, int current, int size);
 
     void cleanBefore(LocalDateTime time);
 }

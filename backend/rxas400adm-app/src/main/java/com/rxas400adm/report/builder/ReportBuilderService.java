@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
 import com.rxas400adm.common.response.PageResult;
+import com.rxas400adm.common.util.EntityUtil;
 import com.rxas400adm.report.IReportService;
 import com.rxas400adm.report.builder.dto.ReportDefinitionDTO;
 import com.rxas400adm.report.builder.mapper.ReportDefinitionMapper;
 import com.rxas400adm.report.builder.vo.DataSourceMeta;
 import com.rxas400adm.report.builder.vo.DataSourceMeta.FieldMeta;
 import com.rxas400adm.report.builder.vo.ReportDefinitionVO;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rxas400adm.as400.dto.*;
 import com.rxas400adm.as400.service.*;
 import com.rxas400adm.as400.vo.*;
@@ -75,7 +77,7 @@ public class ReportBuilderService implements IReportBuilderService {
                         f("reqDate","需求日期","date"), f("statusLabel","状态","dimension"),
                         f("lineCount","行数","measure")),
                 cono -> {
-                    List<BpcsOrderListVO> list = supplyChainService.searchOrders(new BpcsOrderListQueryDTO() {{ setCono(cono); }});
+                    List<BpcsOrderListVO> list = supplyChainService.searchOrders(new BpcsOrderListQueryDTO() {{ setCono(cono); }}).getRecords();
                     return list.stream().map(ReportBuilderService::toMap).toList();
                 }));
 
@@ -172,7 +174,7 @@ public class ReportBuilderService implements IReportBuilderService {
                         f("onHand","在库","measure"), f("allocated","已分配","measure"),
                         f("onOrder","在途","measure"), f("available","可用","measure"),
                         f("safetyStock","安全库存","measure"), f("deficit","缺口","measure")),
-                cono -> supplyChainService.inventoryAlerts(cono, 500).stream().map(ReportBuilderService::toMap).toList()));
+                cono -> supplyChainService.inventoryAlerts(cono, 1, 500).getRecords().stream().map(ReportBuilderService::toMap).toList()));
 
         // ── ABC 分析 ──
         r.put("abc", new DataSourceEntry("ABC 库存分析",
@@ -181,7 +183,7 @@ public class ReportBuilderService implements IReportBuilderService {
                         f("warehouse","仓库","dimension"), f("quantity","数量","measure"),
                         f("unitCost","单位成本","measure"), f("stockValue","库存价值","measure"),
                         f("abcClass","ABC 分类","dimension")),
-                cono -> supplyChainService.abcAnalysis(cono, 500).stream().map(ReportBuilderService::toMap).toList()));
+                cono -> supplyChainService.abcAnalysis(cono, 1, 500).getRecords().stream().map(ReportBuilderService::toMap).toList()));
 
         // ── 供应商绩效 ──
         r.put("supplier", new DataSourceEntry("供应商绩效",
@@ -189,7 +191,7 @@ public class ReportBuilderService implements IReportBuilderService {
                         f("vendorName","供应商","dimension"), f("poCount","采购单数","measure"),
                         f("onTimeCount","准时交付数","measure"), f("onTimeRate","准时率","measure"),
                         f("avgPrice","平均单价","measure")),
-                cono -> supplyChainService.supplierPerformance(cono, 100).stream().map(ReportBuilderService::toMap).toList()));
+                cono -> supplyChainService.supplierPerformance(cono, 1, 100).getRecords().stream().map(ReportBuilderService::toMap).toList()));
 
         // ── KPI 汇总 ──
         r.put("kpi", new DataSourceEntry("供应链 KPI",
@@ -209,7 +211,7 @@ public class ReportBuilderService implements IReportBuilderService {
                         f("type","事务类型","dimension"), f("quantity","数量","measure"),
                         f("referenceNo","参考号","dimension"), f("date","日期","date"),
                         f("time","时间","dimension"), f("userId","操作人","dimension")),
-                cono -> supplyChainService.inventoryHistory(cono, null, null, null, 500).stream().map(ReportBuilderService::toMap).toList()));
+                cono -> supplyChainService.inventoryHistory(cono, null, null, null, 1, 500).getRecords().stream().map(ReportBuilderService::toMap).toList()));
 
         // ── 采购收货 ──
         r.put("purchaseReceiving", new DataSourceEntry("采购收货状态",
@@ -219,7 +221,7 @@ public class ReportBuilderService implements IReportBuilderService {
                         f("itemDesc","物料描述","dimension"), f("qtyOrdered","订购数量","measure"),
                         f("qtyReceived","已收数量","measure"), f("qtyOpen","未收数量","measure"),
                         f("unitPrice","单价","measure")),
-                cono -> supplyChainService.purchaseReceiving(cono, null, null, 500).stream().map(ReportBuilderService::toMap).toList()));
+                cono -> supplyChainService.purchaseReceiving(cono, null, null, 1, 500).getRecords().stream().map(ReportBuilderService::toMap).toList()));
 
         // ── 销售分析（Top 客户/物料） ──
         r.put("salesAnalysis", new DataSourceEntry("销售分析（Top 客户/物料）",
@@ -268,6 +270,17 @@ public class ReportBuilderService implements IReportBuilderService {
     }
 
     @Override
+    public PageResult<ReportDefinitionVO> pageDefinitions(int current, int size) {
+        Page<ReportDefinition> page =
+                definitionMapper.selectPage(
+                        new Page<>(current, size),
+                        null);
+        List<ReportDefinitionVO> voList = page.getRecords().stream()
+                .map(ReportDefinitionVO::from).toList();
+        return new PageResult<>(page.getTotal(), voList);
+    }
+
+    @Override
     public ReportDefinitionVO getDefinition(Long id) {
         ReportDefinition def = definitionMapper.selectById(id);
         if (def == null) throw new BusinessException(ErrorCode.NOT_FOUND, "报表定义不存在: " + id);
@@ -304,14 +317,13 @@ public class ReportBuilderService implements IReportBuilderService {
 
     @Override
     public void deleteDefinition(Long id) {
-        if (definitionMapper.selectById(id) == null) throw new BusinessException(ErrorCode.NOT_FOUND, "报表定义不存在: " + id);
+        EntityUtil.require(id, "ReportDefinition", definitionMapper::selectById);
         definitionMapper.deleteById(id);
     }
 
     @Override
     public Map<String, Object> executeReport(Long id) {
-        ReportDefinition def = definitionMapper.selectById(id);
-        if (def == null) throw new BusinessException(ErrorCode.NOT_FOUND, "报表定义不存在: " + id);
+        ReportDefinition def = EntityUtil.require(id, "ReportDefinition", definitionMapper::selectById);
 
         Map<String, DataSourceEntry> registry = buildRegistry();
         DataSourceEntry entry = registry.get(def.getDataSource());

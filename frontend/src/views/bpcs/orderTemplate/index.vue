@@ -1,13 +1,13 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-input v-model="keyword" clearable :placeholder="$t('common.keyword')" @keyup.enter="load" />
-      <el-button type="primary" @click="load">{{ $t('common.search') }}</el-button>
-      <el-button @click="resetQuery">{{ $t('common.reset') }}</el-button>
+      <el-input v-model="keyword" clearable :placeholder="$t('common.keyword')" @keyup.enter="forceSearch" />
+      <el-button type="primary" @click="forceSearch">{{ $t('common.search') }}</el-button>
+      <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
       <el-button type="primary" @click="openAdd">{{ $t('common.add') }}</el-button>
     </div>
     <div class="table-wrapper">
-      <el-table :data="rows" v-loading="loading" size="small" border>
+      <el-table :data="tableData" v-loading="loading" size="small" border>
         <el-table-column prop="templateName" :label="$t('bpcs.orderTemplate.templateName')" min-width="200" />
         <el-table-column prop="cono" :label="$t('bpcs.common.companyCode')" width="100" />
         <el-table-column prop="cust" :label="$t('bpcs.common.customerCode')" width="100" />
@@ -20,7 +20,7 @@
           </template>
         </el-table-column>
       </el-table>
-      <AppPagination v-model:current="current" v-model:size="size" :total="total" @change="load" />
+      <AppPagination v-model:current="current" v-model:size="size" :total="total" @change="handlePageChange" @size-change="handleSizeChange" />
     </div>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" destroy-on-close>
@@ -50,39 +50,23 @@ defineOptions({ name: 'BpcsOrderTemplate' })
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import { listOrderTemplates, createOrderTemplate, updateOrderTemplate, deleteOrderTemplate, useOrderTemplate } from '@/api/bpcs'
 import type { OrderTemplate } from '@/api/bpcs'
 
 const { t } = useI18n()
-const loading = ref(false)
-const rows = ref<OrderTemplate[]>([])
-const total = ref(0)
-const current = ref(1)
-const size = ref(20)
-const keyword = ref('')
+
+const { tableData, keyword, loading, total, current, size, forceSearch, resetSearch, handlePageChange, handleSizeChange, fetchData } = useSmartQueryTable<OrderTemplate>({
+  fetchApi: (params) => listOrderTemplates({ keyword: params.keyword, current: params.current, size: params.size }),
+  frontendPage: false,
+  searchFields: ['templateName', 'cono', 'cust'],
+})
 
 const dialogVisible = ref(false)
 const editId = ref<number | null>(null)
 const form = ref<Partial<OrderTemplate>>({})
 
 const dialogTitle = computed(() => editId.value ? t('common.edit') : t('common.add'))
-
-const load = async () => {
-  loading.value = true
-  try {
-    const res = await listOrderTemplates({ keyword: keyword.value || undefined })
-    rows.value = res || []
-    total.value = (res || []).length
-  } finally {
-    loading.value = false
-  }
-}
-
-const resetQuery = () => {
-  keyword.value = ''
-  current.value = 1
-  load()
-}
 
 const openAdd = () => {
   editId.value = null
@@ -109,7 +93,7 @@ const handleSubmit = async () => {
     ElMessage.success(t('common.addSuccess'))
   }
   dialogVisible.value = false
-  load()
+  void fetchData()
 }
 
 const handleDelete = async (row: OrderTemplate) => {
@@ -120,14 +104,12 @@ const handleDelete = async (row: OrderTemplate) => {
   }
   await deleteOrderTemplate(row.id)
   ElMessage.success(t('common.deleteSuccess'))
-  load()
+  void fetchData()
 }
 
 const handleUse = async (row: OrderTemplate) => {
   await useOrderTemplate(row.id)
   ElMessage.success(t('common.operationSuccess'))
-  load()
+  void fetchData()
 }
-
-load()
 </script>

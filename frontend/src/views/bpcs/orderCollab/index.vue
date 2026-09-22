@@ -1,8 +1,8 @@
 <template>
   <div class="page-container page-container--fit">
     <div class="search-bar">
-      <el-input v-model="query.orderNo" class="w-160" :placeholder="$t('bpcs.collab.orderNo')" clearable @keyup.enter="load" />
-      <el-input v-model="query.customerCode" class="w-120" :placeholder="$t('bpcs.collab.customerCode')" clearable @keyup.enter="load" />
+      <el-input v-model="query.orderNo" class="w-160" :placeholder="$t('bpcs.collab.orderNo')" clearable @keyup.enter="forceSearch" />
+      <el-input v-model="query.customerCode" class="w-120" :placeholder="$t('bpcs.collab.customerCode')" clearable @keyup.enter="forceSearch" />
       <el-select v-model="query.status" class="w-120" :placeholder="$t('bpcs.collab.status')" clearable>
         <el-option :label="$t('bpcs.collab.pending')" value="PENDING" />
         <el-option :label="$t('bpcs.collab.inProgress')" value="IN_PROGRESS" />
@@ -15,12 +15,12 @@
         <el-option :label="$t('bpcs.collab.high')" value="HIGH" />
         <el-option :label="$t('bpcs.collab.urgent')" value="URGENT" />
       </el-select>
-      <el-button type="primary" @click="load">{{ $t('common.search') }}</el-button>
-      <el-button @click="resetQuery">{{ $t('common.reset') }}</el-button>
+      <el-button type="primary" @click="forceSearch">{{ $t('common.search') }}</el-button>
+      <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
       <el-button type="primary" @click="openCreateDialog">{{ $t('bpcs.collab.addCollab') }}</el-button>
     </div>
     <div class="table-wrapper">
-      <el-table :data="rows" v-loading="loading" size="small" border>
+      <el-table :data="tableData" v-loading="loading" size="small" border>
         <el-table-column prop="orderNo" :label="$t('bpcs.collab.orderNo')" width="120" />
         <el-table-column prop="customerCode" :label="$t('bpcs.collab.customerCode')" width="100" />
         <el-table-column prop="customerName" :label="$t('bpcs.collab.customerName')" min-width="120" />
@@ -58,7 +58,7 @@
           </template>
         </el-table-column>
       </el-table>
-      <AppPagination :total="total" v-model:current="page.current" v-model:size="page.size" @change="load" @size-change="load" />
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="forceSearch" @size-change="forceSearch" />
     </div>
 
     <!-- ==================== 创建协同弹窗 ==================== -->
@@ -154,15 +154,23 @@ import {
   sendCollabNotification,
   type OrderCollaborationVO, type CollaborationNotificationVO
 } from '@/api/bpcs'
+import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
 import AppPagination from '@/components/AppPagination.vue'
 
 defineOptions({ name: 'BpcsOrderCollab' })
 
-const loading = ref(false)
-const rows = ref<OrderCollaborationVO[]>([])
-const total = ref(0)
-const page = reactive({ current: 1, size: 20 })
 const query = reactive({ orderNo: '', customerCode: '', status: '', priority: '' })
+
+const { tableData, loading, current, size, total, forceSearch, resetSearch } = useSmartQueryTable<OrderCollaborationVO>({
+  fetchApi: (params) => {
+    const p: Record<string, string | number> = { current: params.current!, size: params.size! }
+    if (query.orderNo) p.orderNo = query.orderNo
+    if (query.customerCode) p.customerCode = query.customerCode
+    if (query.status) p.status = query.status
+    if (query.priority) p.priority = query.priority
+    return listCollaborations(p)
+  },
+})
 
 const createDialogVisible = ref(false)
 const createSaving = ref(false)
@@ -198,27 +206,12 @@ function priorityTagType(priority: string): 'success' | 'warning' | 'info' | 'pr
   return undefined
 }
 
-async function load() {
-  loading.value = true
-  try {
-    const params: Record<string, string | number> = { current: page.current, size: page.size }
-    if (query.orderNo) params.orderNo = query.orderNo
-    if (query.customerCode) params.customerCode = query.customerCode
-    if (query.status) params.status = query.status
-    if (query.priority) params.priority = query.priority
-    const res = await listCollaborations(params)
-    rows.value = res.records
-    total.value = res.total
-  } finally { loading.value = false }
-}
-
 function resetQuery() {
   query.orderNo = ''
   query.customerCode = ''
   query.status = ''
   query.priority = ''
-  page.current = 1
-  load()
+  resetSearch()
 }
 
 function openCreateDialog() {
@@ -235,7 +228,7 @@ async function handleCreate() {
     await createCollaboration(createForm)
     createDialogVisible.value = false
     ElMessage.success(t('common.success'))
-    load()
+    forceSearch()
   } finally { createSaving.value = false }
 }
 
@@ -247,7 +240,7 @@ async function handleStatusChange(row: OrderCollaborationVO, status: string) {
   }
   await updateCollabStatus(row.id, status)
   ElMessage.success(t('common.success'))
-  load()
+  forceSearch()
 }
 
 async function handleDelete(row: OrderCollaborationVO) {
@@ -258,7 +251,7 @@ async function handleDelete(row: OrderCollaborationVO) {
   }
   await deleteCollaboration(row.id)
   ElMessage.success(t('common.success'))
-  load()
+  forceSearch()
 }
 
 function openNotifyDialog(row: OrderCollaborationVO) {
@@ -275,5 +268,5 @@ async function handleSendNotify() {
   } finally { notifySaving.value = false }
 }
 
-onMounted(load)
+onMounted(() => { forceSearch() })
 </script>

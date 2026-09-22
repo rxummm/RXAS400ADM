@@ -7,7 +7,9 @@ import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.as400.vo.BpcsRcmxAssignmentVO;
 import com.rxas400adm.as400.vo.BpcsCsrOptionVO;
 import com.rxas400adm.as400.vo.BpcsCustOptionVO;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,12 +34,15 @@ public class BpcsRcmxController {
 
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('BPCS_VIEW')")
-    public ApiResponse<List<BpcsRcmxAssignmentVO>> list(
+    public ApiResponse<PageResult<BpcsRcmxAssignmentVO>> list(
             @RequestParam(defaultValue = "001") String cono,
             @RequestParam(required = false) String custLike,
             @RequestParam(required = false) String csrLike,
-            @RequestParam(defaultValue = "50") int limit) {
-        return ApiResponse.success(service.listAssignments(cono, custLike, csrLike, limit));
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "20") Integer size) {
+        current = (int) PageConstants.clampNum(current);
+        size = (int) PageConstants.clampSize(size);
+        return ApiResponse.success(service.listAssignments(cono, custLike, csrLike, current, size));
     }
 
     @GetMapping("/get")

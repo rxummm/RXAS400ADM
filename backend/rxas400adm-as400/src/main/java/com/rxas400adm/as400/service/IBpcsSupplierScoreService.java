@@ -1,8 +1,7 @@
 package com.rxas400adm.as400.service;
 
 import com.rxas400adm.as400.vo.BpcsSupplierScoreVO;
-
-import java.util.List;
+import com.rxas400adm.common.response.PageResult;
 
 /**
  * ④ 供应商评分接口。
@@ -10,5 +9,5 @@ import java.util.List;
 public interface IBpcsSupplierScoreService {
 
     /** 查询供应商绩效评分 */
-    List<BpcsSupplierScoreVO> getSupplierScores(String cono, int limit);
+    PageResult<BpcsSupplierScoreVO> getSupplierScores(String cono, int current, int size);
 }

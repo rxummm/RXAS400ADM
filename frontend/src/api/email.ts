@@ -36,9 +36,6 @@ export interface EmailLog {
   createdTime?: string
 }
 
-/** @deprecated 使用 PaginatedResult 代替 */
-export type PageResult<T> = PaginatedResult<T>
-
 // --- Config ---
 export const listEmailConfigs = () => request.get<EmailConfig[]>('/email/config')
 export const updateEmailConfigs = (configs: Record<string, string>) =>
@@ -48,7 +45,7 @@ export const testSendEmail = (to: string) =>
 
 // --- Groups ---
 export const listEmailGroups = (params?: { current?: number; size?: number; keyword?: string }) =>
-  request.get<PageResult<EmailGroup>>('/email/groups', { params })
+  request.get<PaginatedResult<EmailGroup>>('/email/groups', { params })
 export const listAllEmailGroups = () => request.get<EmailGroup[]>('/email/groups/all')
 export const createEmailGroup = (data: { groupName: string; description?: string }) =>
   request.post<void>('/email/groups', data)
@@ -64,7 +61,7 @@ export const removeGroupMember = (id: number, memberId: number) =>
 // --- Logs ---
 export const listEmailLogs = (params?: {
   current?: number; size?: number; channel?: string; status?: string; keyword?: string
-}) => request.get<PageResult<EmailLog>>('/email/logs', { params })
+}) => request.get<PaginatedResult<EmailLog>>('/email/logs', { params })
 export const getEmailLog = (id: number) => request.get<EmailLog>(`/email/logs/${id}`)
 
 // --- Senders ---

@@ -43,6 +43,7 @@ class RegionServiceTest {
         service = new RegionService(regionMapper);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("children → 空 parentCode 返回省级")
     void children_emptyParent_shouldReturnProvinces() {
@@ -51,6 +52,7 @@ class RegionServiceTest {
         assertNotNull(result);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("create → code 重复抛异常")
     void create_duplicateCode_shouldThrow() {
@@ -61,6 +63,7 @@ class RegionServiceTest {
         assertThrows(BusinessException.class, () -> service.create(dto));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("create → 正常新增")
     void create_valid_shouldInsert() {
@@ -80,6 +83,7 @@ class RegionServiceTest {
         assertEquals("海南省", result.getName());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("delete → 有下级数据抛异常")
     void delete_hasChildren_shouldThrow() {
@@ -92,6 +96,7 @@ class RegionServiceTest {
         assertThrows(BusinessException.class, () -> service.delete(1L));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("delete → 无下级数据则删除")
     void delete_noChildren_shouldDelete() {
@@ -105,6 +110,7 @@ class RegionServiceTest {
         verify(regionMapper).deleteById(1L);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("page → 分页查询返回结果")
     void page_shouldReturnPageResult() {
@@ -117,6 +123,7 @@ class RegionServiceTest {
         assertNotNull(result);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @DisplayName("search → 关键字搜索")
     void search_shouldCallMapper() {

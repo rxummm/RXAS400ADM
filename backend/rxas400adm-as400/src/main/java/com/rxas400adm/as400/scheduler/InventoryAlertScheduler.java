@@ -42,7 +42,7 @@ public class InventoryAlertScheduler {
             }
             try {
                 As400ServerContextHolder.setServerId(server.getId());
-                List<BpcsInventoryAlertVO> alerts = supplyChainService.inventoryAlerts("001", 100);
+                List<BpcsInventoryAlertVO> alerts = supplyChainService.inventoryAlerts("001", 1, 100).getRecords();
                 for (BpcsInventoryAlertVO alert : alerts) {
                     Map<String, Object> msg = new HashMap<>();
                     msg.put("serverId", server.getId());

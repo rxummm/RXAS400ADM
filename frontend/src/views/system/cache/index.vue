@@ -20,7 +20,7 @@
 
     <div class="table-wrapper">
       <RxSkeleton type="table" :rows="8" :loading="loading">
-        <el-table :data="pagedRows" size="small" border stripe class="w-full">
+        <el-table :data="tableData" size="small" border stripe class="w-full">
         <el-table-column prop="name" :label="$t('cache.name')" min-width="200" show-overflow-tooltip />
         <el-table-column prop="size" :label="$t('cache.size')" width="140" align="center">
           <template #default="{ row }">
@@ -70,8 +70,6 @@ const {
   enableCache: true,
   searchFields: ['name'],
 })
-
-const pagedRows = computed(() => tableData.value)
 
 const onSizeChange = () => {
   current.value = 1

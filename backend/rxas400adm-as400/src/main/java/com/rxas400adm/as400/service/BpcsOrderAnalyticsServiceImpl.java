@@ -3,12 +3,14 @@ package com.rxas400adm.as400.service;
 import com.rxas400adm.as400.AS400ClientProvider;
 import com.rxas400adm.as400.dto.BpcsOrderFulfillmentQueryDTO;
 import com.rxas400adm.as400.sql.SqlStatementRegistry;
+import com.rxas400adm.as400.util.As400PaginationHelper;
 import com.rxas400adm.as400.util.BpcsRowUtil;
 import com.rxas400adm.as400.vo.*;
 import com.rxas400adm.common.constants.As400Identifiers;
 import com.rxas400adm.common.config.ProfileResolver;
 import com.rxas400adm.common.exception.BusinessException;
 import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.response.PageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,9 +25,6 @@ import static com.rxas400adm.as400.util.BpcsRowUtil.pickStr;
 
 /**
  * 订单分析服务实现（履行率、OTD、Backorder）。
- *
- * <p>只读查询，数据源 BPCS ECH/ECL/ESH。
- * mock 模式返回演示数据，prod 模式走 AS400 SQL。
  */
 @Slf4j
 @Service
@@ -66,21 +65,25 @@ public class BpcsOrderAnalyticsServiceImpl implements IBpcsOrderAnalyticsService
     }
 
     @Override
-    public List<BpcsOrderBackorderLineVO> getBackorderLines(BpcsOrderFulfillmentQueryDTO query) {
+    public PageResult<BpcsOrderBackorderLineVO> getBackorderLines(BpcsOrderFulfillmentQueryDTO query) {
         validateCono(query.getCono());
         if (profileResolver.isMockMode()) {
-            return mockBackorderLines();
+            return new PageResult<>(mockBackorderLines().size(), mockBackorderLines());
         }
         String sql = statements.get("bpcs.order.backorderLines");
-        List<Map<String, Object>> rows = clientProvider.current().queryListCheckedBounded(sql, query.getSize(), query.getCono());
-        List<BpcsOrderBackorderLineVO> result = new ArrayList<>();
-        for (Map<String, Object> row : rows) {
+        PageResult<Map<String, Object>> page = As400PaginationHelper.queryPaged(
+                clientProvider, sql, query.getCurrent(), query.getSize(),
+                new Object[]{query.getCono()}, row -> row);
+
+        // Filter by item if specified
+        List<BpcsOrderBackorderLineVO> filtered = new ArrayList<>();
+        for (Map<String, Object> row : page.getRecords()) {
             String item = pickStr(row, "ITEM");
             if (query.getItemFilter() != null && !query.getItemFilter().isBlank()
                     && !item.toUpperCase().contains(query.getItemFilter().toUpperCase())) {
                 continue;
             }
-            result.add(new BpcsOrderBackorderLineVO(
+            filtered.add(new BpcsOrderBackorderLineVO(
                     pickStr(row, "CONO"),
                     pickStr(row, "ORNO"),
                     pickStr(row, "ORLN"),
@@ -95,27 +98,23 @@ public class BpcsOrderAnalyticsServiceImpl implements IBpcsOrderAnalyticsService
                     pickStr(row, "HSTAT")
             ));
         }
-        return result;
+        return new PageResult<>(page.getTotal(), filtered);
     }
 
     @Override
-    public List<BpcsOrderBackorderByItemVO> getBackorderByItem(String cono, int limit) {
+    public PageResult<BpcsOrderBackorderByItemVO> getBackorderByItem(String cono, int current, int size) {
         validateCono(cono);
         if (profileResolver.isMockMode()) {
-            return mockBackorderByItem();
+            return new PageResult<>(mockBackorderByItem().size(), mockBackorderByItem());
         }
         String sql = statements.get("bpcs.order.backorderByItem");
-        List<Map<String, Object>> rows = clientProvider.current().queryListCheckedBounded(sql, limit, cono);
-        List<BpcsOrderBackorderByItemVO> result = new ArrayList<>();
-        for (Map<String, Object> row : rows) {
-            result.add(new BpcsOrderBackorderByItemVO(
-                    pickStr(row, "ITEM"),
-                    pickStr(row, "ITDSC"),
-                    BpcsRowUtil.intVal(row, "BO_COUNT"),
-                    BpcsRowUtil.intVal(row, "TOTAL_BO_QTY")
-            ));
-        }
-        return result;
+        return As400PaginationHelper.queryPaged(clientProvider, sql, current, size,
+                new Object[]{cono}, row -> new BpcsOrderBackorderByItemVO(
+                        pickStr(row, "ITEM"),
+                        pickStr(row, "ITDSC"),
+                        BpcsRowUtil.intVal(row, "BO_COUNT"),
+                        BpcsRowUtil.intVal(row, "TOTAL_BO_QTY")
+                ));
     }
 
     @Override
@@ -145,27 +144,21 @@ public class BpcsOrderAnalyticsServiceImpl implements IBpcsOrderAnalyticsService
     }
 
     @Override
-    public List<BpcsOrderOtdByCustomerVO> getOtdByCustomer(String cono, int limit) {
+    public PageResult<BpcsOrderOtdByCustomerVO> getOtdByCustomer(String cono, int current, int size) {
         validateCono(cono);
         if (profileResolver.isMockMode()) {
-            return mockOtdByCustomer();
+            return new PageResult<>(mockOtdByCustomer().size(), mockOtdByCustomer());
         }
         String sql = statements.get("bpcs.order.otdByCustomer");
-        List<Map<String, Object>> rows = clientProvider.current().queryListCheckedBounded(sql, limit, cono);
-        List<BpcsOrderOtdByCustomerVO> result = new ArrayList<>();
-        for (Map<String, Object> row : rows) {
-            result.add(new BpcsOrderOtdByCustomerVO(
-                    pickStr(row, "CUST"),
-                    pickStr(row, "CUNAME"),
-                    BpcsRowUtil.intVal(row, "TOTAL"),
-                    BpcsRowUtil.intVal(row, "ON_TIME"),
-                    BpcsRowUtil.decOrNull(row, "OTD_PCT")
-            ));
-        }
-        return result;
+        return As400PaginationHelper.queryPaged(clientProvider, sql, current, size,
+                new Object[]{cono}, row -> new BpcsOrderOtdByCustomerVO(
+                        pickStr(row, "CUST"),
+                        pickStr(row, "CUNAME"),
+                        BpcsRowUtil.intVal(row, "TOTAL"),
+                        BpcsRowUtil.intVal(row, "ON_TIME"),
+                        BpcsRowUtil.decOrNull(row, "OTD_PCT")
+                ));
     }
-
-    // ==================== Mock 数据 ====================
 
     private BpcsOrderFulfillmentStatsVO mockFulfillmentStats() {
         return new BpcsOrderFulfillmentStatsVO(
@@ -207,11 +200,9 @@ public class BpcsOrderAnalyticsServiceImpl implements IBpcsOrderAnalyticsService
         );
     }
 
-    // ==================== 校验 ====================
-
     private void validateCono(String cono) {
         if (cono == null || cono.isBlank()) {
-            cono = "001"; // 默认公司码
+            cono = "001";
         }
         if (!As400Identifiers.IDENTIFIER.matcher(cono.toUpperCase()).matches()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "Invalid company code: " + cono);

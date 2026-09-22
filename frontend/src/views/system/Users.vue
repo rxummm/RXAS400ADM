@@ -32,7 +32,7 @@
                 >
                   {{ r.roleName || r.roleCode }}
                 </el-tag>
-                <span v-if="!row.roles || row.roles.length === 0" class="muted">
+                <span v-if="!row.roles || row.roles.length === 0" class="text-muted">
                   {{ $t('users.noRoles') }}
                 </span>
               </template>
@@ -164,6 +164,7 @@ import UserFormDialog from './UserFormDialog.vue'
 import UserPermDialog from './UserPermDialog.vue'
 import { formatDate } from '@/utils/format'
 import { useSmartQueryTable } from '@/composables/useSmartQueryTable'
+import { useConfirmDelete } from '@/composables/useConfirmDelete'
 
 defineOptions({ name: 'Users' })
 
@@ -279,26 +280,11 @@ const toggleStatus = async (row: UserVO) => {
   await forceSearch()
 }
 
-const removeLoading_remove = ref<number | null>(null)
-const remove = async (row: UserVO) => {
-  try {
-    await ElMessageBox.confirm(
-      t('users.deleteConfirm', { username: row.username }),
-      t('common.confirm'),
-      { type: 'warning' },
-    )
-  } catch {
-    return
-  }
-  removeLoading_remove.value = row.id
-  try {
-    await deleteUser(row.id)
-    ElMessage.success(t('common.deleteSuccess'))
-    await forceSearch()
-  } finally {
-    removeLoading_remove.value = null
-  }
-}
+const { removeLoading, confirmRemove: remove } = useConfirmDelete<UserVO>({
+  deleteApi: (row) => deleteUser(row.id),
+  onSuccess: () => forceSearch(),
+  confirmMessage: 'users.deleteConfirm',
+})
 
 function openPermManage(row: UserVO) {
   permManageUser.value = { id: row.id, username: row.username }
@@ -307,10 +293,13 @@ function openPermManage(row: UserVO) {
 
 onMounted(async () => {
   try {
-    loadRoles()
-    servers.value = await as400Store.fetchServers()
-    loadAttempts()
-    loadIpStats()
+    const [, srvs] = await Promise.all([
+      loadRoles(),
+      as400Store.fetchServers() as Promise<unknown>,
+      loadAttempts(),
+      loadIpStats(),
+    ])
+    servers.value = srvs as { id: number; name: string }[]
   } catch (e: unknown) {
     ElMessage.error((e instanceof Error ? e.message : null) || t('common.loadFailed'))
   }
@@ -318,8 +307,4 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.muted {
-  color: var(--text-placeholder);
-  font-size: 12px;
-}
 </style>

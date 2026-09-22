@@ -4,8 +4,6 @@ import com.rxas400adm.operation.annotation.IbmiOperation;
 import com.rxas400adm.operation.domain.RiskLevel;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class IbmiOperationAnnotationTest {

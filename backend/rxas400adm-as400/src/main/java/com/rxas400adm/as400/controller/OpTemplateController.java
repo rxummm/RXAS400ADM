@@ -5,6 +5,9 @@ import com.rxas400adm.as400.dto.OpTemplateUpdateDTO;
 import com.rxas400adm.as400.service.IOpTemplateService;
 import com.rxas400adm.as400.vo.OpTemplateVO;
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.util.SecurityUtils;
@@ -37,28 +40,30 @@ public class OpTemplateController {
     @GetMapping
     @PreAuthorize("hasAuthority('SCRIPT_MANAGE')")
     public ApiResponse<PageResult<OpTemplateVO>> page(@RequestParam(defaultValue = "1") long current,
-                                                      @RequestParam(defaultValue = "20") long size,
-                                                      @RequestParam(required = false) String keyword) {
+                                                       @RequestParam(defaultValue = "20") long size,
+                                                       @RequestParam(required = false) String keyword) {
+        current = PageConstants.clampNum(current);
+        size = PageConstants.clampSize(size);
         return ApiResponse.success(opTemplateService.page(current, size, keyword));
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('SCRIPT_MANAGE')")
-    @OperateLog(module = "操作模板", operation = "新建模板")
+    @OperateLog(module = OperateLogModule.OP_TEMPLATE, operation = OperateLogOperation.CREATE_TEMPLATE)
     public ApiResponse<OpTemplateVO> create(@Valid @RequestBody OpTemplateCreateDTO dto) {
         return ApiResponse.success(opTemplateService.create(dto, SecurityUtils.currentUsername()));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('SCRIPT_MANAGE')")
-    @OperateLog(module = "操作模板", operation = "更新模板")
+    @OperateLog(module = OperateLogModule.OP_TEMPLATE, operation = OperateLogOperation.UPDATE_TEMPLATE)
     public ApiResponse<OpTemplateVO> update(@PathVariable Long id, @Valid @RequestBody OpTemplateUpdateDTO dto) {
         return ApiResponse.success(opTemplateService.update(id, dto, SecurityUtils.currentUsername()));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('SCRIPT_MANAGE')")
-    @OperateLog(module = "操作模板", operation = "删除模板")
+    @OperateLog(module = OperateLogModule.OP_TEMPLATE, operation = OperateLogOperation.DELETE_TEMPLATE)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         opTemplateService.delete(id);
         return ApiResponse.success();
@@ -66,7 +71,7 @@ public class OpTemplateController {
 
     @PostMapping("/{id}/execute")
     @PreAuthorize("hasAuthority('SCRIPT_MANAGE')")
-    @OperateLog(module = "操作模板", operation = "执行模板")
+    @OperateLog(module = OperateLogModule.OP_TEMPLATE, operation = OperateLogOperation.EXECUTE_TEMPLATE)
     public ApiResponse<Void> execute(@PathVariable Long id, @RequestParam Long serverId) {
         opTemplateService.execute(id, serverId);
         return ApiResponse.success();

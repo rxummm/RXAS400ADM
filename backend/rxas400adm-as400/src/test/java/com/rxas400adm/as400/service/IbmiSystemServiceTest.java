@@ -50,6 +50,7 @@ class IbmiSystemServiceTest {
 
     @Test
     @DisplayName("list → 返回所有服务器")
+    @SuppressWarnings("unchecked")
     void list_shouldReturnAll() {
         IbmiSystem sys = new IbmiSystem();
         sys.setId(1L);
@@ -79,6 +80,7 @@ class IbmiSystemServiceTest {
 
     @Test
     @DisplayName("create → name 重复抛异常")
+    @SuppressWarnings("unchecked")
     void create_duplicateName_shouldThrow() {
         when(ibmiSystemMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(1L);
 
@@ -90,6 +92,7 @@ class IbmiSystemServiceTest {
 
     @Test
     @DisplayName("create → 正常新增")
+    @SuppressWarnings("unchecked")
     void create_valid_shouldInsert() {
         when(ibmiSystemMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(0L);
         when(ibmiSystemMapper.insert(any(IbmiSystem.class))).thenAnswer(inv -> {

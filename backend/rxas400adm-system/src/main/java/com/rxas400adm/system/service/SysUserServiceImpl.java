@@ -146,7 +146,7 @@ public class SysUserServiceImpl implements SysUserService {
     public void delete(Long id) {
         SysUser user = userMapper.selectById(id);
         if (user == null) {
-            return;
+            throw new BusinessException(ErrorCode.NOT_FOUND, "User not found: " + id);
         }
         // 先删关联（rx_user_role 有外键 fk_user_role_user），再删用户
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, id));

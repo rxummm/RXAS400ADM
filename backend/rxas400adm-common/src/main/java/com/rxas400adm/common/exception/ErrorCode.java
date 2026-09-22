@@ -35,6 +35,7 @@ public enum ErrorCode {
     DEPLOY_NOT_FOUND(30001, "Deployment not found"),
     DEPLOY_STATUS_INVALID(30002, "Current deployment status does not allow this operation"),
     APPROVAL_NOT_FOUND(30003, "No pending approval record"),
+    OPERATION_STATUS_INVALID(30006, "Current status does not allow this operation"),
     DEPLOY_ROLLBACK_FAILED(30004, "Deployment failed and rollback also failed"),
     DEPLOY_CONCURRENT(30005, "Deployment already in progress, please do not submit again"),
 

@@ -3,6 +3,7 @@ package com.rxas400adm.system.controller;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.annotation.OperateLogModule;
 import com.rxas400adm.common.annotation.OperateLogOperation;
+import com.rxas400adm.common.constants.PageConstants;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.system.dto.SysRoleDTO;
@@ -48,8 +49,10 @@ public class SysRoleController {
     @GetMapping("/page")
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     public ApiResponse<PageResult<SysRoleVO>> page(@RequestParam(defaultValue = "1") long current,
-                                                  @RequestParam(defaultValue = "10") long size,
-                                                  @RequestParam(required = false) String keyword) {
+                                                   @RequestParam(defaultValue = "10") long size,
+                                                   @RequestParam(required = false) String keyword) {
+        current = PageConstants.clampNum(current);
+        size = PageConstants.clampSize(size);
         PageResult<SysRole> page = roleService.page(current, size, keyword);
         return ApiResponse.success(new PageResult<>(page.getTotal(),
                 page.getRecords().stream().map(SysRoleVO::from).toList()));

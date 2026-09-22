@@ -16,6 +16,7 @@ import com.rxas400adm.system.entity.WebhookConfig;
 import com.rxas400adm.system.entity.WebhookLog;
 import com.rxas400adm.system.mapper.WebhookConfigMapper;
 import com.rxas400adm.system.mapper.WebhookLogMapper;
+import com.rxas400adm.system.vo.WebhookConfigVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +36,17 @@ public class WebhookService implements IWebhookService {
     private final WebhookLogMapper webhookLogMapper;
     private final WebhookNotifier webhookNotifier;
 
+    @Override
+    public PageResult<WebhookConfigVO> pageList(int current, int size) {
+        Page<WebhookConfig> page = webhookMapper.selectPage(
+                new Page<>(PageConstants.clampNum(current), PageConstants.clampSize(size)),
+                new LambdaQueryWrapper<WebhookConfig>()
+                        .orderByDesc(WebhookConfig::getEnabled)
+                        .orderByAsc(WebhookConfig::getId));
+        return new PageResult<>(page.getTotal(), page.getRecords().stream().map(WebhookConfigVO::from).toList());
+    }
+
+    @Override
     public List<WebhookConfig> listAll() {
         return webhookMapper.selectList(new LambdaQueryWrapper<WebhookConfig>()
                         .orderByDesc(WebhookConfig::getEnabled).orderByAsc(WebhookConfig::getId))

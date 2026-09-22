@@ -37,6 +37,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="loadPlans" @size-change="loadPlans" />
     </div>
 
     <!-- 创建计划弹窗 -->
@@ -100,12 +101,16 @@ import {
   createCycleCountPlan, listCycleCountPlans, recordCycleCountResult,
   type CycleCountPlan
 } from '@/api/bpcs'
+import AppPagination from '@/components/AppPagination.vue'
 
 const { t } = useI18n()
 const loading = ref(false)
 const creating = ref(false)
 const recording = ref(false)
 const plans = ref<CycleCountPlan[]>([])
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
 const statusFilter = ref('')
 
 const showCreateDialog = ref(false)
@@ -123,7 +128,9 @@ const recordForm = reactive({ planId: 0, systemQty: 0, countedQty: 0, reason: ''
 async function loadPlans() {
   loading.value = true
   try {
-    plans.value = await listCycleCountPlans({ status: statusFilter.value || undefined, limit: 50 })
+    const res = await listCycleCountPlans({ status: statusFilter.value || undefined, current: current.value, size: size.value })
+    plans.value = res.records
+    total.value = res.total
   } catch {
     /* interceptor handles error */
   } finally {

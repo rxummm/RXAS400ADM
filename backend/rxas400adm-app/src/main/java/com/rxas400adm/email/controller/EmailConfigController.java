@@ -1,6 +1,8 @@
 package com.rxas400adm.email.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.email.dto.EmailConfigDTO;
 import com.rxas400adm.email.service.IEmailService;
@@ -33,7 +35,7 @@ public class EmailConfigController {
 
     @PutMapping
     @PreAuthorize("hasAuthority('EMAIL_MANAGE')")
-    @OperateLog(module = "邮件管理", operation = "更新邮件配置")
+    @OperateLog(module = OperateLogModule.EMAIL_MANAGEMENT, operation = OperateLogOperation.UPDATE_EMAIL_CONFIG)
     public ApiResponse<Void> update(@Valid @RequestBody EmailConfigDTO dto) {
         emailService.updateConfigs(dto.getConfigs());
         return ApiResponse.success(null);
@@ -41,7 +43,7 @@ public class EmailConfigController {
 
     @PostMapping("/test-send")
     @PreAuthorize("hasAuthority('EMAIL_MANAGE')")
-    @OperateLog(module = "邮件管理", operation = "发送测试邮件")
+    @OperateLog(module = OperateLogModule.EMAIL_MANAGEMENT, operation = OperateLogOperation.SEND_TEST_EMAIL)
     public ApiResponse<Void> testSend(@RequestParam String to) {
         emailService.sendTestEmail(to);
         return ApiResponse.success(null);

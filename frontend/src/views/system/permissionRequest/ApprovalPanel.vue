@@ -22,7 +22,7 @@
     <div class="table-wrapper">
       <RxSkeleton type="table" :rows="8" :loading="loading">
         <el-table :data="rows" size="small" border stripe class="w-full">
-        <el-table-column prop="username" label="User" width="110" />
+        <el-table-column prop="username" :label="$t('permissionRequest.user')" width="110" />
         <el-table-column :label="$t('permissionRequest.appliedMenus')" min-width="240">
           <template #default="{ row }">
             <el-tag

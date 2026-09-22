@@ -31,6 +31,7 @@
         <el-table-column prop="time" :label="$t('bpcs.inventoryHistory.refType')" width="80" />
         <el-table-column prop="userId" :label="$t('bpcs.inventoryHistory.userId')" width="90" />
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="load" @size-change="load" />
       <el-empty v-if="!loading && rows.length === 0" :description="$t('common.noData')" />
     </div>
   </div>
@@ -44,9 +45,13 @@ import { getInventoryHistory, type InventoryHistory } from '@/api/bpcs'
 import { BPCS_EXPORT } from '@/api/bpcs'
 import ExportDropdown from '@/components/ExportDropdown.vue'
 import type { ExportColumn } from '@/components/ExportButton.vue'
+import AppPagination from '@/components/AppPagination.vue'
 const { t } = useI18n()
 const loading = ref(false)
 const rows = ref<InventoryHistory[]>([])
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
 const query = reactive({ cono: '001', item: '', fromDate: '', toDate: '' })
 const exportColumns: ExportColumn[] = [
   { key: 'item', label: t('bpcs.common.itemCode') },
@@ -58,10 +63,10 @@ const exportColumns: ExportColumn[] = [
 ]
 function load() {
   loading.value = true
-  const p: Record<string, string | number> = { cono: query.cono || '001', limit: 200 }
+  const p: Record<string, string | number> = { cono: query.cono || '001', current: current.value, size: size.value }
   if (query.item) p.item = query.item
   if (query.fromDate) p.fromDate = query.fromDate
   if (query.toDate) p.toDate = query.toDate
-  getInventoryHistory(p).then(d => { rows.value = d }).catch(() => {}).finally(() => { loading.value = false })
+  getInventoryHistory(p).then(d => { rows.value = d.records; total.value = d.total }).catch(() => {}).finally(() => { loading.value = false })
 }
 </script>

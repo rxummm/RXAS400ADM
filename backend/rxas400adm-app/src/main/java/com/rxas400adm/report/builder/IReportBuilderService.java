@@ -1,5 +1,6 @@
 package com.rxas400adm.report.builder;
 
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.report.builder.dto.ReportDefinitionDTO;
 import com.rxas400adm.report.builder.vo.DataSourceMeta;
 import com.rxas400adm.report.builder.vo.ReportDefinitionVO;
@@ -17,6 +18,9 @@ public interface IReportBuilderService {
 
     /** 查询全部报表定义 */
     List<ReportDefinitionVO> listDefinitions();
+
+    /** 分页查询报表定义 */
+    PageResult<ReportDefinitionVO> pageDefinitions(int current, int size);
 
     /** 查询单个报表定义 */
     ReportDefinitionVO getDefinition(Long id);

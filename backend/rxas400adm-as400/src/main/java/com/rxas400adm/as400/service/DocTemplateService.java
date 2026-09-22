@@ -5,8 +5,7 @@ import com.rxas400adm.as400.dto.DocTemplateDTO;
 import com.rxas400adm.as400.entity.DocTemplate;
 import com.rxas400adm.as400.mapper.DocTemplateMapper;
 import com.rxas400adm.as400.vo.DocTemplateVO;
-import com.rxas400adm.common.exception.BusinessException;
-import com.rxas400adm.common.exception.ErrorCode;
+import com.rxas400adm.common.util.EntityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,10 +49,7 @@ public class DocTemplateService {
     }
 
     public void updateTemplate(Long id, DocTemplateDTO dto, String operator) {
-        DocTemplate template = templateMapper.selectById(id);
-        if (template == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "Document template not found");
-        }
+        DocTemplate template = EntityUtil.require(id, "DocTemplate", templateMapper::selectById);
         if (StringUtils.hasText(dto.getName())) {
             template.setName(dto.getName().trim());
         }
@@ -71,9 +67,7 @@ public class DocTemplateService {
     }
 
     public void deleteTemplate(Long id) {
-        if (templateMapper.selectById(id) == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "Doc template not found: " + id);
-        }
+        EntityUtil.require(id, "DocTemplate", templateMapper::selectById);
         templateMapper.deleteById(id);
     }
 

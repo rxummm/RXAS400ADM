@@ -2,9 +2,11 @@ package com.rxas400adm.as400.controller;
 
 import com.rxas400adm.as400.dto.RmaDTO;
 import com.rxas400adm.as400.dto.RmaStatusUpdateDTO;
+import com.rxas400adm.as400.entity.Rma;
 import com.rxas400adm.as400.service.IRmaService;
 import com.rxas400adm.as400.vo.RmaVO;
 import com.rxas400adm.common.response.ApiResponse;
+import com.rxas400adm.common.response.PageResult;
 import com.rxas400adm.common.annotation.OperateLog;
 import com.rxas400adm.common.util.SecurityUtils;
 import jakarta.validation.Valid;
@@ -12,8 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
-import java.util.List;
 
 
 /**
@@ -29,8 +29,13 @@ public class RmaController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('BPCS_VIEW')")
-    public ApiResponse<List<RmaVO>> list(@RequestParam(required = false) String status) {
-        return ApiResponse.success(service.list(status).stream().map(RmaVO::from).toList());
+    public ApiResponse<PageResult<RmaVO>> list(
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "20") int size) {
+        PageResult<Rma> page = service.list(status, current, size);
+        return ApiResponse.success(new PageResult<>(page.getTotal(),
+                page.getRecords().stream().map(RmaVO::from).toList()));
     }
 
     @GetMapping("/{id}")

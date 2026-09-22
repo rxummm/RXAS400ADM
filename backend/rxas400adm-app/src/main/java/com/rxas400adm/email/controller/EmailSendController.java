@@ -1,6 +1,8 @@
 package com.rxas400adm.email.controller;
 
 import com.rxas400adm.common.annotation.OperateLog;
+import com.rxas400adm.common.annotation.OperateLogModule;
+import com.rxas400adm.common.annotation.OperateLogOperation;
 import com.rxas400adm.common.response.ApiResponse;
 import com.rxas400adm.email.MailMessage;
 import com.rxas400adm.email.dto.EmailSendDTO;
@@ -55,7 +57,7 @@ public class EmailSendController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('EMAIL_SEND')")
-    @OperateLog(module = "邮件管理", operation = "发送邮件")
+    @OperateLog(module = OperateLogModule.EMAIL_MANAGEMENT, operation = OperateLogOperation.SEND_EMAIL)
     @Operation(summary = "发送邮件（支持附件）")
     public ApiResponse<Void> send(
             @Valid @ModelAttribute EmailSendDTO dto,

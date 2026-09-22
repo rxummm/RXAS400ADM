@@ -26,6 +26,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <AppPagination :total="total" v-model:current="current" v-model:size="size" @change="load" @size-change="load" />
       <el-empty v-if="!loading && rows.length === 0" :description="$t('common.noData')" />
     </div>
   </div>
@@ -39,10 +40,14 @@ import { listSupplierScores, type SupplierScoreVO } from '@/api/bpcs'
 import { BPCS_EXPORT } from '@/api/bpcs'
 import ExportDropdown from '@/components/ExportDropdown.vue'
 import type { ExportColumn } from '@/components/ExportButton.vue'
+import AppPagination from '@/components/AppPagination.vue'
 const { t } = useI18n()
 const cono = ref('001')
 const loading = ref(false)
 const rows = ref<SupplierScoreVO[]>([])
+const current = ref(1)
+const size = ref(20)
+const total = ref(0)
 const exportColumns: ExportColumn[] = [
   { key: 'vendorName', label: t('bpcs.common.vendorName') },
   { key: 'totalPo', label: t('bpcs.common.poCount') },
@@ -51,6 +56,6 @@ const exportColumns: ExportColumn[] = [
 ]
 function load() {
   loading.value = true
-  listSupplierScores(cono.value || '001', 50).then(d => { rows.value = d }).catch(() => {}).finally(() => { loading.value = false })
+  listSupplierScores({ cono: cono.value || '001', current: current.value, size: size.value }).then(d => { rows.value = d.records; total.value = d.total }).catch(() => {}).finally(() => { loading.value = false })
 }
 </script>
