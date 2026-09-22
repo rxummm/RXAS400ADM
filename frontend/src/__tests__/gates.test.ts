@@ -704,26 +704,26 @@ import Child from './Child.vue'
 })
 
 describe('check-i18n.mjs M7: useFormDialog i18nPrefix 命名空间必须含 add 键', () => {
-  it('命名空间缺 add → 检出（permissions.add 曾缺失）', () => {
-    const f = fixture({ 'useFormDialog-holder.ts': `useFormDialog({ i18nPrefix: 'permissions' })\nuseFormDialog({ i18nPrefix: 'role' })\n` })
+  it('命名空间缺 add → 检出（DB 未加载的命名空间）', () => {
+    const f = fixture({ 'useFormDialog-holder.ts': `useFormDialog({ i18nPrefix: 'myModule' })\nuseFormDialog({ i18nPrefix: 'role' })\n` })
     try {
       const files = [join(f.abs, 'useFormDialog-holder.ts')]
-      const zhKeys = new Set(['permissions.create', 'role.add'])
-      const enKeys = new Set(['permissions.create', 'role.add'])
+      const zhKeys = new Set(['myModule.create', 'role.add'])
+      const enKeys = new Set(['myModule.create', 'role.add'])
       const bad = findI18nPrefixMissingAdd(files, zhKeys, enKeys)
       expect(bad).toHaveLength(1)
-      expect(bad[0].ns).toBe('permissions')
+      expect(bad[0].ns).toBe('myModule')
     } finally {
       cleanup(f.abs)
     }
   })
 
   it('所有命名空间均含 add（zh+en）→ 空结果', () => {
-    const f = fixture({ 'useFormDialog-holder.ts': `useFormDialog({ i18nPrefix: 'permissions' })\nuseFormDialog({ i18nPrefix: 'role' })\n` })
+    const f = fixture({ 'useFormDialog-holder.ts': `useFormDialog({ i18nPrefix: 'myModule' })\nuseFormDialog({ i18nPrefix: 'role' })\n` })
     try {
       const files = [join(f.abs, 'useFormDialog-holder.ts')]
-      const zhKeys = new Set(['permissions.add', 'role.add'])
-      const enKeys = new Set(['permissions.add', 'role.add'])
+      const zhKeys = new Set(['myModule.add', 'role.add'])
+      const enKeys = new Set(['myModule.add', 'role.add'])
       expect(findI18nPrefixMissingAdd(files, zhKeys, enKeys)).toHaveLength(0)
     } finally {
       cleanup(f.abs)
@@ -731,14 +731,26 @@ describe('check-i18n.mjs M7: useFormDialog i18nPrefix 命名空间必须含 add 
   })
 
   it('en 缺 add 同样检出（防只改一边）', () => {
+    const f = fixture({ 'useFormDialog-holder.ts': `useFormDialog({ i18nPrefix: 'myModule' })\n` })
+    try {
+      const files = [join(f.abs, 'useFormDialog-holder.ts')]
+      const zhKeys = new Set(['myModule.add'])
+      const enKeys = new Set(['myModule.create'])
+      const bad = findI18nPrefixMissingAdd(files, zhKeys, enKeys)
+      expect(bad).toHaveLength(1)
+      expect(bad[0].ns).toBe('myModule')
+    } finally {
+      cleanup(f.abs)
+    }
+  })
+
+  it('DB 加载的命名空间自动跳过（permissions 在 DB_LOADED_NAMESPACES 中）', () => {
     const f = fixture({ 'useFormDialog-holder.ts': `useFormDialog({ i18nPrefix: 'permissions' })\n` })
     try {
       const files = [join(f.abs, 'useFormDialog-holder.ts')]
-      const zhKeys = new Set(['permissions.add'])
-      const enKeys = new Set(['permissions.create'])
-      const bad = findI18nPrefixMissingAdd(files, zhKeys, enKeys)
-      expect(bad).toHaveLength(1)
-      expect(bad[0].ns).toBe('permissions')
+      const zhKeys = new Set(['other.add'])
+      const enKeys = new Set(['other.add'])
+      expect(findI18nPrefixMissingAdd(files, zhKeys, enKeys)).toHaveLength(0)
     } finally {
       cleanup(f.abs)
     }

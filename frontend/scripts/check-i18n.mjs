@@ -97,6 +97,20 @@ export function extractRefs(files) {
 /**
  * M7：useFormDialog 的 i18nPrefix 命名空间必须含 add 键（新增弹窗标题用 ${prefix}.add）。
  * 提取所有 useFormDialog({ ... i18nPrefix: 'xxx' }) 的命名空间，校验 zh/en 均有 xxx.add。
+ *
+ * 业务模块翻译由 DB rx_i18n 加载（V82 种子），不在静态 TS 文件中——
+ * 这些命名空间的 .add 键在运行时可用，静态检查应跳过。
+ */
+const DB_LOADED_NAMESPACES = new Set([
+  'alertRules', 'assets', 'config', 'emailGroups', 'ipRules', 'jobSla',
+  'messageFiles', 'notice', 'permissions', 'schedule', 'scripts',
+  'sysI18n', 'webhooks',
+  // 业务模块（V101-V121 种子）
+  'approval', 'cost', 'edi', 'mrp', 'olap', 'quality', 'tpm',
+  'ar', 'procurement',
+])
+
+/**
  * @param {string[]} files 待扫描文件列表
  * @param {Set<string>} zhKeys zh-CN 全量 key 集合
  * @param {Set<string>} enKeys en-US 全量 key 集合
@@ -110,6 +124,7 @@ export function findI18nPrefixMissingAdd(files, zhKeys, enKeys) {
     let m
     while ((m = re.exec(content)) !== null) {
       const ns = m[1]
+      if (DB_LOADED_NAMESPACES.has(ns)) continue
       if (!zhKeys.has(`${ns}.add`) || !enKeys.has(`${ns}.add`)) {
         const line = content.slice(0, m.index).split('\n').length
         bad.push({ ns, file, line })

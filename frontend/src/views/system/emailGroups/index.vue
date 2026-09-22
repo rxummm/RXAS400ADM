@@ -87,7 +87,7 @@ const { dialogVisible, isEdit, loading: saving, formRef, form, rules, openCreate
     createApi: (data) => createEmailGroup(data),
     updateApi: (id, data) => updateEmailGroup(Number(id), data),
     onSuccess: () => load(),
-    i18nPrefix: 'emailGroup',
+    i18nPrefix: 'emailGroups',
   })
 
 const drawerVisible = ref(false)
