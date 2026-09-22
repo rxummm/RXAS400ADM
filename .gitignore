@@ -33,3 +33,4 @@ Thumbs.db
 logs/
 *.tmp
 mvn_test_result.txt
+.agnes/
